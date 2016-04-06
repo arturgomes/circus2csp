@@ -250,7 +250,8 @@ do_settings _ anim =
 
 
 done_cmd :: (Animator, Answer) -> IO ()
-done_cmd (anim, Done s)       = do {putStrLn s; get_cmd anim}
+--done_cmd (anim, Done s)       = do {putStrLn s; get_cmd anim}
+done_cmd (anim, Done s)       = do {writeFile "spec.txt" s; get_cmd anim}
 done_cmd (anim, ErrorMsg m)   = do {putErrorMsg m; get_cmd anim}
 done_cmd (anim, ErrorLocns es)= do {putStrLn (unlines (map fmtperr es));
 				    get_cmd anim}
@@ -262,7 +263,7 @@ done_cmd (anim, SchemaCode name (ZSetComp gfs (Just (ZBinding bs))) depth) =
     do  -- output_zpara (ZSchemaDef (ZSPlain name) (ZSchema gfs))
 	-- Here is a alternative to the above line, that numbers the lines.
 	putStrLn ("\\begin{schema}{"++name++"}")
-        mapM (putStrLn . fmtgfs) (zip [1..] gfs) 
+        mapM (putStrLn . fmtgfs) (zip [1..] gfs)
 	putStrLn "\\end{schema}"
 	let hidden = genfilt_names gfs \\ (map fst bs)
 	if hidden == []
@@ -275,7 +276,7 @@ done_cmd (anim, SchemaCode name (ZSetComp gfs (Just (ZBinding bs))) depth) =
 	get_cmd anim
 
 fmtgfs :: (Int,ZGenFilt) -> String
-fmtgfs (n,Check ZFalse{reason=(r:rs)}) = 
+fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
    show n ++ "  " ++ "false  \\because{"
 	++ concat[zpred_string pinfo p ++ "; " | p<- r:rs]
 	++ "}"

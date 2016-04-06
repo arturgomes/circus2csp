@@ -232,7 +232,7 @@ evalexpression s anim
     = (anim, answerErrorOr value)
   where
   env = evalenv anim
-  oexpr = 
+  oexpr =
     do  expr <- parseZexpr s
 	uexpr <- unfoldexpr env expr
 	return (opt_expr env uexpr)
@@ -459,7 +459,7 @@ fmtpara :: ZParaInfo -> String
 fmtpara p
   = s ++ if null rest then "" else "..."
   where
-  (s,rest) = splitAt 65 (show (origpara p))
+  (s,rest) = splitAt 10000 (show (origpara p))
 
 get_info :: ZVar -> Animator -> ErrorOr ZParaInfo
 get_info s anim
