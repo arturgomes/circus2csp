@@ -1,0 +1,296 @@
+Specification 	= { Section } | { Paragraph } ;
+
+Section 		= L_BEGIN_ZED, L_SECTION , NAME , L_PARENTS , [ NAME , { L_COMMA , NAME } ] , L_END_ZED , { Paragraph } --(* inheriting section *)
+ 				| L_BEGIN_ZED, L_SECTION , NAME , L_END_ZED , { Paragraph } -- (* base section *) ;
+
+Paragraph 		= L_BEGIN_ZED, L_OPENBRACKET , NAME , { L_COMMA , NAME } , L_CLOSEBRACKET , L_END_ZED (* given types *)
+				-- axiomatic description 
+				| L_BEGIN_AXDEF, SchemaText , L_END_AXDEF
+				-- schema definition 
+				| L_BEGIN_SCHEMA, NAME , SchemaText , L_END_SCHEMA
+				-- generic axiomatic description 
+				| L_BEGIN_GENDEF , L_OPENBRACKET , Formals , L_CLOSEBRACKET , SchemaText , L_END_GENDEF
+				--TODO| GENSCH , NAME , L_OPENBRACKET , Formals , L_CLOSEBRACKET , SchemaText , END (* generic schema definition *)
+				-- horizontal definition 
+				| L_BEGIN_ZED, DeclName , L_EQUALS_EQUALS , Expression , L_END_ZED
+				-- generic horizontal definition 
+				| L_BEGIN_ZED, NAME , L_OPENBRACKET , Formals , L_CLOSEBRACKET , L_EQUALS_EQUALS , Expression , L_END_ZED
+				-- generic operator definition 
+				| L_BEGIN_ZED, GenName , L_EQUALS_EQUALS , Expression , L_END_ZED
+				-- free types 
+				| L_BEGIN_ZED, Freetype , { L_AND_FT , Freetype } , L_END_ZED
+				-- conjecture 
+				| L_BEGIN_ZED, L_VDASH , Predicate , L_END_ZED
+				-- generic conjecture 
+				| L_BEGIN_ZED, L_OPENBRACKET , Formals , L_CLOSEBRACKET , L_VDASH , Predicate , L_END_ZED
+				-- operator template 
+				| L_BEGIN_ZED, OperatorTemplate , L_END_ZED
+
+
+Freetype 		= NAME , L_COLON_COLON_EQUALS , Branch , { L_VERT , Branch } ;(* free type *)
+
+Branch 			= DeclName , [ L_LDATA , Expression , L_RDATA ] ; (* element or injection *)
+
+Formals 		= NAME , { L_COMMA , NAME } ; (* generic parameters *)
+
+Predicate 		= Predicate , NL , Predicate (* newline conjunction *)
+				-- semicolon conjunction 
+				| Predicate , L_SEMICOLON , Predicate
+				-- universal quantification 
+				| L_FORALL , SchemaText , L_AT , Predicate
+				-- existential quantification 
+				| L_EXISTS , SchemaText , L_AT , Predicate
+				-- unique existential quantification 
+				| L_EXISTS_1 , SchemaText , L_AT , Predicate
+				-- equivalence 
+				| Predicate , L_IFF , Predicate
+				-- implication 
+				| Predicate , L_IMPLIES , Predicate
+				-- disjunction 
+				| Predicate , L_LOR , Predicate
+				-- conjunction 
+				| Predicate , L_LAND , Predicate
+				-- negation 
+				| L_LNOT , Predicate
+				-- relation operator application 
+				| Relation
+				| Expression (* schema predicate )
+				-- truth 
+				| L_TRUE 
+				-- falsity 
+				| L_FALSE 
+				-- parenthesized predicate 
+				| L_OPENPAREN , Predicate , L_CLOSEPAREN 
+
+
+
+
+Expression 		= 
+				--schema universal quantification
+				L_FORALL , SchemaText , L_AT , Expression 
+				-- schema existential quantification 
+				| L_EXISTS , SchemaText , L_AT , Expression
+				-- schema unique existential quantification 
+				| L_EXISTS_1 , SchemaText , L_AT , Expression
+				-- function construction 
+				| L_LAMBDA , SchemaText , L_AT , Expression
+				-- definite description 
+				| L_MU , SchemaText , L_AT , Expression
+				-- substitution expression 
+				| L_LET , DeclName , L_EQUALS_EQUALS , Expression , { L_SEMICOLON , DeclName , L_EQUALS_EQUALS , Expression } , L_AT , Expression
+				-- schema equivalence 
+				| Expression , L_IFF , Expression
+				-- schema implication 
+				| Expression , L_IMPLIES , Expression
+				-- schema disjunction 
+				| Expression , L_LOR , Expression
+				-- schema conjunction 
+				| Expression , L_LAND , Expression
+				-- schema negation 
+				| L_LNOT , Expression
+				-- conditional 
+				| L_IF , Predicate , L_THEN , Expression , L_ELSE , Expression
+				-- schema composition 
+				| Expression , L_SEMI , Expression
+				-- schema piping 
+				| Expression , L_PIPE , Expression
+				-- schema hiding 
+				| Expression , L_HIDE , L_OPENPAREN , DeclName , { L_COMMA , DeclName } , L_CLOSEPAREN
+				-- schema projection 
+				| Expression , L_PROJECT , Expression
+				-- schema precondition 
+				| L_PRE , Expression
+				-- Cartesian product 
+				| Expression , L_CROSS , Expression , { L_CROSS , Expression }
+				-- powerset 
+				| L_POWER , Expression
+				-- function and generic operator application 
+				| Application
+				-- application 
+				| Expression , Expression
+				-- schema decoration 
+				| Expression , L_STROKE
+				-- schema renaming 
+				| Expression , L_OPENBRACKET , DeclName , L_SLASH , DeclName , { L_COMMA , DeclName , L_SLASH , DeclName } , L_CLOSEBRACKET
+				-- binding selection 
+				| Expression , L_POINT , RefName
+				-- tuple selection 
+				| Expression , L_POINT , NUMERAL
+				-- binding construction 
+				| L_THETA , Expression , { L_STROKE }
+				-- reference 
+				| RefName
+				-- generic instantiation 
+				| RefName , L_OPENBRACKET , Expression , { L_COMMA , Expression } , L_CLOSEBRACKET
+				-- number literal 
+				| NUMERAL
+				-- set extension 
+				| L_OPENSET , [ Expression , { L_COMMA , Expression } ] , L_CLOSESET
+				-- set comprehension 
+				| L_OPENSET , SchemaText , L_AT , Expression , L_CLOSESET
+				| ( ( L_OPENSET , SchemaText , L_CLOSESET ) — ( L_OPENSET , L_CLOSESET ) ) — ( L_OPENSET , Expression , L_CLOSESET ) (* characteristic set comprehension *)
+				| ( L_OPENBRACKET , SchemaText , L_CLOSEBRACKET ) — ( L_OPENBRACKET , Expression , L_CLOSEBRACKET ) (* schema construction *)
+				-- binding extension 
+				| L_LBLOT , [ DeclName , L_EQUALS_EQUALS , Expression , { L_COMMA , DeclName , L_EQUALS_EQUALS , Expression } ] , L_RBLOT
+				-- tuple extension 
+				| L_OPENPAREN , Expression , L_COMMA , Expression , { L_COMMA , Expression } , L_CLOSEPAREN
+				-- characteristic definite description 
+				| L_OPENPAREN , L_MU , SchemaText , L_CLOSEPAREN
+				| L_OPENPAREN , Expression , L_CLOSEPAREN ;
+
+SchemaText 		= [ DeclPart ] , [ L_VERT , Predicate ] ;
+
+DeclPart 		= Declaration , { ( L_SEMICOLON | NL ) , Declaration } ;				
+
+Declaration		= DeclName , { L_COMMA , DeclName } , L_COLON , Expression
+				| DeclName , L_EQUALS_EQUALS , Expression
+				| Expression ;
+
+OperatorTemplate = relation , Template
+				| function , CategoryTemplate
+				| generic , CategoryTemplate;
+
+
+CategoryTemplate = PrefixTemplate
+				| PostfixTemplate
+				| Prec , Assoc , InfixTemplate
+				| NofixTemplate
+
+Prec 			= NUMERAL ;
+
+Assoc 			= L_LEFTASSOC | L_RIGHTASSOC ;
+
+Template 		= PrefixTemplate
+				| PostfixTemplate
+				| InfixTemplate
+				| NofixTemplate
+
+PrefixTemplate 	= L_OPENPAREN , PrefixName , L_CLOSEPAREN
+				| L_OPENPAREN , P , L_UNDERSCORE , L_CLOSEPAREN
+
+PostfixTemplate = L_OPENPAREN , PostfixName , L_CLOSEPAREN ;
+InfixTemplate 	= L_OPENPAREN , InfixName , L_CLOSEPAREN ;
+NofixTemplate 	= L_OPENPAREN , NofixName , L_CLOSEPAREN ;
+
+DeclName 		= NAME
+		 		| OpName ;
+
+RefName 		= NAME
+				| L_OPENPAREN , OpName , L_CLOSEPAREN ;
+
+OpName 			= PrefixName
+				| PostfixName
+				| InfixName
+				| NofixName
+
+
+PrefixName		= PRE , L_UNDERSCORE,
+				| PREP , L_UNDERSCORE
+				| L , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ERE | L_LISTARG , SRE ) , L_UNDERSCORE
+				| LP , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , EREP | L_LISTARG , SREP ) , L_UNDERSCORE
+
+PostfixName		= L_UNDERSCORE , POST
+				| L_UNDERSCORE , POSTP
+				| L_UNDERSCORE , EL , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ER | L_UNDERSCORE , SR )
+				| L_UNDERSCORE , ELP , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ERP | L_UNDERSCORE , SRP )
+
+InfixName		= L_UNDERSCORE , I , L_UNDERSCORE
+				| L_UNDERSCORE , IP , L_UNDERSCORE
+				| L_UNDERSCORE , EL , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ERE | L_LISTARG , SRE ) , L_UNDERSCORE
+				| L_UNDERSCORE , ELP , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , EREP | L_LISTARG , SREP ) , L_UNDERSCORE
+
+NofixName 		= L , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ER | L_LISTARG , SR )
+				| LP , { L_UNDERSCORE , ES | L_LISTARG , SS } , ( L_UNDERSCORE , ERP | L_LISTARG , SRP )
+
+GenName			= PrefixGenName
+				| PostfixGenName
+				| InfixGenName
+				| NofixGenName
+
+PrefixGenName	= PRE , NAME			
+				| L , { NAME , ( ES | SS ) } , NAME , ( ERE | SRE ) , NAME
+
+PostfixGenName	= NAME , POST
+				| NAME , EL , { NAME , ( ES | SS ) } , NAME , ( ER | SR )
+
+InfixGenName	= NAME , I , NAME
+				| NAME , EL , { NAME , ( ES | SS ) } , NAME , ( ERE | SRE ) , NAME
+
+NofixGenName	= L , { NAME , ( ES | SS ) } , NAME , ( ER | SR ) ;
+
+Relation 		= PrefixRel
+				| PostfixRel
+				| InfixRel
+				| NofixRel
+
+PrefixRel 		= PREP , Expression
+				| LP , ExpSep , ( Expression , EREP | ExpressionList , SREP ) , Expression
+
+PostfixRel 		= Expression , POSTP
+				| Expression , ELP , ExpSep , ( Expression , ERP | ExpressionList , SRP )
+
+InfixRel 		= Expression , ( L_IN | L_EQUALS | IP ) , Expression , { ( L_IN | L_EQUALS | IP ) , Expression }
+				| Expression , ELP , ExpSep , ( Expression , EREP | ExpressionList , SREP ) , Expression
+
+NofixRel	 	= LP , ExpSep , ( Expression , ERP | ExpressionList , SRP ) ;
+
+Application 	= PrefixApp
+				| PostfixApp
+				| InfixApp
+				| NofixApp
+
+PrefixApp		= PRE , Expression
+				| L , ExpSep , ( Expression , ERE | ExpressionList , SRE ) , Expression
+
+PostfixApp		= Expression , POST
+				| Expression , EL , ExpSep , ( Expression , ER | ExpressionList , SR )
+
+InfixApp		= Expression , I , Expression
+				| Expression , EL , ExpSep , ( Expression , ERE | ExpressionList , SRE ) , Expression
+
+NofixApp		= L , ExpSep , ( Expression , ER | ExpressionList , SR ) ;
+
+ExpSep			= { Expression , ES | ExpressionList , SS } ;
+
+ExpressionList	= [ Expression , { L_COMMA , Expression } ] ;
+
+TOKENSTREAM 	= { SPACE } , { TOKEN , { SPACE } } ;
+TOKEN 			= DECORWORD | NUMERAL | STROKE
+				| (-tok | )-tok | [-tok | ]-tok | {-tok | }-tok | h| | | i | hh | ii
+				| L_BEGIN_ZED| L_BEGIN_AXDEF| L_BEGIN_GENDEF | L_BEGIN_SCHEMA| GENSCH | END | NL ;
+DECORWORD 		= WORD , { STROKE } ;
+WORD 			= WORDPART , { WORDPART }
+				| ( LETTER | ( DIGIT — DECIMAL ) ) , ALPHASTR , { WORDPART }
+				| SYMBOL , SYMBOLSTR , { WORDPART };
+WORDPART		= WORDGLUE , ( ALPHASTR | SYMBOLSTR ) ;
+ALPHASTR		= { LETTER | DIGIT } ;
+SYMBOLSTR 		= { SYMBOL } ;
+NUMERAL 		= NUMERAL , DECIMAL
+				| DECIMAL ;
+
+
+STROKE 			= STROKECHAR
+				| T_LEFT_BINDING_BRACKET , DECIMAL , T_RIGHT_BINDING_BRACKET ;
+
+L_OPENPAREN 		= ’(’ ;
+L_CLOSEPAREN	 	= ’)’ ;
+L_OPENBRACKET 		= ’[’ ;
+L_CLOSEBRACKET 		= ’]’ ;
+L_OPENBRACE 		= ’{’ ;
+L_CLOSEBRACE 		= ’}’ ;
+T_LEFT_BINDING_BRKT 	= 
+T_RIGHT_BINDING_BRKT 	= 
+T_LEFT_DOUBLE_ANGLE_BRKT 	= 
+T_RIGHT_DOUBLE_ANGLE_BRKT 	= 
+BOXCHAR 	= ZEDCHAR | AXCHAR | SCHCHAR | GENCHAR | ENDCHAR ;
+
+L_BEGIN_ZED					= L_BEGIN_L_BEGIN_ZED;
+AX 						= L_BEGIN_AXDEF ;
+SCH 					= L_BEGIN_SCHEMA ;
+L_BEGIN_GENDEF 					= L_BEGIN_GENDEF ;
+--#GENSCH 					= SCHCHAR , GENCHAR ;
+END 					= ENDCHAR ;
+NL 						= NLCHAR ;
+
+
+
