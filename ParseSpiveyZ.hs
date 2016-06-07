@@ -84,6 +84,11 @@ parseZident :: String -> ErrorOr ZVar
 parseZident = check_parse . epapply zident . zlexz 0 lexstate0
 
 
+--------------------------------------
+------------- Z - Spivey -------------
+--------------------------------------
+
+
 -- Specification ::= Paragraph NL ... NL Paragraph
 
 zspec :: EParser ZToken ZSpec
@@ -699,7 +704,7 @@ zset_exp
 	 tok L_CLOSESET;
 	 return (ZSetComp st e)}
 
---Ident 			::= Word Decoration
+--Ident ::= Word Decoration
 zident :: EParser ZToken ZVar
 zident = do {w <- zword; d <- zdecoration; return (make_zvar w d)}
 
@@ -756,12 +761,12 @@ zin_sym_decor
 zpre_sym_decor :: EParser ZToken ZVar
 zpre_sym_decor = zpre_gen_decor +++ zpre_rel_decor
 
---Post-Sym 		::= Post-Fun
--- By Artur Gomes -- see if it's right!
+--Post-Sym ::= Post-Fun
+-- By Artur Gomes -- To see if this is right!
 zpost_sym_decor :: EParser ZToken ZVar
 zpost_sym_decor = do zpost_fun_decor
 
---Decoration 		:: = [Stroke ... Stroke]*
+--Decoration :: = [Stroke ... Stroke]*
 zdecoration :: EParser ZToken [ZDecor]
 zdecoration = many zstroke
 
@@ -771,7 +776,7 @@ zdecoration = many zstroke
 --Gen-Actuals 	::= [Expression,...,Expression]
 --TODO
 
---Word 			::= Undecorated name or special symbol
+--Word ::= Undecorated name or special symbol
 zword :: EParser ZToken String
 zword =
   do L_WORD w <- sat isWord
@@ -780,7 +785,7 @@ zword =
   isWord (L_WORD _) = True
   isWord _          = False
 
---Stroke 			::= Single decoration: ′, ?, ! or a subscript digit
+--Stroke ::= Single decoration: ′, ?, ! or a subscript digit
 zstroke :: EParser ZToken ZDecor
 zstroke
   = do  L_STROKE w <- sat isStroke
@@ -796,7 +801,7 @@ zschema_name
     do  {tok L_XI; name <- zword; return (ZSXi name)} +++
     do  {name <- zword; return (ZSPlain name)}
 
---In-Fun 			::= Infix function symbol
+--In-Fun ::= Infix function symbol
 zin_fun_decor :: Int -> EParser ZToken ZVar
 zin_fun_decor p
   = do  {ifs <- zin_fun p;
@@ -822,7 +827,7 @@ zin_fun p =
 -- calling this function with  an argument of zero will
 -- match in_fun's with any precedence value i.e. 1-6
 
---In-Rel 			::= Infix relation symbol (or underlined identifier)
+--In-Rel ::= Infix relation symbol (or underlined identifier)
 zin_rel_decor :: EParser ZToken ZVar
 zin_rel_decor
   = do  {irs <- zin_rel;
@@ -993,6 +998,7 @@ zhide
 opt ::  a -> EParser ZToken a -> EParser ZToken a
 opt def p = p +++ return def
 
+-- Takes as many backslash as needed
 optnls :: EParser ZToken [ZToken]
 optnls = many (tok L_BACKSLASH_BACKSLASH)
 

@@ -84,6 +84,10 @@ parseZident :: String -> ErrorOr ZVar
 parseZident = check_parse . epapply zident . zlexz 0 lexstate0
 
 
+--------------------------------------
+------------- Z - Spivey -------------
+--------------------------------------
+
 -- Specification ::= Paragraph NL ... NL Paragraph
 
 zspec :: EParser ZToken ZSpec
@@ -102,13 +106,14 @@ zspec
 zparagraph :: EParser ZToken [ZPara]
 zparagraph
   = zunboxed_para +++
-    zaxiomatic_box +++
+    zaxiomatic_box +++ -- \begin{axdef}...\end{axdef}
     zschema_box +++
+    circuspar +++
     zmachine_box   -- an extension for defining state machines.
 
 --Axiomatic-Box 	::= [
 --					| Decl-Part
---					--------------
+--					|-------------
 --					| Axiom-Part
 --				  	]*
 
@@ -123,11 +128,11 @@ zaxiomatic_box
 	return [ZAxDef (concat decls ++ ax)]
 
 --Schema-Box	  	::= [
---					---Schema-Name[Gen-Formals]*---
+--					|--Schema-Name[Gen-Formals]*---
 --					| Decl-Part
---					--------
+--					|-------
 --					| Axiom-Part
---					-------------------
+--					|------------------
 --					]*
 zschema_box :: EParser ZToken [ZPara]
 zschema_box
@@ -188,8 +193,8 @@ zdef_lhs
 	return (make_zvar var_name dec)
 -- TODO Pre_Gen_Decor Ident, Ident In_Gen_decor Ident and generic formals
 
---Branch			::= Ident
---				|	Var-Name << Expression >>
+--Branch	::= Ident
+--			|	Var-Name << Expression >>
 zbranch :: EParser ZToken ZBranch
 zbranch
   = do  {vn <- zvar_name;
@@ -484,7 +489,7 @@ zlet_def
 	 return (vn,e)}
 
 
--- Artur --
+-- Comments from Artur
 -- [Expression, ..., Expression]
 zexpressions :: EParser ZToken [ZExpr]
 zexpressions
@@ -699,7 +704,7 @@ zset_exp
 	 tok L_CLOSESET;
 	 return (ZSetComp st e)}
 
---Ident 			::= Word Decoration
+--Ident ::= Word Decoration
 zident :: EParser ZToken ZVar
 zident = do {w <- zword; d <- zdecoration; return (make_zvar w d)}
 
@@ -756,12 +761,12 @@ zin_sym_decor
 zpre_sym_decor :: EParser ZToken ZVar
 zpre_sym_decor = zpre_gen_decor +++ zpre_rel_decor
 
---Post-Sym 		::= Post-Fun
--- By Artur Gomes -- see if it's right!
+--Post-Sym ::= Post-Fun
+-- By Artur Gomes -- To see if this is right!
 zpost_sym_decor :: EParser ZToken ZVar
 zpost_sym_decor = do zpost_fun_decor
 
---Decoration 		:: = [Stroke ... Stroke]*
+--Decoration :: = [Stroke ... Stroke]*
 zdecoration :: EParser ZToken [ZDecor]
 zdecoration = many zstroke
 
@@ -771,7 +776,7 @@ zdecoration = many zstroke
 --Gen-Actuals 	::= [Expression,...,Expression]
 --TODO
 
---Word 			::= Undecorated name or special symbol
+--Word ::= Undecorated name or special symbol
 zword :: EParser ZToken String
 zword =
   do L_WORD w <- sat isWord
@@ -780,7 +785,7 @@ zword =
   isWord (L_WORD _) = True
   isWord _          = False
 
---Stroke 			::= Single decoration: ′, ?, ! or a subscript digit
+--Stroke ::= Single decoration: ′, ?, ! or a subscript digit
 zstroke :: EParser ZToken ZDecor
 zstroke
   = do  L_STROKE w <- sat isStroke
@@ -796,7 +801,7 @@ zschema_name
     do  {tok L_XI; name <- zword; return (ZSXi name)} +++
     do  {name <- zword; return (ZSPlain name)}
 
---In-Fun 			::= Infix function symbol
+--In-Fun ::= Infix function symbol
 zin_fun_decor :: Int -> EParser ZToken ZVar
 zin_fun_decor p
   = do  {ifs <- zin_fun p;
@@ -822,7 +827,7 @@ zin_fun p =
 -- calling this function with  an argument of zero will
 -- match in_fun's with any precedence value i.e. 1-6
 
---In-Rel 			::= Infix relation symbol (or underlined identifier)
+--In-Rel ::= Infix relation symbol (or underlined identifier)
 zin_rel_decor :: EParser ZToken ZVar
 zin_rel_decor
   = do  {irs <- zin_rel;
@@ -913,6 +918,176 @@ znumber =
 
 
 --------------------------------------
+-------------   Circus   -------------
+--------------------------------------
+
+--Program 	:: CircusPar*
+--circusprogram :: EParser ZToken CProgram
+--circusprogram
+--  = do {cp <- many circuspar;
+--  	return (concat cp)}
+
+--CircusPar 	::= Par
+--			| \circchannel CDecl
+--			| \circchanset N == CSExp
+--			| ProcDecl
+
+--	optnls
+--	tok L_CIRCCHANSET
+--	zdef <- zdef_lhs
+--	optnls
+--	tok L_EQUALS_EQUALS
+--	cut
+--	optnls
+
+circuspar :: EParser ZToken [ZPara]
+circuspar
+  = do {tok L_BEGIN_CIRCUS;
+  	cut;
+  	s <- circ_chan `sepby1` many1 zsep;
+  	optnls;
+  	tok L_END_CIRCUS;
+  	return (concat s)}
+
+circ_chan :: EParser ZToken [ZPara]
+circ_chan
+  = do {optnls;
+  			tok L_CIRCCHANNEL;
+  	    	cdec <- circusdecl;
+  	    	return [CircChannel cdec]}
+
+--CDecl 		::= SimpleCDecl
+--			| SimpleCDecl; CDecl
+circusdecl  :: EParser ZToken [CDecl]
+circusdecl
+  = do { csd <- csimpledecl;
+  	csdx <- many (
+  			do {semicolon;
+  				cs <- csimpledecl;
+  				return cs});
+  	return (csd : csdx)}
+
+--SimpleCDecl	::= N^{+}
+--			| N^{+} : Exp
+--			| [N^{+}]N^{+} : Exp
+--			| SchemaExp
+csimpledecl :: EParser ZToken [CDecl]
+csimpledecl
+  = do { csd <- zvar_name;
+  	csdx <- many (
+  			do {comma;
+  				cs <- zvar_name;
+  				return (CSyncChan cs)});
+  	return ([CSyncChan csd] : csdx)}
+	--		 +++
+	--do {chn <- zvar_name;
+	--	expn <- zexpression;
+	--	 return (CChanDecl chn expn)} +++
+	--do {chn <- many zvar_name;
+	--	expn <- zexpression;
+	--	 return (CMultChanDecl (concat chn) expn)} +++
+	--do {tn <- zvar_name;
+	--	chn <- zvar_name;
+	--	expn <- zexpression;
+	--	 return (CGenChanDecl tn chn expn)}
+
+--CSExp		::= \lchanset \rchanset
+--			| \lchanset N^{+} \rchanset
+--			| N
+--			| CSExp \union CSExp
+--			| CSExp \intersect CSExp
+--			| CSExp \circhide CSExp
+--circuscsexpr ::  EParser ZToken CSExp
+--circuscsexpr
+--  = do { tok L_LCHANSET; tok L_RCHANSET;
+--		return }
+--ProcDecl	::= \circprocess N \circdef ProcDef
+--			| \circprocess N[N^{+}] \circdef ProcDef
+
+--ProcDef		::= Decl \circspot ProcDef
+--			| Decl \circindex ProcDef
+--			| Proc
+
+--Proc 		::= \circbegin PPar*
+--				\circstate SchemaExp PPar*
+--				\circspot Action
+--				\circend
+--			| Proc \circsemi Proc
+--			| Proc \extchoice Proc
+--			| Proc \intchoice Proc
+--			| Proc \lpar CSExp \rpar Proc
+--			| Proc \interleave Proc
+--			| Proc \circhide CSExp
+--			| (Decl \circspot ProcDef)(Exp^{+})
+--			| N(Exp^{+})
+--			| N
+--			| (Decl \circindex ProcDef)\lcircindex Exp^{+} \rcircindex
+--			| N\lcircindex Exp^{+} \rcircindex
+--			| Proc[N^{+}:=N^{+}]
+--			| N[Exp^{+}]
+--			| \Semi Decl \circspot Proc
+--			| \Extchoice Decl \circspot Proc
+--			| \IntChoice Decl \circspot Proc
+--			| \lpar CSExp \rpar Decl \circspot Proc
+--			| \Interleave Decl \circspot Proc
+
+
+
+--NSExp 		::= \{\}
+--			| \{N^{+}\}
+--			| N
+--			| NSExp \union NSExp
+--			| NSExp \intersect NSExp
+--			| NSExp \circhide \NSExp
+
+--PPar 		::= Par
+--			| N \circdef ParAction
+--			| \circnameset N == NSExp
+
+--ParAction 	::= Action
+--			| Decl \circspot ParAction
+
+--Action 		::= SchemaExp
+--			| Command
+--			| N
+--			| CSPAction
+--			| Action[N^{+}:=N^{+}]
+
+--CSPAction	::= \Skip | \Stop | \Chaos | Comm \then Action
+--			| Pred \circguard Action
+--			| Action \circseq Action
+--			| Action \extchoice Action
+--			| Action \intchoice Action
+--			| Action \lpar NSExp | CSExp | NSExp \rpar Action
+--			| Action \linter NSExp | NSExp \rinter Action
+--			| Action \circhide CSExp
+--			| ParAction(Exp^{+)
+--			| \circmu N \circspot Action
+--			| \Semi Decl \circspot Action
+--			| \Extchoice Decl \circspot Action
+--			| \IntChoice Decl \circspot Action
+--			| \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
+--			| \Interleave Decl \circspot \linter NSExp \rinter Action
+
+
+--Comm 		::= N CParameter* | N [Exp^{+}] CParameter *
+
+--CParameter	::= ?N | ?N : Pred | !Exp | .Exp
+
+--Command 	::= N^{+} := Exp^{+}
+--			| \circif GActions \cirfi
+--			| \circvar Decl \circspot Action
+--			| N^{+} :[Pred,Pred]
+--			| \{Pred\}
+--			| [Pred]
+--			| \circval Decl \circspot Action
+--			| \circres Decl \circspot Action
+--			| \circvres Decl \circspot Action
+
+--GActions 	::= Pred \then Action
+--			| Pred \then Action \extchoice GAction
+
+--------------------------------------
 ---------- Auxiliary Defs ------------
 ---- From the original Jaza Files ----
 --------------------------------------
@@ -993,21 +1168,13 @@ zhide
 opt ::  a -> EParser ZToken a -> EParser ZToken a
 opt def p = p +++ return def
 
+-- Takes as many backslash as needed
 optnls :: EParser ZToken [ZToken]
 optnls = many (tok L_BACKSLASH_BACKSLASH)
 
 comma = do {optnls; tok L_COMMA; optnls}
+semicolon = do {optnls; tok L_SEMICOLON; optnls}
 
-
---circus_box :: EParser ZToken [ZPara]
---circus_box
---  = do  tok L_BEGIN_CIRCUS
---	cut
---	decls <- zdecl_part
---	ax <- opt [] (do {optnls; tok L_WHERE; cut; optnls; zaxiom_part })
---	optnls
---	tok L_END_CIRCUS
---	return [CircusPar (concat decls ++ ax)]
 
 
 zmachine_box :: EParser ZToken [ZPara]

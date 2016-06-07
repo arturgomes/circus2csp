@@ -1,29 +1,32 @@
-Specification 	= { Section } | { Paragraph } ;
+Specification (OK)	= { Section } | { Paragraph } ;
 
-Section 		= L_BEGIN_ZED, L_SECTION , NAME , L_PARENTS , [ NAME , { L_COMMA , NAME } ] , L_END_ZED , { Paragraph } --(* inheriting section *)
- 				| L_BEGIN_ZED, L_SECTION , NAME , L_END_ZED , { Paragraph } -- (* base section *) ;
+Section  (OK)	=
+				-- inheriting section
+				L_BEGIN_ZED, L_SECTION , NAME , L_PARENTS , [ NAME , { L_COMMA , NAME } ] , L_END_ZED , { Paragraph }
+				-- base section
+ 				| L_BEGIN_ZED, L_SECTION , NAME , L_END_ZED , { Paragraph }
 
-Paragraph 		= L_BEGIN_ZED, L_OPENBRACKET , NAME , { L_COMMA , NAME } , L_CLOSEBRACKET , L_END_ZED (* given types *)
-				-- axiomatic description 
+Paragraph 		= L_BEGIN_ZED, L_OPENBRACKET , NAME , { L_COMMA , NAME } , L_CLOSEBRACKET , L_END_ZED (* given types *) (ok)
+				-- axiomatic  (OK)
 				| L_BEGIN_AXDEF, SchemaText , L_END_AXDEF
-				-- schema definition 
+				-- schema definition (OK)
 				| L_BEGIN_SCHEMA, NAME , SchemaText , L_END_SCHEMA
-				-- generic axiomatic description 
+				-- generic axiomatic description (OK)
 				| L_BEGIN_GENDEF , L_OPENBRACKET , Formals , L_CLOSEBRACKET , SchemaText , L_END_GENDEF
 				--TODO| GENSCH , NAME , L_OPENBRACKET , Formals , L_CLOSEBRACKET , SchemaText , END (* generic schema definition *)
-				-- horizontal definition 
+				-- horizontal definition (OK)
 				| L_BEGIN_ZED, DeclName , L_EQUALS_EQUALS , Expression , L_END_ZED
-				-- generic horizontal definition 
+				-- generic horizontal definition (OK)
 				| L_BEGIN_ZED, NAME , L_OPENBRACKET , Formals , L_CLOSEBRACKET , L_EQUALS_EQUALS , Expression , L_END_ZED
-				-- generic operator definition 
+				-- generic operator definition (OK)
 				| L_BEGIN_ZED, GenName , L_EQUALS_EQUALS , Expression , L_END_ZED
-				-- free types 
+				-- free types (OK)
 				| L_BEGIN_ZED, Freetype , { L_AND_FT , Freetype } , L_END_ZED
-				-- conjecture 
+				-- conjecture
 				| L_BEGIN_ZED, L_VDASH , Predicate , L_END_ZED
-				-- generic conjecture 
+				-- generic conjecture
 				| L_BEGIN_ZED, L_OPENBRACKET , Formals , L_CLOSEBRACKET , L_VDASH , Predicate , L_END_ZED
-				-- operator template 
+				-- operator template
 				| L_BEGIN_ZED, OperatorTemplate , L_END_ZED
 
 
@@ -31,116 +34,120 @@ Freetype 		= NAME , L_COLON_COLON_EQUALS , Branch , { L_VERT , Branch } ;(* free
 
 Branch 			= DeclName , [ L_LDATA , Expression , L_RDATA ] ; (* element or injection *)
 
+---
+--- CONTINUE FROM HERE
+---
+
 Formals 		= NAME , { L_COMMA , NAME } ; (* generic parameters *)
 
 Predicate 		= Predicate , NL , Predicate (* newline conjunction *)
-				-- semicolon conjunction 
+				-- semicolon conjunction
 				| Predicate , L_SEMICOLON , Predicate
-				-- universal quantification 
+				-- universal quantification
 				| L_FORALL , SchemaText , L_AT , Predicate
-				-- existential quantification 
+				-- existential quantification
 				| L_EXISTS , SchemaText , L_AT , Predicate
-				-- unique existential quantification 
+				-- unique existential quantification
 				| L_EXISTS_1 , SchemaText , L_AT , Predicate
-				-- equivalence 
+				-- equivalence
 				| Predicate , L_IFF , Predicate
-				-- implication 
+				-- implication
 				| Predicate , L_IMPLIES , Predicate
-				-- disjunction 
+				-- disjunction
 				| Predicate , L_LOR , Predicate
-				-- conjunction 
+				-- conjunction
 				| Predicate , L_LAND , Predicate
-				-- negation 
+				-- negation
 				| L_LNOT , Predicate
-				-- relation operator application 
+				-- relation operator application
 				| Relation
 				| Expression (* schema predicate )
-				-- truth 
-				| L_TRUE 
-				-- falsity 
-				| L_FALSE 
-				-- parenthesized predicate 
-				| L_OPENPAREN , Predicate , L_CLOSEPAREN 
+				-- truth
+				| L_TRUE
+				-- falsity
+				| L_FALSE
+				-- parenthesized predicate
+				| L_OPENPAREN , Predicate , L_CLOSEPAREN
 
 
 
 
-Expression 		= 
+Expression 		=
 				--schema universal quantification
-				L_FORALL , SchemaText , L_AT , Expression 
-				-- schema existential quantification 
+				L_FORALL , SchemaText , L_AT , Expression
+				-- schema existential quantification
 				| L_EXISTS , SchemaText , L_AT , Expression
-				-- schema unique existential quantification 
+				-- schema unique existential quantification
 				| L_EXISTS_1 , SchemaText , L_AT , Expression
-				-- function construction 
+				-- function construction
 				| L_LAMBDA , SchemaText , L_AT , Expression
-				-- definite description 
+				-- definite description
 				| L_MU , SchemaText , L_AT , Expression
-				-- substitution expression 
+				-- substitution expression
 				| L_LET , DeclName , L_EQUALS_EQUALS , Expression , { L_SEMICOLON , DeclName , L_EQUALS_EQUALS , Expression } , L_AT , Expression
-				-- schema equivalence 
+				-- schema equivalence
 				| Expression , L_IFF , Expression
-				-- schema implication 
+				-- schema implication
 				| Expression , L_IMPLIES , Expression
-				-- schema disjunction 
+				-- schema disjunction
 				| Expression , L_LOR , Expression
-				-- schema conjunction 
+				-- schema conjunction
 				| Expression , L_LAND , Expression
-				-- schema negation 
+				-- schema negation
 				| L_LNOT , Expression
-				-- conditional 
+				-- conditional
 				| L_IF , Predicate , L_THEN , Expression , L_ELSE , Expression
-				-- schema composition 
+				-- schema composition
 				| Expression , L_SEMI , Expression
-				-- schema piping 
+				-- schema piping
 				| Expression , L_PIPE , Expression
-				-- schema hiding 
+				-- schema hiding
 				| Expression , L_HIDE , L_OPENPAREN , DeclName , { L_COMMA , DeclName } , L_CLOSEPAREN
-				-- schema projection 
+				-- schema projection
 				| Expression , L_PROJECT , Expression
-				-- schema precondition 
+				-- schema precondition
 				| L_PRE , Expression
-				-- Cartesian product 
+				-- Cartesian product
 				| Expression , L_CROSS , Expression , { L_CROSS , Expression }
-				-- powerset 
+				-- powerset
 				| L_POWER , Expression
-				-- function and generic operator application 
+				-- function and generic operator application
 				| Application
-				-- application 
+				-- application
 				| Expression , Expression
-				-- schema decoration 
+				-- schema decoration
 				| Expression , L_STROKE
-				-- schema renaming 
+				-- schema renaming
 				| Expression , L_OPENBRACKET , DeclName , L_SLASH , DeclName , { L_COMMA , DeclName , L_SLASH , DeclName } , L_CLOSEBRACKET
-				-- binding selection 
+				-- binding selection
 				| Expression , L_POINT , RefName
-				-- tuple selection 
+				-- tuple selection
 				| Expression , L_POINT , NUMERAL
-				-- binding construction 
+				-- binding construction
 				| L_THETA , Expression , { L_STROKE }
-				-- reference 
+				-- reference
 				| RefName
-				-- generic instantiation 
+				-- generic instantiation
 				| RefName , L_OPENBRACKET , Expression , { L_COMMA , Expression } , L_CLOSEBRACKET
-				-- number literal 
+				-- number literal
 				| NUMERAL
-				-- set extension 
+				-- set extension
 				| L_OPENSET , [ Expression , { L_COMMA , Expression } ] , L_CLOSESET
-				-- set comprehension 
+				-- set comprehension
 				| L_OPENSET , SchemaText , L_AT , Expression , L_CLOSESET
 				| ( ( L_OPENSET , SchemaText , L_CLOSESET ) — ( L_OPENSET , L_CLOSESET ) ) — ( L_OPENSET , Expression , L_CLOSESET ) (* characteristic set comprehension *)
 				| ( L_OPENBRACKET , SchemaText , L_CLOSEBRACKET ) — ( L_OPENBRACKET , Expression , L_CLOSEBRACKET ) (* schema construction *)
-				-- binding extension 
+				-- binding extension
 				| L_LBLOT , [ DeclName , L_EQUALS_EQUALS , Expression , { L_COMMA , DeclName , L_EQUALS_EQUALS , Expression } ] , L_RBLOT
-				-- tuple extension 
+				-- tuple extension
 				| L_OPENPAREN , Expression , L_COMMA , Expression , { L_COMMA , Expression } , L_CLOSEPAREN
-				-- characteristic definite description 
+				-- characteristic definite description
 				| L_OPENPAREN , L_MU , SchemaText , L_CLOSEPAREN
 				| L_OPENPAREN , Expression , L_CLOSEPAREN ;
 
 SchemaText 		= [ DeclPart ] , [ L_VERT , Predicate ] ;
 
-DeclPart 		= Declaration , { ( L_SEMICOLON | NL ) , Declaration } ;				
+DeclPart 		= Declaration , { ( L_SEMICOLON | NL ) , Declaration } ;
 
 Declaration		= DeclName , { L_COMMA , DeclName } , L_COLON , Expression
 				| DeclName , L_EQUALS_EQUALS , Expression
@@ -172,11 +179,9 @@ PostfixTemplate = L_OPENPAREN , PostfixName , L_CLOSEPAREN ;
 InfixTemplate 	= L_OPENPAREN , InfixName , L_CLOSEPAREN ;
 NofixTemplate 	= L_OPENPAREN , NofixName , L_CLOSEPAREN ;
 
-DeclName 		= NAME
-		 		| OpName ;
+DeclName 		= NAME | OpName ;
 
-RefName 		= NAME
-				| L_OPENPAREN , OpName , L_CLOSEPAREN ;
+RefName 		= NAME | L_OPENPAREN , OpName , L_CLOSEPAREN ;
 
 OpName 			= PrefixName
 				| PostfixName
@@ -207,7 +212,7 @@ GenName			= PrefixGenName
 				| InfixGenName
 				| NofixGenName
 
-PrefixGenName	= PRE , NAME			
+PrefixGenName	= PRE , NAME
 				| L , { NAME , ( ES | SS ) } , NAME , ( ERE | SRE ) , NAME
 
 PostfixGenName	= NAME , POST
@@ -278,10 +283,10 @@ L_OPENBRACKET 		= ’[’ ;
 L_CLOSEBRACKET 		= ’]’ ;
 L_OPENBRACE 		= ’{’ ;
 L_CLOSEBRACE 		= ’}’ ;
-T_LEFT_BINDING_BRKT 	= 
-T_RIGHT_BINDING_BRKT 	= 
-T_LEFT_DOUBLE_ANGLE_BRKT 	= 
-T_RIGHT_DOUBLE_ANGLE_BRKT 	= 
+T_LEFT_BINDING_BRKT 	=
+T_RIGHT_BINDING_BRKT 	=
+T_LEFT_DOUBLE_ANGLE_BRKT 	=
+T_RIGHT_DOUBLE_ANGLE_BRKT 	=
 BOXCHAR 	= ZEDCHAR | AXCHAR | SCHCHAR | GENCHAR | ENDCHAR ;
 
 L_BEGIN_ZED					= L_BEGIN_L_BEGIN_ZED;

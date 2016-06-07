@@ -35,25 +35,74 @@ data ZToken
   | L_END_GENDEF           -- '\end{gendef}'
   | L_BEGIN_MACHINE        -- '\begin{machine}'    (a Jaza extension)
   | L_END_MACHINE          -- '\end{machine}'
+  -- Circus paragraphs - begin
+  | L_BEGIN_CIRCUS         -- '\begin{circus}'
+  | L_END_CIRCUS           -- '\end{circus}'
+  | L_BEGIN_CIRCUSACTION   -- '\begin{circusaction}'
+  | L_END_CIRCUSACTION     -- '\end{circusaction}'
+
+
+  -- Begin Circus Tokens
+  | L_REPEXTCHOICE
+  | L_REPINTCHOICE
+  | L_REPINTERLEAVE
+  | L_REPSEMI
+  | L_CHAOS
+  | L_CIRCUSBEGIN
+  | L_CIRCUSEND
+  | L_CIRCASSIGNM
+  | L_CIRCCHANSET
+  | L_CIRCDEF
+  | L_CIRCGUARD
+  | L_CIRCCHANNEL
+  | L_CIRCHIDE
+  | L_CIRCIF
+  | L_CIRCINDEX
+  | L_CIRCMU
+  | L_CIRCNAMESET
+  | L_CIRCPROCESS
+  | L_CIRCRES
+  | L_CIRCSEMI
+  | L_CIRCSEQ
+  | L_CIRCSPOT
+  | L_CIRCSTATE
+  | L_CIRCVAL
+  | L_CIRCVAR
+  | L_CIRCVRES
+  | L_CIRFI
+  | L_LCIRCGUARD
+  | L_RCIRCGUARD
+  | L_EXCLMRK
+  | L_EXTCHOICE
+  | L_INTCHOICE
+  | L_INTERLEAVE
+  | L_INTERSECT
+  | L_LCHANSET
+  | L_LCIRCINDEX
+  | L_LCURLYBR
+  | L_LSCHEXPRACT
+  | L_RSCHEXPRACT
+  | L_LINTER
+  | L_LPAR
+  | L_PERIOD
+  | L_QSTNMRK
+  | L_RCHANSET
+  | L_RCIRCINDEX
+  | L_RCURLYBR
+  | L_RINTER
+  | L_RPAR
+  | L_SKIP
+  | L_STOP
+  | L_CTHEN
+  | L_UNION
+  -- end Circus Tokens
 
   -- Now some common keywords and separators.
-  | L_SECTION              -- '\SECTION'
-  | L_PARENTS              -- '\parents'
+  | L_WHERE                -- '\where'
+  | L_LET                  -- '\LET'
   | L_IF                   -- '\IF'
   | L_THEN                 -- '\THEN'
   | L_ELSE                 -- '\ELSE'
-  | L_LET                  -- '\LET'
-  | L_FUNCTION             -- '\function'
-  | L_RELATION             -- '\relation'
-  | L_GENERIC              -- '\generic'
-  | L_LEFTASSOC            -- '\leftassoc'
-  | L_RIGHTASSOC           -- '\rightassoc'
-  | L_PRE                  -- '\pre'
-  | L_LISTARG		   -- '\listarg' (,,)
-  | L_VARG	           -- '\varg' _
-  | L_TRUE                 -- 'true'
-  | L_FALSE                -- 'false'
-  | L_WHERE                -- '\where'
   | L_DELTA                -- '\Delta'
   | L_XI                   -- '\Xi'
   | L_LAMBDA               -- '\lambda'
@@ -94,8 +143,7 @@ data ZToken
   | L_RANGLE               -- '\rangle'
   | L_LBLOT                -- '\lblot'  (these begin/end a literal binding)
   | L_RBLOT                -- '\rblot'
-  | L_VDASH		   -- '\vdash' (conjecture)
-  | L_AND_FT	           -- '\&' (recursive free types)
+
   -- schema operators and logical operators are overloaded.
   | L_FORALL               -- '\forall'
   | L_EXISTS               -- '\exists'
@@ -109,6 +157,9 @@ data ZToken
   | L_SEMI                 -- '\semi'
   | L_PIPE                 -- '\pipe'
   | L_LNOT                 -- '\lnot'
+  | L_PRE                  -- '\pre'
+  | L_TRUE                 -- 'true'
+  | L_FALSE                -- 'false'
 
   -- relations
   | L_EQUALS               -- '='
@@ -117,6 +168,21 @@ data ZToken
   | L_NOTIN                -- '\notin'
   | L_INREL                -- '\inrel'  (used in '\inrel{name}')
 
+  --missing from the ISO Standard Z -
+  | L_GENERIC
+  | L_RELATION
+  | L_LEFTASSOC
+  | L_RIGHTASSOC
+  | L_EMPTY_SET
+  | L_SYMDIFF
+  | L_BIG_CUP
+  | L_BIG_CAP
+  | L_DOM
+  | L_RAN
+  | L_NUM
+  | L_ARITHMOS
+  | L_VDASH
+  | L_FUNCTION
   -- terminals that carry information with them.
   | L_WORD String          -- used for identifiers, schema names etc.
   | L_GIVENVAL String      -- strings are elements of given sets.
@@ -189,6 +255,8 @@ zlexc ls s
   lexcmd "schema" = Token L_BEGIN_SCHEMA (line ls) pos : rest
   lexcmd "gendef" = Token L_BEGIN_GENDEF (line ls) pos : rest
   lexcmd "machine"= Token L_BEGIN_MACHINE (line ls) pos : rest
+  lexcmd "circus"= Token L_BEGIN_CIRCUS (line ls) pos : rest
+  lexcmd "circusaction"= Token L_BEGIN_CIRCUSACTION (line ls) pos : rest
   lexcmd _ = zskipline ls s
 
 directivetable
@@ -247,92 +315,88 @@ zlexz c ls ('\\':s)
   -- generate a variety of lexical symbols.  This might become easier after
   -- operator declarations are implemented?
   | cmd=="t" && length (takeWhile isDigit s2) == 1
-		  = zlexz (c+3) ls (tail s2)   -- ignore \tN tabs commands
-  | cmd=="where"  = tok L_WHERE
-  | cmd=="mid"    = tok L_VERT   -- a synonym for |
-  | cmd=="spot"   = tok L_AT     -- a synonym for @
-  | cmd=="LET"    = tok L_LET
+      = zlexz (c+3) ls (tail s2)   -- ignore \tN tabs commands
+  -- A.2.4.1 Greek Alphabet Characters
+  | cmd=="Delta"  = tok L_DELTA
+  | cmd=="Xi"     = tok L_XI
+  | cmd=="theta"  = tok L_THETA
+  | cmd=="lambda" = tok L_LAMBDA
+  | cmd=="mu"     = tok L_MU
+  -- A.2.4.2 Other letter characters
+  | cmd=="arithmos"=tok L_ARITHMOS
+  | cmd=="nat"    = tok L_CIRCNAMESET
+  | cmd=="power" && underscore1
+      = tok_1 (L_PRE_GEN ("\\power_1"))
+  | cmd=="power"  = tok L_POWER -- must come after \power_1.
+  -- A.2.4.3 Special characters
+  | cmd=="ldata"  = tok L_LDATA
+  | cmd=="rdata"  = tok L_RDATA
+  | cmd=="lblot"  = tok L_LBLOT
+  | cmd=="rblot"  = tok L_RBLOT
+  -- A.2.4.4 Symbol Characters (except mathematical toolkit characters)
+  | cmd=="vdash"   = tok L_VDASH
+  | cmd=="land"   = tok L_LAND
+  | cmd=="lor"    = tok L_LOR
+  | cmd=="implies"= tok L_IMPLIES
+  | cmd=="iff"    = tok L_IFF
+  | cmd=="lnot"   = tok L_LNOT
+  | cmd=="forall" = tok L_FORALL
+  | cmd=="exists" && underscore1 = tok_1 L_EXISTS_1
+  | cmd=="exists" = tok L_EXISTS       -- must come after \exists_1.
+  | cmd=="cross"  = tok L_CROSS
+  | cmd=="in"     = tok L_IN
+  | cmd=="hide"   = tok L_HIDE
+  | cmd=="project"= tok L_PROJECT
+  | cmd=="semi"   = tok L_SEMI
+  | cmd=="pipe"   = tok L_PIPE
+-- A.2.4.5 Core Words
   | cmd=="IF"     = tok L_IF
   | cmd=="THEN"   = tok L_THEN
   | cmd=="ELSE"   = tok L_ELSE
-  | cmd=="Delta"  = tok L_DELTA
-  | cmd=="Xi"     = tok L_XI
-  | cmd=="lambda" = tok L_LAMBDA
-  | cmd=="mu"     = tok L_MU
-  | cmd=="theta"  = tok L_THETA
-  | cmd=="defs"   = tok L_DEFS
-  | cmd=="cross"  = tok L_CROSS
-  | cmd=="also"   = tok L_ALSO
-  | cmd=="ldata"  = tok L_LDATA
-  | cmd=="rdata"  = tok L_RDATA
-  | cmd=="limg"   = tok L_LIMG
-  | cmd=="rimg"   = tok L_RIMG
-  | cmd=="bsup"   = tok L_BSUP
-  | cmd=="esup"   = tok L_ESUP
-  | cmd=="langle" = tok L_LANGLE
-  | cmd=="rangle" = tok L_RANGLE
-  | cmd=="lblot"  = tok L_LBLOT
-  | cmd=="rblot"  = tok L_RBLOT
-  | cmd=="forall" = tok L_FORALL
-  | cmd=="exists" && underscore1
-		  = tok_1 L_EXISTS_1
-  | cmd=="exists" = tok L_EXISTS       -- must come after \exists_1.
-  | cmd=="implies"= tok L_IMPLIES
-  | cmd=="land"   = tok L_LAND
-  | cmd=="lor"    = tok L_LOR
-  | cmd=="iff"    = tok L_IFF
-  | cmd=="project"= tok L_PROJECT
-  | cmd=="hide"   = tok L_HIDE
-  | cmd=="semi"   = tok L_SEMI
-  | cmd=="pipe"   = tok L_PIPE
-  | cmd=="lnot"   = tok L_LNOT
+  | cmd=="LET"    = tok L_LET
   | cmd=="pre"    = tok L_PRE
-  | cmd=="in"     = tok L_IN
-  | cmd=="inrel"  = tok L_INREL
-    -- The next block of tokens follows the tables of
-    -- operators on page 46 of "The Z Notation", Spivey (Edition 2).
-  | cmd=="mapsto" = tok (L_IN_FUN 1 ('\\':cmd))
-  | cmd=="upto"   = tok (L_IN_FUN 2 ('\\':cmd))
-  | cmd=="cup"    = tok (L_IN_FUN 3 ('\\':cmd))
-  | cmd=="setminus"
-		  = tok (L_IN_FUN 3 ('\\':cmd))
-  | cmd=="cat"    = tok (L_IN_FUN 3 ('\\':cmd))
-  | cmd=="div"    = tok (L_IN_FUN 4 ('\\':cmd))
-  | cmd=="mod"    = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="function"   = tok L_FUNCTION
+  | cmd=="generic"    = tok L_GENERIC
+  | cmd=="relation"   = tok L_RELATION
+  | cmd=="leftassoc"  = tok L_LEFTASSOC
+  | cmd=="rightassoc" = tok L_RIGHTASSOC
+  -- A.2.5 Mathematical toolkit characters and words
+  -- A.2.5.1 Section set_toolkit
+  | cmd=="rel"    = tok (L_IN_GEN ('\\':cmd))
+  | cmd=="fun"    = tok (L_IN_GEN ('\\':cmd))
+  | cmd=="neq"    = tok L_NEQ
+  | cmd=="notin"  = tok L_NOTIN
+  | cmd=="emptyset"= tok L_EMPTY_SET
+  | cmd=="subset" = tok (L_IN_REL ('\\':cmd))
+  | cmd=="subseteq"= tok (L_IN_REL ('\\':cmd))
   | cmd=="cap"    = tok (L_IN_FUN 4 ('\\':cmd))
-  | cmd=="extract"= tok (L_IN_FUN 4 ('\\':cmd))
-  | cmd=="filter" = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="cup"    = tok (L_IN_FUN 3 ('\\':cmd))
+  | cmd=="setminus"= tok (L_IN_FUN 3 ('\\':cmd))
+  | cmd=="symdiff"= tok L_SYMDIFF
+  | cmd=="bigcup"= tok L_BIG_CUP
+  | cmd=="bigcap"= tok L_BIG_CAP
+  | cmd=="finset" && underscore1
+      = tok_1 (L_PRE_GEN ("\\finset_1"))
+  | cmd=="finset" = tok (L_PRE_GEN ("\\finset"))  -- must come after \finset_1
+  -- A.2.5.2 Section set_toolkit
+  | cmd=="mapsto" = tok (L_IN_FUN 1 ('\\':cmd))
+  | cmd=="dom"    = tok L_DOM
+  | cmd=="ran"    = tok L_RAN
+  | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="comp"   = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="circ"   = tok (L_IN_FUN 4 ('\\':cmd))
-  | cmd=="oplus"  = tok (L_IN_FUN 5 ('\\':cmd))
   | cmd=="dres"   = tok (L_IN_FUN 6 ('\\':cmd))
   | cmd=="rres"   = tok (L_IN_FUN 6 ('\\':cmd))
   | cmd=="ndres"  = tok (L_IN_FUN 6 ('\\':cmd))
   | cmd=="nrres"  = tok (L_IN_FUN 6 ('\\':cmd))
-
   | cmd=="inv"    = tok (L_POST_FUN ('\\':cmd))
-  | cmd=="star"   = tok (L_POST_FUN ('\\':cmd))
+  | cmd=="limg"   = tok L_LIMG
+  | cmd=="rimg"   = tok L_RIMG
+  | cmd=="oplus"  = tok (L_IN_FUN 5 ('\\':cmd))
   | cmd=="plus"   = tok (L_POST_FUN ('\\':cmd))
-
-  | cmd=="neq"    = tok L_NEQ
-  | cmd=="notin"  = tok L_NOTIN
-  | cmd=="subseteq"
-		  = tok (L_IN_REL ('\\':cmd))
-  | cmd=="subset" = tok (L_IN_REL ('\\':cmd))
-  | cmd=="leq"    = tok (L_IN_REL ('\\':cmd))
-  | cmd=="geq"    = tok (L_IN_REL ('\\':cmd))
-  | cmd=="prefix" = tok (L_IN_REL ('\\':cmd))
-  | cmd=="suffix" = tok (L_IN_REL ('\\':cmd))
-  | cmd=="inseq"  = tok (L_IN_REL ('\\':cmd))
-  | cmd=="partition"
-		  = tok (L_IN_REL ('\\':cmd))
-
-  | cmd=="disjoint"
-		  = tok (L_PRE_REL ('\\':cmd))
-
-  | cmd=="rel"    = tok (L_IN_GEN ('\\':cmd))
+  | cmd=="star"   = tok (L_POST_FUN ('\\':cmd))
+  -- A.2.5.3 Section function_toolkit
   | cmd=="pfun"   = tok (L_IN_GEN ('\\':cmd))
-  | cmd=="fun"    = tok (L_IN_GEN ('\\':cmd))
   | cmd=="pinj"   = tok (L_IN_GEN ('\\':cmd))
   | cmd=="inj"    = tok (L_IN_GEN ('\\':cmd))
   | cmd=="psurj"  = tok (L_IN_GEN ('\\':cmd))
@@ -340,25 +404,98 @@ zlexz c ls ('\\':s)
   | cmd=="bij"    = tok (L_IN_GEN ('\\':cmd))
   | cmd=="ffun"   = tok (L_IN_GEN ('\\':cmd))
   | cmd=="finj"   = tok (L_IN_GEN ('\\':cmd))
-
-  | cmd=="power" && underscore1
-		  = tok_1 (L_PRE_GEN ("\\power_1"))
-  | cmd=="power"  = tok L_POWER                   -- must come after \power_1.
-  | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
-  | cmd=="finset" && underscore1
-		  = tok_1 (L_PRE_GEN ("\\finset_1"))
-  | cmd=="finset" = tok (L_PRE_GEN ("\\finset"))  -- must come after \finset_1
+  | cmd=="disjoint"= tok (L_PRE_REL ('\\':cmd))
+  | cmd=="partition"= tok (L_IN_REL ('\\':cmd))
+  -- A.2.5.3 Section number_toolkit
+  | cmd=="geq"    = tok (L_IN_REL ('\\':cmd))
+  | cmd=="leq"    = tok (L_IN_REL ('\\':cmd))
+  | cmd=="mod"    = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="div"    = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="num"    = tok L_NUM
+  -- Need the \negate -> ~, but different from '~' space
+  -- A.2.5.4 Section sequence_toolkit
+  | cmd=="upto"   = tok (L_IN_FUN 2 ('\\':cmd))
   | cmd=="seq" && underscore1
-		  = tok_1 (L_PRE_GEN ("\\seq_1")) -- must come after \seq_1.
+      = tok_1 (L_PRE_GEN ("\\seq_1")) -- must come after \seq_1.
   | cmd=="seq"    = tok (L_PRE_GEN ("\\seq"))
   | cmd=="iseq"   = tok (L_PRE_GEN ('\\':cmd))
-
-  | cmd=="end" && arg=="{zed}"    = tokarg L_END_ZED
-  | cmd=="end" && arg=="{syntax}" = tokarg L_END_ZED
-  | cmd=="end" && arg=="{axdef}"  = tokarg L_END_AXDEF
-  | cmd=="end" && arg=="{schema}" = tokarg L_END_SCHEMA
-  | cmd=="end" && arg=="{gendef}" = tokarg L_END_GENDEF
-  | cmd=="end" && arg=="{machine}"= tokarg L_END_MACHINE
+  | cmd=="langle" = tok L_LANGLE
+  | cmd=="rangle" = tok L_RANGLE
+  | cmd=="cat"    = tok (L_IN_FUN 3 ('\\':cmd))
+  | cmd=="extract"= tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="filter" = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="prefix" = tok (L_IN_REL ('\\':cmd))
+  | cmd=="suffix" = tok (L_IN_REL ('\\':cmd))
+  | cmd=="infix"  = tok (L_IN_REL ('\\':cmd))
+  | cmd=="dcat"    = tok (L_IN_FUN 3 ('\\':cmd)) --need to double check (Artur)
+  -- Other definitions
+  | cmd=="also"   = tok L_ALSO
+  | cmd=="bsup"   = tok L_BSUP
+  | cmd=="defs"   = tok L_DEFS
+  | cmd=="esup"   = tok L_ESUP
+  | cmd=="inrel"  = tok L_INREL
+  | cmd=="mid"    = tok L_VERT   -- a synonym for |
+  | cmd=="spot"   = tok L_AT     -- a synonym for @
+  | cmd=="where"  = tok L_WHERE
+    -- The next block of tokens follows the tables of
+    -- operators on page 46 of "The Z Notation", Spivey (Edition 2).
+  | cmd=="inseq"  = tok (L_IN_REL ('\\':cmd))
+  -- Circus Commands
+  | cmd=="Chaos"                = tok L_CHAOS
+  | cmd=="circchanset"          = tok L_CIRCCHANSET
+  | cmd=="circdef"              = tok L_CIRCDEF
+  | cmd=="circguard"            = tok L_CIRCGUARD
+  | cmd=="circchannel"          = tok L_CIRCCHANNEL
+  | cmd=="circhide"             = tok L_CIRCHIDE
+  | cmd=="circif"               = tok L_CIRCIF
+  | cmd=="circindex"            = tok L_CIRCINDEX
+  | cmd=="circmu"               = tok L_CIRCMU
+  | cmd=="circnameset"          = tok L_CIRCNAMESET
+  | cmd=="circprocess"          = tok L_CIRCPROCESS
+  | cmd=="circres"              = tok L_CIRCRES
+  | cmd=="circsemi"             = tok L_CIRCSEMI
+  | cmd=="circseq"              = tok L_CIRCSEQ
+  | cmd=="circspot"             = tok L_CIRCSPOT
+  | cmd=="circstate"            = tok L_CIRCSTATE
+  | cmd=="circval"              = tok L_CIRCVAL
+  | cmd=="circvar"              = tok L_CIRCVAR
+  | cmd=="circvres"             = tok L_CIRCVRES
+  | cmd=="cirfi"                = tok L_CIRFI
+  | cmd=="Extchoice"            = tok L_REPEXTCHOICE
+  | cmd=="extchoice"            = tok L_EXTCHOICE
+  | cmd=="IntChoice"            = tok L_REPINTCHOICE
+  | cmd=="intchoice"            = tok L_INTCHOICE
+  | cmd=="Interleave"           = tok L_REPINTERLEAVE
+  | cmd=="interleave"           = tok L_INTERLEAVE
+  | cmd=="intersect"            = tok L_INTERSECT
+  | cmd=="lchanset"             = tok L_LCHANSET
+  | cmd=="lcircindex"           = tok L_LCIRCINDEX
+  | cmd=="linter"               = tok L_LINTER
+  | cmd=="lpar"                 = tok L_LPAR
+  | cmd=="rchanset"             = tok L_RCHANSET
+  | cmd=="rcircindex"           = tok L_RCIRCINDEX
+  | cmd=="rinter"               = tok L_RINTER
+  | cmd=="rpar"                 = tok L_RPAR
+  | cmd=="rpar"                 = tok L_RPAR
+  | cmd=="Semi"                 = tok L_REPSEMI
+  | cmd=="Skip"                 = tok L_SKIP
+  | cmd=="Stop"                 = tok L_STOP
+  | cmd=="then"                 = tok L_CTHEN
+  | cmd=="union"                = tok L_UNION
+  | cmd=="lcircguard"           = tok L_LCIRCGUARD
+  | cmd=="rcircguard"           = tok L_RCIRCGUARD
+  | cmd=="lschexpract"          = tok L_LSCHEXPRACT
+  | cmd=="rschexpract"          = tok L_RSCHEXPRACT
+  -- end Circus Commands
+  | cmd=="end" && arg=="{zed}"          = tokarg L_END_ZED
+  | cmd=="end" && arg=="{syntax}"       = tokarg L_END_ZED
+  | cmd=="end" && arg=="{axdef}"        = tokarg L_END_AXDEF
+  | cmd=="end" && arg=="{schema}"       = tokarg L_END_SCHEMA
+  | cmd=="end" && arg=="{gendef}"       = tokarg L_END_GENDEF
+  | cmd=="end" && arg=="{machine}"      = tokarg L_END_MACHINE
+  -- Circus paragraphs - end
+  | cmd=="end" && arg=="{circus}"       = tokarg L_END_CIRCUS
+  | cmd=="end" && arg=="{circusaction}" = tokarg L_END_CIRCUSACTION
 
   -- treat \\nat_1 specially, so the _1 is not a decoration.
   | cmd=="nat" && underscore1     = tok_1 (L_WORD "\\nat_1")
@@ -382,9 +519,9 @@ zlexz c ls s@('<':_) = zlexinfix c ls s
 zlexz c ls s@('>':_) = zlexinfix c ls s
 zlexz c ls s@(',':_) = zlexinfix c ls s
 zlexz c ls (':':':':'=':s)
-		   = Token L_COLON_COLON_EQUALS (line ls) c : zlexz (c+3) ls s
+       = Token L_COLON_COLON_EQUALS (line ls) c : zlexz (c+3) ls s
 zlexz c ls (':':'=':s)
-		   = Token L_ASSIGN       (line ls) c : zlexz (c+2) ls s
+       = Token L_ASSIGN       (line ls) c : zlexz (c+2) ls s
 zlexz c ls (':':s) = Token L_COLON        (line ls) c : zlexz (c+1) ls s
 zlexz c ls (';':s) = Token L_SEMICOLON    (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('|':s) = Token L_VERT         (line ls) c : zlexz (c+1) ls s
@@ -412,16 +549,16 @@ zlexz c ls ('_':s)
   = if num==""
     then Token (L_ERROR "_") (line ls) c : zlexz (c+1) ls s
     else Token (L_STROKE ('_':num)) (line ls) c
-	 : zlexz (c + 1 + length num) ls s2
+   : zlexz (c + 1 + length num) ls s2
   where
   (num,s2) = span isDigit s
 zlexz c ls (ch:s)
   | isAlpha ch = Token (tok word) (line ls) c
-		 : zlexz (c + length word) ls s2
+     : zlexz (c + length word) ls s2
   | isDigit ch = Token (L_NUMBER (read num)) (line ls) c
-		 : zlexz (c + length num) ls s3
+     : zlexz (c + length num) ls s3
   | otherwise  = Token (L_ERROR [ch]) (line ls) c
-		 : zlexz (c + 1) ls s
+     : zlexz (c + 1) ls s
   where
   (word,s2) = span_ident (ch:s)
   (num,s3)  = span isDigit (ch:s)
@@ -433,11 +570,11 @@ zlexz c ls (ch:s)
 span_ident :: String -> (String, String)
 span_ident []           = ([],[])
 span_ident ('\\':'_':s) = ('\\':'_':ys,zs)
-			       where (ys,zs) = span_ident s
+             where (ys,zs) = span_ident s
 span_ident xs@(ch:s)
   | isAlphaNum ch  =  (ch:ys,zs)
   | otherwise      =  ([],xs)
-		      where (ys,zs) = span_ident s
+          where (ys,zs) = span_ident s
 
 zlexinfix c ls s
   | op=="="    = tok L_EQUALS
