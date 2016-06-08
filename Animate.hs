@@ -489,6 +489,25 @@ process_paras spec (p@(ZSchemaDef name se) : ps)
 			     defunfolded=(ZESchema (ZSchema gfs))}
 	newspec <- adddefn newp spec
 	process_paras newspec ps
+process_paras spec (p@(ZAbbreviation n e) : ps)
+  = do  ue <- unfoldexpr (uenv spec) e
+  let newp = ZParaDefn{origpara=p,
+           defname=n,
+           defunfolded=ue}
+  newspec <- adddefn newp spec
+  process_paras newspec ps
+process_paras spec (p@(ZFreeTypeDef n bs) : ps)
+  = do  ue <- unfoldexpr (uenv spec) (ZFreeType n bs)
+  let newp = ZParaDefn{origpara=p,
+           defname=n,
+           defunfolded=ue}
+  newspec <- adddefn newp spec
+  process_paras newspec ps
+process_paras spec (p@(ZPredicate pred) : ps)
+  = do  upred <- unfoldpred (uenv spec) pred
+  let newp = ZParaPred{origpara=p,
+           predunfolded=upred}
+  process_paras (newp:spec) ps
 process_paras spec (p@ZMachineDef{} : ps)
   = do  let e = uenv spec
 	state <- unfoldsexpr e . sref . machState $ p
@@ -501,25 +520,11 @@ process_paras spec (p@ZMachineDef{} : ps)
 	process_paras newspec ps
 	where
 	sref name = ZSRef (ZSPlain name) [] []
-process_paras spec (p@(ZAbbreviation n e) : ps)
-  = do  ue <- unfoldexpr (uenv spec) e
-	let newp = ZParaDefn{origpara=p,
-			     defname=n,
-			     defunfolded=ue}
-	newspec <- adddefn newp spec
-	process_paras newspec ps
-process_paras spec (p@(ZFreeTypeDef n bs) : ps)
-  = do  ue <- unfoldexpr (uenv spec) (ZFreeType n bs)
-	let newp = ZParaDefn{origpara=p,
-			     defname=n,
-			     defunfolded=ue}
-	newspec <- adddefn newp spec
-	process_paras newspec ps
-process_paras spec (p@(ZPredicate pred) : ps)
+process_paras spec (p@(CircChannel pred) : ps)
   = do  upred <- unfoldpred (uenv spec) pred
-	let newp = ZParaPred{origpara=p,
-			     predunfolded=upred}
-	process_paras (newp:spec) ps
+  let newp = ZParaPred{origpara=p,
+           predunfolded=upred}
+  process_paras (newp:spec) ps
 process_paras spec (para : ps)
   = fail ("Not implemented yet: " ++ show para)
 

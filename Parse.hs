@@ -96,13 +96,13 @@ zspec
 	return (concat ps)
 
 --Paragraph ::= [Ident,...,Ident]
---				|	Axiomatic-Box
---				|	Schema-Box
---				| 	Generic-Box
---				|	Schema-Name[Gen-Formals]* \defs Schema-Exp
---				|	Def-Lhs	== Expression
---				|	Ident ::= Branch | ... | Branch
---				|	Predicate
+--		|Axiomatic-Box
+--		|Schema-Box
+--		|Generic-Box
+--		|Schema-Name[Gen-Formals]* \defs Schema-Exp
+--		|Def-Lhs	== Expression
+--		|Ident ::= Branch | ... | Branch
+--		|Predicate
 zparagraph :: EParser ZToken [ZPara]
 zparagraph
   = zunboxed_para +++
@@ -111,11 +111,11 @@ zparagraph
     circuspar +++
     zmachine_box   -- an extension for defining state machines.
 
---Axiomatic-Box 	::= [
---					| Decl-Part
---					|-------------
---					| Axiom-Part
---				  	]*
+--Axiomatic-Box ::= [
+--		| Decl-Part
+--		|-------------
+--		| Axiom-Part
+--	  	]*
 
 zaxiomatic_box :: EParser ZToken [ZPara]
 zaxiomatic_box
@@ -127,13 +127,13 @@ zaxiomatic_box
 	tok L_END_AXDEF
 	return [ZAxDef (concat decls ++ ax)]
 
---Schema-Box	  	::= [
---					|--Schema-Name[Gen-Formals]*---
---					| Decl-Part
---					|-------
---					| Axiom-Part
---					|------------------
---					]*
+--Schema-Box ::= [
+--		|--Schema-Name[Gen-Formals]*---
+--		| Decl-Part
+--		|-------
+--		| Axiom-Part
+--		|------------------
+--		]*
 zschema_box :: EParser ZToken [ZPara]
 zschema_box
   = do  tok L_BEGIN_SCHEMA
@@ -148,13 +148,13 @@ zschema_box
 	tok L_END_SCHEMA
 	return [ZSchemaDef name (ZSchema (concat decls ++ ax))]
 
---Generic-Box		::= [
---					==[Gen-Formals]*========
---					| Decl-Part
---					-----------
---					| Axiom-Part
---					------------------------
---					]*
+--Generic-Box ::= [
+--		==[Gen-Formals]*========
+--		| Decl-Part
+--		-----------
+--		| Axiom-Part
+--		------------------------
+--		]*
 zgeneric_box :: EParser ZToken [ZPara]
 zgeneric_box
   = do  tok L_BEGIN_GENDEF
@@ -166,11 +166,11 @@ zgeneric_box
 	return [ZGenDef (concat decls ++ ax)]
 -- TODO Gen_Actuals
 
---Decl-Part		::= Basic-Decl Sep ... Sep Basic-Decl
+--Decl-Par ::= Basic-Decl Sep ... Sep Basic-Decl
 zdecl_part :: EParser ZToken [[ZGenFilt]]
 zdecl_part = zbasic_decl `sepby1` many1 zsep
 
---Axiom-Part		::= Predicate Sep ... Sep Predicate
+--Axiom-Part ::= Predicate Sep ... Sep Predicate
 zaxiom_part :: EParser ZToken [ZGenFilt]
 zaxiom_part
   = do  ps <- zpredicate `sepby1` many1 zsep
@@ -183,9 +183,9 @@ zsep
     tok L_SEMICOLON +++
     tok L_ALSO
 
---Def-Lhs	::= Var-Name [Gen-Formals]*
---				|	Pre-Gen Decoration Indent
---				|	Ident In-Gen Decoration Indent
+--Def-Lhs ::= Var-Name [Gen-Formals]*
+--		|Pre-Gen Decoration Indent
+--		|Ident In-Gen Decoration Indent
 zdef_lhs :: EParser ZToken ZVar
 zdef_lhs
   = do  var_name <- zword
@@ -193,8 +193,8 @@ zdef_lhs
 	return (make_zvar var_name dec)
 -- TODO Pre_Gen_Decor Ident, Ident In_Gen_decor Ident and generic formals
 
---Branch	::= Ident
---			|	Var-Name << Expression >>
+--Branch ::= Ident
+-- |	Var-Name << Expression >>
 zbranch :: EParser ZToken ZBranch
 zbranch
   = do  {vn <- zvar_name;
@@ -205,10 +205,10 @@ zbranch
     do  {i <- zident;
 	 return (ZBranch0 i)}
 
---Schema-Exp		::= \forall Schema-Text @ Schema-Exp
---				| \exists Schema-Text @ Schema-Exp
---				| \exists_1 Schema-Text @ Schema-Exp
---				| Schema-Exp-1
+--Schema-Exp ::= \forall Schema-Text @ Schema-Exp
+--	| \exists Schema-Text @ Schema-Exp
+--	| \exists_1 Schema-Text @ Schema-Exp
+--	| Schema-Exp-1
 zschema_exp :: EParser ZToken ZSExpr
 zschema_exp
   = do  {tok L_FORALL;
@@ -235,18 +235,18 @@ zschema_exp
      zschema_exp_1
 
 --Schema-Exp-1	::= [Schema-Text]
---				|	Schema-Ref
---				|	\lnot Schema-Exp-1
---				|	\pre Schema-Exp-1
---				|	Schema-Exp-1 \land Schema-Exp-1
---				|	Schema-Exp-1 \lor Schema-Exp-1
---				|	Schema-Exp-1 \implies Schema-Exp-1
---				|	Schema-Exp-1 \iff Schema-Exp-1
---				|	Schema-Exp-1 \project Schema-Exp-1
---				|	Schema-Exp-1 \hide (Decl-Name,...,Decl-Name)
---				|	Schema-Exp-1 \semi Schema-Exp-1
---				|	Schema-Exp-1 \pipe Schema-Exp-1
---				|   (Schema-Exp)
+--		|Schema-Ref
+--		|\lnot Schema-Exp-1
+--		|\pre Schema-Exp-1
+--		|Schema-Exp-1 \land Schema-Exp-1
+--		|Schema-Exp-1 \lor Schema-Exp-1
+--		|Schema-Exp-1 \implies Schema-Exp-1
+--		|Schema-Exp-1 \iff Schema-Exp-1
+--		|Schema-Exp-1 \project Schema-Exp-1
+--		|Schema-Exp-1 \hide (Decl-Name,...,Decl-Name)
+--		|Schema-Exp-1 \semi Schema-Exp-1
+--		|Schema-Exp-1 \pipe Schema-Exp-1
+--	|   (Schema-Exp)
 -- Note this differs from the Breuer/Bowen grammar because
 --  \implies binds tighter than \iff and the precedence of
 --  schema operators is respected as in zrm.
@@ -274,7 +274,7 @@ zschema_exp_3 :: EParser ZToken ZSExpr
 zschema_exp_3
   = do { se <- zschema_exp_u;
 	 se2 <- opt se (do {hidel <- zit_hiding;
-			   return (ZSHide se hidel)});
+   return (ZSHide se hidel)});
 	 return se2 }
 
 zschema_exp_1a :: EParser ZToken ZSExpr
@@ -303,15 +303,15 @@ zschema_exp_u
 	 return se} +++
     zschema_ref
 
---Schema-Text		::= Declaration [|Predicate]*
+--Schema-Text ::= Declaration [|Predicate]*
 zschema_text :: EParser ZToken [ZGenFilt]
 zschema_text
   = do  d <- zdeclaration
 	p <- opt [] (do {optnls;
-			 tok L_VERT;
-			 optnls;
-			 p <- zpredicate;
-			 return [Check p]})
+ tok L_VERT;
+ optnls;
+ p <- zpredicate;
+ return [Check p]})
 	return (concat d ++ p)
 
 --Schema-Ref ::= Schema-Name Decoration [Gen-Actuals]* [Renaming]*
@@ -348,7 +348,7 @@ zdeclaration :: EParser ZToken [[ZGenFilt]]
 zdeclaration = zbasic_decl `sepby1` do {optnls; tok L_SEMICOLON; optnls}
 
 --Basic-Decl    ::= Decl-Name, ..., Decl-Name : Expression
---				| Schema-Ref
+--	| Schema-Ref
 zbasic_decl :: EParser ZToken [ZGenFilt]
 zbasic_decl
   = do  {ws <- zdecl_name `sepby1` comma;
@@ -360,11 +360,11 @@ zbasic_decl
     do  {sr <- zschema_ref;
 	 return [Include sr]}
 
---Predicate		::= \forall Schema-Text @ Predicate
---				| \exists Schema-Text @ Predicate
---				| \exists_1 Schema-Text @ Predicate
---				| \LET Let-Def ; ... ; Let-Def @ Predicate
---				| Predicate-1
+--Predicate ::= \forall Schema-Text @ Predicate
+--	| \exists Schema-Text @ Predicate
+--	| \exists_1 Schema-Text @ Predicate
+--	| \LET Let-Def ; ... ; Let-Def @ Predicate
+--	| Predicate-1
 
 zpredicate :: EParser ZToken ZPred
 zpredicate
@@ -399,17 +399,17 @@ zpredicate
     zpredicate_1
 
 --Predicate-1 	::= Expression Rel Expression Rel ... Rel Expression
---				| Pre-Rel Decoration Expression
---				| Schema-Ref
---				| \pre Schema-Ref
---				| \true
---				| \false
---				| \lnot Predicate-1
---				| Predicate-1 \land Predicate-1
---				| Predicate-1 \lor Predicate-1
---				| Predicate-1 \implies Predicate-1
---				| Predicate-1 \iff Predicate-1
---				| (Predicate-1)
+--	| Pre-Rel Decoration Expression
+--	| Schema-Ref
+--	| \pre Schema-Ref
+--	| \true
+--	| \false
+--	| \lnot Predicate-1
+--	| Predicate-1 \land Predicate-1
+--	| Predicate-1 \lor Predicate-1
+--	| Predicate-1 \implies Predicate-1
+--	| Predicate-1 \iff Predicate-1
+--	| (Predicate-1)
 
 zpredicate_1 :: EParser ZToken ZPred
 zpredicate_1
@@ -435,10 +435,10 @@ zpredicate_u :: EParser ZToken ZPred
 zpredicate_u
     = do  {e1 <- zexpression;
 	   es <- many1 (do {optnls;
-			    r <- zrel;
-			    optnls;
-			    e2 <- zexpression;
-			    return (r,e2)});
+    r <- zrel;
+    optnls;
+    e2 <- zexpression;
+    return (r,e2)});
 	   return (it_pred e1 es)} +++
 --  Handles iterations, e.g. a=b=c or a \in b = c, by taking the conjunct
 --   of each  iteration e.g. a=b \land b=c or a \in b \land b=c respectively.
@@ -495,14 +495,14 @@ zexpressions :: EParser ZToken [ZExpr]
 zexpressions
   = do  {e <- zexpression;
 	 el <- many (do {comma;
-			 e1 <- zexpression;
-			 return e1});
+ e1 <- zexpression;
+ return e1});
 	 return (e : el)}
 
 --Expression-0	::= \lambda Schema-Text @ Expression
---				| \mu Schema-Text [@ Expression]*
---				| \let Let-Def; ... ; Let-Def @ Expression
---				| Expression
+--	| \mu Schema-Text [@ Expression]*
+--	| \let Let-Def; ... ; Let-Def @ Expression
+--	| Expression
 -- Comment from Mark Utting
 -- This differs slightly from the Breuer/Bowen grammar.
 -- To avoid reparsing parenthesized expressions, we define
@@ -529,7 +529,7 @@ zexpression_0
 	 e <- zexpression;
 	 return (ZELet ldl e)}
 --Expression 	::= \IF Predicate \THEN Expression \ELSE Expression
---				| Expression-1
+--	| Expression-1
 zexpression :: EParser ZToken ZExpr
 zexpression
   = do  {tok L_IF;
@@ -546,37 +546,37 @@ zexpression
     zexpression_1
 
 --Expression-1 	::= Expression-1 In-Gen Decoration Expression-1
---				| Expression-2 \cross Expression-2 \cross ... \cross Expression-2
---				| Expression-2
+--	| Expression-2 \cross Expression-2 \cross ... \cross Expression-2
+--	| Expression-2
 zexpression_1 :: EParser ZToken ZExpr
 zexpression_1
   = chainr1 zexpression_1a (do {op <- zin_gen_decor;
-				return (infixop((ZVar op)))})
+	return (infixop((ZVar op)))})
 
 zexpression_1a :: EParser ZToken ZExpr
 zexpression_1a
   = do  {e <- (zexpression_2 1);
 	 ce <- opt e (do {cel <- many1 (do {optnls;
-					    tok L_CROSS;
-					    optnls;
-					    e2 <- zexpression_2 1;
-					    return e2});
-			  return (ZCross (e:cel))});
+		    tok L_CROSS;
+		    optnls;
+		    e2 <- zexpression_2 1;
+		    return e2});
+  return (ZCross (e:cel))});
 	 return (ce)}
 
 --Expression-2	::= Expression-2 In-Fun Decoration Expression-2
---				| \power Expression-4
---				| Pre-Gen Decoration Expression-4
---				| − Decoration Expression-4
---				| Expression-4 \limg Expression-0 \rimg Decoration
---				| Expression-3
+--	| \power Expression-4
+--	| Pre-Gen Decoration Expression-4
+--	| − Decoration Expression-4
+--	| Expression-4 \limg Expression-0 \rimg Decoration
+--	| Expression-3
 zexpression_2 :: Int -> EParser ZToken ZExpr
 zexpression_2 7 = zexpression_2a
 zexpression_2 p
   = chainl1 (zexpression_2 (p+1)) (do {optnls;
-				       op <- (zin_fun_decor p);
-				       optnls;
-				       return (infixop (ZVar op))})
+	       op <- (zin_fun_decor p);
+	       optnls;
+	       return (infixop (ZVar op))})
 
 infixop :: ZExpr -> ZExpr -> ZExpr -> ZExpr
 infixop op a b = ZCall op (ZTuple [a,b])
@@ -609,34 +609,34 @@ zexpression_2a
 	      return (foldl1 ZCall (e4:es)) }}
 
 --Expression-3	::= Expression-3 Expression-4
---				| Expression-4
+--	| Expression-4
 -- Defined above in zexpression_2a
 
 --Expression-4	::=Var-Name [ Gen-Actuals] | Number
---				| Schema-Ref
---				| Set-Exp
---				| ⟨ [ Expression, ... , Expression] ⟩
---				| [ Expression, ... , Expression]
---				| (Expression, Expression, ... , Expression)
---				| \theta Schema-Name Decoration [ Renaming]
---				| Expression-4 . Var-Name
---				| Expression-4 Post-Fun Decoration
---				| Expression-4^(Expression)
---				| (Expression-0)
+--	| Schema-Ref
+--	| Set-Exp
+--	| ⟨ [ Expression, ... , Expression] ⟩
+--	| [ Expression, ... , Expression]
+--	| (Expression, Expression, ... , Expression)
+--	| \theta Schema-Name Decoration [ Renaming]
+--	| Expression-4 . Var-Name
+--	| Expression-4 Post-Fun Decoration
+--	| Expression-4^(Expression)
+--	| (Expression-0)
 zexpression_4 :: EParser ZToken ZExpr
 zexpression_4
  = do  {e <- zexpression_4a;
 	e2 <- opt e (do {tok L_POINT;
-			 v <- zvar_name;
-			 return (ZSelect e v)} +++
+ v <- zvar_name;
+ return (ZSelect e v)} +++
 		     do {op <- zpost_fun_decor;
-			 return (ZCall (ZVar op) e)} +++
+ return (ZCall (ZVar op) e)} +++
 		     do {tok L_BSUP;
-			 e2 <- zexpression;
-			 tok L_ESUP;
-			 let {op = make_zvar "iter" []};
-			 -- iter is curried: 'R\bsup k \esep' means 'iter R k'
-			 return (ZCall (ZCall (ZVar op) e2) e)});
+ e2 <- zexpression;
+ tok L_ESUP;
+ let {op = make_zvar "iter" []};
+ -- iter is curried: 'R\bsup k \esep' means 'iter R k'
+ return (ZCall (ZCall (ZVar op) e2) e)});
 	return e2 }
 
 zexpression_4a :: EParser ZToken ZExpr
@@ -680,7 +680,7 @@ zexpression_4b
 	 return (ZESchema sr)}
 
 --Set-Exp		::= { [ Expression, ... , Expression]* }
---				| { Schema-Text [ @ Expression]* }
+--	| { Schema-Text [ @ Expression]* }
 zset_exp ::  EParser ZToken ZExpr
 zset_exp
   = do  {tok L_OPENSET;
@@ -697,10 +697,10 @@ zset_exp
     do  {tok L_OPENSET;
 	 st <- zschema_text;
 	 e <- opt Nothing (do {optnls;
-			       tok L_AT;
-			       optnls;
-			       exp <- zexpression;
-			       return (Just exp)});
+       tok L_AT;
+       optnls;
+       exp <- zexpression;
+       return (Just exp)});
 	 tok L_CLOSESET;
 	 return (ZSetComp st e)}
 
@@ -709,12 +709,12 @@ zident :: EParser ZToken ZVar
 zident = do {w <- zword; d <- zdecoration; return (make_zvar w d)}
 
 --Decl-Name 	::= Ident
---				| Op-Name
+--	| Op-Name
 zdecl_name :: EParser ZToken ZVar
 zdecl_name = zop_name +++ zident
 
 --Var-Name		::= Ident
---				| (Op-Name)
+--	| (Op-Name)
 zvar_name :: EParser ZToken ZVar
 zvar_name
   = do  {tok L_OPENPAREN;
@@ -724,10 +724,10 @@ zvar_name
     zident
 
 --Op-Name		::= _ In-Sym Decoration _
---				| Pre-Sym Decoration _
---				| _ Post-Sym Decoration
---				| _ \limg _ \rimg Decoration
---				| _ Decoration
+--	| Pre-Sym Decoration _
+--	| _ Post-Sym Decoration
+--	| _ \limg _ \rimg Decoration
+--	| _ Decoration
 zop_name :: EParser ZToken ZVar
 zop_name =
   do  {tok L_UNDERSCORE;
@@ -844,7 +844,7 @@ zin_rel =
   isIn_Rel (L_IN_REL _)  = True
   isIn_Rel _             = False
 
---In-Gen 			::= Infix generic symbol
+--In-Gen ::= Infix generic symbol
 zin_gen_decor :: EParser ZToken ZVar
 zin_gen_decor
   = do  {igs <- zin_gen;
@@ -907,7 +907,7 @@ zpost_fun =
   isPost_Fun (L_POST_FUN _)  = True
   isPost_Fun _                = False
 
---Number 			::= Unsigned decimal integer
+--Number ::= Unsigned decimal integer
 znumber :: EParser ZToken ZInt
 znumber =
   do L_NUMBER i <- sat isNumber
@@ -928,9 +928,9 @@ znumber =
 --  	return (concat cp)}
 
 --CircusPar 	::= Par
---			| \circchannel CDecl
---			| \circchanset N == CSExp
---			| ProcDecl
+-- | \circchannel CDecl
+-- | \circchanset N == CSExp
+-- | ProcDecl
 
 --	optnls
 --	tok L_CIRCCHANSET
@@ -952,33 +952,42 @@ circuspar
 circ_chan :: EParser ZToken [ZPara]
 circ_chan
   = do {optnls;
-  			tok L_CIRCCHANNEL;
+  tok L_CIRCCHANNEL;
   	    	cdec <- circusdecl;
   	    	return [CircChannel cdec]}
 
 --CDecl 		::= SimpleCDecl
---			| SimpleCDecl; CDecl
+-- | SimpleCDecl; CDecl
 circusdecl  :: EParser ZToken [CDecl]
 circusdecl
   = do { csd <- csimpledecl;
   	csdx <- many (
-  			do {semicolon;
-  				cs <- csimpledecl;
-  				return cs});
-  	return (csd : csdx)}
+  do {semicolon;
+  	cs <- csimpledecl;
+  	return cs});
+  	return csd}
 
 --SimpleCDecl	::= N^{+}
---			| N^{+} : Exp
---			| [N^{+}]N^{+} : Exp
---			| SchemaExp
+-- | N^{+} : Exp
+-- | [N^{+}]N^{+} : Exp
+-- | SchemaExp
 csimpledecl :: EParser ZToken [CDecl]
 csimpledecl
-  = do { csd <- zvar_name;
-  	csdx <- many (
-  			do {comma;
-  				cs <- zvar_name;
-  				return (CSyncChan cs)});
-  	return ([CSyncChan csd] : csdx)}
+  = do  {ws <- zdecl_name `sepby1` comma;
+	 optnls;
+	 tok L_COLON;
+	 optnls;
+	 e <- zexpression;
+	 return [CChanDecl (make_zvar w d) e | (w,d) <- ws]}
+	+++
+	do {gs <- zdecl_name `sepby1` comma;
+	return (map CChan gs)} 
+	-- do {gs <- zident `sepby1` comma;
+	-- optnls;
+	-- tok L_COLONç
+	-- optnls;
+	-- zxpr <- zexpression
+	-- return (map CChanDecl gs)}
 	--		 +++
 	--do {chn <- zvar_name;
 	--	expn <- zexpression;
@@ -992,82 +1001,82 @@ csimpledecl
 	--	 return (CGenChanDecl tn chn expn)}
 
 --CSExp		::= \lchanset \rchanset
---			| \lchanset N^{+} \rchanset
---			| N
---			| CSExp \union CSExp
---			| CSExp \intersect CSExp
---			| CSExp \circhide CSExp
+-- | \lchanset N^{+} \rchanset
+-- | N
+-- | CSExp \union CSExp
+-- | CSExp \intersect CSExp
+-- | CSExp \circhide CSExp
 --circuscsexpr ::  EParser ZToken CSExp
 --circuscsexpr
 --  = do { tok L_LCHANSET; tok L_RCHANSET;
 --		return }
 --ProcDecl	::= \circprocess N \circdef ProcDef
---			| \circprocess N[N^{+}] \circdef ProcDef
+-- | \circprocess N[N^{+}] \circdef ProcDef
 
 --ProcDef		::= Decl \circspot ProcDef
---			| Decl \circindex ProcDef
---			| Proc
+-- | Decl \circindex ProcDef
+-- | Proc
 
 --Proc 		::= \circbegin PPar*
---				\circstate SchemaExp PPar*
---				\circspot Action
---				\circend
---			| Proc \circsemi Proc
---			| Proc \extchoice Proc
---			| Proc \intchoice Proc
---			| Proc \lpar CSExp \rpar Proc
---			| Proc \interleave Proc
---			| Proc \circhide CSExp
---			| (Decl \circspot ProcDef)(Exp^{+})
---			| N(Exp^{+})
---			| N
---			| (Decl \circindex ProcDef)\lcircindex Exp^{+} \rcircindex
---			| N\lcircindex Exp^{+} \rcircindex
---			| Proc[N^{+}:=N^{+}]
---			| N[Exp^{+}]
---			| \Semi Decl \circspot Proc
---			| \Extchoice Decl \circspot Proc
---			| \IntChoice Decl \circspot Proc
---			| \lpar CSExp \rpar Decl \circspot Proc
---			| \Interleave Decl \circspot Proc
+--	\circstate SchemaExp PPar*
+--	\circspot Action
+--	\circend
+-- | Proc \circsemi Proc
+-- | Proc \extchoice Proc
+-- | Proc \intchoice Proc
+-- | Proc \lpar CSExp \rpar Proc
+-- | Proc \interleave Proc
+-- | Proc \circhide CSExp
+-- | (Decl \circspot ProcDef)(Exp^{+})
+-- | N(Exp^{+})
+-- | N
+-- | (Decl \circindex ProcDef)\lcircindex Exp^{+} \rcircindex
+-- | N\lcircindex Exp^{+} \rcircindex
+-- | Proc[N^{+}:=N^{+}]
+-- | N[Exp^{+}]
+-- | \Semi Decl \circspot Proc
+-- | \Extchoice Decl \circspot Proc
+-- | \IntChoice Decl \circspot Proc
+-- | \lpar CSExp \rpar Decl \circspot Proc
+-- | \Interleave Decl \circspot Proc
 
 
 
 --NSExp 		::= \{\}
---			| \{N^{+}\}
---			| N
---			| NSExp \union NSExp
---			| NSExp \intersect NSExp
---			| NSExp \circhide \NSExp
+-- | \{N^{+}\}
+-- | N
+-- | NSExp \union NSExp
+-- | NSExp \intersect NSExp
+-- | NSExp \circhide \NSExp
 
 --PPar 		::= Par
---			| N \circdef ParAction
---			| \circnameset N == NSExp
+-- | N \circdef ParAction
+-- | \circnameset N == NSExp
 
 --ParAction 	::= Action
---			| Decl \circspot ParAction
+-- | Decl \circspot ParAction
 
 --Action 		::= SchemaExp
---			| Command
---			| N
---			| CSPAction
---			| Action[N^{+}:=N^{+}]
+-- | Command
+-- | N
+-- | CSPAction
+-- | Action[N^{+}:=N^{+}]
 
 --CSPAction	::= \Skip | \Stop | \Chaos | Comm \then Action
---			| Pred \circguard Action
---			| Action \circseq Action
---			| Action \extchoice Action
---			| Action \intchoice Action
---			| Action \lpar NSExp | CSExp | NSExp \rpar Action
---			| Action \linter NSExp | NSExp \rinter Action
---			| Action \circhide CSExp
---			| ParAction(Exp^{+)
---			| \circmu N \circspot Action
---			| \Semi Decl \circspot Action
---			| \Extchoice Decl \circspot Action
---			| \IntChoice Decl \circspot Action
---			| \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
---			| \Interleave Decl \circspot \linter NSExp \rinter Action
+-- | Pred \circguard Action
+-- | Action \circseq Action
+-- | Action \extchoice Action
+-- | Action \intchoice Action
+-- | Action \lpar NSExp | CSExp | NSExp \rpar Action
+-- | Action \linter NSExp | NSExp \rinter Action
+-- | Action \circhide CSExp
+-- | ParAction(Exp^{+)
+-- | \circmu N \circspot Action
+-- | \Semi Decl \circspot Action
+-- | \Extchoice Decl \circspot Action
+-- | \IntChoice Decl \circspot Action
+-- | \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
+-- | \Interleave Decl \circspot \linter NSExp \rinter Action
 
 
 --Comm 		::= N CParameter* | N [Exp^{+}] CParameter *
@@ -1075,17 +1084,17 @@ csimpledecl
 --CParameter	::= ?N | ?N : Pred | !Exp | .Exp
 
 --Command 	::= N^{+} := Exp^{+}
---			| \circif GActions \cirfi
---			| \circvar Decl \circspot Action
---			| N^{+} :[Pred,Pred]
---			| \{Pred\}
---			| [Pred]
---			| \circval Decl \circspot Action
---			| \circres Decl \circspot Action
---			| \circvres Decl \circspot Action
+-- | \circif GActions \cirfi
+-- | \circvar Decl \circspot Action
+-- | N^{+} :[Pred,Pred]
+-- | \{Pred\}
+-- | [Pred]
+-- | \circval Decl \circspot Action
+-- | \circres Decl \circspot Action
+-- | \circvres Decl \circspot Action
 
 --GActions 	::= Pred \then Action
---			| Pred \then Action \extchoice GAction
+-- | Pred \then Action \extchoice GAction
 
 --------------------------------------
 ---------- Auxiliary Defs ------------
@@ -1175,9 +1184,9 @@ optnls = many (tok L_BACKSLASH_BACKSLASH)
 comma = do {optnls; tok L_COMMA; optnls}
 semicolon = do {optnls; tok L_SEMICOLON; optnls}
 
+zmachine_box
 
-
-zmachine_box :: EParser ZToken [ZPara]
+ :: EParser ZToken [ZPara]
 zmachine_box
   -- Eg: \begin{machine}{foo} State \init Init \ops Op1; Op2 \end{machine}
   -- Note: All names must be undecorated schema names.
@@ -1194,9 +1203,9 @@ zmachine_box
 	ops <- zword `sepby1` zsep
 	tok L_END_MACHINE
 	return [ZMachineDef{machName=name,
-			    machState=state,
-			    machInit=init,
-			    machOps=ops}]
+    machState=state,
+    machInit=init,
+    machOps=ops}]
 
 zgivenval :: EParser ZToken String
 zgivenval =

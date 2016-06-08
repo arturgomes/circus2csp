@@ -161,6 +161,7 @@ do_cmd cmd args anim
       catch
 	  (do {putStrLn ("Loading '"++args++"' ...");
 	       spec <- readFile args;
+         --done_cmd (pushfile args spec anim)})
 	       done_cmd (pushfile args spec anim)})
 	  (\err ->
 	      do {putStrLn (show (err :: IOException));

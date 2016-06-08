@@ -521,7 +521,7 @@ type CProgram = [ZPara]
 -- Channel and chanset decl
 --
 data CDecl
-  = CSyncChan ZVar         --  no type is defined
+  = CChan ZVar         --  no type is defined
   | CChanDecl ZVar ZExpr   -- channel_name : type
   | CMultChanDecl [ZVar] ZExpr   -- chan1, chan2, chan3 : type
   | CGenChanDecl ZVar ZVar ZExpr -- generic chan decl
@@ -1063,4 +1063,3 @@ traverseTerm (ZExpr e)  = visitExpr e >>= (return . ZExpr)
 traverseTerm (ZPred p)  = visitPred p >>= (return . ZPred)
 traverseTerm (ZSExpr e) = visitSExpr e >>= (return . ZSExpr)
 traverseTerm (ZNull)    = return ZNull
-
