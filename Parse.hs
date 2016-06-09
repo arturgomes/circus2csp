@@ -973,7 +973,17 @@ circusdecl
 -- | SchemaExp
 csimpledecl :: EParser ZToken [CDecl]
 csimpledecl
-  = do  {ws <- zdecl_name `sepby1` comma;
+  = do  {tok L_OPENBRACKET;
+			tp <- zdecl_name;
+			tok L_CLOSEBRACKET;
+			optnls;
+			ws <- zdecl_name `sepby1` comma;
+			optnls;
+			tok L_COLON;
+			optnls;
+			e <- zexpression;
+			return [CGenChanDecl tp (make_zvar w d) e | (w,d) <- ws]}
+	+++do  {ws <- zdecl_name `sepby1` comma;
 	 optnls;
 	 tok L_COLON;
 	 optnls;
@@ -981,7 +991,7 @@ csimpledecl
 	 return [CChanDecl (make_zvar w d) e | (w,d) <- ws]}
 	+++
 	do {gs <- zdecl_name `sepby1` comma;
-	return (map CChan gs)} 
+	return (map CChan gs)}
 	-- do {gs <- zident `sepby1` comma;
 	-- optnls;
 	-- tok L_COLONç

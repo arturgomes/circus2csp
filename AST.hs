@@ -523,7 +523,6 @@ type CProgram = [ZPara]
 data CDecl
   = CChan ZVar         --  no type is defined
   | CChanDecl ZVar ZExpr   -- channel_name : type
-  | CMultChanDecl [ZVar] ZExpr   -- chan1, chan2, chan3 : type
   | CGenChanDecl ZVar ZVar ZExpr -- generic chan decl
   deriving (Eq,Ord,Show)
 {-
@@ -791,6 +790,7 @@ class (Monad m) => Visitor m where
     visitBinder    :: [ZGenFilt] -> ZTerm -> m ([ZGenFilt],ZTerm,Env)
     visitGenFilt   :: ZGenFilt -> m ZGenFilt
     visitTerm      :: ZTerm -> m ZTerm
+    visitCDecl      :: CDecl -> m CDecl
     -- visitPara ??
 
     -- Methods for manipulating the environment,
@@ -821,6 +821,7 @@ class (Monad m) => Visitor m where
     visitBinder = traverseBinder
     visitGenFilt = traverseGenFilt
     visitTerm = traverseTerm
+    visitCDecl = traverseCDecl
 
     -- Default environment implementations.
     -- Minimum defs required are: currEnv and setEnv.
@@ -1063,3 +1064,9 @@ traverseTerm (ZExpr e)  = visitExpr e >>= (return . ZExpr)
 traverseTerm (ZPred p)  = visitPred p >>= (return . ZPred)
 traverseTerm (ZSExpr e) = visitSExpr e >>= (return . ZSExpr)
 traverseTerm (ZNull)    = return ZNull
+
+traverseCDecl cd = fail "traverseCDecl is not implemented"
+--traverseCDecl (CChan v) = visitCDecl v >>= (return . CChan)
+--traverseCDecl (CChanDecl v e ) = visitCDecl v e >>= (return . CChanDecl)
+--traverseCDecl (CMultChanDecl v e ) = visitCDecl v e >>= (return . CMultChanDecl)
+--traverseCDecl (CGenChanDecl  v1 v2 e ) = visitCDecl v1 v2 e >>= (return . CGenChanDecl)

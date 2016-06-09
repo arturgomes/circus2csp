@@ -35,12 +35,12 @@ import Data.Char
 -- We use named fields so that it can easily be extended with new fields.
 data Animator
   = Anim {spec::[ZParaInfo],  -- a stack of definitions, most recent at head
-	  ops::[OpResult],    -- most recent result at the front.
+    ops::[OpResult],    -- most recent result at the front.
           lasteval::EvalInfo, -- info about most recent eval/evalp/do/;
-	  undo_depth::Int,    -- maximum length of 'ops'.  Must be > 0.
-	  setsize::Integer,   -- maximum set size for data.
-	  searchsize::Integer -- maximum search space size.
-	 }
+    undo_depth::Int,    -- maximum length of 'ops'.  Must be > 0.
+    setsize::Integer,   -- maximum set size for data.
+    searchsize::Integer -- maximum search space size.
+   }
 
 -- Information about the most recent expr/pred/schema evaluation.
 data EvalInfo
@@ -63,9 +63,9 @@ set_setting :: String -> Integer -> Animator -> (Animator,Answer)
 -- Pre: 0 <= val
 set_setting "undo" val anim
     | 0 <= val && val <= 1000 =
-	(anim{undo_depth = fromInteger val}, Done "")
+  (anim{undo_depth = fromInteger val}, Done "")
     | otherwise =
-	(anim, errstr "undo depth is limited to 0..1000")
+  (anim, errstr "undo depth is limited to 0..1000")
 set_setting "setsize" val anim = (anim{setsize=val}, Done "")
 set_setting "searchsize" val anim = (anim{searchsize=val}, Done "")
 
@@ -107,23 +107,24 @@ push_op name code ss anim
 -- a schema operation.
 data OpResult
   = OpResult
-	{ opname::String, -- the name of the schema being evaluated
-	  opcode::ZExpr,  -- the schema that is being/has been evaluated
-			  -- (this will always be a ZSetComp expression)
-	  states::[ErrorOr ZValue], -- results of current schema evaluation
-	  statenumber::Int -- the number of the currently selected state
-			   -- (-1 if no state selected)
-	 }
+  { opname::String, -- the name of the schema being evaluated
+    opcode::ZExpr,  -- the schema that is being/has been evaluated
+        -- (this will always be a ZSetComp expression)
+    states::[ErrorOr ZValue], -- results of current schema evaluation
+    statenumber::Int -- the number of the currently selected state
+         -- (-1 if no state selected)
+   }
 
 data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
   | ZParaPred{origpara::ZPara, predunfolded::ZPred}
+  | CircusPara{origpara::ZPara, paraunfolded::[CDecl]}
   | ZParaMachine{origpara::ZPara,
-		 defname::ZVar
-		  -- umachState::[ZGenFilt],
-		  -- umachInit ::[ZGenFilt],
-		  -- umachOps  ::[(String,[ZGenFilt])]
-		 }
+     defname::ZVar
+      -- umachState::[ZGenFilt],
+      -- umachInit ::[ZGenFilt],
+      -- umachOps  ::[(String,[ZGenFilt])]
+     }
 
 
 uenv :: [ZParaInfo] -> Env
@@ -133,22 +134,21 @@ uenv ps =
     x = string_to_zvar "x"
     defs = [(defname p, defunfolded p) | p@(ZParaDefn{}) <- ps]
     branches = concat [map mkbranch bs |
-		       ZParaDefn{defunfolded=ZFreeType n bs} <- ps]
-    mkbranch (ZBranch0 s) =
-	(s, ZFree0 s)
+           ZParaDefn{defunfolded=ZFreeType n bs} <- ps]
+    mkbranch (ZBranch0 s) = (s, ZFree0 s)
     mkbranch (ZBranch1 s dom) =
-	-- a function, expressed as a set comprehension
-	(s, ZSetComp [Choose x dom] (Just (ZTuple[ZVar x, ZFree1 s (ZVar x)])))
+  -- a function, expressed as a set comprehension
+              (s, ZSetComp [Choose x dom] (Just (ZTuple[ZVar x, ZFree1 s (ZVar x)])))
 
 
 animator0
   = Anim{spec=[],
-	 ops=[],
-	 lasteval=NoEval,
-	 undo_depth=1,  -- one level of undo.
-	 setsize=1000,
-	 searchsize=100000
-	}
+   ops=[],
+   lasteval=NoEval,
+   undo_depth=1,  -- one level of undo.
+   setsize=1000,
+   searchsize=100000
+  }
 
 
 -- Most animator functions return one of these responses.
@@ -180,12 +180,12 @@ pushpara s anim
   | isOk result = (anim{spec=spec2}, Done msg)
   | otherwise   = (anim, answerErrorOr result)
   where
-  result = do para <- parseZpara s
-	      spec2 <- process_paras (spec anim) para
-	      return (spec2, length para)
+  result = do {para <- parseZpara s;
+          spec2 <- process_paras (spec anim) para;
+          return (spec2, length para)}
   (spec2, ndefs) = fromOk result
   msg  = "Added " ++ show(ndefs) ++ " definition" ++
-	 (if ndefs > 1 then "s." else ".")
+   (if ndefs > 1 then "s." else ".")
 
 -- This is like pushpara, but processes an entire file.
 -- If there are no errors, it pushes the entire file onto the current spec.
@@ -197,12 +197,12 @@ pushfile filename contents anim
   | isOk result = (anim{spec=spec2}, Done msg)
   | otherwise   = (anim, answerErrorOr result)
   where
-  result = do para <- parseZspec contents
-	      spec2 <- process_paras (spec anim) para
-	      return (spec2, length para)
+  result = do {para <- parseZspec contents;
+          spec2 <- process_paras (spec anim) para;
+          return (spec2, length para)}
   (spec2, ndefs) = fromOk result
   msg  = "Added " ++ show(ndefs) ++ " definition" ++
-	 (if ndefs > 1 then "s." else ".")
+   (if ndefs > 1 then "s." else ".")
 
 
 poppara :: Animator -> (Animator,Answer)
@@ -233,13 +233,13 @@ evalexpression s anim
   where
   env = evalenv anim
   oexpr =
-    do  expr <- parseZexpr s
-	uexpr <- unfoldexpr env expr
-	return (opt_expr env uexpr)
+    do  {expr <- parseZexpr s;
+      uexpr <- unfoldexpr env expr;
+      return (opt_expr env uexpr)}
   value =
-    do  e <- oexpr
-	val <- evalexpr e env
-	return (forceexpr env val)
+    do  {e <- oexpr;
+      val <- evalexpr e env;
+      return (forceexpr env val)}
 
 
 -- Evaluates a given Z predicate.
@@ -256,12 +256,12 @@ evalpredicate s anim
   where
   env = evalenv anim
   opred =
-    do  pred <- parseZpred s
-	upred <- unfoldpred env pred
-	return (opt_pred env upred)
+    do  {pred <- parseZpred s;
+      upred <- unfoldpred env pred;
+      return (opt_pred env upred)}
   value =
-    do  p <- opred
-	evalpred p env
+    do  {p <- opred;
+      evalpred p env}
 
 
 -- This is the same as evalpredicate, but it displays the actual
@@ -271,26 +271,26 @@ showpredicate s anim
   | isOk result  = (anim, Pred (fromOk result))
   | otherwise    = (anim, answerErrorOr result)
   where
-  result = do pred <- parseZpred s
-	      let env = evalenv anim
-	      upred <- unfoldpred env pred
-	      return (opt_pred env upred)
+  result = do let env = evalenv anim
+              pred <- parseZpred s
+              upred <- unfoldpred env pred
+              return (opt_pred env upred)
 
 
 -- Write a given state machine out to a file in BZTT syntax.
 writebztt :: [String] -> Animator -> IO (Animator,Answer)
 writebztt [machname,file] anim
   | isOk machine =
-      do  writeFile file (unlines (fromOk machine))
-	  return (anim, Done ("Written to file " ++ file ))
+      do writeFile file (unlines (fromOk machine))
+         return (anim, Done ("Written to file " ++ file ))
   | otherwise =
       return (anim, answerErrorOr machine)
   where
   machine =
       do let sexpr = ZSRef (ZSPlain machname) [] []
-	 let env = evalenv anim
-	 usexpr <- unfoldsexpr env sexpr
-	 bzMachine machname usexpr env
+         let env = evalenv anim
+         usexpr <- unfoldsexpr env sexpr
+         bzMachine machname usexpr env
 writebztt _ anim = return (anim,ErrorMsg [MStr "illegal args"])
 
 
@@ -303,10 +303,10 @@ execschema s anim
   | otherwise   = (anim, answerErrorOr result)
   where
   result = do sexpr <- parseZsexpr s
-	      let env = evalenv anim
-	      usexpr <- unfoldsexpr env sexpr
-	      let opts = opt_schema env usexpr
-	      return (opts, evalsetcomplazy opts env)
+              let env = evalenv anim
+              usexpr <- unfoldsexpr env sexpr
+              let opts = opt_schema env usexpr
+              return (opts, evalsetcomplazy opts env)
   (op,(maxDepth,states)) = fromOk result
   newanim = push_op s op states anim{lasteval=SchemaEval maxDepth}
   msg = "Do 'next' to see first answer"
@@ -319,7 +319,7 @@ execschema s anim
 -- The result list is stored in the Animator state, so that future
 -- calls can step through the results one by one.
 compose_schema :: (String -> IO String) -> String -> Animator
-	       -> IO (Animator,Answer)
+         -> IO (Animator,Answer)
 compose_schema reader sname anim
   | currstate anim < 0 || null(s0) || notOk(head s0)
     = return (anim, errstr "No current state")
@@ -329,48 +329,48 @@ compose_schema reader sname anim
     = return (anim, answerErrorOr ugfs2)
   | otherwise
     = do errvals <- sequence (map (get . show_zvar) needed)
-	 let vals = sequence errvals
-	 if notOk vals
-	    then return (anim, answerErrorOr vals)
-	    else let inputs2 = [ZAssign n v|(n,v)<-zip needed (fromOk vals)]
-		 in return (stage2 env sname (fromOk ugfs2) inputs2 anim)
+         let vals = sequence errvals
+         if notOk vals
+         then return (anim, answerErrorOr vals)
+         else let inputs2 = [ZAssign n v|(n,v)<-zip needed (fromOk vals)]
+              in return (stage2 env sname (fromOk ugfs2) inputs2 anim)
   where
   s0 = drop (currstate anim) (statelist anim)
   ZBinding bs = fromOk (head s0)
   env = evalenv anim
   ugfs1 = do sexpr <- parseZsexpr sname
-	     unfoldsexpr env sexpr
+             unfoldsexpr env sexpr
   names1 = genfilt_names (fromOk ugfs1)
   -- Partition the current state variables into those that will
   -- be used as inputs to the next operation, and the others.
   -- (the other are added to the schema as outputs, so that the
   -- schema manipulation checks their types etc.)
   inputs = [ZAssign n val
-	   | (n',val) <- bs,
-	     is_primed_zvar n',
-	     let n = unprime_zvar n',
-	     n `elem` names1 ]
+     | (n',val) <- bs,
+       is_primed_zvar n',
+       let n = unprime_zvar n',
+       n `elem` names1 ]
   others = concat [[Choose n' ZUniverse, Check(ZEqual (ZVar n') val)]
-		     | (n',val) <- bs,
-		       is_primed_zvar n',
-		       let n = unprime_zvar n',
-		       not(n `elem` names1) ]
+         | (n',val) <- bs,
+           is_primed_zvar n',
+           let n = unprime_zvar n',
+           not(n `elem` names1) ]
   ugfs2 = schema_rename env (fromOk ugfs1 ++ others) inputs
   -- These are the names of the remaining unknown inputs.
   needed = [v | Choose v _ <- fromOk ugfs2,
-	        (is_unprimed_zvar v || is_input_zvar v)]
+          (is_unprimed_zvar v || is_input_zvar v)]
   -- Here is an interactive reader for those input values.
   get :: String -> IO (ErrorOr ZExpr)
-  get var = do  str <- reader var
-		let str2 = dropWhile isSpace str
-		if null(str2)
-		   then return (IllFormed [MStr "no input value provided"])
-		   else return (do { e0 <- parseZexpr str2;
-				     e1 <- unfoldexpr env e0;
-				     return (opt_expr env e1) })
+  get var = do str <- reader var
+               let str2 = dropWhile isSpace str
+               if null(str2)
+               then return (IllFormed [MStr "no input value provided"])
+               else return (do { e0 <- parseZexpr str2;
+                               e1 <- unfoldexpr env e0;
+                               return (opt_expr env e1) })
 
 stage2 :: Env -> String -> [ZGenFilt] -> [ZReplace] -> Animator
-	  -> (Animator,Answer)
+    -> (Animator,Answer)
 stage2 env name ugfs assign anim
   | notOk ugfs2  = (anim, answerErrorOr ugfs2)
   | otherwise    = (newanim, Done "Do 'next' to see first answer")
@@ -385,7 +385,7 @@ showstate :: Int -> Animator -> (Animator, Answer)
 showstate n anim
   | null(ops anim) = (anim, errstr "No current operation")
   | null(statelist anim)
-		   = (setcurrstate 0 anim, errstr "No solutions")
+       = (setcurrstate 0 anim, errstr "No solutions")
   | n < 0          = (setcurrstate 0 anim, errstr "No earlier solutions")
   | cs == []       = (setcurrstate last anim, errstr "No more solutions")
   | notOk(head cs) = (setcurrstate n anim, answerErrorOr (head cs))
@@ -419,8 +419,8 @@ showunfolded s anim
   | otherwise   = answerErrorOr result
   where
   result = do zvar <- parseZident s
-	      def <- get_info zvar anim
-	      return def
+              def <- get_info zvar anim
+              return def
 
 
 -- Display the optimized code of the most recent execution
@@ -459,7 +459,7 @@ fmtpara :: ZParaInfo -> String
 fmtpara p
   = s ++ if null rest then "" else "..."
   where
-  (s,rest) = splitAt 10000 (show (origpara p))
+  (s,rest) = splitAt 20000 (show (origpara p))
 
 get_info :: ZVar -> Animator -> ErrorOr ZParaInfo
 get_info s anim
@@ -476,55 +476,55 @@ get_info s anim
 process_paras :: [ZParaInfo] -> [ZPara] -> ErrorOr [ZParaInfo]
 process_paras spec []
   = return spec
+process_paras spec (p@(CircChannel s) : ps)
+  = do let newp = CircusPara{origpara=p,
+           paraunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
 process_paras spec (p@(ZGivenSetDecl s) : ps)
-  = do	let newp = ZParaDefn{origpara=p,
-			     defname=s,
-			     defunfolded=ZGivenSet s}
-	newspec <- adddefn newp spec
-	process_paras newspec ps
+  = do let newp = ZParaDefn{origpara=p,
+           defname=s,
+           defunfolded=ZGivenSet s}
+       newspec <- adddefn newp spec
+       process_paras newspec ps
 process_paras spec (p@(ZSchemaDef name se) : ps)
-  = do  gfs <- unfoldsexpr (uenv spec) se
-	let newp = ZParaDefn{origpara=p,
-			     defname=make_schema_name name,
-			     defunfolded=(ZESchema (ZSchema gfs))}
-	newspec <- adddefn newp spec
-	process_paras newspec ps
+  = do gfs <- unfoldsexpr (uenv spec) se
+       let newp = ZParaDefn{origpara=p,
+           defname=make_schema_name name,
+           defunfolded=(ZESchema (ZSchema gfs))}
+       newspec <- adddefn newp spec
+       process_paras newspec ps
+process_paras spec (p@ZMachineDef{} : ps)
+  = do let e = uenv spec
+       state <- unfoldsexpr e . sref . machState $ p
+       init <- unfoldsexpr e . sref . machInit $ p
+       ops <- mapM (unfoldsexpr e . sref) (machOps p)
+       -- TODO: check typing conditions of machine
+       let newp = ZParaMachine{origpara=p,
+        defname=string_to_zvar (machName p)}
+       let newspec = newp:spec
+       process_paras newspec ps
+  where
+  sref name = ZSRef (ZSPlain name) [] []
 process_paras spec (p@(ZAbbreviation n e) : ps)
-  = do  ue <- unfoldexpr (uenv spec) e
-  let newp = ZParaDefn{origpara=p,
+  = do ue <- unfoldexpr (uenv spec) e
+       let newp = ZParaDefn{origpara=p,
            defname=n,
            defunfolded=ue}
-  newspec <- adddefn newp spec
-  process_paras newspec ps
+       newspec <- adddefn newp spec
+       process_paras newspec ps
 process_paras spec (p@(ZFreeTypeDef n bs) : ps)
   = do  ue <- unfoldexpr (uenv spec) (ZFreeType n bs)
-  let newp = ZParaDefn{origpara=p,
+        let newp = ZParaDefn{origpara=p,
            defname=n,
            defunfolded=ue}
-  newspec <- adddefn newp spec
-  process_paras newspec ps
+        newspec <- adddefn newp spec
+        process_paras newspec ps
 process_paras spec (p@(ZPredicate pred) : ps)
   = do  upred <- unfoldpred (uenv spec) pred
-  let newp = ZParaPred{origpara=p,
+        let newp = ZParaPred{origpara=p,
            predunfolded=upred}
-  process_paras (newp:spec) ps
-process_paras spec (p@ZMachineDef{} : ps)
-  = do  let e = uenv spec
-	state <- unfoldsexpr e . sref . machState $ p
-	init <- unfoldsexpr e . sref . machInit $ p
-	ops <- mapM (unfoldsexpr e . sref) (machOps p)
-	-- TODO: check typing conditions of machine
-	let newp = ZParaMachine{origpara=p,
-				defname=string_to_zvar (machName p)}
-	let newspec = newp:spec
-	process_paras newspec ps
-	where
-	sref name = ZSRef (ZSPlain name) [] []
-process_paras spec (p@(CircChannel pred) : ps)
-  = do  upred <- unfoldpred (uenv spec) pred
-  let newp = ZParaPred{origpara=p,
-           predunfolded=upred}
-  process_paras (newp:spec) ps
+        process_paras (newp:spec) ps
 process_paras spec (para : ps)
   = fail ("Not implemented yet: " ++ show para)
 
