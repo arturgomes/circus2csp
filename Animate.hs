@@ -118,7 +118,9 @@ data OpResult
 data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
   | ZParaPred{origpara::ZPara, predunfolded::ZPred}
-  | CircusPara{origpara::ZPara, paraunfolded::[CDecl]}
+  | CircusChannel{origpara::ZPara, chanunfolded::[CDecl]}
+  | CircusChanSet{origpara::ZPara, defname::ZVar, chansetunfolded::CSExp}
+  | CircusProcess{origpara::ZPara,procunfolded::ProcDecl}
   | ZParaMachine{origpara::ZPara,
      defname::ZVar
       -- umachState::[ZGenFilt],
@@ -476,9 +478,21 @@ get_info s anim
 process_paras :: [ZParaInfo] -> [ZPara] -> ErrorOr [ZParaInfo]
 process_paras spec []
   = return spec
+ -- | CircusProcess{origpara::ZPara,procunfolded::ProcDecl}
 process_paras spec (p@(CircChannel s) : ps)
-  = do let newp = CircusPara{origpara=p,
-           paraunfolded=s}
+  = do let newp = CircusChannel{origpara=p,
+           chanunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
+process_paras spec (p@(CircChanSet v s) : ps)
+  = do let newp = CircusChanSet{origpara=p,
+           defname=v,
+           chansetunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
+process_paras spec (p@(Process s) : ps)
+  = do let newp = CircusProcess{origpara=p,
+           procunfolded=s}
        let newspec = newp:spec
        process_paras newspec ps
 process_paras spec (p@(ZGivenSetDecl s) : ps)

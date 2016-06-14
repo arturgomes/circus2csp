@@ -442,6 +442,8 @@ zlexz c ls ('\\':s)
   | cmd=="inseq"  = tok (L_IN_REL ('\\':cmd))
   -- Circus Commands
   | cmd=="Chaos"                = tok L_CHAOS
+  | cmd=="circbegin"            = tok L_CIRCUSBEGIN
+  | cmd=="circend"              = tok L_CIRCUSEND
   | cmd=="circchanset"          = tok L_CIRCCHANSET
   | cmd=="circdef"              = tok L_CIRCDEF
   | cmd=="circguard"            = tok L_CIRCGUARD

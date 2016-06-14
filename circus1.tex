@@ -1,0 +1,150 @@
+
+\begin{circus}\circchanset TherapyPhaseChanSet ==
+\\\t2 \lchanset preparationPhase, therapyInitiation, connectingToPatient,
+\\\t3 duringTherapy, therapyEnding \rchanset
+\end{circus}
+\begin{circus}
+  \circchanset SensorReadingsComm ==\\
+  \\\t3 \lchanset~senAirVol, senApTransdPress, \\
+      senBloodFlowInEBC, senHDMode, \\
+      senSADSensorFlow, senVpTransdPress~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset HDComm ==\\
+  \\\t3 \lchanset~getApTransdPress, getBloodFlowInEBC, \\
+    getCurrentTime, getDfFlow, getHdActivity, \\
+    getHdMachineState,getFflowDirect, \\
+    getInfSalineVol, getVolInEBC,\\
+    getLowerPressureLimit, getRotDirectUFP, \\
+    getUpperPressureLimit, getDfTemperature, \\
+    getVpTransdPress, senBloodFlowInEBC, \\
+    senSADSensorFlow, setAirVol, \\
+    setBloodFlowInEBC, setLastNonZeroBF, \\
+    therapyInitiation, senVpTransdPress, \\
+    getTimerIntervalR9, setTimerIntervalR9, \\
+    getTimerIntervalR10,setTimerIntervalR10,\\
+    getTimerIntervalR9~\rchanset
+\end{circus}
+
+\begin{circus}
+  \circchanset HDGenCompStChanSet ==\\
+  \\\t3 \lchanset~getAirVolLimit, getAirVol,
+  getApTransdPress, getArtBolusVol,
+  getBloodFlowInEBC, getBypassValve,
+  getFflowDirect, getHdActivity,
+  getHDMode, getInfSalineVol,
+  getLastNonZeroBF, getLowerPressureLimit,
+  getMinUFRateTreat, getNetFluidRemoval,
+  getNetFluidRemovalRate, getSADSensorFlow,
+  getSafeUpperLimit, getSignalLamp,
+  getTimerIntervalR10, getTimerIntervalR11,
+  getTimerIntervalR12, getTimerIntervalR13,
+  getTimerIntervalR9, getUpperPressureLimit,
+  getVolInEBC, getVpTransdPress,
+  getBloodLines, setAirVolLimit,
+  setAirVol, setAlarm,
+  setBloodFlowInEBC, setLastNonZeroBF,
+  setTimerIntervalR10, setTimerIntervalR11,
+  setTimerIntervalR12, setTimerIntervalR13,
+  setTimerIntervalR9, getRotDirectBP,
+  getRotDirectUFP, preparationPhase,
+  connectingToPatient, therapyInitiation,
+  therapyEnding~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset RinsingParametersStChanSet ==\\
+  \\\t3 \lchanset~setFillingBPRate, setRinsingBPRate,
+  setRinsingTime, setUfVolForRinsing,
+  setBloodFlowForConnectingPatient,
+  getRinsingBPRate, getRinsingTime,
+  setUfRateForRinsing, getUfRateForRinsing,
+  getUfVolForRinsing,
+  getBloodFlowForConnectingPatient,
+  getFillingBPRate~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset PressureParametersStChanSet ==\\
+  \\\t3 \lchanset~setLimitDeltaMinMaxAP, setActualTMPMaxTMP,
+  setLimitsTMP, setLowHigh,
+  setExtendedTMPLimitRange, getLimitDeltaMinMaxAP,
+  getActualTMPMaxTMP, getLimitsTMP,
+  getLowHigh, getExtendedTMPLimitRange ~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset HeparinParametersStChanSet ==\\
+  \\\t3 \lchanset~setTreatmentWithoutHeparin,
+  setHeparinBolusVol, setHeparinProfileRate,
+  getHeparinBolusVol, getHeparinProfileRate,
+  getTreatmentWithoutHeparin, setSyringeType,
+  getSyringeType~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset UFParametersStChanSet ==\\
+  \\\t3 \lchanset~setMaxUFRate, setMinUFRate,
+  setTherapyTime, setUfVol,
+  getMaxUFRate, getMinUFRate,
+  getTherapyTime, getUfVol~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset DFParametersStChanSet ==\\
+  \\\t3 \lchanset~setBicarbonateAcetate,
+  setBicarbonateConductivity, setDfFlow,
+  setDfTemperature, setConductivity,
+  getBicarbonateAcetate, getConductivity,
+  getDfFlow, getDfTemperature,
+  getBicarbonateConductivity~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset DFParametersStComm ==\\
+  \\\t3 \lchanset~setConductivity,setBicarbonateAcetate,\\
+      setBicarbonateConductivity,\\
+      setDfTemperature,setDfFlow~\rchanset
+\end{circus}
+
+\begin{circus}
+  \circchanset UFParametersStComm ==\\
+  \\\t3 \lchanset~setUfVol,setTherapyTime,\\
+      setMinUFRate,setMaxUFRate~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset PressureParametersStComm ==\\
+  \\\t3 \lchanset~setLimitDeltaMinMaxAP,setActualTMPMaxTMP,\\
+      setLimitsTMP,setLowHigh,setExtendedTMPLimitRange~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset HeparinParametersStComm ==\\
+  \\\t3 \lchanset~setHeparinStopTime,\\
+      setHeparinBolusVol,\\
+      setHeparinProfileRate,\\
+      setTreatmentWithoutHeparin,\\
+      setSyringeType~\rchanset
+\end{circus}
+\begin{circus}
+  \circchanset RinsingParametersStComm ==\\
+  \\\t3 \lchanset~setFillingBPRate,setRinsingBPRate,\\
+    setRinsingTime,setUfRateForRinsing,\\
+    setUfVolForRinsing,setBloodFlowForConnectingPatient\rchanset
+\end{circus}
+
+\begin{circus}
+  \circchanset MainTherapyChanSet ==
+  \\\t3 \lchanset~setActualTMPMaxTMP, setArtBolusVol,\\
+    setBicarbonateAcetate, setBicarbonateConductivity,\\
+    setBloodFlowForConnectingPatient, setBloodFlowInEBC,\\
+    setBloodLines, setConductivity, setDfFlow,\\
+    setDfTemperature,\\
+    setExtendedTMPLimitRange, setFillingBPRate,\\
+    setHDMode, setHeparinBolusVol,\\
+     setHeparinProfileRate,\\
+    setHeparinStopTime, setInfSalineVol,\\
+    setLimitDeltaMinMaxAP, setLimitsTMP, setLowHigh,\\
+    setMaxUFRate, setMinUFRate, setMinUFRateTreat,\\
+    setRinsingBPRate,\\
+    setRinsingTime, setSignalLamp,\\
+    setSyringeType, setTherapyTime,\\
+    setTreatmentWithoutHeparin,\\
+    setUfRateForRinsing, setUfVol,\\
+    setUfVolForRinsing,preparationPhase, therapyInitiation,\\
+        connectingToPatient, duringTherapy,\\
+        therapyEnding~\rchanset
+\end{circus}

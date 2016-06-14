@@ -1,0 +1,28 @@
+
+\begin{circus}%
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+\end{circus}%
+\begin{schema}{SysClockSt}
+ time : \num
+\end{schema}
+\begin{circusaction}
+  ResetClock ~\circdef~\Skip
+\end{circusaction}
+\begin{circus}
+  \circspot ResetClock
+  \circend
+\end{circus}
+
+\begin{circus}%
+  \circprocess  Timer  \circdef \circbegin
+\end{circus}
+\begin{circusaction}
+  ResetClock  \circdef \Skip
+\end{circusaction}
+\begin{circusaction}
+  Time  \circdef \Stop
+\end{circusaction}
+\begin{circus}
+  \circspot \Skip
+  \circend
+\end{circus}
