@@ -147,20 +147,6 @@ zschema_box
 	tok L_END_SCHEMA
 	return [ZSchemaDef name (ZSchema (concat decls ++ ax))]
 
--- Artur Gomes
-zschema_box_single :: EParser ZToken ZPara
-zschema_box_single
-  = do  tok L_BEGIN_SCHEMA
-	cut
-	tok L_OPENBRACE
-	name <- zschema_name
-	tok L_CLOSEBRACE
-	-- TODO: add generic formals
-	decls <- zdecl_part
-	ax <- opt [] (do {optnls; tok L_WHERE; cut; optnls; zaxiom_part })
-	optnls
-	tok L_END_SCHEMA
-	return (ZSchemaDef name (ZSchema (concat decls ++ ax)))
 
 --Generic-Box ::= [
 --		==[Gen-Formals]*========
@@ -958,7 +944,12 @@ circus_par :: EParser ZToken [ZPara]
 circus_par
   = circ_chan +++ 
   circ_chanset +++
-  circus_proc
+  circus_proc +++
+  circus_zitem
+
+circus_zitem :: EParser ZToken [ZPara]
+circus_zitem =
+	do {s <- zitem `sepby1` many1 zsep; return (concat s)}
 
 circus_proc :: EParser ZToken [ZPara]
 circus_proc 
@@ -986,33 +977,42 @@ circusdecl
 csimpledecl :: EParser ZToken [CDecl]
 csimpledecl
   = do {tok L_OPENBRACKET;
-		tp <- zdecl_name;
+		tp <- zword;
 		tok L_CLOSEBRACKET;
 		optnls;
-		ws <- zdecl_name `sepby1` comma;
+		ws <- zword `sepby1` comma;
 		optnls;
 		tok L_COLON;
 		optnls;
 		e <- zexpression;
-		return [CGenChanDecl tp (make_zvar w d) e | (w,d) <- ws]}
+		return (mapCGenChanDecl tp ws e)}
 	+++
-	do {ws <- zdecl_name `sepby1` comma; 
+	do {ws <- zword `sepby1` comma; 
 		optnls; 
 		tok L_COLON; 
 		optnls; 
 		e <- zexpression; 
-		return [CChanDecl (make_zvar w d) e | (w,d) <- ws]}
+		return (mapCChanDecl ws e)}
 	+++
-	do {gs <- zdecl_name `sepby1` comma; 
+	do {gs <- zword `sepby1` comma; 
 		return (map CChan gs)}
 
+mapCGenChanDecl :: ZName -> [ZName] -> ZExpr -> [CDecl]
+mapCGenChanDecl tp [] e      = []
+mapCGenChanDecl tp [x] e    = [CGenChanDecl tp x e]
+mapCGenChanDecl tp (x:xs) e = (CGenChanDecl tp x e):(mapCGenChanDecl tp xs e)
+
+mapCChanDecl :: [ZName] -> ZExpr -> [CDecl]
+mapCChanDecl [] e      = []
+mapCChanDecl [x] e    = [CChanDecl x e]
+mapCChanDecl (x:xs) e = (CChanDecl x e):(mapCChanDecl xs e)
 
 circ_chanset :: EParser ZToken [ZPara]
 circ_chanset
   = do {optnls;
   		tok L_CIRCCHANSET; 
  		optnls;
-  		tp <- zdecl_name;
+  		tp <- zword;
  		optnls;
  		tok L_EQUALS_EQUALS;
  		optnls;
@@ -1060,14 +1060,14 @@ csexp_chanset ::  EParser ZToken CSExp
 csexp_chanset
  = do {tok L_LCHANSET; -- \lchanset N^{+} \rchanset
  		optnls;
-  		ws <- zdecl_name `sepby1` comma; 
+  		ws <- zword `sepby1` comma; 
 		optnls;
  		tok L_RCHANSET;
- 		return (CChanSet [(make_zvar w d) | (w,d) <- ws])}
+ 		return (CChanSet ws)}
 
 csexp_channame ::  EParser ZToken CSExp
 csexp_channame
- = do {ws <- zdecl_name; -- N
+ = do {ws <- zword; -- N
    		return (CSExpr ws)}		
 
 csexp_ecsn ::  EParser ZToken CSExp
@@ -1083,7 +1083,7 @@ circus_proc_decl :: EParser ZToken ProcDecl
 circus_proc_decl
   =	do {tok L_CIRCPROCESS; 
  		optnls;
-  		nm <- zdecl_name;
+  		nm <- zword;
   		optnls;
   		tok L_CIRCDEF; 
  		optnls;
@@ -1091,10 +1091,10 @@ circus_proc_decl
   		return (CProcess nm prc)} +++
   	do {tok L_CIRCPROCESS; 
  		optnls;
-  		nm <- zdecl_name;
+  		nm <- zword;
   		optnls;
   		tok L_OPENBRACKET;
-		nm1 <- zdecl_name;
+		nm1 <- zword;
 		tok L_CLOSEBRACKET;
 		optnls;
   		prc <- circus_proc_def;
@@ -1110,13 +1110,13 @@ circus_proc_def
   		optnls;
   		tok L_CIRCSPOT; 
  		optnls;
-  		prc <- circus_process;
+  		prc <- circus_proc_def;
   		return (ProcDefSpot (concat decls) prc)} +++
   	do {decls <- zdecl_part;
   		optnls;
   		tok L_CIRCINDEX; 
  		optnls;
-  		prc <- circus_process;
+  		prc <- circus_proc_def;
   		return (ProcDefIndex (concat decls) prc)} +++
   	do {prc <- circus_process;
   		return (CoreProcess prc)}
@@ -1158,21 +1158,11 @@ circus_process
 		}+++
 	do {tok L_CIRCUSBEGIN;
 		optnls;
-		stt <- zschema_box_single;
-		optnls;
-		pp1 <-  proc_par;
-		optnls;
-		tok L_CIRCSPOT;
-		main <- circus_action;
-		optnls;
-		tok L_CIRCUSEND;
-		return (ProcMain1 stt pp1 main)
-		}+++
-	do {tok L_CIRCUSBEGIN;
-		optnls;
 		pp <- proc_par;
 		optnls;
-		stt <- zschema_box_single;
+		tok L_CIRCSTATE;
+		optnls;
+		stt <- zitem_sdef;
 		optnls;
 		pp1 <-  proc_par;
 		optnls;
@@ -1180,10 +1170,24 @@ circus_process
 		main <- circus_action;
 		optnls;
 		tok L_CIRCUSEND;
-		return (ProcMain pp stt pp1 main)
+		return (ProcMain (remSch stt) (pp++pp1) main)
+		} +++
+	do {tok L_CIRCUSBEGIN;
+		optnls;
+		tok L_CIRCSTATE;
+		optnls;
+		stt <- zitem_sdef;
+		optnls;
+		pp1 <-  proc_par;
+		optnls;
+		tok L_CIRCSPOT;
+		main <- circus_action;
+		optnls;
+		tok L_CIRCUSEND;
+		return (ProcMain (remSch stt) pp1 main)
 		}
 	
-
+remSch [s] = s
 
 -- NSExp	::= \{\}
 		-- | \{N^{+}\}
@@ -1226,18 +1230,18 @@ nsexp_nset_mult ::  EParser ZToken NSExp
 nsexp_nset_mult
  = do {tok L_LCHANSET; -- \{N^{+}\}
  		optnls;
-  		ws <- zdecl_name `sepby1` comma; 
+  		ws <- zword `sepby1` comma; 
 		optnls;
  		tok L_RCHANSET;
- 		return (NSExprMult [(make_zvar w d) | (w,d) <- ws])}
+ 		return (NSExprMult ws)}
 nsexp_nset_sgl ::  EParser ZToken NSExp
 nsexp_nset_sgl
  = do {tok L_LCHANSET; -- \{N^{+}\}
  		optnls;
-  		(w,d) <- zdecl_name;
+  		wd <- zword;
 		optnls;
  		tok L_RCHANSET;
- 		return (NSExprSngl (make_zvar w d))}
+ 		return (NSExprSngl wd)}
 
 nsexp_ensn ::  EParser ZToken NSExp
 nsexp_ensn
@@ -1250,33 +1254,63 @@ nsexp_ensn
 -- 			| \circnameset N == NSExp
 proc_par :: EParser ZToken [PPar]
 proc_par 
-	= --do { ppar <- zparagraph `sepby1` optnls; return [ProcPar (concat ppar)]} +++
+	= do { ppar <- zparagraph `sepby1` optnls; return (map ProcPar (concat ppar))} +++
 	circus_action_par_lim 
 
+circus_zparagraph :: EParser ZToken [ZPara]
+circus_zparagraph
+  = do {
+  	tok L_END_CIRCUS;
+  	optnls;
+ 	sch <- zparagraph;
+  	optnls;
+  	tok L_BEGIN_CIRCUS;
+  	return sch}+++
+  	do {
+  	tok L_END_CIRCUSACTION;
+  	optnls;
+ 	sch <- zparagraph;
+  	optnls;
+  	tok L_BEGIN_CIRCUSACTION;
+  	return sch}+++
+  	do {
+  	tok L_END_CIRCUS;
+  	optnls;
+ 	sch <- zparagraph;
+  	optnls;
+  	tok L_BEGIN_CIRCUSACTION;
+  	return sch}+++
+  	do {
+  	tok L_END_CIRCUSACTION;
+  	optnls;
+ 	sch <- zparagraph;
+  	optnls;
+  	tok L_BEGIN_CIRCUS;
+  	return sch}
 
 circus_action_par_lim :: EParser ZToken [PPar]
 circus_action_par_lim
   = do {
   	tok L_END_CIRCUS;
   	optnls;
- 	cap <- circus_action_par `sepby1` optnls;
-  	optnls;
-  	tok L_BEGIN_CIRCUS;
-  	return cap}
-
-circus_action_par :: EParser ZToken PPar
-circus_action_par
-  = do {
   	tok L_BEGIN_CIRCUSACTION;
   	cut;
-	nm <- zdecl_name;
+ 	cap <- circus_action_par `sepby1` optnls;
+  	optnls;
+  	tok L_END_CIRCUSACTION;
+  	optnls;
+  	tok L_BEGIN_CIRCUS;
+  	return (concat cap)}
+
+circus_action_par :: EParser ZToken [PPar]
+circus_action_par
+  = do {
+	nm <- zword;
 	optnls;
 	tok L_CIRCDEF; 
 	optnls;
 	prc <- par_action;
-  	optnls;
-  	tok L_END_CIRCUSACTION;
-  	return (CParAction nm prc)}
+  	return [CParAction nm prc]}
 
 --ParAction 	::= Action
 -- 				| Decl \circspot ParAction
@@ -1299,7 +1333,7 @@ circus_action :: EParser ZToken CAction
 circus_action 
 	= --do {stt <- zschema_box_single; return (CActionSchema stt)} +++
 	  -- do {nm <- circus_command; return (CActionCommand nm)} +++
-	  do {nm <- zdecl_name; return (CircusActionName nm)} +++
+	  do {nm <- zword; return (CircusActionName nm)} +++
 	  do {csp <- csp_action; return (CCSPAction csp)}
 
 

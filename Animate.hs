@@ -119,7 +119,7 @@ data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
   | ZParaPred{origpara::ZPara, predunfolded::ZPred}
   | CircusChannel{origpara::ZPara, chanunfolded::[CDecl]}
-  | CircusChanSet{origpara::ZPara, defname::ZVar, chansetunfolded::CSExp}
+  | CircusChanSet{origpara::ZPara, defcname::ZName, chansetunfolded::CSExp}
   | CircusProcess{origpara::ZPara,procunfolded::ProcDecl}
   | ZParaMachine{origpara::ZPara,
      defname::ZVar
@@ -486,7 +486,7 @@ process_paras spec (p@(CircChannel s) : ps)
        process_paras newspec ps
 process_paras spec (p@(CircChanSet v s) : ps)
   = do let newp = CircusChanSet{origpara=p,
-           defname=v,
+           defcname=v,
            chansetunfolded=s}
        let newspec = newp:spec
        process_paras newspec ps

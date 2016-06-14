@@ -1,12 +1,21 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
 
-\begin{circus}%
-  \circprocess\ ~SysClock ~\circdef~\circbegin
+\begin{document}
+\begin{circus}
+[NAME,DATE]\\
+\circprocess\ ~SysClock ~\circdef~ x,y : TIME \circspot \circbegin\\
+\circstate SysClockSt \defs [known:\power~NAME; birthday : NAME \pfun DATE | known = \dom birthday]
 \end{circus}%
-\begin{schema}{SysClockSt}
- time : \num
-\end{schema}
 \begin{circusaction}
-  ResetClock ~\circdef~\Skip
+  ResetClock ~\circdef~\Skip\\
+  Test ~\circdef~\Skip
 \end{circusaction}
 \begin{circus}
   \circspot ResetClock
@@ -14,15 +23,32 @@
 \end{circus}
 
 \begin{circus}%
-  \circprocess  Timer  \circdef \circbegin
-\end{circus}
+  \circprocess\ ~Timer ~\circdef~\circbegin
+\end{circus}%
 \begin{circusaction}
-  ResetClock  \circdef \Skip
-\end{circusaction}
-\begin{circusaction}
-  Time  \circdef \Stop
+  ResetClock ~\circdef~\Skip
 \end{circusaction}
 \begin{circus}
   \circspot \Skip
   \circend
 \end{circus}
+\begin{schema}{MySchema}
+known:\power~NAME; 
+birthday : NAME \pfun DATE 
+\where
+known = \dom birthday\\
+\end{schema}
+\begin{circus}%
+  \circprocess\ ~VeryComplicated ~\circdef~\circbegin
+  \circstate SysClockSt \defs MySchema\\
+
+\end{circus}%
+\begin{circusaction}
+  ResetClock ~\circdef~\Skip
+\end{circusaction}
+\begin{circus}
+  \circspot \Skip
+  \circend
+\end{circus}
+
+\end{document}

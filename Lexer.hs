@@ -380,8 +380,6 @@ zlexz c ls ('\\':s)
   | cmd=="finset" = tok (L_PRE_GEN ("\\finset"))  -- must come after \finset_1
   -- A.2.5.2 Section set_toolkit
   | cmd=="mapsto" = tok (L_IN_FUN 1 ('\\':cmd))
-  | cmd=="dom"    = tok L_DOM
-  | cmd=="ran"    = tok L_RAN
   | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="comp"   = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="circ"   = tok (L_IN_FUN 4 ('\\':cmd))
