@@ -442,7 +442,7 @@ zlexz c ls ('\\':s)
   | cmd=="Chaos"                = tok L_CHAOS
   | cmd=="circbegin"            = tok L_CIRCUSBEGIN
   | cmd=="circend"              = tok L_CIRCUSEND
-  | cmd=="circchanset"          = tok L_CIRCCHANSET
+  | cmd=="circchannelset"       = tok L_CIRCCHANSET
   | cmd=="circdef"              = tok L_CIRCDEF
   | cmd=="circguard"            = tok L_CIRCGUARD
   | cmd=="circchannel"          = tok L_CIRCCHANNEL
@@ -475,7 +475,6 @@ zlexz c ls ('\\':s)
   | cmd=="rchanset"             = tok L_RCHANSET
   | cmd=="rcircindex"           = tok L_RCIRCINDEX
   | cmd=="rinter"               = tok L_RINTER
-  | cmd=="rpar"                 = tok L_RPAR
   | cmd=="rpar"                 = tok L_RPAR
   | cmd=="Semi"                 = tok L_REPSEMI
   | cmd=="Skip"                 = tok L_SKIP

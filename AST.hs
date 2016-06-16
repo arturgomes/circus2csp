@@ -552,43 +552,42 @@ data CSExp
 -- Proccess declaration
 --
 data ProcDecl
-  = CProcess ZName ProcDef                  -- \circprocess N \circdef ProcDef
-  | CGenProcess ZName ZName ProcDef          -- \circprocess N[N^{+}] \circdef ProcDef
+  = CProcess ZName ProcessDef                  -- \circprocess N \circdef ProcDef
+  | CGenProcess ZName ZName ProcessDef          -- \circprocess N[N^{+}] \circdef ProcDef
   deriving (Eq,Ord,Show)
 
-data ProcDef
-  = ProcDefSpot [ZGenFilt] ProcDef           -- Decl \circspot ProcDef
-  | ProcDefIndex [ZGenFilt] ProcDef          -- Decl \circindex ProcDef
-  | CoreProcess CProc                      -- Proc
+data ProcessDef
+  = ProcDefSpot [ZGenFilt] ProcessDef           -- Decl \circspot ProcDef
+  | ProcDefIndex [ZGenFilt] ProcessDef          -- Decl \circindex ProcDef
+  | ProcDef CProc                      -- Proc
   deriving (Eq,Ord,Show)
 
 data CProc
-  = ProcMain ZPara [PPar] CAction   -- \circbegin PPar*
+  = CSemi CProc CProc                      -- Proc \circsemi Proc
+  | CExtChoice CProc CProc                 -- Proc \extchoice Proc
+  | CIntChoice CProc CProc                 -- Proc \intchoice Proc
+  | CParParal CSExp CProc CProc            -- Proc \lpar CSExp \rpar Proc
+  | CInterleave CProc CProc                -- Proc \interleave Proc
+  -- | CParamProcDecl CDecl ProcessDef [ZExpr]  -- (Decl \circspot ProcDef)(Exp^{+})
+  -- | CParamProc ZName [ZExpr]              -- N(Exp^{+})
+  -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
+                                           -- Proc[N^{+}:=N^{+}] -- TODO
+  | ProcMain ZPara [PPar] CAction   -- \circbegin PPar*
                                            --   \circstate SchemaExp PPar*
                                            --   \circspot Action
                                            --   \circend
   | ProcStalessMain [PPar] CAction         -- \circbegin PPar*
                                            --   \circspot Action
                                            --   \circend
-  | CSemi CProc CProc                      -- Proc \circsemi Proc
-  | CExtChoice CProc CProc                 -- Proc \extchoice Proc
-  | CIntChoice CProc CProc                 -- Proc \intchoice Proc
-  | CParParal CProc CSExp CProc            -- Proc \lpar CSExp \rpar Proc
-  | CInterleave CProc CProc                -- Proc \interleave Proc
+  | CircusProc ZName                       -- N
+  | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
+  | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
+  | CRepSemiProc [ZGenFilt] CProc          -- \Semi Decl \circspot Proc
+  | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
+  | CRepIntChProc [ZGenFilt] CProc         -- \IntChoice Decl \circspot Proc
+  | CRepParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
+  | CRepInterlProc [ZGenFilt] CProc        -- \Interleave Decl \circspot Proc
   | CHide CProc CSExp                      -- Proc \circhide CSExp
-  | CParamProcDecl CDecl ProcDef ZExpr     -- (Decl \circspot ProcDef)(Exp^{+})
-  | CParamProc ZName ZExpr                  -- N(Exp^{+})
-  | CircusProc ZName                        -- N
-  | CIndexProc [ZGenFilt] ProcDef ZExpr    -- \(Decl \circindex ProcDef)
-                                           -- \lcircindex Exp^{+} \rcircindex
-  | CSimpIndexProc ZName ZExpr              -- N\lcircindex Exp^{+} \rcircindex
-  --      | Proc[N^{+}:=N^{+}] -- TODO
-  | CGenProc ZName ZSExpr                   -- N[Exp^{+}]
-  | CSemiProc [ZGenFilt] CProc             -- \Semi Decl \circspot Proc
-  | CExtChProc [ZGenFilt] CProc            -- \Extchoice Decl \circspot Proc
-  | CIntChProc [ZGenFilt] CProc            -- \IntChoice Decl \circspot Proc
-  | CGenParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
-  | CGenInterleave [ZGenFilt] CProc        -- \Interleave Decl \circspot Proc
   deriving (Eq,Ord,Show)
 
 data NSExp
@@ -601,7 +600,7 @@ data NSExp
   deriving (Eq,Ord,Show)
 
 data PPar
- = ProcPar ZPara                         -- Par
+ = ProcZPara ZPara                         -- Par
  | CParAction ZName ParAction               -- N \circdef ParAction
  | CNameSet ZName NSExp                     -- \circnameset N == NSExp
  deriving (Eq,Ord,Show)
@@ -612,7 +611,7 @@ data ParAction
  deriving (Eq,Ord,Show)
 
 data CAction
- = CActionSchema ZPara
+ = CActionSchema ZSExpr
  | CActionCommand CCommand
  | CircusActionName ZName
  | CCSPAction CSPAction

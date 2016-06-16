@@ -80,7 +80,7 @@ tags:
 	hstags $(GHC_FLAGS) *.hs *.lhs
 
 clean:
-	rm -f *.o *.hi
+	rm -f *.o *.hi *.aux *.log *.out
 
 depend:
 	ghc -M $(GHCFLAGS) *.hs FiniteSets.lhs

@@ -1,6 +1,8 @@
 ZGivenSetDecl ("NAME",[])
-ZGivenSetDecl ("DATE",[])
-Process (CProcess "SysClock" (ProcDefSpot [Choose ("x",[]) (ZVar ("TIME",[])),Choose ("y",[]) (ZVar ("TIME",[]))] (CoreProcess (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSchema [Choose ("known",[]) (ZCall (ZVar ("\\power",[])) (ZVar ("NAME",[]))),Choose ("birthday",[]) (ZCall (ZVar ("\\pfun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("DATE",[])])),Check (ZEqual (ZVar ("known",[])) (ZCall (ZVar ("\\dom",[])) (ZVar ("birthday",[]))))])) [CParAction "ResetClock" (CircusAction (CCSPAction CSPSkip)),CParAction "Test" (CircusAction (CCSPAction CSPSkip))] (CircusActionName "ResetClock")))))
-Process (CProcess "Timer" (CoreProcess (ProcStalessMain [CParAction "ResetClock" (CircusAction (CCSPAction CSPSkip))] (CCSPAction CSPSkip))))
-ZSchemaDef (ZSPlain "MySchema") (ZSchema [Choose ("known",[]) (ZCall (ZVar ("\\power",[])) (ZVar ("NAME",[]))),Choose ("birthday",[]) (ZCall (ZVar ("\\pfun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("DATE",[])])),Check (ZEqual (ZVar ("known",[])) (ZCall (ZVar ("\\dom",[])) (ZVar ("birthday",[]))))])
-Process (CProcess "VeryComplicated" (CoreProcess (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSRef (ZSPlain "MySchema") [] [])) [CParAction "ResetClock" (CircusAction (CCSPAction CSPSkip))] (CCSPAction CSPSkip))))
+ZGivenSetDecl ("TIME",[])
+ZFreeTypeDef ("REPORT",[]) [ZBranch0 ("ok",[]),ZBranch0 ("already\\_known",[]),ZBranch0 ("not\\_known",[])]
+Process (CProcess "SysClock" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSchema [Choose ("t",[]) (ZVar ("TIME",[]))])) [CParAction "ResetClock" (CircusAction (CCSPAction CSPSkip))] (CActionSchema (ZSRef (ZSPlain "ResetClock") [] [])))))
+Process (CProcess "Timer" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "TimerSt") (ZSchema [Choose ("t",[]) (ZVar ("TIME",[]))])) [CParAction "ResetClock" (CircusAction (CCSPAction CSPSkip))] (CActionSchema (ZSRef (ZSPlain "ResetClock") [] [])))))
+Process (CProcess "BothProcesses" (ProcDef (CRepSemiProc [Choose ("x",[]) (ZVar ("TIME",[]))] (CircusProc "SysClock"))))
+Process (CProcess "BothProcesses1" (ProcDef (CIntChoice (CircusProc "BothProcesses") (CircusProc "SysClock"))))
+Process (CProcess "BothProcesses1" (ProcDef (CRepSemiProc [Choose ("x",[]) (ZVar ("TIME",[]))] (CIntChoice (CircusProc "SysClock") (CircusProc "BothProcesses")))))

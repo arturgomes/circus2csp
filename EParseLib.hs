@@ -17,7 +17,7 @@
 -- 3.  allow 'cuts' within grammars, to improve efficiency by
 --       reducing non-determinism.
 --        (Note: 'first' and '+++', from the original library,
---               can also help to reduce non-determinism).
+--    can also help to reduce non-determinism).
 --
 -- The goal is complete compatibility with the original library,
 -- so that you can just replace 'import ParseLib' by 'import EParseLib',
@@ -98,13 +98,13 @@ choose_error errs
   = foldl1 latest errs
   where
   ([],"")     `latest`  e          = e
-  e           `latest`  ([],"")    = e
+  e`latest`  ([],"")    = e
   ([],msg)    `latest`  _          = ([],msg)  -- EOF error
-  _           `latest`  ([],msg)   = ([],msg)  -- EOF error
+  _`latest`  ([],msg)   = ([],msg)  -- EOF error
   a@(t:_,_)   `latest`  b@(u:_,_)
     | (tokenLine t, tokenColumn t) > (tokenLine u, tokenColumn u) = a
     | (tokenLine t, tokenColumn t) < (tokenLine u, tokenColumn u) = b
-    | otherwise                                                   = b
+    | otherwise       = b
 
 
 
@@ -174,7 +174,7 @@ instance Monad (EParser tok) where
 --
 --      takeUntil1 (==4) [1,2,3,4,5]  = [1,2,3,4]
 --
-takeUntil1               :: (a -> Bool) -> [a] -> [a]
+takeUntil1    :: (a -> Bool) -> [a] -> [a]
 takeUntil1 p []          =  []
 takeUntil1 p (x:xs)
 	    | p x       =  [x]
@@ -230,11 +230,11 @@ tok t
 -- is sometimes needed to improve laziness.
 --force       :: EParser tok ast -> EParser tok ast
 --force (P p) = P (\inp -> let pout@ParseResult{parses=x} = p inp in
---                               pout{parses=((fst(head x), snd(head x)):tail x)})
+--         pout{parses=((fst(head x), snd(head x)):tail x)})
 
 
 -- reduces non-determinism by returning just the first parse.
-first             :: EParser tok ast -> EParser tok ast
+first  :: EParser tok ast -> EParser tok ast
 first (P p)        = P (\inp -> first_parse (p inp))
     where
     first_parse pout = pout{parses=take 1 (parses pout)}
@@ -250,8 +250,8 @@ first (P p)        = P (\inp -> first_parse (p inp))
 -- Note that the effect of a cut is global.  It prunes away ALL
 -- unexplored alternatives, right up to the top-level parser function!
 --
-cut               :: EParser tok ()
-cut                = P (\toks -> ParseResult{parses=[((),[],toks)],
+cut    :: EParser tok ()
+cut     = P (\toks -> ParseResult{parses=[((),[],toks)],
 					     seencut=True,
 					     besterror=no_error})
 
@@ -304,8 +304,8 @@ epapplystr (P p) = p . tokenise 1 0
 -- In practice, you will usually want to change from using papply
 -- to using , except that the result contains
 -- more information (errors as well as the parse results).
-papply            :: Parser ast -> [Char] -> [(ast,[Char])]
-papply p           = concatMap fix_result . parses . epapplystr p
+papply :: Parser ast -> [Char] -> [(ast,[Char])]
+papply p= concatMap fix_result . parses . epapplystr p
   where
   fix_result (ast,[],toks) = [(ast, map tokenValue toks)]
   fix_result (ast,_,toks)  = []    -- discard parses with errors
@@ -317,116 +317,117 @@ tokenise l c ('\t':s) = Token '\t' l c : tokenise l ((c `div` 8 + 1)*8) s
 tokenise l c (ch:s)   = Token ch l c   : tokenise l (c+1) s
 
 ---------------- Derived combinators ------------------------------
-many              :: EParser tok a -> EParser tok [a]
-many p             = (many1 p +++ return [])
+many   :: EParser tok a -> EParser tok [a]
+many p  = (many1 p +++ return [])
 -- Because of cuts in p many can fail therefore force is not safe.
---many p             = force (many1 p +++ return [])
+--many p  = force (many1 p +++ return [])
 
-many1             :: EParser tok a -> EParser tok [a]
-many1 p            = do {x <- p; xs <- many p; return (x:xs)}
+many1   :: EParser tok a -> EParser tok [a]
+many1 p = do {x <- p; xs <- many p; return (x:xs)}
 
-sepby             :: EParser tok a -> EParser tok b -> EParser tok [a]
-p `sepby` sep      = (p `sepby1` sep) +++ return []
+sepby  :: EParser tok a -> EParser tok b -> EParser tok [a]
+p `sepby` sep
+        = (p `sepby1` sep) +++ return []
 
-sepby1            :: EParser tok a -> EParser tok b -> EParser tok [a]
-p `sepby1` sep     = do {x <- p; xs <- many (do {sep; p}); return (x:xs)}
+sepby1 :: EParser tok a -> EParser tok b -> EParser tok [a]
+p `sepby1` sep
+        = do {x <- p; xs <- many (do {sep; p}); return (x:xs)}
 
-chainl            :: EParser tok a -> EParser tok (a -> a -> a)
-				   -> a -> EParser tok a
-chainl p op v      = (p `chainl1` op) +++ return v
+chainl :: EParser tok a -> EParser tok (a -> a -> a) -> a -> EParser tok a
+chainl p op v
+        = (p `chainl1` op) +++ return v
 
-chainl1           :: EParser tok a -> EParser tok (a -> a -> a)
-				   -> EParser tok a
-p `chainl1` op     = do {x <- p; rest x}
+chainl1:: EParser tok a -> EParser tok (a -> a -> a) -> EParser tok a
+p `chainl1` op
+        = do {x <- p; rest x}
 		     where
 			rest x = do {f <- op; y <- p; rest (f x y)}
 				 +++ return x
+chainr :: EParser tok a -> EParser tok (a -> a -> a) -> a -> EParser tok a
+chainr p op v 
+        = (p `chainr1` op) +++ return v
 
-chainr            :: EParser tok a -> EParser tok (a -> a -> a)
-				   -> a -> EParser tok a
-chainr p op v      = (p `chainr1` op) +++ return v
-
-chainr1           :: EParser tok a -> EParser tok (a -> a -> a)
-				   -> EParser tok a
-p `chainr1` op     = do {x <- p; rest x}
+chainr1 :: EParser tok a -> EParser tok (a -> a -> a) -> EParser tok a
+p `chainr1` op
+        = do {x <- p; rest x}
 		     where
 			rest x = do {f <- op;
 				     y <- p `chainr1` op;
 				     return (f x y)}
 				 +++ return x
 
-ops               :: [(EParser tok a, b)] -> EParser tok b
-ops xs             = foldr1 (+++) [do {p; return op} | (p,op) <- xs]
+ops    :: [(EParser tok a, b)] -> EParser tok b
+ops xs  
+        = foldr1 (+++) [do {p; return op} | (p,op) <- xs]
 
-bracket           :: EParser tok a -> EParser tok b
-				   -> EParser tok c
-				   -> EParser tok b
-bracket open p close = do {open; x <- p; close; return x}
+bracket:: EParser tok a -> EParser tok b -> EParser tok c -> EParser tok b
+bracket open p close 
+        = do {open; x <- p; close; return x}
 
 
 
 ------- The rest of this file is identical to ParseLib.hs --------------
 --------- (and defines 'Parser's rather than 'EParser's) ---------------
 
-char              :: Char -> Parser Char
-char x             = tok x   -- Was: sat (\y -> x == y)
+char   :: Char -> Parser Char
+char x  = tok x   -- Was: sat (\y -> x == y)
 
-digit             :: Parser Char
-digit              = sat isDigit
+digit  :: Parser Char
+digit   = sat isDigit
 
-lower             :: Parser Char
-lower              = sat isLower
+lower  :: Parser Char
+lower   = sat isLower
 
-upper             :: Parser Char
-upper              = sat isUpper
+upper  :: Parser Char
+upper   = sat isUpper
 
-letter            :: Parser Char
-letter             = sat isAlpha
+letter :: Parser Char
+letter  = sat isAlpha
 
 alphanum          :: Parser Char
-alphanum           = sat isAlphaNum
+alphanum= sat isAlphaNum
 
-string            :: String -> Parser String
+string :: String -> Parser String
 string ""          = return ""
 string (x:xs)      = do {char x; string xs; return (x:xs)}
 
-ident             :: Parser String
-ident              = do {x <- lower; xs <- many alphanum; return (x:xs)}
+ident  :: Parser String
+ident   = do {x <- lower; xs <- many alphanum; return (x:xs)}
 
-nat               :: Parser Int
-nat                = do {x <- digit; return (digitToInt x)} `chainl1` return op
+nat    :: Parser Int
+nat     = do {x <- digit; return (digitToInt x)} `chainl1` return op
 		     where
 			m `op` n = 10*m + n
 
-int               :: Parser Int
-int                = do {char '-'; n <- nat; return (-n)} +++ nat
+int    :: Parser Int
+int     = do {char '-'; n <- nat; return (-n)} +++ nat
 
 --- Lexical combinators ------------------------------------------------------
 
-spaces            :: Parser ()
-spaces             = do {many1 (sat isSpace); return ()}
+spaces :: Parser ()
+spaces  = do {many1 (sat isSpace); return ()}
 
-comment           :: Parser ()
-comment            = do {string "--"; many (sat (\x -> x /= '\n')); return ()}
+comment:: Parser ()
+comment = do {string "--"; many (sat (\x -> x /= '\n')); return ()}
 
-junk              :: Parser ()
-junk               = do {many (spaces +++ comment); return ()}
+junk   :: Parser ()
+junk    = do {many (spaces +++ comment); return ()}
 
-parse             :: Parser a -> Parser a
-parse p            = do {junk; p}
+parse  :: Parser a -> Parser a
+parse p = do {junk; p}
 
-token             :: Parser a -> Parser a
-token p            = do {v <- p; junk; return v}
+token  :: Parser a -> Parser a
+token p = do {v <- p; junk; return v}
 
 --- Token parsers ------------------------------------------------------------
 
-natural           :: Parser Int
-natural            = token nat
+natural:: Parser Int
+natural = token nat
 
-integer           :: Parser Int
-integer            = token int
+integer:: Parser Int
+integer = token int
 
-symbol            :: String -> Parser String
+symbol :: String -> Parser String
 symbol xs          = token (string xs)
 
 identifier        :: [String] -> Parser String
