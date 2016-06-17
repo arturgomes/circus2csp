@@ -40,7 +40,7 @@ module EParseLib
     EParser, epapply, epapplystr, cut, localizecut, --errorRecovery,
     Parser, item, tok, papply,
     (+++), sat, many, many1, sepby, sepby1, chainl,
-    chainl1, chainr, chainr1, ops, bracket,
+    chainl1,chainl2, chainr, chainr1, ops, bracket,
     -- The remainder are only for parsing character strings.
     -- They have type: Parser ast, rather than EParser tok ast
     char, digit, lower, upper,
@@ -51,7 +51,7 @@ where
 
 import Data.Char
 import Control.Monad
-
+import AST
 infixr 5 +++
 
 ----- The Token-with-Line-and-Column-Information type ------------
@@ -340,9 +340,16 @@ chainl p op v
 chainl1:: EParser tok a -> EParser tok (a -> a -> a) -> EParser tok a
 p `chainl1` op
         = do {x <- p; rest x}
-		     where
-			rest x = do {f <- op; y <- p; rest (f x y)}
-				 +++ return x
+         where
+      rest x = do {f <- op; y <- p; rest (f x y)}
+         +++ return x
+
+chainl2 p cs
+        = do {x <- p; rest x}
+         where
+      rest x = do {csx <- cs; y <- p; rest (CParParal csx x y)}
+         +++ return x
+
 chainr :: EParser tok a -> EParser tok (a -> a -> a) -> a -> EParser tok a
 chainr p op v 
         = (p `chainr1` op) +++ return v
