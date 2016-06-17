@@ -1,0 +1,19 @@
+\begin{zed}
+ [DATA,TIME]\\
+ \also PID ::= p1 | p2 | p3 | p4\\
+\end{zed}
+\begin{circus}
+	\circchannelset NAME == \lchanset \rchanset\\
+	\circchannelset TIME == \lchanset a, b, c \rchanset\\
+	\circchannel [T]c1, c2 : \power T; newchannel\\
+	% \circchannelset UNI == NAME \cup TIME\\
+	% \circchannelset DUE == \lchanset \rchanset \cap TIME\\
+	% \circchannelset TREI == \lchanset \rchanset \circhide \lchanset \rchanset\\
+	% \circchannelset FOUR == NAME \circhide \lchanset a, b, c \rchanset\\
+	\circchannel first, second, third : T\\
+	\circchannel a, b, c : T; d, c : NT
+\end{circus}
+
+
+
+

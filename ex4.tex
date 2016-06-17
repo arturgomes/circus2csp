@@ -1,0 +1,70 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+\begin{zed}
+[NAME,TIME]\\
+REPORT ~~::=~~ ok | already\_known | not\_known\\
+\end{zed}
+\begin{circus}
+\circprocess ~SysClock ~\circdef~ 
+\circbegin\\
+  \circstate SysClockSt \defs [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess ~Timer ~\circdef~ 
+\circbegin\\
+  \circstate TimerSt == [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess ~BothProcesses ~\circdef~ \Semi x : TIME \circspot SysClock\\
+\end{circus}
+\begin{circus}
+\circprocess ~BothProcesses1 ~\circdef~ BothProcesses \circsemi SysClock\\
+\end{circus}
+\begin{circus}
+\circprocess ~MyInsaneProcess ~\circdef~ \Semi insane: TIME \circspot SysClock \circsemi Timer\\
+\end{circus}
+
+% Process (
+% 	CProcess "MyInsaneProcess2" (
+% 		ProcDef (
+% 			CRepSemiProc [Choose ("insane",[]) (ZVar ("TIME",[]))] (
+% 				CIntChoice 
+% 					(CExtChoice
+% 						(CircusProc "SysClock") 
+% 							(CSemi 
+% 								(CircusProc "Timer") 
+% 								(CircusProc "BothProcesses")
+% 							)
+% 					) 
+% 					(CircusProc "BothProcesses1")))))
+
+\begin{circus}
+\circprocess ~MyInsaneProcess2 ~\circdef~ \Semi insane: TIME \circspot \\
+		SysClock \extchoice Timer \circsemi BothProcesses \intchoice BothProcesses1\\
+\end{circus}
+\begin{circus}
+
+\circprocess ~MyInsaneProcess3 ~\circdef~ 
+		Timer \lpar \lchanset \rchanset \rpar BothProcesses\\
+\end{circus}
+\begin{circus}
+
+\circprocess ~MyInsaneProcess4 ~\circdef~ 
+		SysClock \extchoice Timer \lpar \lchanset \rchanset \rpar BothProcesses \intchoice BothProcesses1\\
+\end{circus}
+
+\end{document}
