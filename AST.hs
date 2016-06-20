@@ -563,7 +563,7 @@ data ProcessDef
   deriving (Eq,Ord,Show)
 
 data CProc
-  = CSemi CProc CProc                      -- Proc \circsemi Proc
+  = CSeq CProc CProc                      -- Proc \cirCSeq Proc
   | CExtChoice CProc CProc                 -- Proc \extchoice Proc
   | CIntChoice CProc CProc                 -- Proc \intchoice Proc
   | CParParal CSExp CProc CProc            -- Proc \lpar CSExp \rpar Proc
@@ -582,7 +582,7 @@ data CProc
   | CircusProc ZName                       -- N
   | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
   | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
-  | CRepSemiProc [ZGenFilt] CProc          -- \Semi Decl \circspot Proc
+  | CRepSeqProc [ZGenFilt] CProc          -- \Semi Decl \circspot Proc
   | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
   | CRepIntChProc [ZGenFilt] CProc         -- \IntChoice Decl \circspot Proc
   | CRepParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
@@ -607,34 +607,31 @@ data PPar
 
 data ParAction
  = CircusAction CAction                                 -- Action
- | ParActionDecl [ZGenFilt] ParAction      -- Decl \circspot ParAction
+ | ParamActionDecl [ZGenFilt] ParAction      -- Decl \circspot ParAction
  deriving (Eq,Ord,Show)
 
 data CAction
  = CActionSchema ZSExpr
  | CActionCommand CCommand
  | CircusActionName ZName
- | CCSPAction CSPAction
- -- | CActionRename ZName                   -- Action[N^{+}:=N^{+}]
- deriving (Eq,Ord,Show)
-
-data CSPAction
- = CSPSkip | CSPStop | CSPChaos
- | CommAction Comm CAction                -- Comm \then Action
+ | CSPSkip | CSPStop | CSPChaos
+ | CSPCommAction Comm CAction                -- Comm \then Action
  | CSPGuard ZPred CAction                 -- Pred \circguard Action
  | CSPSeq CAction CAction                 -- Action \circseq Action
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
  | CSPIntChoice CAction CAction           -- Action \intchoice Action
- | CSPNSParal CAction NSExp CSExp NSExp CAction -- Action [| NSExp | CSExp | NSExp |] Action
- | CSPInterParal CAction NSExp NSExp CAction    -- Action [ NSExp | NSExp ] Action
+ | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action [| NSExp | CSExp | NSExp |] Action
+ | CSPInterParal NSExp NSExp CAction CAction    -- Action [ NSExp | NSExp ] Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
  | CSPParAction ParAction ZExpr           -- ParAction(Exp^{+})
  | CSPRecursion ZName CAction              -- \circmu N \circspot Action
- | CSPGenSemi [ZGenFilt] CAction          -- \Semi Decl \circspot Action
- | CSPGenExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
- | CSPGenIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
- | CSPGenNSParal CSExp [ZGenFilt] NSExp CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
- | CSPGenInterl [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
+ | CSPRepSemi [ZGenFilt] CAction          -- \Semi Decl \circspot Action
+ | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
+ | CSPRepIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
+ | CSPRepParalNS CSExp [ZGenFilt] NSExp CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
+ | CSPRepParal CSExp [ZGenFilt] CAction -- \lpar CSExp \rpar Decl \circspot ction
+ | CSPRepInterlNS [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
+ | CSPRepInterl [ZGenFilt] CAction  -- \Interleave Decl \circspot  Action
  deriving (Eq,Ord,Show)
 
 --Comm    ::= N CParameter* | N [Exp^{+}] CParameter *

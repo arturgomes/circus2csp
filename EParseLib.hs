@@ -40,7 +40,7 @@ module EParseLib
     EParser, epapply, epapplystr, cut, localizecut, --errorRecovery,
     Parser, item, tok, papply,
     (+++), sat, many, many1, sepby, sepby1, chainl,
-    chainl1,chainl2, chainr, chainr1, ops, bracket,
+    chainl1, recursiveCParParal, recursiveCSPParParal1, recursiveCSPParParal2, chainr, chainr1, ops, bracket,
     -- The remainder are only for parsing character strings.
     -- They have type: Parser ast, rather than EParser tok ast
     char, digit, lower, upper,
@@ -344,14 +344,29 @@ p `chainl1` op
       rest x = do {f <- op; y <- p; rest (f x y)}
          +++ return x
 
-chainl2 p cs
+recursiveCParParal p cs
         = do {x <- p; rest x}
          where
-      rest x = do {csx <- cs; y <- p; rest (CParParal csx x y)}
+        rest x = do {csx <- cs; y <- p; rest (CParParal csx x y)}
          +++ return x
 
+recursiveCSPParParal2 p ns ns1
+        = do {x <- p; rest x}
+         where
+        rest x = do {nsx1 <- ns;
+                    nsx2 <- ns1;
+                    y <- p; rest (CSPInterParal nsx1 nsx2 x y)}
+
+recursiveCSPParParal1 p ns cs ns1
+        = do {x <- p; rest x}
+         where
+        rest x = do {nsx1 <- ns;
+                    csx <- cs;
+                    nsx2 <- ns1;
+                    y <- p; rest (CSPNSParal nsx1 csx nsx2 x y)}
+
 chainr :: EParser tok a -> EParser tok (a -> a -> a) -> a -> EParser tok a
-chainr p op v 
+chainr p op v
         = (p `chainr1` op) +++ return v
 
 chainr1 :: EParser tok a -> EParser tok (a -> a -> a) -> EParser tok a
@@ -364,11 +379,11 @@ p `chainr1` op
 				 +++ return x
 
 ops    :: [(EParser tok a, b)] -> EParser tok b
-ops xs  
+ops xs
         = foldr1 (+++) [do {p; return op} | (p,op) <- xs]
 
 bracket:: EParser tok a -> EParser tok b -> EParser tok c -> EParser tok b
-bracket open p close 
+bracket open p close
         = do {open; x <- p; close; return x}
 
 

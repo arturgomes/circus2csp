@@ -13,7 +13,7 @@
 REPORT ~~::=~~ ok | already\_known | not\_known\\
 \end{zed}
 \begin{circus}
-\circprocess ~SysClock ~\circdef~ 
+\circprocess ~SysClock ~\circdef~
 \circbegin\\
   \circstate SysClockSt \defs [t : TIME]\\
   ResetClock ~\circdef~\Skip\\
@@ -21,7 +21,7 @@ REPORT ~~::=~~ ok | already\_known | not\_known\\
   \circend
 \end{circus}
 \begin{circus}
-\circprocess ~Timer ~\circdef~ 
+\circprocess ~Timer ~\circdef~
 \circbegin\\
   \circstate TimerSt == [t : TIME]\\
   ResetClock ~\circdef~\Skip\\
@@ -32,39 +32,43 @@ REPORT ~~::=~~ ok | already\_known | not\_known\\
 \circprocess ~BothProcesses ~\circdef~ \Semi x : TIME \circspot SysClock\\
 \end{circus}
 \begin{circus}
-\circprocess ~BothProcesses1 ~\circdef~ BothProcesses \circsemi SysClock\\
+\circprocess ~BothProcesses1 ~\circdef~ BothProcesses \circseq SysClock\\
 \end{circus}
 \begin{circus}
-\circprocess ~MyInsaneProcess ~\circdef~ \Semi insane: TIME \circspot SysClock \circsemi Timer\\
+\circprocess ~MyInsaneProcess ~\circdef~ \Semi insane: TIME \circspot SysClock \circseq Timer\\
 \end{circus}
 
 % Process (
 % 	CProcess "MyInsaneProcess2" (
 % 		ProcDef (
 % 			CRepSemiProc [Choose ("insane",[]) (ZVar ("TIME",[]))] (
-% 				CIntChoice 
+% 				CIntChoice
 % 					(CExtChoice
-% 						(CircusProc "SysClock") 
-% 							(CSemi 
-% 								(CircusProc "Timer") 
+% 						(CircusProc "SysClock")
+% 							(CSemi
+% 								(CircusProc "Timer")
 % 								(CircusProc "BothProcesses")
 % 							)
-% 					) 
+% 					)
 % 					(CircusProc "BothProcesses1")))))
 
 \begin{circus}
 \circprocess ~MyInsaneProcess2 ~\circdef~ \Semi insane: TIME \circspot \\
-		SysClock \extchoice Timer \circsemi BothProcesses \intchoice BothProcesses1\\
+		SysClock  \intchoice BothProcesses1 \extchoice Timer \circseq BothProcesses \intchoice BothProcesses1\\
 \end{circus}
 \begin{circus}
 
-\circprocess ~MyInsaneProcess3 ~\circdef~ 
+\circprocess ~MyInsaneProcess3 ~\circdef~
 		Timer \lpar \lchanset \rchanset \rpar BothProcesses\\
 \end{circus}
 \begin{circus}
 
-\circprocess ~MyInsaneProcess4 ~\circdef~ 
-		SysClock \extchoice Timer \lpar \lchanset \rchanset \rpar BothProcesses \intchoice BothProcesses1\\
+\circprocess ~MyInsaneProcess4 ~\circdef~
+		SysClock \extchoice Timer \lpar \lchanset \rchanset \rpar \circbegin\\
+  \circstate TimerSt == [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend \intchoice BothProcesses1\\
 \end{circus}
 
 \end{document}
