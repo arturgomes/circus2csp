@@ -53,6 +53,7 @@ data ZToken
   | L_CIRCASSIGNM
   | L_CIRCCHANSET
   | L_CIRCDEF
+  | L_CIRCELSE
   | L_CIRCGUARD
   | L_CIRCCHANNEL
   | L_CIRCHIDE
@@ -66,10 +67,11 @@ data ZToken
   | L_CIRCSEQ
   | L_CIRCSPOT
   | L_CIRCSTATE
+  | L_CIRCTHEN
   | L_CIRCVAL
   | L_CIRCVAR
   | L_CIRCVRES
-  | L_CIRFI
+  | L_CIRCFI
   | L_LCIRCGUARD
   | L_RCIRCGUARD
   | L_EXCLMRK
@@ -444,6 +446,7 @@ zlexz c ls ('\\':s)
   | cmd=="circend"              = tok L_CIRCUSEND
   | cmd=="circchannelset"       = tok L_CIRCCHANSET
   | cmd=="circdef"              = tok L_CIRCDEF
+  | cmd=="circelse"             = tok L_CIRCELSE
   | cmd=="circguard"            = tok L_CIRCGUARD
   | cmd=="circchannel"          = tok L_CIRCCHANNEL
   | cmd=="circhide"             = tok L_CIRCHIDE
@@ -456,10 +459,11 @@ zlexz c ls ('\\':s)
   | cmd=="circseq"              = tok L_CIRCSEQ
   | cmd=="circspot"             = tok L_CIRCSPOT
   | cmd=="circstate"            = tok L_CIRCSTATE
+  | cmd=="circthen"             = tok L_CIRCTHEN
   | cmd=="circval"              = tok L_CIRCVAL
   | cmd=="circvar"              = tok L_CIRCVAR
   | cmd=="circvres"             = tok L_CIRCVRES
-  | cmd=="cirfi"                = tok L_CIRFI
+  | cmd=="circfi"               = tok L_CIRCFI
   | cmd=="Extchoice"            = tok L_REPEXTCHOICE
   | cmd=="extchoice"            = tok L_EXTCHOICE
   | cmd=="IntChoice"            = tok L_REPINTCHOICE

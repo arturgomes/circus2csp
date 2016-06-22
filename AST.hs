@@ -618,8 +618,10 @@ data CAction
  | CSPSeq CAction CAction                 -- Action \circseq Action
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
  | CSPIntChoice CAction CAction           -- Action \intchoice Action
- | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action [| NSExp | CSExp | NSExp |] Action
- | CSPInterParal NSExp NSExp CAction CAction    -- Action [ NSExp | NSExp ] Action
+ | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
+ | CSPParal CSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
+ | CSPNSInter NSExp NSExp CAction CAction    -- Action \linter NSExp | NSExp \rinter Action
+ | CSPInterleave CAction CAction          -- Action \interleave Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
  | CSPParAction ZName [ZExpr]             -- ParAction(Exp^{+})
  | CSPRecursion ZName CAction             -- \circmu N \circspot Action
@@ -658,8 +660,8 @@ data CCommand
   deriving (Eq,Ord,Show)
 
 data CGActions
- = CircThen ZPred CAction                 -- Pred \then Action
- | CGExtChoice ZPred CAction CGActions    -- Pred \then Action \extchoice GActions
+ = CircGAction ZPred CAction                 -- Pred \then Action
+ | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
  deriving (Eq,Ord,Show)
 ---
 --- end Circus

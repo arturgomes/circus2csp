@@ -41,7 +41,7 @@ module EParseLib
     Parser, item, tok, papply,
     (+++), sat, many, many1, sepby, sepby1, chainl,
     chainl1, 
-    recursiveCParParal, recursiveCParParal1,
+    recursiveCParParal, recursiveCParParal1,recursiveCParParal2,
     recursiveCHide, recursiveCHide1,
     recursiveCSPParParal2,
     recursiveCSPParParal1, 
@@ -361,6 +361,12 @@ p `recursiveCParParal1` cs
         rest x = do {csx <- cs; y <- p; rest (CParParal csx x y)}
          +++ return x
 
+p `recursiveCParParal2` cs
+        = do {x <- p; rest x}
+         where
+        rest x = do {csx <- cs; y <- p; rest (CSPParal csx x y)}
+         +++ return x
+
 recursiveCHide :: EParser tok CProc -> EParser tok CSExp -> CProc -> EParser tok CProc
 recursiveCHide p cs v
   = (p `recursiveCHide1` cs) +++ return v
@@ -376,7 +382,7 @@ recursiveCSPParParal2 p ns
         = do {x <- p; rest x}
          where
         rest x = do {(nsx1,nsx2) <- ns;
-                    y <- p; rest (CSPInterParal nsx1 nsx2 x y)}
+                    y <- p; rest (CSPNSInter nsx1 nsx2 x y)}
          +++ return x
 
 recursiveCSPParParal1 p ns
