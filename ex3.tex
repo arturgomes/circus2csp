@@ -8,15 +8,16 @@
 \usepackage{circus}
 
 \begin{document}
-
+\begin{zed}
+[NAME,DATE]\\
+  REPORT ~~::=~~ ok | already\_known | not\_known\\
+\end{zed}
 \begin{circus}
 \circprocess\ ~SysClock ~\circdef~ 
 \circbegin
 \circstate SysClockSt == [known:\power~NAME; birthday : NAME \pfun DATE | known = \dom birthday]\\
-  [NAME,DATE]\\
-  REPORT ~~::=~~ ok | already\_known | not\_known\\
-  ResetClock ~\circdef~\Skip\\
-  Test ~\circdef~\Skip\\
+  ResetClock ~\circdef~result \then \Skip\\
+  Test ~\circdef~result \then \Skip\\
   \circnameset Name == {}\\
   \circspot ResetClock
   \circend

@@ -453,7 +453,6 @@ zlexz c ls ('\\':s)
   | cmd=="circnameset"          = tok L_CIRCNAMESET
   | cmd=="circprocess"          = tok L_CIRCPROCESS
   | cmd=="circres"              = tok L_CIRCRES
-  | cmd=="circsemi"             = tok L_CIRCSEMI
   | cmd=="circseq"              = tok L_CIRCSEQ
   | cmd=="circspot"             = tok L_CIRCSPOT
   | cmd=="circstate"            = tok L_CIRCSTATE

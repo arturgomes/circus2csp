@@ -253,8 +253,7 @@ do_settings _ anim =
 
 
 done_cmd :: (Animator, Answer) -> IO ()
---done_cmd (anim, Done s)       = do {putStrLn s; get_cmd anim}
-done_cmd (anim, Done s)       = do {writeFile "spec.txt" s; get_cmd anim}
+done_cmd (anim, Done s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
 done_cmd (anim, ErrorMsg m)   = do {putErrorMsg m; get_cmd anim}
 done_cmd (anim, ErrorLocns es)= do {putStrLn (unlines (map fmtperr es));
 				    get_cmd anim}

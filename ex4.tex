@@ -15,8 +15,9 @@ REPORT ~~::=~~ ok | already\_known | not\_known\\
 \begin{circus}
 \circprocess ~SysClock ~\circdef~
 \circbegin\\
-  \circstate SysClockSt \defs [t : TIME]\\
-  ResetClock ~\circdef~\Skip\\
+  \circstate SysClockSt == [t : TIME]\\
+  Reset ~\circdef~ \Skip\\
+  ResetClock ~\circdef~ add!n \then Sum(n)\\
   \circspot ResetClock\\
   \circend
 \end{circus}

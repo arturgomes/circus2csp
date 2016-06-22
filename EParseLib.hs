@@ -40,7 +40,12 @@ module EParseLib
     EParser, epapply, epapplystr, cut, localizecut, --errorRecovery,
     Parser, item, tok, papply,
     (+++), sat, many, many1, sepby, sepby1, chainl,
-    chainl1, recursiveCParParal, recursiveCSPParParal1, recursiveCSPParParal2, chainr, chainr1, ops, bracket,
+    chainl1, 
+    recursiveCParParal, recursiveCParParal1,
+    recursiveCHide, recursiveCHide1,
+    recursiveCSPParParal2,
+    recursiveCSPParParal1, 
+    chainr, chainr1, ops, bracket,
     -- The remainder are only for parsing character strings.
     -- They have type: Parser ast, rather than EParser tok ast
     char, digit, lower, upper,
@@ -344,26 +349,42 @@ p `chainl1` op
       rest x = do {f <- op; y <- p; rest (f x y)}
          +++ return x
 
-recursiveCParParal p cs
+recursiveCParParal :: EParser tok CProc
+     -> EParser tok CSExp -> CProc -> EParser tok CProc
+recursiveCParParal p cs v
+        = (p `recursiveCParParal1` cs) +++ return v
+
+recursiveCParParal1 :: EParser tok CProc -> EParser tok CSExp -> EParser tok CProc
+p `recursiveCParParal1` cs
         = do {x <- p; rest x}
          where
         rest x = do {csx <- cs; y <- p; rest (CParParal csx x y)}
          +++ return x
 
-recursiveCSPParParal2 p ns ns1
-        = do {x <- p; rest x}
-         where
-        rest x = do {nsx1 <- ns;
-                    nsx2 <- ns1;
-                    y <- p; rest (CSPInterParal nsx1 nsx2 x y)}
+recursiveCHide :: EParser tok CProc -> EParser tok CSExp -> CProc -> EParser tok CProc
+recursiveCHide p cs v
+  = (p `recursiveCHide1` cs) +++ return v
 
-recursiveCSPParParal1 p ns cs ns1
+recursiveCHide1 :: EParser tok CProc -> EParser tok CSExp -> EParser tok CProc
+p `recursiveCHide1` cs
         = do {x <- p; rest x}
          where
-        rest x = do {nsx1 <- ns;
-                    csx <- cs;
-                    nsx2 <- ns1;
+      rest x = do {csx1 <- cs; rest (CHide x csx1)}
+         +++ return x
+
+recursiveCSPParParal2 p ns 
+        = do {x <- p; rest x}
+         where
+        rest x = do {(nsx1,nsx2) <- ns;
+                    y <- p; rest (CSPInterParal nsx1 nsx2 x y)}
+         +++ return x
+
+recursiveCSPParParal1 p ns
+        = do {x <- p; rest x}
+         where
+        rest x = do {(nsx1,csx,nsx2) <- ns;
                     y <- p; rest (CSPNSParal nsx1 csx nsx2 x y)}
+         +++ return x
 
 chainr :: EParser tok a -> EParser tok (a -> a -> a) -> a -> EParser tok a
 chainr p op v

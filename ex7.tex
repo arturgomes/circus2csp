@@ -9,36 +9,28 @@
 
 \begin{document}
 \begin{circus}
-\circchannel store, add, out : NAT\\
+\circchannel store, add, out : T\\
 \circchannel result, reset\\
-\end{circus}
-\begin{circus}
 \circprocess Register \circdef\\
-	\circbegin \circstate RegSt \defs [ value : NAT]\\
+	\circbegin \circstate RegSt \defs [ value : T]\\
 	RegCycle \circdef store?newValue \then (value := newValue)\\
 	\extchoice add?newValue \then (value := value + newValue)\\
 	\extchoice result \then out!value \then \Skip\\
 	\extchoice reset \then (value := 0)\\
-\circspot (value := 0) \\
+	\circspot (value := 0) \circseq \Skip
 	\circend\\
-\end{circus}
-\begin{circus}
+
 \circchannel read, write : Z\\
 \circprocess SumClient \circdef\\
 	\circbegin\\
 	ReadValue \circdef read?n \then reset \then Sum(n)\\
-	Pick \circdef Action1 \lpar NSa | CS | NSb \rpar Action2 \circhide AA\\\
-	Pick1 \circdef Action1 \linter NSa | NSb \rinter Action2 \\\
-	Sum \circdef n : NAT \circspot \lcircguard n = 0 \rcircguard \circguard result \then out?r \then write!r \then \Skip\\
-	\extchoice \lcircguard n \neq 0 \rcircguard \circguard add!n \then Sum(n)\\
-	\circspot \Skip\\
-	\circend\\
-
-\end{circus}
-\begin{circus}
-\circprocess Summation \circdef (Action1 \lpar CS \rpar Action2) \circhide AA
+	\circspot ReadValue\\
+	\circend
 \end{circus}
 \begin{circus}
 \circchannelset RegAlphabet == \lchanset store, add, out, result, reset \rchanset\\
+\end{circus}
+\begin{circus}
+\circprocess Summation \circdef ( SumClient \lpar RegAlphabet \rpar Register ) \circhide RegAlphabet
 \end{circus}
 \end{document}

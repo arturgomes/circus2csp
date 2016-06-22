@@ -392,8 +392,8 @@ data ZPred
   | ZPLet [(ZVar,ZExpr)] ZPred  -- removed in Unfold
   | ZEqual ZExpr ZExpr
   | ZMember ZExpr ZExpr
-  | ZPre ZSExpr               -- removed in Unfold
-  | ZPSchema ZSExpr           -- removed in Unfold
+  | ZPre ZSExpr                 -- removed in Unfold
+  | ZPSchema ZSExpr             -- removed in Unfold
   deriving (Eq,Ord,Show)
 
 ztrue = ZTrue{reason=[]}
@@ -402,8 +402,8 @@ zfalse = ZFalse{reason=[]}
 data ZSExpr
   = ZSchema [ZGenFilt]
   | ZSRef ZSName [ZDecor] [ZReplace]
-  | ZS1 ZS1 ZSExpr                   -- unary schema operators
-  | ZS2 ZS2 ZSExpr ZSExpr            -- binary schema operators
+  | ZS1 ZS1 ZSExpr              -- unary schema operators
+  | ZS2 ZS2 ZSExpr ZSExpr       -- binary schema operators
   | ZSHide ZSExpr [ZVar]
   | ZSExists [ZGenFilt] ZSExpr
   | ZSExists_1 [ZGenFilt] ZSExpr
@@ -415,11 +415,11 @@ data ZSExpr
 -- When renaming causes names to be merged, the merged names must have
 -- the same type.
 data ZReplace
-  = ZRename ZVar ZVar    -- S [yi / xi] = ZRename (ZVar xi []) (ZVar yi [])
-  | ZAssign ZVar ZExpr   -- S [xi := 3] = ZAssign (ZVar xi []) (Int 3)
+  = ZRename ZVar ZVar           -- S [yi / xi] = ZRename (ZVar xi []) (ZVar yi [])
+  | ZAssign ZVar ZExpr          -- S [xi := 3] = ZAssign (ZVar xi []) (Int 3)
   deriving (Eq,Ord,Show)
 
-data ZSName                    -- schema names including prefix.
+data ZSName                     -- schema names including prefix.
   = ZSPlain String | ZSDelta String | ZSXi String
   deriving (Eq,Ord,Show)
 
@@ -436,7 +436,7 @@ data ZS2
 data ZPara
   = ZGivenSetDecl GivenSet       -- [XXX]
   | ZSchemaDef ZSName ZSExpr     -- \begin{schema}{XXX}...\end{schema}
-				 -- or XXX \defs [...|...]
+				                         -- or XXX \defs [...|...]
   | ZAbbreviation ZVar ZExpr     -- XXX == expression
   | ZFreeTypeDef ZVar [ZBranch]  -- XXX ::= A | B | ...
   | ZPredicate ZPred
@@ -447,14 +447,14 @@ data ZPara
 		machInit::String,
 		machOps::[String]}
     -- Inclusion of Circus Paragraphs
-  | CircChannel [CDecl]      -- \circchannel CDecl
-  | CircChanSet ZName CSExp -- \circchanset N == CSExp
-  | Process ProcDecl    -- ProcDecl
+  | CircChannel [CDecl]         -- \circchannel CDecl
+  | CircChanSet ZName CSExp     -- \circchanset N == CSExp
+  | Process ProcDecl            -- ProcDecl
   deriving (Eq,Ord,Show)
 
-data ZBranch             -- E.g. given T ::= A | C <<N x T>>
-  = ZBranch0 ZVar        -- the A branch is: ZBranch0 ("A",[])
-  | ZBranch1 ZVar ZExpr  -- and C branch is: ZBranch1 ("C",[]) (ZCross [...])
+data ZBranch                    -- E.g. given T ::= A | C <<N x T>>
+  = ZBranch0 ZVar               -- the A branch is: ZBranch0 ("A",[])
+  | ZBranch1 ZVar ZExpr         -- and C branch is: ZBranch1 ("C",[]) (ZCross [...])
   deriving (Eq,Ord,Show)
 
 isBranch0 :: ZBranch -> Bool
@@ -515,15 +515,13 @@ isDefined v               = False
 --------------------------------------
 type CProgram = [ZPara]
 
-
-
 --
 -- Channel and chanset decl
 --
 data CDecl
   = CChan ZName                             --  no type is defined
   | CChanDecl ZName ZExpr                   -- channel_name : type
-  | CGenChanDecl ZName ZName ZExpr           -- generic chan decl
+  | CGenChanDecl ZName ZName ZExpr          -- generic chan decl
   deriving (Eq,Ord,Show)
 {-
 Channel Schema declaration is left out for now, but
@@ -535,15 +533,14 @@ one could declare it as:
 \end{schema}
 
 and therefore, would need to define it in terms of the Z parser
-
 -- | SchemaExp -- left out for now
 
 -}
 
 data CSExp
-  = CSEmpty                                -- Empty chanset
-  | CChanSet [ZName]                        -- named chanset
-  | CSExpr ZName                            -- a chanset decl from another chanset
+  = CSExpr ZName                           -- a chanset decl from another chanset
+  | CSEmpty                                -- Empty chanset
+  | CChanSet [ZName]                       -- named chanset
   | ChanSetUnion CSExp CSExp               -- chanset union
   | ChanSetInter CSExp CSExp               -- chanset intersection
   | ChanSetHide CSExp CSExp                -- chanset hidding chanset
@@ -552,48 +549,49 @@ data CSExp
 -- Proccess declaration
 --
 data ProcDecl
-  = CProcess ZName ProcessDef                  -- \circprocess N \circdef ProcDef
-  | CGenProcess ZName ZName ProcessDef          -- \circprocess N[N^{+}] \circdef ProcDef
+  = CProcess ZName ProcessDef              -- \circprocess N \circdef ProcDef
+  | CGenProcess ZName [ZName] ProcessDef     -- \circprocess N[N^{+}] \circdef ProcDef
   deriving (Eq,Ord,Show)
 
 data ProcessDef
-  = ProcDefSpot [ZGenFilt] ProcessDef           -- Decl \circspot ProcDef
-  | ProcDefIndex [ZGenFilt] ProcessDef          -- Decl \circindex ProcDef
-  | ProcDef CProc                      -- Proc
+  = ProcDefSpot [ZGenFilt] ProcessDef      -- Decl \circspot ProcDef
+  | ProcDefIndex [ZGenFilt] ProcessDef     -- Decl \circindex ProcDef
+  | ProcDef CProc                          -- Proc
   deriving (Eq,Ord,Show)
 
 data CProc
-  = CSeq CProc CProc                      -- Proc \cirCSeq Proc
+  = CRepSeqProc [ZGenFilt] CProc           -- \Semi Decl \circspot Proc
+  | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
+  | CRepIntChProc [ZGenFilt] CProc         -- \IntChoice Decl \circspot Proc
+  | CRepParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
+  | CRepInterlProc [ZGenFilt] CProc        -- \Interleave Decl \circspot Proc
+  | CHide CProc CSExp                      -- Proc \circhide CSExp
   | CExtChoice CProc CProc                 -- Proc \extchoice Proc
   | CIntChoice CProc CProc                 -- Proc \intchoice Proc
   | CParParal CSExp CProc CProc            -- Proc \lpar CSExp \rpar Proc
   | CInterleave CProc CProc                -- Proc \interleave Proc
-  -- | CParamProcDecl CDecl ProcessDef [ZExpr]  -- (Decl \circspot ProcDef)(Exp^{+})
-  -- | CParamProc ZName [ZExpr]              -- N(Exp^{+})
+  -- | ChanProcDecl CDecl ProcessDef [ZExpr]  -- (Decl \circspot ProcDef)(Exp^{+})
+  -- | ChanProc ZName [ZExpr]              -- N(Exp^{+})
   -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
                                            -- Proc[N^{+}:=N^{+}] -- TODO
-  | ProcMain ZPara [PPar] CAction   -- \circbegin PPar*
+  | CSeq CProc CProc                       -- Proc \cirCSeq Proc
+  | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
+  | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
+  | CircusProc ZName                       -- N
+   
+  | ProcMain ZPara [PPar] CAction          -- \circbegin PPar*
                                            --   \circstate SchemaExp PPar*
                                            --   \circspot Action
                                            --   \circend
   | ProcStalessMain [PPar] CAction         -- \circbegin PPar*
                                            --   \circspot Action
                                            --   \circend
-  | CircusProc ZName                       -- N
-  | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
-  | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
-  | CRepSeqProc [ZGenFilt] CProc          -- \Semi Decl \circspot Proc
-  | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
-  | CRepIntChProc [ZGenFilt] CProc         -- \IntChoice Decl \circspot Proc
-  | CRepParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
-  | CRepInterlProc [ZGenFilt] CProc        -- \Interleave Decl \circspot Proc
-  | CHide CProc CSExp                      -- Proc \circhide CSExp
-  deriving (Eq,Ord,Show)
+ deriving (Eq,Ord,Show)
 
 data NSExp
   = NSExpEmpty                             -- \{\}
-  | NSExprMult [ZName]                      -- \{N^{+}\}
-  | NSExprSngl ZName                        -- N
+  | NSExprMult [ZName]                     -- \{N^{+}\}
+  | NSExprSngl ZName                       -- N
   | NSUnion NSExp NSExp                    -- NSExp \union NSExp
   | NSIntersect NSExp NSExp                -- NSExp \intersect NSExp
   | NSHide NSExp NSExp                     -- NSExp \circhide \NSExp
@@ -601,21 +599,21 @@ data NSExp
 
 data PPar
  = ProcZPara ZPara                         -- Par
- | CParAction ZName ParAction               -- N \circdef ParAction
- | CNameSet ZName NSExp                     -- \circnameset N == NSExp
+ | CParAction ZName ParAction              -- N \circdef ParAction
+ | CNameSet ZName NSExp                    -- \circnameset N == NSExp
  deriving (Eq,Ord,Show)
 
 data ParAction
  = CircusAction CAction                                 -- Action
- | ParamActionDecl [ZGenFilt] ParAction      -- Decl \circspot ParAction
+ | ParamActionDecl [ZGenFilt] ParAction    -- Decl \circspot ParAction
  deriving (Eq,Ord,Show)
 
 data CAction
  = CActionSchema ZSExpr
  | CActionCommand CCommand
- | CircusActionName ZName
+ | CActionName ZName
  | CSPSkip | CSPStop | CSPChaos
- | CSPCommAction Comm CAction                -- Comm \then Action
+ | CSPCommAction Comm CAction             -- Comm \then Action
  | CSPGuard ZPred CAction                 -- Pred \circguard Action
  | CSPSeq CAction CAction                 -- Action \circseq Action
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
@@ -623,38 +621,37 @@ data CAction
  | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action [| NSExp | CSExp | NSExp |] Action
  | CSPInterParal NSExp NSExp CAction CAction    -- Action [ NSExp | NSExp ] Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
- | CSPParAction ParAction ZExpr           -- ParAction(Exp^{+})
- | CSPRecursion ZName CAction              -- \circmu N \circspot Action
- | CSPRepSemi [ZGenFilt] CAction          -- \Semi Decl \circspot Action
+ | CSPParAction ZName [ZExpr]             -- ParAction(Exp^{+})
+ | CSPRecursion ZName CAction             -- \circmu N \circspot Action
+ | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
  | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
  | CSPRepIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
  | CSPRepParalNS CSExp [ZGenFilt] NSExp CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
- | CSPRepParal CSExp [ZGenFilt] CAction -- \lpar CSExp \rpar Decl \circspot ction
+ | CSPRepParal CSExp [ZGenFilt] CAction   -- \lpar CSExp \rpar Decl \circspot ction
  | CSPRepInterlNS [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
- | CSPRepInterl [ZGenFilt] CAction  -- \Interleave Decl \circspot  Action
+ | CSPRepInterl [ZGenFilt] CAction        -- \Interleave Decl \circspot  Action
  deriving (Eq,Ord,Show)
 
---Comm    ::= N CParameter* | N [Exp^{+}] CParameter *
 data Comm
-  = ChanComm ZName [CParameter]
-  | ChanGenComm ZName ZExpr [CParameter]
+  = ChanComm ZName [CParameter]           -- N CParameter*
+  | ChanGenComm ZName [ZExpr] [CParameter]-- N [Exp^{+}] CParameter *
   deriving (Eq,Ord,Show)
 
---CParameter  ::= ?N | ?N : Pred | !Exp | .Exp
+
 data CParameter
-   = CParamInp ZName
-   | CParamInpPred ZName ZPred
-   | CParamOutExp ZExpr
-   | CParamDotExp ZExpr
+   = ChanInp ZName                        -- ?N
+   | ChanInpPred ZName ZPred              -- ?N : Pred
+   | ChanOutExp ZExpr                     -- !Exp
+   | ChanDotExp ZExpr                     -- .Exp
    deriving (Eq,Ord,Show)
 
 data CCommand
-  = CAssign ZName ZExpr                    -- N^{+} := Exp^{+}
+  = CAssign [ZName] [ZExpr]               -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
-  | CAssumpt ZName ZPred ZPred             -- N^{+} :[Pred,Pred]
-                                          -- \{Pred\}
-                                          -- [Pred]
+  | CAssumpt [ZName] ZPred ZPred          -- N^{+} :[Pred,Pred]
+  | CommandBrace ZPred                    -- \{Pred\}
+  | CommandBracket ZPred                  -- [Pred]
   | CValDecl [ZGenFilt] CAction           -- \circval Decl \circspot Action
   | CResDecl [ZGenFilt] CAction           -- \circres Decl \circspot Action
   | CVResDecl [ZGenFilt] CAction          -- \circvres Decl \circspot Action

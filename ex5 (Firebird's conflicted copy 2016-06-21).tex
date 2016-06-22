@@ -1,0 +1,35 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+\begin{circus}
+\circchannel store, add, out : \nat\\
+\circchannel result, reset\\
+\circprocess Register \circdef\\
+	\circbegin \circstate RegSt \defs [ value : \nat]\\
+	RegCycle \circdef store?newValue \then value := newValue\\
+	\extchoice add?newValue \then value := value + newValue\\
+	\extchoice result \then out!value \then \Skip\\
+	\extchoice reset \then value := 0\\
+	\circspot value := 0\circseq (\circmu X \circspot RegCycle; X )
+	\circend\\
+
+\circchannel read, write : Z\\
+\circprocess SumClient \circdef\\
+	\circbegin\\
+	ReadValue \circdef read?n \then reset \then Sum(n)\\
+	Sum \circdef n : \nat \circspot \lcircguard n = 0 \rcircguard \circguard result \then out?r \then write!r \then \Skip\\
+	\extchoice \lcircguard n \neq 0 \rcircguard \circguard add!n \then Sum(n − 1)\\
+	\circspot \circmu X \circspot ReadValue\circseq X\\
+	\circend\\
+
+\circchannelset RegAlphabet == \lchanset store, add, out, result, reset \rchanset\\
+\circprocess Summation \circdef ( SumClient \lpar RegAlphabet \rpar Register ) \circhide RegAlphabet
+\end{circus}
+\end{document}
