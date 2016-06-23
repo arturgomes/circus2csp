@@ -44,7 +44,7 @@ jaza: $(JAZAOBJ)
 	ghc $(GHCFLAGS) -o jaza --make TextUI.hs
 
 circus: $(JAZAOBJ)
-	ghc $(GHCFLAGS) -o circus --make CircusUI.hs
+	ghc -w $(GHCFLAGS) -o circus --make CircusUI.hs
 
 Z2BZPOBJ=$(ANIMOBJ) $(CLPSOBJ) Z2BZP.o
 z2bzp: $(Z2BZPOBJ)

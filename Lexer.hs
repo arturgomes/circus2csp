@@ -297,6 +297,10 @@ zlexz c ls ('\\':',':s) = zlexz (c+2) ls s
 zlexz c ls ('\\':':':s) = zlexz (c+2) ls s
 zlexz c ls ('\\':';':s) = zlexz (c+2) ls s
 zlexz c ls ('\\':' ':s) = zlexz (c+2) ls s
+zlexz c ls ('\\':'t':'1':s) = zlexz (c+3) ls s -- Artur : producing \t1, \t2, \t3, \t4
+zlexz c ls ('\\':'t':'2':s) = zlexz (c+3) ls s
+zlexz c ls ('\\':'t':'3':s) = zlexz (c+3) ls s
+zlexz c ls ('\\':'t':'4':s) = zlexz (c+3) ls s
 -- LaTeX commands that start with a backslash
 zlexz c ls ('\\':'\\':s)
   = Token L_BACKSLASH_BACKSLASH (line ls) c : zlexz (c+2) ls s

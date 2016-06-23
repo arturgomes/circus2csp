@@ -571,7 +571,7 @@ data CProc
   | CParParal CSExp CProc CProc            -- Proc \lpar CSExp \rpar Proc
   | CInterleave CProc CProc                -- Proc \interleave Proc
   -- | ChanProcDecl CDecl ProcessDef [ZExpr]  -- (Decl \circspot ProcDef)(Exp^{+})
-  -- | ChanProc ZName [ZExpr]              -- N(Exp^{+})
+  | CParamProc ZName [ZExpr]              -- N(Exp^{+})
   -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
                                            -- Proc[N^{+}:=N^{+}] -- TODO
   | CSeq CProc CProc                       -- Proc \cirCSeq Proc
