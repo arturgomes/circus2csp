@@ -376,7 +376,9 @@ zlexz c ls ('\\':s)
   | cmd=="subset" = tok (L_IN_REL ('\\':cmd))
   | cmd=="subseteq"= tok (L_IN_REL ('\\':cmd))
   | cmd=="cap"    = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="cap"    = tok L_INTERSECT
   | cmd=="cup"    = tok (L_IN_FUN 3 ('\\':cmd))
+  | cmd=="cup"    = tok L_UNION
   | cmd=="setminus"= tok (L_IN_FUN 3 ('\\':cmd))
   | cmd=="symdiff"= tok L_SYMDIFF
   | cmd=="bigcup"= tok L_BIG_CUP

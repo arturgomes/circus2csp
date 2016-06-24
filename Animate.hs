@@ -461,7 +461,7 @@ fmtpara :: ZParaInfo -> String
 fmtpara p
   = s ++ if null rest then "" else "..."
   where
-  (s,rest) = splitAt 20000 (show (origpara p))
+  (s,rest) = splitAt 2000000 (show (origpara p))
 
 get_info :: ZVar -> Animator -> ErrorOr ZParaInfo
 get_info s anim

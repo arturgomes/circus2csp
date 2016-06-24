@@ -18,7 +18,6 @@
 \circstate SysClockSt == [known:\power~NAME; birthday : NAME \pfun DATE | known = \dom birthday]\\
   ResetClock ~\circdef~result \then \Skip\\
   Test ~\circdef~result \then \Skip\\
-  \circnameset Name == {}\\
   \circspot ResetClock
   \circend
 \end{circus}

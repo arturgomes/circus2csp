@@ -211,16 +211,42 @@
 \end{circus}
 
 
+% \begin{circus}%
+%   \circprocess ~SysClock ~\circdef~
+%   \circbegin\\
+%   \circstate SysClockSt \defs [time : NAT]\\
+%   ResetClock \circdef (time:=0) \circseq Clock\\
+%  Clock \circdef \circmu~X \circspot 
+%  	tick \then (time := time+1) \interleave getCurrentTime!time \then \Skip \circseq X\\
+%   Wait~\circdef~ \circvar n : NAT \circspot\\
+%    \circif (n>0) \circthen tick \then Wait(n-1) \circelse (n=0) \circthen \Skip \circfi\\
+%   \circspot ResetClock
+%   \circend
+% \end{circus}
+
 \begin{circus}%
-  \circprocess ~SysClock ~\circdef~
-  \circbegin\\
-  \circstate SysClockSt \defs [time : NAT]\\
-  ResetClock \circdef (time:=0) \circseq Clock\\
- Clock \circdef \circmu~X \circspot 
- 	tick \then (time := time+1) \interleave getCurrentTime!time \then \Skip \circseq X\\
-  Wait~\circdef~ \circvar n : NAT \circspot\\
-   \circif (n>0) \circthen tick \then Wait(n-1) \circelse (n=0) \circthen \Skip \circfi\\
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+\circstate SysClockSt \defs [time : NAT]\\
+\end{circus}%
+ \begin{circusaction}
+  ResetClock ~\circdef~
+  \\\t2time:=0 \circseq Clock\\
+\end{circusaction}
+\begin{circusaction}
+  Clock ~\circdef~
+  \\\t2 \circmu~X \circspot  (tick \then (time:=time+1) \interleave getCurrentTime!time \then \Skip)\circseq X
+\end{circusaction}
+\begin{circusaction}
+  Wait~\circdef~ \circvar n : \num \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+\end{circusaction}
+\begin{circusaction}
   \circspot ResetClock
+\end{circusaction}%
+%\vspace{-1cm}
+\begin{circus}
   \circend
 \end{circus}
 
