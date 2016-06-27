@@ -1,0 +1,36 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+\begin{zed}
+[NAME,TIME]\\
+REPORT ~~::=~~ ok | already\_known | not\_known\\
+\end{zed}
+\begin{circus}
+\circprocess ~SysClock ~\circdef~ 
+\circbegin\\
+  \circstate SysClockSt \defs [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess ~Timer ~\circdef~ 
+\circbegin\\
+  \circstate TimerSt == [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess ~BothProcesses ~\circdef~ \Intchoice x : TIME \circspot SysClock\\
+\end{circus}
+
+\end{document}
+
