@@ -9,28 +9,21 @@
 
 \begin{document}
 \begin{zed}
-[NAME,TIME]\\
-REPORT ~~::=~~ ok | already\_known | not\_known\\
+\bool ::= \false | \true\\
+TIME == \{0 \upto 10\}\\
 \end{zed}
-\begin{circus}
-\circprocess ~SysClock ~\circdef~ 
-\circbegin\\
-  \circstate SysClockSt \defs [t : TIME]\\
-  ResetClock ~\circdef~\Skip\\
-  \circspot ResetClock\\
-  \circend
-\end{circus}
-\begin{circus}
-\circprocess ~Timer ~\circdef~ 
-\circbegin\\
-  \circstate TimerSt == [t : TIME]\\
-  ResetClock ~\circdef~\Skip\\
-  \circspot ResetClock\\
-  \circend
-\end{circus}
-\begin{circus}
-\circprocess ~BothProcesses ~\circdef~ \Intchoice x : TIME \circspot SysClock\\
-\end{circus}
+
+\begin{schema}{TimerSt}
+x : \power TIME\\
+a : TIME\\
+b : TIME\\
+c : TIME\\
+d : TIME
+\where
+a \in x\\
+b < c\\
+c > d
+\end{schema}
+
 
 \end{document}
-

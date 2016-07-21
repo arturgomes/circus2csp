@@ -543,7 +543,7 @@ data CSExp
   | CChanSet [ZName]                       -- named chanset
   | ChanSetUnion CSExp CSExp               -- chanset union
   | ChanSetInter CSExp CSExp               -- chanset intersection
-  | ChanSetHide CSExp CSExp                -- chanset hidding chanset
+  | ChanSetDiff CSExp CSExp                -- chanset hidding chanset
   deriving (Eq,Ord,Show)
 --
 -- Proccess declaration
@@ -608,7 +608,7 @@ data ParAction
  deriving (Eq,Ord,Show)
 
 data CAction
-  
+
  = CActionSchemaExpr ZSExpr               -- \lschexpract S \rschexpract
  | CActionCommand CCommand
  | CActionName ZName
@@ -619,7 +619,7 @@ data CAction
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
  | CSPIntChoice CAction CAction           -- Action \intchoice Action
  | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
- | CSPParal CSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
+ | CSPParal CSExp CAction CAction -- Action \lpar CSExp \rpar Action
  | CSPNSInter NSExp NSExp CAction CAction    -- Action \linter NSExp | NSExp \rinter Action
  | CSPInterleave CAction CAction          -- Action \interleave Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
@@ -648,7 +648,7 @@ data CParameter
    deriving (Eq,Ord,Show)
 
 data CCommand
-  = CAssign [ZName] [ZExpr]               -- N^{+} := Exp^{+}
+  = CAssign [ZVar] [ZExpr]               -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
   | CAssumpt [ZName] ZPred ZPred          -- N^{+} :[Pred,Pred]
@@ -660,7 +660,7 @@ data CCommand
   deriving (Eq,Ord,Show)
 
 data CGActions
- = CircGAction ZPred CAction                 -- Pred \then Action
+ = CircGAction ZPred CAction                 -- Pred \circthen Action
  | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
  deriving (Eq,Ord,Show)
 ---
@@ -1068,3 +1068,7 @@ traverseCDecl cd = fail "traverseCDecl is not implemented"
 --traverseCDecl (CChanDecl v e ) = visitCDecl v e >>= (return . CChanDecl)
 --traverseCDecl (CMultChanDecl v e ) = visitCDecl v e >>= (return . CMultChanDecl)
 --traverseCDecl (CGenChanDecl  v1 v2 e ) = visitCDecl v1 v2 e >>= (return . CGenChanDecl)
+
+
+-- Circus traverse
+

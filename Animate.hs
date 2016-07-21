@@ -414,6 +414,14 @@ popstate anim
 showspec :: Animator -> Answer
 showspec = Done . unlines . map fmtpara . reverse . spec
 
+-- reverse example:
+-- Input: reverse [1..5]
+-- Output: [5,4,3,2,1]
+--
+-- unlines example:
+-- Type:  [String] -> String
+-- Input: unlines ["aa","bb","cc","dd","ee"]
+-- Output: "aa\nbb\ncc\ndd\nee\n"
 
 showunfolded :: String -> Animator -> Answer
 showunfolded s anim
@@ -459,9 +467,15 @@ answerErrorOr (IllFormed msg)
 -- This is for showing a summary of a Z paragraph
 fmtpara :: ZParaInfo -> String
 fmtpara p
-  = s ++ if null rest then "" else "..."
+  = s -- ++ if null rest then "" else "..."
   where
-  (s,rest) = splitAt 2000000 (show (origpara p))
+  s = (show (origpara p))
+  -- (s,rest) = splitAt 2000000 (show (origpara p))
+
+-- splitAt
+-- Type: Int -> [a] -> ([a],[a])
+-- Input: splitAt 5 [1,2,3,4,5,6,7,8,9,10]
+-- Output: ([1,2,3,4,5],[6,7,8,9,10])
 
 get_info :: ZVar -> Animator -> ErrorOr ZParaInfo
 get_info s anim
@@ -469,7 +483,6 @@ get_info s anim
   | otherwise      = Ok (head matches)
   where
   matches = [p | p@ZParaDefn{defname=n} <- spec anim, n==s]
-
 
 -- process_paras spec newp.
 --

@@ -2,8 +2,7 @@
 \subsection{Types and state variables - To be continued}
 %<*zedtypes>
 \begin{zed}
-[NAT]
-\also BUTTON ::= ON~|~OFF
+BUTTON ::= ON~|~OFF
 \also SWITCH ::= ENABLED~|~DISABLED
 \also DIRECTION ::= FORWARD~|~BACKWARDS
 \also STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~|~endPhase
@@ -11,7 +10,7 @@
 \t4  |~reinfProcess~|~preparationOfDF~|~priming~|~rinsing~|~idle
 \also LID ::= OPEN~|~CLOSED
 \also CONCENTRATE ::= ACID~|~ACETATE~|~BICARBONATE
-\also TIME ~==~\{~h:NAT;~m:NAT~@~(h,m)~\}
+\also TIME ~==~\{~h:\nat;~m:\nat~@~(h,m)~\}
 \also HDMODE ::= RUN~|~ALARM~|~BYPASS
 \also LAMP ::= GREEN~|~YELLOW
 \also BOOL ::= TRUE~|~FALSE
@@ -36,25 +35,25 @@
   \circchannel fillArterialDrip, connPatientArterially, connPatientVenously\\
   \circchannel insertHeparinSyringe, heparinLineIsVented\\
   \circchannel connectingConcentrate~:~CONCENTRATE\\
-  \circchannel salineBagLevel~:~NAT
+  \circchannel salineBagLevel~:~\nat
 \end{circus}
 
 \begin{circus}
-  \circchannel senAirVol~:~NAT\\
-  \circchannel senAirVolLimit~:~NAT\\
-  \circchannel senApTransdPress~:~NAT\\
-  \circchannel senBloodFlowInEBC~:~NAT\\
+  \circchannel senAirVol~:~\nat\\
+  \circchannel senAirVolLimit~:~\nat\\
+  \circchannel senApTransdPress~:~\nat\\
+  \circchannel senBloodFlowInEBC~:~\nat\\
   \circchannel senBypassVol~:~LID\\
   \circchannel senFflowDirect~:~DIRECTION\\
-  \circchannel senInfVol~:~NAT\\
-  \circchannel senLastNonZeroBF~:~NAT\\
+  \circchannel senInfVol~:~\nat\\
+  \circchannel senLastNonZeroBF~:~\nat\\
   \circchannel senNetFluidRemoval~:~SWITCH\\
-  \circchannel senNetFluidRemovalRate~:~NAT\\
+  \circchannel senNetFluidRemovalRate~:~\nat\\
   \circchannel senRotDirectBP~:~DIRECTION~\\
   \circchannel senRotDirectUFP~:~DIRECTION~\\
-  \circchannel senVolInEBC~:~NAT\\
-  \circchannel senVpTransdPress~:~NAT\\
-  \circchannel senSADSensorFlow~:~NAT\\
+  \circchannel senVolInEBC~:~\nat\\
+  \circchannel senVpTransdPress~:~\nat\\
+  \circchannel senSADSensorFlow~:~\nat\\
   \circchannel senHDMode~:~HDMODE\\
   \circchannel setMinUFRateTreat~:~BUTTON
 \end{circus}
@@ -212,10 +211,10 @@
 
 \begin{circus}%
   \circprocess\ ~SysClock ~\circdef~\circbegin
-  \circstate SysClockSt == SysClocS
+  \circstate SysClockSt \defs SysClocS
 \end{circus}
 \begin{schema}{SysClockS}
- time : NAT
+ time : \nat
 \end{schema}
 \begin{circusaction}
   ResetClock ~\circdef~
@@ -226,7 +225,7 @@
   \\\t2  \circmu~X \circspot  (tick \then (time := time+1) \interleave getCurrentTime!time \then \Skip)\circseq X
 \end{circusaction}
 \begin{circusaction}
-  Wait~\circdef~ \circvar n : NAT \circspot
+  Wait~\circdef~ \circvar n : \nat \circspot
    \circif n> 0 \circthen (tick \then Wait (n-1))
    \circelse n~=~0 \circthen \Skip
    \circfi\\
@@ -238,7 +237,7 @@
 
 \begin{circus}%
   \circprocess\ ~HDMachine ~\circdef~ \circbegin
-  \circstate HDState == HDGenComp
+  \circstate HDState \defs HDGenComp
                           \land~RinsingParameters
                           \land~DFParameters
                           \land~UFParameters
@@ -247,101 +246,101 @@
 \end{circus}%
 %</hdchannels>
 \begin{schema}{HDGenComp}
-    airVolLimit~:~NAT\\
-    airVol~:~NAT\\
+    airVolLimit~:~\nat\\
+    airVol~:~\nat\\
     alarm~:~SWITCH\\
-    artBolusVol~:~NAT\\
-    apTransdPress~:~NAT\\
-    bloodFlowInEBC~:~NAT\\
+    artBolusVol~:~\nat\\
+    apTransdPress~:~\nat\\
+    bloodFlowInEBC~:~\nat\\
     bypassValve~:~LID\\
     fflowDirect~:~DIRECTION\\
     hdActivity~:~\power~ACTIVITY\\
     hdMachineState~:~\power~STATEPHASE\\
     hdMode~:~HDMODE\\
-    infSalineVol~:~NAT\\
-    lastNonZeroBF~:~NAT\\
-    lowerPressureLimit~:~NAT\\
-    netFluidRemovalRate~:~NAT\\
+    infSalineVol~:~\nat\\
+    lastNonZeroBF~:~\nat\\
+    lowerPressureLimit~:~\nat\\
+    netFluidRemovalRate~:~\nat\\
     netFluidRemoval~:~SWITCH\\
     rotDirectionBP~:~DIRECTION\\
     rotDirectionUFP~:~DIRECTION~\\
-    safeUpperLimit~:~NAT\\
-    timerIntervalR9~:~NAT\\
-    timerIntervalR10~:~NAT\\
-    timerIntervalR11~:~NAT\\
-    timerIntervalR12~:~NAT\\
-    timerIntervalR13~:~NAT\\
-    time~:~NAT\\
-    upperPressureLimit~:~NAT\\
-    volumeInEBC~:~NAT\\
-    vpTransdPress~:~NAT\\
-    sadSensorFlow~:~NAT\\
+    safeUpperLimit~:~\nat\\
+    timerIntervalR9~:~\nat\\
+    timerIntervalR10~:~\nat\\
+    timerIntervalR11~:~\nat\\
+    timerIntervalR12~:~\nat\\
+    timerIntervalR13~:~\nat\\
+    time~:~\nat\\
+    upperPressureLimit~:~\nat\\
+    volumeInEBC~:~\nat\\
+    vpTransdPress~:~\nat\\
+    sadSensorFlow~:~\nat\\
     bloodLines~:~BOOL\\
     minUFRateTreat~:~BUTTON
 \end{schema}
 
 \begin{schema}{RinsingParameters}
-    fillingBPRate~:~NAT\\
-    rinsingBPRate~:~NAT\\
-    rinsingTime~:~NAT\\
-    ufRateForRinsing~:~NAT\\
-    ufVolForRinsing~:~NAT\\
-    bloodFlowForConnectingPatient~:~NAT
+    fillingBPRate~:~\nat\\
+    rinsingBPRate~:~\nat\\
+    rinsingTime~:~\nat\\
+    ufRateForRinsing~:~\nat\\
+    ufVolForRinsing~:~\nat\\
+    bloodFlowForConnectingPatient~:~\nat
   \where
-    fillingBPRate~\in~\{~x~:~NAT | 0~\leq~x~\leq~6000\}\\
-    rinsingBPRate~\in~\{~x~:~NAT | 50~\leq~x~\leq~300\}\\
-    rinsingTime~\in~\{~x~:~NAT | 0~\leq~x~\leq~59\}\\
-    ufRateForRinsing~\in~\{~x~:~NAT | 50~\leq~x~\leq~3000\}\\
-    ufVolForRinsing~\in~\{~x~:~NAT | 50~\leq~x~\leq~2940\}\\
-    bloodFlowForConnectingPatient~\in~\{~x~:~NAT | 50~\leq~x~\leq~600\}\\
+    fillingBPRate~\in~\{~x~:~\nat | 0~\leq~x~\leq~6000\}\\
+    rinsingBPRate~\in~\{~x~:~\nat | 50~\leq~x~\leq~300\}\\
+    rinsingTime~\in~\{~x~:~\nat | 0~\leq~x~\leq~59\}\\
+    ufRateForRinsing~\in~\{~x~:~\nat | 50~\leq~x~\leq~3000\}\\
+    ufVolForRinsing~\in~\{~x~:~\nat | 50~\leq~x~\leq~2940\}\\
+    bloodFlowForConnectingPatient~\in~\{~x~:~\nat | 50~\leq~x~\leq~600\}\\
 \end{schema}
 \begin{schema}{DFParameters}
-    conductivity~:~NAT\\
+    conductivity~:~\nat\\
     bicarbonateAcetate~:~CONCENTRATE\\% \comment{I don't see invariants for this one}\\
-    bicarbonateConductivity~:~NAT\\
-    dfTemperature~:~NAT\\
-    rinsingTime~:~NAT\\
-    dfFlow~:~NAT\\
+    bicarbonateConductivity~:~\nat\\
+    dfTemperature~:~\nat\\
+    rinsingTime~:~\nat\\
+    dfFlow~:~\nat\\
   \where
-    conductivity~\in~\{~x~:~NAT | 125~\leq~x~\leq~160\}\\
-    bicarbonateConductivity~\in~\{~x~:~NAT | 2~\leq~x~\leq~4\}\\
-    dfTemperature~\in~\{~x~:~NAT | 33~\leq~x~\leq~40\}\\
-    rinsingTime~\in~\{~x~:~NAT | 0~\leq~x~\leq~59\}\\
-    dfFlow~\in~\{~x~:~NAT | 300~\leq~x~\leq~800\}~\cup~\{~x~:~NAT | 50~\leq~x~\leq~300\}\\
+    conductivity~\in~\{~x~:~\nat | 125~\leq~x~\leq~160\}\\
+    bicarbonateConductivity~\in~\{~x~:~\nat | 2~\leq~x~\leq~4\}\\
+    dfTemperature~\in~\{~x~:~\nat | 33~\leq~x~\leq~40\}\\
+    rinsingTime~\in~\{~x~:~\nat | 0~\leq~x~\leq~59\}\\
+    dfFlow~\in~\{~x~:~\nat | 300~\leq~x~\leq~800\}~\cup~\{~x~:~\nat | 50~\leq~x~\leq~300\}\\
 \end{schema}
 \begin{schema}{UFParameters}
-    ufVol~:~NAT\\
-    therapyTime~:~NAT\\
-    minUFRate~:~NAT\\
-    maxUFRate~:~NAT\\
+    ufVol~:~\nat\\
+    therapyTime~:~\nat\\
+    minUFRate~:~\nat\\
+    maxUFRate~:~\nat\\
   \where
-    ufVol~\in~\{~x~:~NAT | 100~\leq~x~\leq~20000\}\\
-    therapyTime~\in~\{~x~:~NAT | 10~\leq~x~\leq~600\}\\
-    minUFRate~\in~\{~x~:~NAT | 0~\leq~x~\leq~500\}\\
-    maxUFRate~\in~\{~x~:~NAT | 0~\leq~x~\leq~4000\}\\
+    ufVol~\in~\{~x~:~\nat | 100~\leq~x~\leq~20000\}\\
+    therapyTime~\in~\{~x~:~\nat | 10~\leq~x~\leq~600\}\\
+    minUFRate~\in~\{~x~:~\nat | 0~\leq~x~\leq~500\}\\
+    maxUFRate~\in~\{~x~:~\nat | 0~\leq~x~\leq~4000\}\\
 \end{schema}
 \begin{schema}{PressureParameters}
-    limitDeltaMinMaxAP~:~NAT\\
-    actualTMPMaxTMP~:~NAT\\
+    limitDeltaMinMaxAP~:~\nat\\
+    actualTMPMaxTMP~:~\nat\\
     limitsTMP~:~SWITCH\\
-    lowHigh~:~NAT\\
+    lowHigh~:~\nat\\
     extendedTMPLimitRange~:~SWITCH\\
 \where
-    limitDeltaMinMaxAP~\in~\{~x~:~NAT | 10~\leq~x~\leq~100\}\\
-    actualTMPMaxTMP~\in~\{~x~:~NAT | 300~\leq~x~\leq~700\}\\
-    lowHigh~\in~\{~x~:~NAT | 2~\leq~x~\leq~99\}\\
+    limitDeltaMinMaxAP~\in~\{~x~:~\nat | 10~\leq~x~\leq~100\}\\
+    actualTMPMaxTMP~\in~\{~x~:~\nat | 300~\leq~x~\leq~700\}\\
+    lowHigh~\in~\{~x~:~\nat | 2~\leq~x~\leq~99\}\\
 \end{schema}
 
 \begin{schema}{HeparinParameters}
     heparinStopTime~:~TIME\\
-    heparinBolusVol~:~NAT\\
-    heparinProfileRate~:~NAT\\
+    heparinBolusVol~:~\nat\\
+    heparinProfileRate~:~\nat\\
     treatmentWithoutHeparin~:~SWITCH\\
-    syringeType~:~NAT
+    syringeType~:~\nat
   \where
-    heparinStopTime~\in~\{\,h,m:NAT | (h,m) \in TIME \land m<60~\land~h\leq10\,\}\\
-    heparinBolusVol~\in~\{~x~:~NAT | 1~\leq~x~\leq~100\}\\
-    heparinProfileRate~\in~\{~x~:~NAT | 1~\leq~x~\leq~100\}\\
+    heparinStopTime~\in~\{\,h,m:\nat | (h,m) \in TIME \land m<60~\land~h\leq10\,\}\\
+    heparinBolusVol~\in~\{~x~:~\nat | 1~\leq~x~\leq~100\}\\
+    heparinProfileRate~\in~\{~x~:~\nat | 1~\leq~x~\leq~100\}\\
     syringeType~\in~\{10,20,30\}
 \end{schema}
 %</zedstate>
@@ -407,7 +406,7 @@ airVolLimit'~=~0
     \t2 \extchoice setMinUFRateTreat?minUFRateTreat \then SensorReadings
 \end{circusaction}
 \begin{circusaction}
-  StatePhase \circdef\\\t1 
+  StatePhase \circdef\\\t1
   (preparationPhase \then (hdMachineState := prepPhase) \circseq StatePhase\\
           \extchoice connectingToPatient \then
           \\\t2 (hdMachineState := connectThePatient) \circseq StatePhase\\
@@ -424,10 +423,10 @@ airVolLimit'~=~0
 \subsection{Software requirements Arterial bolus.}
 \begin{circusaction}
 StopBloodFlow~\circdef~ stopBloodFlow \then \Skip\\
-RaiseAlarm~\circdef~ \lschexpract [~\Delta~HDState | alarm'~=~ENABLED ~]\rschexpract \circseq (produceAlarmSound \then \Skip)\\
-\also StopBP~\circdef~ stopBP \then \Skip\\
-\also StopFlowDialyzer~\circdef~ stopFlowDialyzer \then \Skip\\
-\also DisconnectDF~\circdef~ disconnectDF \then \Skip\\
+RaiseAlarm~\circdef~ \lschexpract [~\Delta~HDState | alarm'~=~ENABLED ~]\rschexpract \circseq (produceAlarmSound \then \Skip)
+\also StopBP~\circdef~ stopBP \then \Skip
+\also StopFlowDialyzer~\circdef~ stopFlowDialyzer \then \Skip
+\also DisconnectDF~\circdef~ disconnectDF \then \Skip
 \also StopCoagulantFlow~\circdef~ stopCoagulantFlow \then \Skip
 \end{circusaction}
 %<*ZR1>
@@ -556,7 +555,7 @@ R2 ~\circdef~ NoFlowWatchDog \interleave BloodFlowSample
 \begin{circusaction}
 TrackTimerVPTransdPressR9 ~\circdef~
 \\(
-  
+
      (
    tick \then senVpTransdPress?x \then
      (
@@ -584,7 +583,7 @@ TrackTimerVPTransdPressR9 ~\circdef~
 \begin{circusaction}
 TrackTimerVPTransdPressR10 ~\circdef~
 \\\t1 (
-  
+
      (
    tick \then senVpTransdPress?x \then
 \\ (
@@ -847,7 +846,7 @@ R16~\circdef~(conToPatient~\then~Wait(310000))~\circseq (therapyInit~\then~\Skip
 \begin{schema}{R24}
  \Delta HDState
 \where
-  sadSensorFlow~\in~\{x~:~NAT~|~0~\leq~x~\leq~200\}\\
+  sadSensorFlow~\in~\{x~:~\nat~|~0~\leq~x~\leq~200\}\\
   airVolLimit'~=~2
 \end{schema}
 %</ZR24>
@@ -856,7 +855,7 @@ R16~\circdef~(conToPatient~\then~Wait(310000))~\circseq (therapyInit~\then~\Skip
 \begin{schema}{R25}
  \Delta HDState
 \where
-  sadSensorFlow~\in~\{x~:~NAT~|~200~<~x~\leq~400\}\\
+  sadSensorFlow~\in~\{x~:~\nat~|~200~<~x~\leq~400\}\\
   airVolLimit'~=~3
 \end{schema}
  %</ZR25>
@@ -1002,12 +1001,12 @@ ConnectingTheConcentrate~\circdef~
 \end{circusaction}
 
 \begin{schema}{SetRinsingParameters}
-    setFBPRate?~:~NAT\\
-    setRBPRate?~:~NAT\\
-    setRTime?~:~NAT\\
-    setUFRFRinsing?~:~NAT\\
-    setUFVFRinsing?~:~NAT\\
-    setBFFCPatient?~:~NAT\\
+    setFBPRate?~:~\nat\\
+    setRBPRate?~:~\nat\\
+    setRTime?~:~\nat\\
+    setUFRFRinsing?~:~\nat\\
+    setUFVFRinsing?~:~\nat\\
+    setBFFCPatient?~:~\nat\\
     \Delta HDState
   \where
     fillingBPRate'~=~setFBPRate?\\
@@ -1036,12 +1035,12 @@ StdAtrialTubing~\circdef~atrialTubing~\then~\Skip
 PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\Skip\end{circusaction}
 
 \begin{schema}{SetDFParameters}
-    setConductivity?~:~NAT\\
+    setConductivity?~:~\nat\\
     setBicarbonateAcetate?~:~CONCENTRATE\\
-    setBicarbonateConductivity?~:~NAT\\
-    setDFTemperature?~:~NAT\\
-    setRinsingTime?~:~NAT\\
-    setDFFlow?~:~NAT\\
+    setBicarbonateConductivity?~:~\nat\\
+    setDFTemperature?~:~\nat\\
+    setRinsingTime?~:~\nat\\
+    setDFFlow?~:~\nat\\
     \Delta HDState
   \where
     conductivity'~=~setConductivity?\\
@@ -1053,10 +1052,10 @@ PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\S
 \end{schema}
 
 \begin{schema}{SetUFParameters}
-    setUFVol?~:~NAT\\
-    setTherapyTime?~:~NAT\\
-    setMinUFRate?~:~NAT\\
-    MaxUFRat?~:~NAT\\
+    setUFVol?~:~\nat\\
+    setTherapyTime?~:~\nat\\
+    setMinUFRate?~:~\nat\\
+    MaxUFRat?~:~\nat\\
     \Delta HDState
   \where
     ufVol'~=~setUFVol?\\
@@ -1066,10 +1065,10 @@ PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\S
 \end{schema}
 
 \begin{schema}{SetPressureParameters}
-    setLimitDeltaMinMaxAP?~:~NAT\\
-    setActualTMPMaxTMP?~:~NAT\\
+    setLimitDeltaMinMaxAP?~:~\nat\\
+    setActualTMPMaxTMP?~:~\nat\\
     setLimitsTMP?~:~SWITCH\\
-    setLowHigh?~:~NAT\\
+    setLowHigh?~:~\nat\\
     setExtendedTMPLimitRange?~:~SWITCH\\
     \Delta HDState
 \where
@@ -1082,10 +1081,10 @@ PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\S
 
 \begin{schema}{SetHeparinParameters}
     setHSTime?~:~TIME\\
-    setHBVol?~:~NAT\\
-    setHPRate?~:~NAT\\
+    setHBVol?~:~\nat\\
+    setHPRate?~:~\nat\\
     setTWHeparin?~:~SWITCH\\
-    setSType?~:~NAT\\
+    setSType?~:~\nat\\
     \Delta HDState
   \where
     heparinStopTime'~=~setHSTime?\\

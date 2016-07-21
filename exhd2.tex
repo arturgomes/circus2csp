@@ -372,18 +372,17 @@ SensorReadings ~\circdef~
 %\subsection{Software requirements Arterial bolus.}
 
 StopBloodFlow~\circdef~ stopBloodFlow \then \Skip
-RaiseAlarm~\circdef~ [~\Delta~HDState | alarm'~=~ENABLED ~]
+\also RaiseAlarm~\circdef~ \lschexpract [~\Delta~HDState | alarm'~=~ENABLED ~] \rschexpract \circseq (produceAlarmSound \then \Skip)
 \also StopBP~\circdef~stopBP \then \Skip
 \also StopBP~\circdef~ stopBP \then \Skip
 \also StopFlowDialyzer~\circdef~ stopFlowDialyzer \then \Skip
 \also DisconnectDF~\circdef~ disconnectDF \then \Skip
-\also StopCoagulantFlow~\circdef~ stopCoagulantFlow \then \Skip
+\also StopCoagulantFlow~\circdef~ stopCoagulantFlow \then \Skip\\
 
 %<*ZR1>
 %<*ZR1>
 
-PreR1 \circdef
-  [\Delta HDState | hdActivity~=~\{applicationArterialBolus\}\land infSalineVol~>~400]
+PreR1 \circdef [\Delta HDState | hdActivity~=~\{applicationArterialBolus\}\land infSalineVol~>~400]\\
 
 R1~\circdef~(PreR1~\circseq~(StopBloodFlow~\interleave~RaiseAlarm)
   \\\t2 \extchoice \lnot PreR1 \circseq Wait(CheckInterval) \circseq R1)

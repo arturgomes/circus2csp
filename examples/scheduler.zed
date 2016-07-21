@@ -14,7 +14,7 @@ paper `\emph{Automating the generation and sequencing of test cases
 FME 1993.
 
 It would be interesting to see if putting this through
-the Z to BZP translator produces an equivalent .bzp file 
+the Z to BZP translator produces an equivalent .bzp file
 to the result of putting the B version through the B to BZP translator!
 
 \begin{zed}
@@ -24,7 +24,7 @@ to the result of putting the B version through the B to BZP translator!
 \begin{schema}{Scheduler}
     active,ready,waiting:\finset PID \\
 \where
-    \# active \leq 1 \\ 
+    \# active \leq 1 \\
     ready \cap waiting = \emptyset \\
     active \cap waiting = \emptyset \\
     active \cap ready = \emptyset \\
@@ -56,9 +56,9 @@ using the Z if-then-else operators.
 \where
     pp? \in waiting \\
     waiting' = waiting \setminus \{pp?\} \\
-    (active = \emptyset 
+    (active = \emptyset
 	\implies active' = \{pp?\} \land ready'=ready) \\
-    (active \neq \emptyset 
+    (active \neq \emptyset
 	\implies active' = active \land ready'=ready \cup \{pp?\})
 \end{schema}
 
@@ -97,7 +97,7 @@ These next two auxiliary schemas are used to define the Swap operation.
 
 Here are the preconditions of the operations.
 % \begin{zed}
-%   \vdash ? \pre New = [Scheduler; pp?:PID 
+%   \vdash ? \pre New = [Scheduler; pp?:PID
 % 			| pp? \not \in active \cup ready \cup waiting ]
 % \end{zed}
 % \begin{zed}

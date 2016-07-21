@@ -170,21 +170,6 @@ data ZToken
   | L_NOTIN                -- '\notin'
   | L_INREL                -- '\inrel'  (used in '\inrel{name}')
 
-  --missing from the ISO Standard Z -
-  | L_GENERIC
-  | L_RELATION
-  | L_LEFTASSOC
-  | L_RIGHTASSOC
-  | L_EMPTY_SET
-  | L_SYMDIFF
-  | L_BIG_CUP
-  | L_BIG_CAP
-  | L_DOM
-  | L_RAN
-  | L_NUM
-  | L_ARITHMOS
-  | L_VDASH
-  | L_FUNCTION
   -- terminals that carry information with them.
   | L_WORD String          -- used for identifiers, schema names etc.
   | L_GIVENVAL String      -- strings are elements of given sets.
@@ -329,8 +314,7 @@ zlexz c ls ('\\':s)
   | cmd=="lambda" = tok L_LAMBDA
   | cmd=="mu"     = tok L_MU
   -- A.2.4.2 Other letter characters
-  | cmd=="arithmos"=tok L_ARITHMOS
-  | cmd=="nat"    = tok L_CIRCNAMESET
+  -- | cmd=="nat"    = tok L_CIRCNAMESET
   | cmd=="power" && underscore1
       = tok_1 (L_PRE_GEN ("\\power_1"))
   | cmd=="power"  = tok L_POWER -- must come after \power_1.
@@ -340,7 +324,6 @@ zlexz c ls ('\\':s)
   | cmd=="lblot"  = tok L_LBLOT
   | cmd=="rblot"  = tok L_RBLOT
   -- A.2.4.4 Symbol Characters (except mathematical toolkit characters)
-  | cmd=="vdash"   = tok L_VDASH
   | cmd=="land"   = tok L_LAND
   | cmd=="lor"    = tok L_LOR
   | cmd=="implies"= tok L_IMPLIES
@@ -361,18 +344,13 @@ zlexz c ls ('\\':s)
   | cmd=="ELSE"   = tok L_ELSE
   | cmd=="LET"    = tok L_LET
   | cmd=="pre"    = tok L_PRE
-  | cmd=="function"   = tok L_FUNCTION
-  | cmd=="generic"    = tok L_GENERIC
-  | cmd=="relation"   = tok L_RELATION
-  | cmd=="leftassoc"  = tok L_LEFTASSOC
-  | cmd=="rightassoc" = tok L_RIGHTASSOC
   -- A.2.5 Mathematical toolkit characters and words
   -- A.2.5.1 Section set_toolkit
   | cmd=="rel"    = tok (L_IN_GEN ('\\':cmd))
   | cmd=="fun"    = tok (L_IN_GEN ('\\':cmd))
   | cmd=="neq"    = tok L_NEQ
   | cmd=="notin"  = tok L_NOTIN
-  | cmd=="emptyset"= tok L_EMPTY_SET
+  -- | cmd=="emptyset"= tok L_EMPTY_SET
   | cmd=="subset" = tok (L_IN_REL ('\\':cmd))
   | cmd=="subseteq"= tok (L_IN_REL ('\\':cmd))
   | cmd=="cap"    = tok (L_IN_FUN 4 ('\\':cmd))
@@ -380,9 +358,6 @@ zlexz c ls ('\\':s)
   | cmd=="cup"    = tok (L_IN_FUN 3 ('\\':cmd))
   | cmd=="cup"    = tok L_UNION
   | cmd=="setminus"= tok (L_IN_FUN 3 ('\\':cmd))
-  | cmd=="symdiff"= tok L_SYMDIFF
-  | cmd=="bigcup"= tok L_BIG_CUP
-  | cmd=="bigcap"= tok L_BIG_CAP
   | cmd=="finset" && underscore1
       = tok_1 (L_PRE_GEN ("\\finset_1"))
   | cmd=="finset" = tok (L_PRE_GEN ("\\finset"))  -- must come after \finset_1
@@ -417,7 +392,6 @@ zlexz c ls ('\\':s)
   | cmd=="leq"    = tok (L_IN_REL ('\\':cmd))
   | cmd=="mod"    = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="div"    = tok (L_IN_FUN 4 ('\\':cmd))
-  | cmd=="num"    = tok L_NUM
   -- Need the \negate -> ~, but different from '~' space
   -- A.2.5.4 Section sequence_toolkit
   | cmd=="upto"   = tok (L_IN_FUN 2 ('\\':cmd))

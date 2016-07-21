@@ -218,11 +218,11 @@ BUTTON ::= ON~|~OFF
 \end{schema}
 \begin{circusaction}
   ResetClock ~\circdef~
-  \\\t2time:=0 \circseq Clock\\
+  \\\t2 (time:=0) \circseq Clock\\
 \end{circusaction}
 \begin{circusaction}
   Clock ~\circdef~
-  \\\t2 \circmu~X \circspot  (tick \then time:=time+1 \interleave getCurrentTime!time \then \Skip)\circseq X
+  \\\t2 \circmu~X \circspot  (tick \then (time:=time+1) \interleave getCurrentTime!time \then \Skip)\circseq X
 \end{circusaction}
 \begin{circusaction}
   Wait~\circdef~ \circvar n : NAT \circspot
@@ -230,16 +230,21 @@ BUTTON ::= ON~|~OFF
    \circelse n~=~0 \circthen \Skip
    \circfi\\
 \end{circusaction}
-\begin{circusaction}
-  \circspot ResetClock
-\end{circusaction}%
-\vspace{-1cm}
 \begin{circus}
+  \circspot ResetClock
+
   \circend
 \end{circus}
 
 \begin{circus}%
   \circprocess\ ~HDMachine ~\circdef~ \circbegin
+
+\circstate HDMachineSt \defs HDGenComp
+\\\t2\land~RinsingParameters
+\\\t2\land~DFParameters
+\\\t2\land~UFParameters
+\\\t2\land~PressureParameters
+\\\t2\land~HeparinParameters
 \end{circus}%
 %</hdchannels>
 \begin{schema}{HDGenComp}
@@ -341,16 +346,7 @@ BUTTON ::= ON~|~OFF
     syringeType~\in~\{10,20,30\}
 \end{schema}
 %</zedstate>
-%<*hdstate>
- \begin{zed}
-HDState == HDGenComp
-\\\t2\land~RinsingParameters
-\\\t2\land~DFParameters
-\\\t2\land~UFParameters
-\\\t2\land~PressureParameters
-\\\t2\land~HeparinParameters
-\end{zed}
-%</hdstate>
+
 
 \begin{schema}{HDGenCompInit}
 HDState~'\\
@@ -407,14 +403,14 @@ PressureParameters~'
 HeparinParameters~'
 \end{schema}
 
-\begin{circus}
-HDStateInit~=~HDGenCompInit
-\\\t2\land~RinsingParametersInit
-\\\t2\land~DFParametersInit
-\\\t2\land~UFParametersInit
-\\\t2\land~PressureParametersInit
-\\\t2\land~HeparinParametersInit
-\end{circus}
+\begin{circusaction}
+HDStateInit~\circdefs~HDGenCompInit
+\land~RinsingParametersInit
+\land~DFParametersInit
+\land~UFParametersInit
+\land~PressureParametersInit
+\land~HeparinParametersInit
+\end{circusaction}
 
 %<*hdchannels>
 % \begin{circus}
@@ -422,8 +418,8 @@ HDStateInit~=~HDGenCompInit
 % \end{circus}
 
 
-\begin{circus}
-    SensorReadings ~\defs~
+\begin{circusaction}
+    SensorReadings ~\circdef~
     %senAirVolLimit?airVolLimit \then SensorReadings\\
     senApTransdPress?apTransdPress \then SensorReadings\\
     \t2\extchoice senBloodFlowInEBC?bloodFlowInEBC \then SensorReadings\\
@@ -440,19 +436,19 @@ HDStateInit~=~HDGenCompInit
     \t2\extchoice senVpTransdPress?vpTransdPress \then SensorReadings\\
     \t2\extchoice senHDMode?hdMode \then SensorReadings\\
     \t2\extchoice setMinUFRateTreat?minUFRateTreat \then SensorReadings
-\end{circus}
-\begin{circus}
+\end{circusaction}
+\begin{circusaction}
   StatePhase \circdef\\\t1
-  (preparationPhase \then hdMachineState:=prepPhase \circseq StatePhase\\
+  (preparationPhase \then (hdMachineState:=prepPhase) \circseq StatePhase\\
           \extchoice connectingToPatient \then
           \\\t2hdMachineState:=connectThePatient \circseq StatePhase\\
           \extchoice therapyInitiation
           \then hdMachineState:=initPhase \circseq StatePhase\\
           \extchoice therapyEnding \then hdMachineState:=endPhase \circseq StatePhase)
-\end{circus}
-\begin{circus}
+\end{circusaction}
+\begin{circusaction}
     InitState ~\circdef~ HDGenCompInit \circseq SensorReadings
-\end{circus}
+\end{circusaction}
 %<*hdclock>
 
 
@@ -494,7 +490,7 @@ NoFlowWatchDog ~\circdef~ \\
 BloodFlowSample  ~\circdef~  \\ %second approach for R2
     \t2~senBloodFlowInEBC?bloodFlowInEBC \then
     ((\circif bloodFlowInEBC \neq 0
-                  \circthen lastNonZeroBF := time\\
+                  \circthen (lastNonZeroBF := time)\\
                   \circelse bloodFlowInEBC~=~0 \then \Skip
                  \circfi) \circseq \\BloodFlowSample)
 
