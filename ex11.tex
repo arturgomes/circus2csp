@@ -1,0 +1,53 @@
+\begin{zed}
+[HOUR,MINUTE]
+\also TIME == \{ h:HOUR; m:MINUTE @ (h,m) \}
+\also INTEGER == \{0 \upto 100\}
+\also BUTTON ::= ON~|~OFF
+\also SWITCH ::= ENABLED~|~DISABLED
+\also DIRECTION ::= FORWARD~|~BACKWARDS
+\also STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~|~endPhase
+\also ACTIVITY ::= rinsingEBC~|~applicationArterialBolus~|~anticoagDelivRun |~reinfProcess~|~preparationOfDF~|~priming~|~rinsing~|~idle
+\also LID ::= OPEN~|~CLOSED
+\also CONCENTRATE ::= ACID~|~ACETATE~|~BICARBONATE
+
+\also HDMODE ::= RUN~|~ALARM~|~BYPASS
+\also LAMP ::= GREEN~|~YELLOW
+\also BOOL ::= TRUE~|~FALSE
+\end{zed}
+
+
+%<*hdchannels>
+\begin{circus}
+  \circchannel preparationPhase, therapyInitiation\\
+  \circchannel connectingToPatient, duringTherapy, therapyEnding\\
+  \circchannel autSelfTest, atrialTubing\\
+  \circchannel ventricularTubing, connectDialyzer
+\end{circus}
+
+%--responses to requirements
+\begin{circus}
+  \circchannel stopBloodFlow, produceAlarmSound, stopBP\\
+  \circchannel disconnectDF, stopFlowDialyzer, stopCoagulantFlow
+\end{circus}
+
+\begin{circus}
+  \circchannel fillArterialDrip, connPatientArterially, connPatientVenously\\
+  \circchannel insertHeparinSyringe, heparinLineIsVented\\
+  \circchannel salineBagLevel~:~INTEGER \cross CONCENTRATE; connectingConcentrate~:~CONCENTRATE\\
+\end{circus}
+\begin{circus}%
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+\end{circus}
+\begin{circusaction}
+  Clock ~\circdef~
+  \\\t2  \circmu~X \circspot  (tick \then \Skip \interleave getCurrentTime?time \then \Skip)\circseq X
+\end{circusaction}
+\begin{circusaction}
+  Wait~\circdef~ \circif n> 0 \circthen (tick \then \Skip)
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+\end{circusaction}
+\begin{circus}
+  \circspot Clock
+  \circend
+\end{circus}
