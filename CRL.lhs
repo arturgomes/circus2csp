@@ -15,12 +15,12 @@ TODO: implement proviso
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (\circvar\ d:T @ A_1) \lpar ns_1 | cs | ns_2 \rpar A_2 \\ %
+%         (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar A2 \\ %
 %         = \\ %
-%         (\circvar\ d:T @ A_1 \lpar ns_1 | cs | ns_2 \rpar A_2) %
+%         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
 %     \end{circus}%
 %     \begin{prov}
-%         $\{d,d'\} \cap FV(A_2) = \emptyset$
+%         $\{d,d'\} \cap FV(A2) = \emptyset$
 %     \end{prov}
 
 %   \end{law}
@@ -35,19 +35,19 @@ Law 2 (var-exp-par-2)
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (\circvar\ d:T @ A_1) \lpar ns_1 | cs | ns_2 \rpar (\circvar\ d:T @ A_2) \\ %
+%         (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar (\circvar\ d:T \circspot A2) \\ %
 %         = \\ %
-%         (\circvar\ d:T @ A_1 \lpar ns_1 | cs | ns_2 \rpar A_2) %
+%         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
 %     \end{circus}%
 %     \begin{prov}
-%         $\{d,d'\} \cap FV(A_2) = \emptyset$
+%         $\{d,d'\} \cap FV(A2) = \emptyset$
 %     \end{prov}
 
 %   \end{law}
 %   \label{law:var-exp-par}
 % \end{lawn}
 \begin{code}
-crl_var_exp_par_2 (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
+crl_var_exp_par2 (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
   = case (d1 == d2) of _
                         | True       -> (CActionCommand (CVarDecl d1 (CSPNSParal ns1 cs ns2 a1 a2)))
                         | otherwise   -> (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
@@ -64,10 +64,10 @@ Law 4 (var-exp-seq)
 % \begin{lawn}[Variable block/Sequence---extension$^*$]\sl
 %  \begin{law}
 %    \begin{circus}
-%        A_1 \Semi\ (\circvar\ x:T @ A_2) \Semi\ A_3 = (\circvar\ x:T @ A_1 \Semi\ A_2 \Semi\ A_3) %
+%        A1 \Semi\ (\circvar\ x:T \circspot A2) \Semi\ A3 = (\circvar\ x:T \circspot A1 \Semi\ A2 \Semi\ A3) %
 %    \end{circus}%
 %    \begin{prov}
-%        $x \notin FV(A_1) \cup FV(A_3)$
+%        $x \notin FV(A1) \cup FV(A3)$
 %    \end{prov}
 
 %  \end{law}
@@ -75,14 +75,14 @@ Law 4 (var-exp-seq)
 % \end{lawn}
 TODO: implement proviso
 \begin{code}
-crl_variableBlockSequenceExtension (CSPSeq (CSPSeq a1 (CActionCommand (CVarDecl [(Choose x t)] a2))) a3) 
+crl_variableBlockSequenceExtension (CSPSeq (CSPSeq a1 (CActionCommand (CVarDecl [(Choose x t)] a2))) a3)
   = CActionCommand (CVarDecl [(Choose x t)] (CSPSeq (CSPSeq a1 a2) a3))
 \end{code}
 Law 5 (Variable Substitution) TODO
 % \begin{lawn}[Variable Substitution$^*$]\sl
 %  \begin{law}
 %    \begin{circus}
-%        A(x) = \circvar\ y @ y:[y'=x] \Semi\ A(y)%
+%        A(x) = \circvar\ y \circspot y \prefixcolon [y'=x] \circseq\ A(y)%
 %    \end{circus}%
 %    \begin{prov}
 %        $y$ is not free in A
@@ -100,7 +100,7 @@ Law 6 (Variable block introduction)
 % \begin{lawn}[Variable block introduction$^*$]\sl
 %  \begin{law}
 %    \begin{circus}
-%        A = \circvar\ x:T @ A %
+%        A = \circvar\ x:T \circspot A %
 %    \end{circus}%
 %    \begin{prov}
 %        $x \notin FV(A)$
@@ -113,7 +113,7 @@ TODO: implement proviso
 crl_variableBlockIntroduction a x t = CActionCommand (CVarDecl [(Choose x t)] a)
 \end{code}
 \begin{code}
-crl_07 (CActionCommand (CVarDecl [(Choose x t1)] (CActionCommand (CVarDecl [(Choose y t2)] a))))
+crl07 (CActionCommand (CVarDecl [(Choose x t1)] (CActionCommand (CVarDecl [(Choose y t2)] a))))
   = (CActionCommand (CVarDecl [(Choose x t1),(Choose y t2)] a))
 \end{code}
 Law 8 (Sequence unit)
@@ -134,7 +134,7 @@ Law 9 (Recursion unfold)
 % \begin{lawn}[Recursion unfold]\sl
 %  \begin{law}
 %    \begin{zed}
-%      \mu X @ F(X) = F(\mu X @ F(X))
+%      \mu X \circspot F(X) = F(\mu X \circspot F(X))
 %    \end{zed}
 %  \end{law}
 %  \label{law:recUnfold}
@@ -150,9 +150,9 @@ Law 10 (Parallelism composition/External choice—expansion)
 % \begin{lawn}[Parallelism composition/External choice---expansion$^*$]\sl
 %  \begin{law}
 %    \begin{circus}
-%        (\Extchoice i @ a_i \then A_i) \lpar ns_1 | cs | ns_2 \rpar (\Extchoice j @ b_j \then B_j) \\ %
+%        (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar (\Extchoice j \circspot b_j \then B_j) \\ %
 %        = \\ %
-%        (\Extchoice i @ a_i \then A_i) \lpar ns_1 | cs | ns_2 \rpar ((\Extchoice j @ b_j \then B_j) \extchoice (c \then C)) \\ %
+%        (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar ((\Extchoice j \circspot b_j \then B_j) \extchoice (c \then C)) \\ %
 %    \end{circus}%
 %    provided
 %    \begin{itemize}
@@ -174,13 +174,13 @@ Law 11 (Parallelism composition introduction 1$^*$)
 % \begin{lawn}[Parallelism composition introduction 1$^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         c \then A = (c \then A \lpar ns_1 | \lchanset c \rchanset | ns_2 \rpar c \then Skip)%
+%         c \then A = (c \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c \then Skip)%
 %         \also
-%         c.e \then A = (c.e \then A \lpar ns_1 | \lchanset c \rchanset | ns_2 \rpar c.e \then Skip)%
+%         c.e \then A = (c.e \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c.e \then Skip)%
 %     \end{circus}%
 %     \begin{provs}
 %         \item $c \notin usedC(A)$
-%         \item $wrtV(A) \subseteq ns_1$
+%         \item $wrtV(A) \subseteq ns1$
 %     \end{provs}
 
 %   \end{law}
@@ -193,25 +193,26 @@ crl_parallelismIntroduction1b (CSPCommAction (ChanComm c [ChanDotExp e]) a)  ns1
   = (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction (ChanComm c [ChanDotExp e]) a) (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip))
 \end{code}
 Law 12 (Channel extension 1)
-
+TODO: implement proviso
 % \begin{lawn}[Channel extension 1]\sl\label{law:chanExt1}
 %   \begin{law}
 %     \begin{zed}
-%       A_1 \lpar ns_1 | cs | ns_2 \rpar A_2 = A_1 \lpar ns_1 | cs \cup \lchan c \rchan | ns_2 \rpar A_2%
+%       A1 \lpar ns1 | cs | ns2 \rpar A2 = A1 \lpar ns1 | cs \cup \lchanset c \rchanset | ns2 \rpar A2%
 %     \end{zed}
 %     \begin{prov}
-%       $c \notin usedC(A_1) \cup usedC(A_2)$
+%       $c \notin usedC(A1) \cup usedC(A2)$
 %     \end{prov}
 %   \end{law}
 % \end{lawn}
 \begin{code}
-crl_chanExt1  = undefined
+crl_chanExt1 (CSPNSParal ns1 cs ns2 a1 a2) c
+  = (CSPNSParal ns1 (ChanSetUnion cs (CChanSet [c])) ns2 a1 a2)
 \end{code}
 Law 13 (Hiding expansion 2$^*$)
 % \begin{lawn}[Hiding expansion 2$^*$]\sl
 %   \begin{law}
 %     \begin{zed}
-%       A \hide cs = A \hide cs \cup \{ c \}
+%       A \circhide cs = A \circhide (cs \cup \lchanset c \rchanset)
 %     \end{zed}
 %     \begin{prov} $c \notin usedC(A)$ \end{prov}
 
@@ -219,56 +220,70 @@ Law 13 (Hiding expansion 2$^*$)
 %   \label{law:hidingExpansion2}
 % \end{lawn}
 \begin{code}
-crl_hidingExpansion2 = undefined
+crl_hidingExpansion2 (CSPHide a cs) c
+  = (CSPHide a (ChanSetUnion cs (CChanSet [c])))
 \end{code}
 Law 14 (Prefix/Hiding$^*$)
 % \begin{lawn}[Prefix/Hiding$^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (c \then Skip) \hide \{ c \} = Skip%
+%         (c \then Skip) \circhide \lchanset c \rchanset = Skip%
 %         \also
-%         (c.e \then Skip) \hide \{ c \} = Skip%
+%         (c.e \then Skip) \circhide \lchanset c \rchanset = Skip%
 %     \end{circus}%
 %   \end{law}
 %   \label{law:prefixHiding}
 % \end{lawn}
 \begin{code}
-crl_prefixHiding = undefined
+crl_prefixHiding (CSPHide (CSPCommAction (ChanComm c []) CSPSkip) (CChanSet [c1]))
+  = case (c == c1) of _
+                        | True        ->  CSPSkip
+                        | otherwise   -> (CSPHide (CSPCommAction (ChanComm c []) CSPSkip) (CChanSet [c1]))
+crl_prefixHiding (CSPHide (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip) (CChanSet [c1]))
+  = case (c == c1) of _
+                        | True        ->  CSPSkip
+                        | otherwise   -> (CSPHide (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip) (CChanSet [c1]))
 \end{code}
 Law 15 (Hiding Identity$^*$)
 % \begin{lawn}[Hiding Identity$^*$]\sl
 %   \begin{law}
 %     \begin{zed}
-%       A \hide cs = A
+%       A \circhide cs = A
 %     \end{zed}
 %     \begin{prov} $cs \cap usedC(A) = \emptyset$ \end{prov}
 %   \end{law}
 %   \label{law:hidingIdentity}
 % \end{lawn}
 \begin{code}
-crl_hidingIdentity = undefined
+crl_hidingIdentity (CSPHide a cs)
+  = a
 \end{code}
 Law 16 (Parallelism composition/External choice---exchange)
 % \begin{lawn}[Parallelism composition/External choice---exchange]\sl\label{law:parExtChoiceExchange}
 %   \begin{law}
 %     \begin{zed}
-%       (A_1 \lpar ns_1 | cs | ns_2 \rpar A_2) \extchoice (B_1 \lpar ns_1 | cs | ns_2 \rpar B_2) \\%
+%       (A1 \lpar ns1 | cs | ns2 \rpar A2) \extchoice (B1 \lpar ns1 | cs | ns2 \rpar B2) \\%
 %       = \\
-%       (A_1 \extchoice B_1) \lpar ns_1 | cs | ns_2\rpar (A_2 \extchoice B_2)
+%       (A1 \extchoice B1) \lpar ns1 | cs | ns2\rpar (A2 \extchoice B2)
 %     \end{zed}
-%     \begin{prov} $A_1 \lpar ns_1 | cs | ns_2 \rpar B_2 = A_2 \lpar ns_1 | cs | ns_2 \rpar B_1 = Stop$
+%     \begin{prov} $A1 \lpar ns1 | cs | ns2 \rpar B2 = A2 \lpar ns1 | cs | ns2 \rpar B1 = Stop$
 %     \end{prov}
 
 %   \end{law}
 % \end{lawn}
 \begin{code}
-crl_parExtChoiceExchange = undefined
+crl_parExtChoiceExchange (CSPExtChoice (CSPNSParal ns1 cs ns2 a1 a2) (CSPNSParal ns11 cs1 ns21 b1 b2))
+  = case (ns1 == ns11
+          && cs1 == cs
+          && ns2 == ns21) of _
+                              | True        ->  (CSPNSParal ns1 cs ns2 (CSPExtChoice a1 b1) (CSPExtChoice a2 b2))
+                              | otherwise   -> (CSPExtChoice (CSPNSParal ns1 cs ns2 a1 a2) (CSPNSParal ns11 cs1 ns21 b1 b2))
 \end{code}
 Law 17 (Parallelism composition/External choice---distribution$^*$)
 % \begin{lawn}[Parallelism composition/External choice---distribution$^*$]\sl
 % \begin{law}
 %   \begin{circus}
-%       \Extchoice i @ (A_i \lpar ns_1 | cs | ns_2 \rpar A) = (\Extchoice i @ A_i) \lpar ns_1 | cs | ns_2 \rpar A
+%       \Extchoice i \circspot (A_i \lpar ns1 | cs | ns2 \rpar A) = (\Extchoice i \circspot A_i) \lpar ns1 | cs | ns2 \rpar A
 %   \end{circus}%
 %   \begin{provs}
 %       \item $initials(A) \subseteq cs$ %
@@ -279,7 +294,8 @@ Law 17 (Parallelism composition/External choice---distribution$^*$)
 % \label{law:parallelismExternalChoiceDistribution}
 % \end{lawn}
 \begin{code}
-crl_parallelismExternalChoiceDistribution = undefined
+crl_parallelismExternalChoiceDistribution (CSPRepExtChoice i (CSPNSParal ns1 cs ns2 ai a))
+  = (CSPNSParal ns1 cs ns2 (CSPRepExtChoice i ai) a)
 \end{code}
 Law 18 (External choice unit)
 % \begin{lawn}[External choice unit]\sl
@@ -291,51 +307,57 @@ Law 18 (External choice unit)
 %   \label{law:extChoiceStopUnit}
 % \end{lawn}
 \begin{code}
-crl_extChoiceStopUnit = undefined
+crl_extChoiceStopUnit (CSPExtChoice CSPStop a)
+  = a
 \end{code}
 Law 19 (External choice/Sequence---distribution)
 % \begin{lawn}[External choice/Sequence---distribution]\sl
 %   \begin{law}
 %     \begin{zed}
-%       (\Extchoice i @ g_i \guard c_i \then A_i); B = \Extchoice i @ g_i \guard c_i \then A_i; B%
+%       (\Extchoice i \circspot g_i \guard c_i \then A_i); B = \Extchoice i \circspot g_i \guard c_i \then A_i; B%
 %     \end{zed}
 %   \end{law}
 %   \label{law:extChoiceSeqDist}
 % \end{lawn}
 \begin{code}
-crl_extChoiceSeqDist = undefined
+crl_extChoiceSeqDist (CSPSeq (CSPRepExtChoice i (CSPGuard gi (CSPCommAction ci ai))) b)
+  = (CSPRepExtChoice i (CSPSeq (CSPGuard gi (CSPCommAction ci ai)) b))
 \end{code}
 Law 20 (Hiding/External choice---distribution$^*$)
 % \begin{lawn}[Hiding/External choice---distribution$^*$]\sl
 %   \begin{law}
 %     \begin{zed}
-%       (A_1 \extchoice A_2) \hide cs = (A_1 \hide cs) \extchoice (A_2 \hide cs)
+%       (A1 \extchoice A2) \circhide cs = (A1 \circhide cs) \extchoice (A2 \circhide cs)
 %     \end{zed}
-%     \begin{prov} $(initials(A_1) \cup initials(A_2)) \cap cs = \emptyset$ \end{prov}
+%     \begin{prov} $(initials(A1) \cup initials(A2)) \cap cs = \emptyset$ \end{prov}
 %   \end{law}
 %   \label{law:hidingExternalChoiceDistribution}
 % \end{lawn}
 \begin{code}
-crl_hidingExternalChoiceDistribution = undefined
+crl_hidingExternalChoiceDistribution (CSPHide (CSPExtChoice a1 a2) cs)
+  = (CSPExtChoice (CSPHide a1 cs) (CSPHide a2 cs))
 \end{code}
 Law 21 (Hiding/External choice---distribution$^*$)
 % \begin{lawn}[Parallelism composition Deadlocked 1$^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (c_1 \then A_1) \lpar ns_1 | cs | ns_2 \rpar (c_2 \then A_2)
+%         (c1 \then A1) \lpar ns1 | cs | ns2 \rpar (c2 \then A2)
 %         = Stop %
-%         = Stop \lpar ns_1 | cs | ns_2 \rpar (c_2 \then A_2)
+%         = Stop \lpar ns1 | cs | ns2 \rpar (c2 \then A2)
 %     \end{circus}%
 %     \begin{provs}
-%         \item $c_1 \neq c_2$
-%         \item $\{c_1,c_2\} \subseteq cs$
+%         \item $c1 \neq c2$
+%         \item $\{c1,c2\} \subseteq cs$
 %     \end{provs}
 
 %   \end{law}
 %   \label{law:parallelismDeadlocked1}
 % \end{lawn}
 \begin{code}
-crl_parallelismDeadlocked1 = undefined
+crl_parallelismDeadlocked1 (CSPNSParal ns1 cs ns2 (CSPCommAction c1 a1) (CSPCommAction c2 a2))
+  = (CSPNSParal ns1 cs ns2 CSPStop (CSPCommAction c2 a2))
+crl_parallelismDeadlocked1 (CSPNSParal ns1 cs ns2 CSPStop (CSPCommAction c2 a2))
+  = CSPStop
 \end{code}
 Law 22 (Sequence zero)
 % \begin{lawn}[Sequence zero]\sl
@@ -347,201 +369,584 @@ Law 22 (Sequence zero)
 %   \label{law:seqStopZero}
 % \end{lawn}
 \begin{code}
-crl_seqStopZero = undefined
+crl_seqStopZero (CSPSeq CSPStop a)
+  = CSPStop
 \end{code}
 Law 23 (Communication/Parallelism composition---distribution)
 % \begin{lawn}[Communication/Parallelism composition---distribution]\sl
 %   \begin{law}
 %     \begin{zed}
-%       (c!e \then A_1) \lpar ns_1 | cs | ns_2 \rpar (c?x \then A_2(x)) = c.e \then (A_1 \lpar ns_1 | cs | ns_2 \rpar A_2(e)) %
+%       (c!e \then A1) \lpar ns1 | cs | ns2 \rpar (c?x \then A2(x)) = c.e \then (A1 \lpar ns1 | cs | ns2 \rpar A2(e)) %
 %     \end{zed}
 %     \begin{provs}
 %         \item $c \in cs$
-%         \item $x \notin FV(A_2)$.
+%         \item $x \notin FV(A2)$.
 %     \end{provs}
 %   \end{law}
 %   \label{law:communicationParallelismDistribution}
 % \end{lawn}
 \begin{code}
-crl_communicationParallelismDistribution = undefined
+crl_communicationParallelismDistribution (CSPNSParal ns1 cs ns2 (CSPCommAction (ChanComm c [ChanOutExp e]) (CActionName a1)) (CSPCommAction (ChanComm c1 [ChanInp x1]) (CSPParAction a2 [ZVar (x,[])])))
+  = case (c == c1
+        && x == x1) of _
+                        | True        ->  (CSPCommAction (ChanComm c [ChanDotExp e]) (CSPNSParal ns1 cs ns2 (CActionName a1) (CSPParAction a2 [e])))
+                        | otherwise   -> (CSPNSParal ns1 cs ns2 (CSPCommAction (ChanComm c [ChanOutExp e]) (CActionName a1)) (CSPCommAction (ChanComm c1 [ChanInp x1]) (CSPParAction a2 [ZVar (x,[])])))
 \end{code}
 Law 24 (Channel extension 3$^*$)
 % \begin{lawn}[Channel extension 3$^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (A_1 \lpar ns_1 | cs_1 | ns_2 \rpar A_2(e)) \hide cs_2 \\ %
+%         (A1 \lpar ns1 | cs1 | ns2 \rpar A2(e)) \circhide cs2 \\ %
 %         = \\ %
-%         ((c!e \then A_1) \lpar ns_1 | cs_1 | ns_2 \rpar (c?x \then A_2(x))) \hide cs_2 %
+%         ((c!e \then A1) \lpar ns1 | cs1 | ns2 \rpar (c?x \then A2(x))) \circhide cs2 %
 %     \end{circus}%
 %     \begin{provs}
-%         \item $c \in cs_1$
-%         \item $c \in cs_2$
-%         \item $x \notin FV(A_2)$
+%         \item $c \in cs1$
+%         \item $c \in cs2$
+%         \item $x \notin FV(A2)$
 %     \end{provs}
 
 %   \end{law}
 %   \label{law:channelExtension3}
 % \end{lawn}
 \begin{code}
-crl_channelExtension3 = undefined
+crl_channelExtension3 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 (CSPParAction a2 [e])) cs2) c x
+  = (CSPHide (CSPNSParal ns1 cs1 ns2 (CSPCommAction (ChanComm c [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c [ChanInp x]) (CSPParAction a2 [ZVar (x,[])]))) cs2)
 \end{code}
 Law 25 (Channel extension 4$^*$)
 % \begin{lawn}[Channel extension 4$^*$]\sl
 %   \begin{law}
 %     \begin{circus}
-%         (A_1 \lpar ns_1 | cs_1 | ns_2 \rpar A_2) \hide cs_2 = ((c \then A_1) \lpar ns_1 | cs_1 | ns_2 \rpar (c \then A_2)) \hide cs_2%
+%         (A1 \lpar ns1 | cs1 | ns2 \rpar A2) \circhide cs2 = ((c \then A1) \lpar ns1 | cs1 | ns2 \rpar (c \then A2)) \circhide cs2%
 %         \also
-%         (A_1 \lpar ns_1 | cs_1 | ns_2 \rpar A_2) \hide cs_2 = ((c.e \then A_1) \lpar ns_1 | cs_1 | ns_2 \rpar (c.e \then A_2)) \hide cs_2%
+%         (A1 \lpar ns1 | cs1 | ns2 \rpar A2) \circhide cs2 = ((c.e \then A1) \lpar ns1 | cs1 | ns2 \rpar (c.e \then A2)) \circhide cs2%
 %     \end{circus}%
 %     \begin{provs}
-%         \item $c \in cs_1$%
-%         \item $c \in cs_2$%
+%         \item $c \in cs1$%
+%         \item $c \in cs2$%
 %     \end{provs}
 
 %   \end{law}
 %   \label{law:channelExtension4}
 % \end{lawn}
 \begin{code}
-crl_channelExtension4 = undefined
+crl_channelExtension4 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2) (ChanComm c [ChanOutExp (e)])
+  = (CSPHide (CSPNSParal ns1 cs1 ns2 (CSPCommAction (ChanComm c [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c [ChanOutExp (e)]) a2)) cs2)
+
+crl_channelExtension4 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2) c
+  = (CSPHide (CSPNSParal ns1 cs1 ns2 (CSPCommAction c a1) (CSPCommAction c a2)) cs2)
 \end{code}
 Law 26 (prom-var-state)
 \begin{code}
 crl_promVarState (ProcMain (ZSchemaDef st (ZSchema exsc)) [CParAction lact (ParamActionDecl (xt:zvar1) act)] (CActionCommand (CValDecl [xt1] mact)))
-  = (ProcMain (ZSchemaDef st (ZS2 ZSAnd (ZSchema exsc) (ZSchema [xt]))) [CParAction lact act] mact)
+  = case (xt == xt1) of _
+                         | True        -> (ProcMain (ZSchemaDef st (ZS2 ZSAnd (ZSchema exsc) (ZSchema [xt]))) [CParAction lact act] mact)
+                         | otherwise   -> (ProcMain (ZSchemaDef st (ZSchema exsc)) [CParAction lact (ParamActionDecl (xt:zvar1) act)] (CActionCommand (CValDecl [xt1] mact)))
+
 \end{code}
 Law 27 (prom-var-state-2)
 \begin{code}
-crl_promVarState2 (ProcStalessMain [CParAction lact (ParamActionDecl (at:zvar1) act)] (CActionCommand (CValDecl [xt] mact))) st
-  = (ProcMain (ZSchemaDef st (ZSchema [xt])) [CParAction lact act] mact)
+crl_promVarState2 (ProcStalessMain [CParAction lact (ParamActionDecl (xt1:zvar1) act)] (CActionCommand (CValDecl [xt] mact))) st
+  = case (xt == xt1) of _
+                         | True        -> (ProcMain (ZSchemaDef st (ZSchema [xt])) [CParAction lact act] mact)
+                         | otherwise   -> (ProcStalessMain [CParAction lact (ParamActionDecl (xt1:zvar1) act)] (CActionCommand (CValDecl [xt] mact)))
 \end{code}
 Law 28 (Parallelism composition unit)
-
+% \begin{lawn}[Parallelism composition unit$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         Skip \lpar ns1 | cs | ns2 \rpar Skip = Skip
+%     \end{circus}%
+%   \end{law}
+%   \label{law:parallelismUnit1}
+% \end{lawn}
 \begin{code}
-
-crl_28 (CSPNSParal _ _ _ CSPSkip CSPSkip) = CSPSkip
+crl_parallelismUnit1 (CSPNSParal _ _ _ CSPSkip CSPSkip) = CSPSkip
 \end{code}
+Law 29 (Parallelism composition/Interleaving Equivalence)
+% \begin{lawn}[Parallelism composition/Interleaving Equivalence$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         A1 \linter ns2 | ns2 \rinter A2 = A1 \lpar ns2 | \emptyset | ns2 \rpar A2%
+%     \end{circus}%
+%   \end{law}
+%   \label{law:parallelism-interleaving-equivalence}
+% \end{lawn}
 \begin{code}
--- Law 29 (Parallelism composition/Interleaving Equivalence)
-crl_29 (CSPNSInter ns1 ns2 a1 a2) = (CSPNSParal ns1 CSEmpty ns2 a1 a2)
-crl_29_backwards (CSPNSParal ns1 CSEmpty ns2 a1 a2) = (CSPNSInter ns1 ns2 a1 a2)
+crl_parallInterlEquiv (CSPNSInter ns1 ns2 a1 a2) = (CSPNSParal ns1 CSEmpty ns2 a1 a2)
+crl_parallInterlEquiv_backwards (CSPNSParal ns1 CSEmpty ns2 a1 a2) = (CSPNSInter ns1 ns2 a1 a2)
 \end{code}
+Law 30 (Parallelism composition/Sequence---step$^*$)
+% \begin{lawn}[Parallelism composition/Sequence---step$^*$]\sl\label{law:parSeqStep}
+%   \begin{law}
+%     \begin{zed}
+%       (A1; A2) \lpar ns1 | cs | ns_ 2 \rpar A3  = A1; (A2 \lpar ns_ 1 | cs | ns2 \rpar A3)%
+%     \end{zed}
+%     \begin{provs}
+%       \item $initials(A3) \subseteq cs$
+%       \item $cs \cap usedC(A1) = \emptyset$
+%       \item $wrtV(A1) \cap usedV(A3) = \emptyset$
+%         \item $A3$ is divergence-free
+%       \item $wrtV(A1) \subseteq ns1$
+%     \end{provs}
+
+%   \end{law}
+% \end{lawn}
+TODO: implement proviso
 \begin{code}
--- Law 30 (Parallelism composition/Sequence—step)
--- TODO: implement proviso
-crl_30 (CSPNSParal ns1 cs ns2 (CSPSeq a1 a2) a3)
+crl_parSeqStep (CSPNSParal ns1 cs ns2 (CSPSeq a1 a2) a3)
     = (CSPSeq a1 (CSPNSParal ns1 cs ns2 a2 a3))
 \end{code}
+Law 31 (Hiding/Sequence---distribution$^*$)
+% \begin{lawn}[Hiding/Sequence---distribution$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%       (A1 \Semi\ A2) \circhide cs = (A1 \circhide cs) \Semi\ (A2 \circhide cs)
+%     \end{zed}
+%   \end{law}
+%   \label{law:hidingSequenceDistribution}
+% \end{lawn}
 \begin{code}
--- Law 31 (Hiding/Sequence—distribution⇤)
-crl_31 (CSPHide (CSPSeq a1 a2) cs) = (CSPSeq (CSPHide a1 cs) (CSPHide a2 cs))
+crl_hidingSequenceDistribution (CSPHide (CSPSeq a1 a2) cs) = (CSPSeq (CSPHide a1 cs) (CSPHide a2 cs))
 \end{code}
+Law 32 (Guard/Sequence---associativity)
+% \begin{lawn}[Guard/Sequence---associativity]\sl
+%   \begin{law}
+%     \begin{zed}
+%       (g \guard A1); A2 = g \guard (A1; A2)
+%     \end{zed}
+%   \end{law}
+%   \label{law:guardSeqAssoc}
+% \end{lawn}
 \begin{code}
--- Law 32 (Guard/Sequence—associativity)
-crl_32 (CSPSeq (CSPGuard g a1) a2) = (CSPGuard g (CSPSeq a1 a2))
+crl_guardSeqAssoc (CSPSeq (CSPGuard g a1) a2) = (CSPGuard g (CSPSeq a1 a2))
 \end{code}
+Law 33 (Input prefix/Parallelism composition---distribution 2$^*$)
+% \begin{lawn}[Input prefix/Parallelism composition---distribution 2$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         c?x \then (A1 \lpar ns1 | cs | ns2 \rpar A2) %
+%         = %
+%         (c?x \then A1) \lpar ns1 | cs | ns2 \rpar A2%
+%     \end{circus}%
+%     \begin{provs}
+%         \item $c \notin cs$%
+%         \item $x \notin usedV(A2)$
+%         \item $initials(A2) \subseteq cs$
+%         \item $A2$ is deterministic
+%     \end{provs}
+%   \end{law}
+%   \label{law:inputPrefixParallelismDistribution2}
+% \end{lawn}
+TODO: implement proviso
 \begin{code}
--- Law 33 (Input prefix/Parallelism composition—distribution 2⇤)
--- TODO: implement proviso
-crl_33 (CSPCommAction (ChanComm c [ChanInp x]) (CSPNSParal ns1 cs ns2 a1 a2))
+
+crl_inputPrefixParallelismDistribution2 (CSPCommAction (ChanComm c [ChanInp x]) (CSPNSParal ns1 cs ns2 a1 a2))
   = (CSPNSParal ns1 cs ns2 (CSPCommAction (ChanComm c [ChanInp x]) a1) a2)
 \end{code}
+Law 34 (Prefix/$Skip$$^*$)
+% \begin{lawn}[Prefix/$Skip$$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         c \then A = (c \then Skip) \Semi\ A
+%         \also
+%         c.e \then A = (c.e \then Skip) \Semi\ A
+%     \end{circus}%
+
+%   \end{law}
+%   \label{law:prefixSkip}
+% \end{lawn}
 \begin{code}
--- Law 34 (Prefix/Skip⇤)
-crl_34 (CSPCommAction (ChanComm c [ChanDotExp x]) a) = (CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
-crl_34 (CSPCommAction c a) = (CSPSeq (CSPCommAction c CSPSkip) a)
+crl_prefixSkip (CSPCommAction (ChanComm c [ChanDotExp x]) a)
+  = (CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
+crl_prefixSkip (CSPCommAction c a)
+  = (CSPSeq (CSPCommAction c CSPSkip) a)
 \end{code}
+Law 35 (Prefix/Parallelism composition---distribution)
+TODO: implement proviso
+% \begin{lawn}[Prefix/Parallelism composition---distribution]\sl
+%   \begin{law}
+%     \begin{zed}
+%       c \then (A1 \lpar ns1 | cs | ns2 \rpar A2) = (c \then A1) \lpar ns1 | cs \cup \lchanset c \rchanset | ns2 \rpar (c \then A2)%
+%       \also
+%       c.e \then (A1 \lpar ns1 | cs | ns2 \rpar A2) = (c.e \then A1) \lpar ns1 | cs \cup \lchanset c \rchanset | ns2 \rpar (c.e \then A2)%
+%     \end{zed}
+%     \begin{prov} $c \notin usedC(A1) \cup usedC(A2)$ or $c \in cs$
+%     \end{prov}
+
+%   \end{law}
+%   \label{law:prefixParDist}
+% \end{lawn}
 \begin{code}
--- Law 35 (Prefix/Parallelism composition—distribution)
--- TODO: implement proviso
-crl_35 (CSPCommAction (ChanComm cc []) (CSPNSParal ns1 cs ns2 a1 a2))
+crl_prefixParDist (CSPCommAction (ChanComm cc []) (CSPNSParal ns1 cs ns2 a1 a2))
   = (CSPNSParal
       ns1 (ChanSetUnion cs (CChanSet [cc])) ns2
       (CSPCommAction (ChanComm cc []) a1)
       (CSPCommAction (ChanComm cc []) a2))
-\end{code}
-\begin{code}
-crl_35 (CSPCommAction (ChanComm c [ChanDotExp e]) (CSPNSParal ns1 cs ns2 a1 a2))
+
+crl_prefixParDist (CSPCommAction (ChanComm c [ChanDotExp e]) (CSPNSParal ns1 cs ns2 a1 a2))
   = (CSPNSParal
       ns1 (ChanSetUnion cs (CChanSet [c])) ns2
       (CSPCommAction (ChanComm c [ChanDotExp e]) a1)
       (CSPCommAction (ChanComm c [ChanDotExp e]) a2))
 \end{code}
+Law 36 (External choice/Sequence---distribution 2$^*$)
+TODO: implement proviso
+% \begin{lawn}[External choice/Sequence---distribution 2$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%       ((g1 \guard A1) \extchoice (g2 \guard A2)); B = ((g1 \guard A1) ; B) \extchoice ((g2 \guard A2) ; B)%
+%     \end{zed}
+%     \begin{prov} $g1 \implies \lnot g2$ \end{prov}
+%   \end{law}
+%   \label{law:externalChoiceSequenceDistribution2}
+% \end{lawn}
 \begin{code}
--- Law 36 (External choice/Sequence—distribution 2⇤)
--- TODO: implement proviso
-crl_36 (CSPSeq (CSPExtChoice (CSPGuard g1 a1) (CSPGuard g2 a2)) b)
+crl_externalChoiceSequenceDistribution2 (CSPSeq (CSPExtChoice (CSPGuard g1 a1) (CSPGuard g2 a2)) b)
   = (CSPExtChoice (CSPSeq (CSPGuard g1 a1) b) (CSPSeq (CSPGuard g2 a2) b))
 \end{code}
+Law 37 (True guard)
+% \begin{lawn}[True guard]\sl
+%   \begin{law}
+%     \begin{zed}
+%       true \guard A = A
+%     \end{zed}
+%   \end{law}
+%   \label{law:trueGuard}
+% \end{lawn}
 \begin{code}
--- Law 37 (True guard)
-crl_37 (CSPGuard ZTrue{reason=[]} a) = a
+crl_trueGuard (CSPGuard ZTrue{reason=[]} a)
+  = a
 \end{code}
+Law 38 (False guard)
+% \begin{lawn}[False guard]\sl
+%   \begin{law}
+%     \begin{zed}
+%       false \guard A = Stop
+%     \end{zed}
+%   \end{law}
+%   \label{law:falseGuard}
+% \end{lawn}
 \begin{code}
--- Law 38 (False guard)
-crl_38 (CSPGuard ZFalse{reason=[]} _) = CSPStop
+crl_falseGuard (CSPGuard ZFalse{reason=[]} _)
+  = CSPStop
 \end{code}
+Law 39 (Hiding/$Chaos$---distribution$^*$)
+% \begin{lawn}[Hiding/$Chaos$---distribution$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%       Chaos \circhide cs = Chaos
+%     \end{zed}
+%   \end{law}
+%   \label{law:hidingChaos}
+% \end{lawn}
 \begin{code}
--- Law 39 (Hiding/Chaos–distribution)
-crl_39 (CSPHide CSPChaos _) = CSPChaos
+crl_hidingChaos (CSPHide CSPChaos _)
+  = CSPChaos
 \end{code}
+Law 40 (Sequence zero 2$^*$)
+% \begin{lawn}[Sequence zero 2$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%       Chaos; A = Chaos
+%     \end{zed}
+%   \end{law}
+%   \label{law:seqChaosZero}
+% \end{lawn}
 \begin{code}
--- Law 40 (Sequence zero 2)
-crl_40 (CSPSeq CSPChaos _) = CSPChaos
+crl_seqChaosZero (CSPSeq CSPChaos _)
+  = CSPChaos
 \end{code}
+Law 41 (Parallelism composition Zero$^*$)
+% \begin{lawn}[Parallelism composition Zero$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         Chaos \lpar ns1 | cs | ns2 \rpar A = Chaos%
+%     \end{circus}%
+%   \end{law}
+%   \label{law:parallelismZero}
+% \end{lawn}
 \begin{code}
--- Law 41 (Parallelism composition Zero)
-crl_41 (CSPNSParal _ _ _ CSPChaos _) = CSPChaos
+crl_parallelismZero (CSPNSParal _ _ _ CSPChaos _)
+  = CSPChaos
 \end{code}
+Law 42 (Internal choice/Parallelism composition Distribution$^*$)
+% \begin{lawn}[Internal choice/Parallelism composition Distribution$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         (A1 \intchoice A2) \lpar ns1 | cs | ns2 \rpar A3 \\ %
+%         = \\ %
+%         (A1 \lpar ns1 | cs | ns2 \rpar A3) \intchoice (A2 \lpar ns1 | cs | ns2 \rpar A3) \\ %
+%     \end{circus}%
+%   \end{law}
+%   \label{law:internalChoiceParallelismDistribution}
+% \end{lawn}
 \begin{code}
--- Law 42 (Internal choice/Parallelism composition Distribution)
-crl_42 (CSPNSParal ns1 cs ns2 (CSPIntChoice a1 a2) a3)
+crl_internalChoiceParallelismDistribution (CSPNSParal ns1 cs ns2 (CSPIntChoice a1 a2) a3)
   = (CSPIntChoice (CSPNSParal ns1 cs ns2 a1 a3) (CSPNSParal ns1 cs ns2 a2 a3))
 \end{code}
 \begin{code}
 --Law 43 (Sequence/Internal choice—distribution)
-crl_43 (CSPSeq a1 (CSPIntChoice a2 a3))
+crl43 (CSPSeq a1 (CSPIntChoice a2 a3))
   = (CSPIntChoice (CSPSeq a1 a2) (CSPSeq a1 a3))
 \end{code}
+Law 44 (Sequence/Internal choice---distribution$^*$)
+% \begin{lawn}[Sequence/Internal choice---distribution$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         A1 \Semi\ (A2 \intchoice A3) = (A1 \Semi\ A2) \intchoice (A1 \Semi\ A3)%
+%     \end{circus}%
+%   \end{law}
+%   \label{law:sequenceInternalChoiceDistribution}
+% \end{lawn}
+TODO: implement proviso
 \begin{code}
---Law 44 (Hiding/Parallelism composition—distribution⇤)
--- TODO: implement proviso
-crl_44 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2)
-  =  (CSPNSParal ns1 cs1 ns2 (CSPHide a1 cs2) (CSPHide a2 cs2))
+crl_sequenceInternalChoiceDistribution (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2)
+  = (CSPNSParal ns1 cs1 ns2 (CSPHide a1 cs2) (CSPHide a2 cs2))
 \end{code}
+Law 45 (Hiding combination)
+% \begin{lawn}[Hiding combination]\sl
+%   \begin{law}
+%     \begin{zed}
+%       (A \circhide cs1) \circhide cs2 = A \circhide (cs1 \cup cs2)
+%    \end{zed}
+%   \end{law}
+%   \label{law:hidingCombination}
+% \end{lawn}
 \begin{code}
---Law 45 (Hiding combination)
-crl_45 (CSPHide (CSPHide a cs1) cs2)
+crl_hidingCombination (CSPHide (CSPHide a cs1) cs2)
   = (CSPHide a (ChanSetUnion cs1 cs2))
 \end{code}
+Law 46 (Parallelism composition Deadlocked 3$^*$)
+TODO: implement proviso
+QUESTION: can we interpret $c_i --> A_i$ the same of $c.i --> A(i)$
+% \begin{lawn}[Parallelism composition Deadlocked 3$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         (\Extchoice_i c_i \then A_i) \lpar ns1 | cs | ns2 \rpar (\Extchoice_j c_j \then A_j)
+%         = Stop %
+%         = Stop \lpar ns1 | cs | ns2 \rpar (\Extchoice_j c_j \then A_j)
+%     \end{circus}%
+%     \begin{provs}
+%         \item $\bigcup_i\{c_i\} \cap $\bigcup_i\{c_i\} = \emptyset$
+%         \item $$\bigcup_i\{c_i\} \cap $\bigcup_i\{c_i\} \subseteq cs$
+%     \end{provs}
+
+%   \end{law}
+%   \label{law:parallelismDeadlocked3}
+% \end{lawn}
+
 \begin{code}
--- Law 47 (Assignment Removal⇤)
--- TODO: implement proviso
-crl_47 (CSPSeq (CActionCommand (CAssign _ e)) (CSPParAction a _))
+crl_parallelismDeadlocked3 (CSPNSParal ns1 cs ns2 (CSPRepExtChoice i (CSPCommAction ci ai)) (CSPRepExtChoice j (CSPCommAction cj aj)))
+  = (CSPNSParal ns1 cs ns2 CSPStop (CSPRepExtChoice j (CSPCommAction cj aj)))
+\end{code}
+Law 47 (Assignment Removal$^*$)
+TODO: implement proviso
+% \begin{lawn}[Assignment Removal$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%       x := e \circseq A(x) = A(e)
+%    \end{zed}%
+%     \begin{provs}
+%         \item $x$ is not free in $A(e)$
+%     \end{provs}
+%   \end{law}
+%   \label{law:assignmentRemoval}
+% \end{lawn}
+\begin{code}
+crl_assignmentRemoval (CSPSeq (CActionCommand (CAssign _ e)) (CSPParAction a _))
   = (CSPParAction a e)
 \end{code}
+Law 48 (Innocuous Assignment$^*$)
+
+% \begin{lawn}[Assignment Removal]\sl
+%   \begin{law}
+%     \begin{zed}
+%       x := e \circseq A(x) = A(e)
+%    \end{zed}%
+%     \begin{provs}
+%         \item $x$ is not free in $A(e)$
+%     \end{provs}
+%   \end{law}
+%   \label{law:innocuousAssignment}
+% \end{lawn}
 \begin{code}
--- Law 48 (Innocuous Assignment⇤)
-crl_48 (CActionCommand (CAssign [(x1,[])] [ZVar (x2,[])]))
+crl_innocuousAssignment (CActionCommand (CAssign [(x1,[])] [ZVar (x2,[])]))
   = do {case (x1 == x2) of _
                             | True -> CSPSkip
                             | otherwise -> (CActionCommand (CAssign [(x1,[])] [ZVar (x2,[])]))}
 \end{code}
+Law 49 (Variable Substitution 2$^*$)
+TODO: implement proviso
+% \begin{lawn}[Variable Substitution$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         \circvar x \circspot A(x) = \circvar y \circspot A(y)%
+%     \end{circus}%
+%     \begin{prov}
+%         $y$ is not free in A
+%         $y$ is not free in A
+%     \end{prov}
+%   \end{law}
+%   \label{law:variableSubstitution}
+% \end{lawn}
 \begin{code}
--- Law 50 (Input Prefix/Sequence Distribution⇤)
--- TODO: implement proviso
-crl_50 (CSPSeq (CSPCommAction (ChanComm c [ChanInp x]) a1) a2 )
+crl_variableSubstitution2 (CValDecl [Include (ZSRef (ZSPlain x) [] [])] (CSPParAction a [ZVar (x1,[])])) y
+  = (CValDecl [Include (ZSRef (ZSPlain y) [] [])] (CSPParAction a [ZVar (y,[])]))
+\end{code}
+Law 50 (Input Prefix/Sequence Distribution$^*$)
+TODO: implement proviso
+% \begin{lawn}[Input Prefix/Sequence Distribution$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         (c?x \then A1) \circseq A2 = c?x \then (A1 \circseq A2)
+%     \end{circus}%
+%     \begin{provs}
+%         \item $x \notin FV(A2)$
+%     \end{provs}
+%   \end{law}
+%   \label{law:inputPrefixSequenceDistribution}
+% \end{lawn}
+\begin{code}
+
+crl_inputPrefixSequenceDistribution (CSPSeq (CSPCommAction (ChanComm c [ChanInp x]) a1) a2 )
   = (CSPCommAction (ChanComm c [ChanInp x]) (CSPSeq a1 a2))
 \end{code}
+Law 51 (Input Prefix/Hiding Identity$^*$)
+% \begin{lawn}[Input Prefix/Hiding Identity$^*$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         (c?x \then A1) \circseq A2 = c?x \then (A1 \circseq A2)
+%     \end{circus}%
+%     \begin{provs}
+%         \item $x \notin FV(A2)$
+%     \end{provs}
+%   \end{law}
+%   \label{law:inputPrefixHidIdentity}
+% \end{lawn}
 \begin{code}
---Law 51 (Input Prefix/Hiding Identity⇤)
---crl_51
+crl_inputPrefixHidIdentity (CSPSeq (CSPCommAction (ChanComm c [ChanInp x]) a1) a2)
+  = (CSPCommAction (ChanComm c [ChanInp x]) (CSPSeq a1 a2))
+\end{code}
+Law 52 (Guard/Parallelism composition---distribution$^*$)
+% \begin{lawn}[Guard/Parallelism composition---distribution$^*$]\sl
+%   \begin{law}
+%     \begin{zed}
+%      (g \guard A1) \lpar ns1 | cs | ns2 \rpar A2
+%      = g \guard (A1 \lpar ns1 | cs | ns2 \rpar A2)
+%     \end{zed}
+%   \end{law}
+%   \label{law:guardParDist}
+% \end{lawn}
+\begin{code}
+crl_guardParDist (CSPNSParal ns1 cs ns2 (CSPGuard g a1) a2)
+  = (CSPGuard g (CSPNSParal ns1 cs ns2 a1 a2))
+
+\end{code}
+Law 53 (Internal choice/Hiding composition Distribution)
+% \begin{lawn}[Internal choice/Hiding composition Distribution]\sl
+%   \begin{law}
+%     \begin{circus}
+%         (A1 \intchoice A2) \circhide cs = (A1 \circhide cs) \intchoice (A2\circhide cs )
+%     \end{circus}%
+%   \end{law}
+%   \label{law:internalChoiceHidingDistribution}
+% \end{lawn}
+\begin{code}
+crl_internalChoiceHidingDistribution (CSPHide (CSPIntChoice a1 a2) cs)
+  = (CSPIntChoice (CSPHide a1 cs) (CSPHide a2 cs))
+\end{code}
+Law 54 (Alternation Zero)
+% \begin{lawn}[Alternation Zero]\sl
+%   \begin{law}
+%     \begin{circus}
+%         \circif\ \circelse\ i \circspot g_i \then A_i \ \circfi =\Chaos
+%     \end{circus}%
+%     \begin{provs}
+%         \item $\bigvee_i \circspot\ g_i \equiv false$
+%     \end{provs}
+%   \end{law}
+%   \label{law:alternationZero}
+% \end{lawn}
+\begin{code}
+crl_alternationZero
+  = undefined
+
+\end{code}
+Law 55 (Alternation)
+% \begin{lawn}[Alternation]\sl
+%   \begin{law}
+%     \begin{circus}
+%         \circif\ \circelse\ i : S \circspot g_i \then\ A_i \circfi \\
+%         = \Intchoice i: T \circspot A_i%
+%     \end{circus}%
+%     \begin{prov}
+%         $T \subseteq S$
+%         $\bigwedge i : T \circspot g_i \equiv true $
+%         $\bigvee i : S\setminus\T \circspot g_i \equiv false$
+%     \end{prov}
+%   \end{law}
+%   \label{law:alternation}
+% \end{lawn}
+
+\begin{code}
+crl_alternation
+  = undefined
+
+\end{code}
+Law 56 (Assignment $Skip$)
+% \begin{lawn}[Assignment $Skip$]\sl
+%   \begin{law}
+%     \begin{circus}
+%         \circvar x \circspot x := e = \circvar x \circspot \Skip%
+%     \end{circus}%
+%   \end{law}
+%   \label{law:assignmentSkip}
+% \end{lawn}
+\begin{code}
+crl_assignmentSkip (CActionCommand (CValDecl [Include (ZSRef (ZSPlain x) [] [])] (CActionCommand (CAssign [(x1,[])] [ZVar (e,[])]))))
+  = (CActionCommand (CValDecl [Include (ZSRef (ZSPlain x) [] [])] CSPSkip))
+\end{code}
+
+
+\subsection{Auxiliary functions from Oliveira's PhD thesis}
+Function for $usedC(A)$
+\begin{code}
+usedC (CSPCommAction x c) = [getCommName x] ++ usedC c
+usedC (CSPGuard _ c) = usedC c
+usedC (CSPSeq ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPExtChoice ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPIntChoice ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPNSParal _ _ _ ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPParal _ ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPNSInter _ _ ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPInterleave ca cb) = (usedC ca) ++ (usedC cb)
+usedC (CSPHide c _) = usedC c
+usedC (CSPRecursion _ c) = usedC c
+usedC (CSPRepSeq _ c) = usedC c
+usedC (CSPRepExtChoice _ c) = usedC c
+usedC (CSPRepIntChoice _ c) = usedC c
+usedC (CSPRepParalNS _ _ _ c) = usedC c
+usedC (CSPRepParal _ _ c) = usedC c
+usedC (CSPRepInterlNS _ _ c) = usedC c
+usedC (CSPRepInterl _ c) = usedC c
+usedC _ = []
 \end{code}
 \begin{code}
--- Law 56 (Assignment Skip)
--- crl_56 (CActionCommand (CVarDecl [(Choose x t)] (CActionCommand (CAssign [(x1,[])] [ZVar (e,[])]))))
---  = do {case (x == (ZVar x1)) of _
---              | True -> (CActionCommand (CVarDecl [(Choose x t)] CSPSkip))
---              | otherwise -> (CActionCommand (CVarDecl x (CActionCommand (CAssign [(x1,[])] [ZVar (e,[])]))))}
+getCommName (ChanComm n _) = n
+getCommName (ChanGenComm n _ _) = n
 
-
+\end{code}
+Function for the proviso $c \in usedC(A)$
+\begin{code}
+inSet c acls
+  = case (head (head (filter (\(x:xs) -> x == c) acls))) of
+    [x]   -> Just c
+    _   -> Nothing
+\end{code}
+\begin{code}
+inChanSet c (CChanSet acls)
+  = case (head (head (filter (\(x:xs) -> [x] ==[getCommName c]) acls))) of
+    [x]   -> Just c
+    _   -> Nothing
 \end{code}

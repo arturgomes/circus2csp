@@ -1208,7 +1208,9 @@ circus_process_u :: EParser ZToken CProc
 circus_process_u
 	-- N(Exp^{+})
 	= circus_process_param_proc
-	 -- N[Exp^{+}]
+	-- Proc[N^{+}:=N^{+}]
+	+++ circus_process_rename
+	-- N[Exp^{+}]
 	+++ circus_process_rep_proc
 	-- N
 	+++ circus_process_name
@@ -1225,7 +1227,16 @@ circus_process_u
 	+++ circus_proc_main
 	-- Proc \circhide CSExp
 	+++ circus_process_hide
-
+	-- Action rename
+circus_process_rename :: EParser ZToken CProc
+circus_process_rename	
+	= do {nm <- zword; optnls; 
+			tok L_OPENBRACKET;
+			ws <- sepbycomma1 zword;
+	 		tok L_ASSIGN;
+	 		zxprs <- zexpressions;
+			tok L_CLOSEBRACKET;
+			return (CProcRename nm ws zxprs)}
 -- Proc \circhide CSExp
 circus_process_hide :: EParser ZToken CProc
 circus_process_hide
@@ -1773,33 +1784,33 @@ circus_comm_params
 circus_comm_param :: EParser ZToken CParameter
 circus_comm_param
 	= circus_comm_param_dot_exp +++ -- .Exp
-	circus_comm_param_input +++ -- ?N
 		circus_comm_param_input_pred +++ -- ?N : Pred
+		circus_comm_param_input +++ -- ?N
 		circus_comm_param_output_exp -- !Exp
 
 
  -- ?N
 circus_comm_param_input :: EParser ZToken CParameter
 circus_comm_param_input
-	= do {tok (L_STROKE "?");
+	= do {tok L_CINPUT;
 	  		zn <- zword;
 			return (ChanInp zn)}
 
 -- ?N : Pred
 circus_comm_param_input_pred :: EParser ZToken CParameter
 circus_comm_param_input_pred
-	= do {tok (L_STROKE "?");
+	= do {tok L_CINPUT;
 	  		zn <- zword;
-	  		optnls;
-	  		tok L_COMMA;
-	  		optnls;
+			optnls;
+			tok L_COLON;
+			optnls;
 	  		p <- zpredicate;
 			return (ChanInpPred zn p)}
 
 -- !Exp
 circus_comm_param_output_exp:: EParser ZToken CParameter
 circus_comm_param_output_exp
-	= do {tok (L_STROKE "!");
+	= do {tok L_COUTPUT;
 	  		p <- zexpression;
 			return (ChanOutExp p)}
 
@@ -1826,6 +1837,7 @@ circus_command
 	+++ circus_command_val
 	+++ circus_command_var
 	+++ circus_command_assign
+	+++	circus_command_prefix
 	+++	circus_command_bracket
 	+++	circus_command_brace
 	+++ circus_command_assumption
@@ -1844,7 +1856,7 @@ circus_command_vres
 
 circus_command_res :: EParser ZToken CCommand
 circus_command_res
-	= do {tok L_CIRCVRES;
+	= do {tok L_CIRCRES;
 			decls <- zdecl_part;
 	  		optnls;
 	  		tok L_CIRCSPOT ;
@@ -1855,7 +1867,7 @@ circus_command_res
 
 circus_command_val :: EParser ZToken CCommand
 circus_command_val
-	= do {tok L_CIRCVRES;
+	= do {tok L_CIRCVAL;
 			decls <- zdecl_part;
 	  		optnls;
 	  		tok L_CIRCSPOT ;
@@ -1904,6 +1916,20 @@ circus_command_assumption
 	  		optnls;
 	  		tok L_CLOSEBRACKET;
 			return (CAssumpt ws pred1 pred2)}
+circus_command_prefix :: EParser ZToken CCommand
+circus_command_prefix
+	= do {tok L_COLON;
+	  		optnls;
+	  		tok L_OPENBRACKET;
+	  		optnls;
+			pred1 <- zpredicate;
+	  		optnls;
+	  		tok L_COMMA;
+	  		optnls;
+			pred2 <- zpredicate;
+	  		optnls;
+	  		tok L_CLOSEBRACKET;
+			return (CPrefix pred1 pred2)}
 --  N^{+} := Exp^{+}
 circus_command_assign :: EParser ZToken CCommand
 circus_command_assign
@@ -1945,7 +1971,11 @@ circus_command_if
 
 circus_guarded_commands :: EParser ZToken CGActions
 circus_guarded_commands
-	= do {gcs <- circus_guarded_command;
+	= do {tok L_CIRCELSE;
+			optnls;
+	  		cgc <- par_action;
+	  		return (CircElse cgc)}
+	  +++ do {gcs <- circus_guarded_command;
 			optnls;
 			tok L_CIRCELSE;
 			optnls;

@@ -1,0 +1,63 @@
+\documentclass{llncs}
+\usepackage{llncsdoc}
+\usepackage{circus}
+\begin{document}
+\begin{circus}
+maxbuff == \nat_1 \\
+maxring == maxbuff - 1 \\
+Value == \nat \\
+CellId == 1 \upto maxring \\
+Direction ::=  req | ack
+    \also
+    \circchannel\ input, output : Value \\
+    \circchannel\ write, read, rd\_i, wrt\_i: CellId \cross Direction \cross Value \\
+    \circchannel\ rrd, wrt: Direction \cross Value \\
+    \circchannelset Ctr\_I == \lchanset rd\_i, wrt\_i \rchanset \\
+    \circprocess\ RingCell \circdef \circbegin\ \circstate\ CellState \defs [v:Value] \\
+    \t1 InitCell \circdef (\Intchoice x : Value \circspot setV(x)) \\
+%            setV \defs [\Delta CellState; x? : \nat | v' = x?] \\
+        setV \circdef \circval newV : Value \circspot (v:= newV) \\
+        Cell \circdef ((wrt.req?x \then setV(x)) \circseq\ (wrt.ack.x \then \Skip))  \\
+            \extchoice rrd.req?dumb \then rrd.ack!v \then Skip
+        \\
+        \circspot InitCell \circseq (\circmu X \circspot Cell \circseq X)
+    \\
+    \circend
+    \\
+    \circprocess\ IRCell \circdef RingCell[rrd,wrt:=rd\_i.i, wrt\_i.i]
+    \\
+    \circprocess\ DRing \circdef \Interleave i: CellId \circspot IRCell(i)
+    \also
+    \circprocess\ Controller \circdef \\
+    \circbegin\ \circstate\ CtrState \defs [cache:Value; size:\nat; top:CellId; bot:CellId] \\
+    \t1
+%            InitCtr \defs [CtrState' | cache'=0 \land size' = 0 \land top' = 1 \land bot'= 0] \\
+        InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 0) \\
+        Input \circdef (\lcircguard size < maxbuff \rcircguard \circguard \\
+                    \t1
+                        input?x \then (\lcircguard size = 0 \rcircguard \circguard ((cache:=x) \circseq (size:=1)))) \\
+                    \extchoice \lcircguard size > 0 \rcircguard \circguard
+                            write.top.req!x \then write.top.ack?dumb \then \\
+                            ((size:=size+1) \circseq\ (top:=(top~\mod~maxring)+1))
+        \\
+        Output \circdef
+            \lcircguard size > 0 \rcircguard \circguard \\
+            \t1
+                output!cache \then \\
+                \t1
+                    (\lcircguard size > 1 \rcircguard \circguard
+                                            (\IntChoice dumb:Value \circspot \\
+                                                \t1 read.bot.req.dumb \then read.bot.ack?x \then Skip) \circseq\ \\
+                                            ((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))
+                    \\
+                    \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0)
+        \\
+        \circspot InitCtr \circseq\ \circmu X \circspot ((Input \extchoice Output)\circseq X)
+    \\
+    \circend
+    \\
+    \circprocess\ ControllerR \circdef\ Controller[read,write:=rd\_i,wrt\_i]
+    \\
+    \circprocess\ DBuffer \circdef\ ((ControllerR \lpar Ctr\_I \rpar DRing) \circhide Ctr\_I)
+\end{circus}%
+\end{document}

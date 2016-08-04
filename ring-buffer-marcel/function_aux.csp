@@ -1,0 +1,30 @@
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+-- Function auxiliary operations
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+-- Function is a set {(x1, y1),...,(xn, yn)}
+
+-- Transforms a singleton set into the element itself
+pick({x}) = x
+
+-- Returns the function return
+-- Raises error if z is not in the domain of the function
+apply(f,x) = pick({ v | (n,v) <- f, n==x})
+
+-- domain antirestriction
+ddres(f,xs) = {(n,v) | (n,v) <- f, not member(n,xs)}
+
+-- domain restriction
+dres(f,xs) = {(n,v) | (n,v) <- f, member(n,xs)}
+
+-- Overwrites the fuction
+over(f,n,v) = union(ddres(f,{n}),{(n,v)})
+
+-- Returns the domain of a relation
+dom(f) = {n | (n,v) <- f}
+
+-- Returns the domain of a relation
+ran(f) = {v | (n,v) <- f}
+
+

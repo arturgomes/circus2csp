@@ -92,6 +92,7 @@ data ZToken
   | L_LINTER
   | L_LPAR
   | L_PERIOD
+  | L_PREFIXCOLON
   | L_QSTNMRK
   | L_RCHANSET
   | L_RCIRCINDEX
@@ -102,6 +103,8 @@ data ZToken
   | L_STOP
   | L_CTHEN
   | L_UNION
+  | L_CINPUT
+  | L_COUTPUT
   -- end Circus Tokens
 
   -- Now some common keywords and separators.
@@ -460,6 +463,7 @@ zlexz c ls ('\\':s)
   | cmd=="lcircindex"           = tok L_LCIRCINDEX
   | cmd=="linter"               = tok L_LINTER
   | cmd=="lpar"                 = tok L_LPAR
+  | cmd=="prefixcolon"          = tok L_COLON
   | cmd=="rchanset"             = tok L_RCHANSET
   | cmd=="rcircindex"           = tok L_RCIRCINDEX
   | cmd=="rinter"               = tok L_RINTER
@@ -521,6 +525,8 @@ zlexz c ls (')':s) = Token L_CLOSEPAREN   (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('[':s) = Token L_OPENBRACKET  (line ls) c : zlexz (c+1) ls s
 zlexz c ls (']':s) = Token L_CLOSEBRACKET (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('\'':s)= Token (L_STROKE "'") (line ls) c : zlexz (c+1) ls s
+zlexz c ls ('?':s) = Token L_CINPUT       (line ls) c : zlexz (c+1) ls s
+zlexz c ls ('!':s) = Token L_COUTPUT      (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('?':s) = Token (L_STROKE "?") (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('!':s) = Token (L_STROKE "!") (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('"':s)

@@ -579,7 +579,7 @@ data CProc
   | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
   | CParamProc ZName [ZExpr]              -- N(Exp^{+})
   -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
-                                           -- Proc[N^{+}:=N^{+}] -- TODO
+  | CProcRename ZName [ZVar] [ZExpr]        -- Proc[N^{+}:=N^{+}] -- TODO
   | CSeq CProc CProc                       -- Proc \cirCSeq Proc
   | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
   | CircusProc ZName                       -- N
@@ -613,10 +613,10 @@ data ParAction
  deriving (Eq,Ord,Show)
 
 data CAction
-
  = CActionSchemaExpr ZSExpr               -- \lschexpract S \rschexpract
  | CActionCommand CCommand
  | CActionName ZName
+ 
  | CSPSkip | CSPStop | CSPChaos
  | CSPCommAction Comm CAction             -- Comm \then Action
  | CSPGuard ZPred CAction                 -- Pred \circguard Action
@@ -656,7 +656,8 @@ data CCommand
   = CAssign [ZVar] [ZExpr]               -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
-  | CAssumpt [ZName] ZPred ZPred          -- N^{+} :[Pred,Pred]
+  | CAssumpt [ZName] ZPred ZPred          -- N^{+} \prefixcolon [Pred,Pred]
+  | CPrefix ZPred ZPred          -- \prefixcolon [Pred,Pred]
   | CommandBrace ZPred                    -- \{Pred\}
   | CommandBracket ZPred                  -- [Pred]
   | CValDecl [ZGenFilt] CAction           -- \circval Decl \circspot Action
@@ -667,6 +668,7 @@ data CCommand
 data CGActions
  = CircGAction ZPred CAction                 -- Pred \circthen Action
  | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
+ | CircElse ParAction    -- \circelse CAction
  deriving (Eq,Ord,Show)
 ---
 --- end Circus
