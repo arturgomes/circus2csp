@@ -1,8 +1,8 @@
 # Makefile for compiling and testing the Z animator under GHC.
-.SUFFIXES: .o .hi .lhs .hs .hc .s
+.SUFFIXES: .o .hi ..lhs .hs .hc .s
 
 # Enable profiling (turn off -auto-all for EParseLib, Parse, Formatting )
-# NOTE: you must also disable readline in TextUI.hs.
+# NOTE: you must also disable readline in TextUI.lhs.
 # GHCFLAGS=-syslib text -syslib util -static -prof -auto-all
 
 #GHCFLAGS=-syslib text -syslib util -static
@@ -35,16 +35,17 @@ help:
 
 CLPSTESTOBJ=$(ANIMOBJ) $(CLPSOBJ) CLPSTests.o
 clpstests: $(CLPSTESTOBJ)
-	ghc $(GHCFLAGS) -o clpstests --make CLPSTests.hs
+	ghc $(GHCFLAGS) -o clpstests --make CLPSTests.lhs
 
 # Note: -lHSutil -lreadline -lncurses flags have to go in this order,
 #       otherwise the linker does not search them in the correct order.
 JAZAOBJ=$(ANIMOBJ) $(CLPSOBJ) TextUI.o
+CIRCUSOBJ=$(ANIMOBJ) $(CLPSOBJ) CircusUI.o
 jaza: $(JAZAOBJ)
-	ghc $(GHCFLAGS) -o jaza --make TextUI.hs
+	ghc $(GHCFLAGS) -o jaza --make TextUI.lhs
 
-circus: $(JAZAOBJ)
-	ghc -w $(GHCFLAGS) -o circus --make CircusUI.hs
+circus: $(CIRCUSOBJ)
+	ghc -w $(GHCFLAGS) -o circus --make CircusUI.lhs
 
 Z2BZPOBJ=$(ANIMOBJ) $(CLPSOBJ) Z2BZP.o
 z2bzp: $(Z2BZPOBJ)
@@ -52,7 +53,7 @@ z2bzp: $(Z2BZPOBJ)
 
 
 wc:
-	wc $(ANIMOBJ:.o=.*hs)
+	wc $(ANIMOBJ:.o=..lhs)
 
 test: $(TEST)
 	for t in $(TESTS); do echo $$t; ./$$t; done
@@ -65,7 +66,7 @@ TESTSRC=jaza/tests/Makefile jaza/tests/*.jaza
 
 # This makes a source release.
 srcrel:
-	cd ..; tar czvf jaza_source.tgz $(DOCS) jaza/*.hs jaza/*.lhs $(TESTSRC)
+	cd ..; tar czvf jaza_source.tgz $(DOCS) jaza/*.lhs jaza/*.lhs $(TESTSRC)
 
 winrel:
 	cd ..; zip jaza_winxp.zip $(DOCS) jaza/jaza.exe $(TESTSRC)
@@ -83,7 +84,7 @@ clean:
 	rm -f *.o *.hi *.aux *.log *.out
 
 depend:
-	ghc -M $(GHCFLAGS) *.hs FiniteSets.lhs
+	ghc -M $(GHCFLAGS) *.lhs FiniteSets.lhs
 
 eval_test: $(COREOBJ) $(EVALOBJ) Eval_Test.o
 	ghc $(GHCFLAGS) -o eval_test $(COREOBJ) $(EVALOBJ) Eval_Test.o
@@ -95,32 +96,32 @@ parse_test: $(COREOBJ) $(PARSEOBJ) Parse_Test.o Test_Strings.o
 	ghc $(GHCFLAGS) -o parse_test $(COREOBJ) $(PARSEOBJ) Parse_Test.o Test_Strings.o
 
 formatter_test: $(COREOBJ) $(PARSEOBJ) FiniteSets.o Formatter.o Formatter_Test.o Test_Strings.o
-	ghc $(GHCFLAGS) -o formatter_test --make Formatter_Test.hs
+	ghc $(GHCFLAGS) -o formatter_test --make Formatter_Test.lhs
 	# WAS $(COREOBJ) $(PARSEOBJ) FiniteSets.o Formatter.o Formatter_Test.o Test_Strings.o
 
 unfold_test: $(COREOBJ) $(EVALOBJ) Unfold.o Unfold_Test.o
-	ghc $(GHCFLAGS) -o unfold_test --make Unfold_Test.hs
+	ghc $(GHCFLAGS) -o unfold_test --make Unfold_Test.lhs
 	# WAS: $(COREOBJ) $(EVALOBJ) Unfold.o Unfold_Test.o
 
 subs_test: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o Subs_Test.o
-	ghc $(GHCFLAGS) -o subs_test --make Subs_Test.hs
+	ghc $(GHCFLAGS) -o subs_test --make Subs_Test.lhs
 	# WAS: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o Subs_Test.o
 
 reorder_test: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o SetSize.o Reorder.o ReorderTest.o
-	ghc $(GHCFLAGS) -o reorder_test --make ReorderTest.hs
+	ghc $(GHCFLAGS) -o reorder_test --make ReorderTest.lhs
 	# WAS: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o SetSize.o Reorder.o ReorderTest.o
 
 
 %.hi: %.o
 	@:     # do nothing (just record the dependency of .hi on .o)
 
-%.o: %.hs
+%.o: %.lhs
 	ghc $(GHCFLAGS) -c $<
 
-#%.hi: %.lhs
+#%.hi: %..lhs
 #	ghc $(GHCFLAGS) -c $<
 
-%.o: %.lhs
+%.o: %..lhs
 	ghc $(GHCFLAGS) -c $<
 
 
@@ -128,8 +129,8 @@ reorder_test: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o Se
 
 
 # DO NOT DELETE: Beginning of Haskell dependencies
-AST.o : AST.hs
-Animate.o : Animate.hs
+AST.o : AST.lhs
+Animate.o : Animate.lhs
 Animate.o : ./Errors.hi
 Animate.o : ./BZTT.hi
 Animate.o : ./Eval.hi
@@ -137,7 +138,7 @@ Animate.o : ./Optimize.hi
 Animate.o : ./Unfold.hi
 Animate.o : ./Parse.hi
 Animate.o : AST.hi
-BZTT.o : BZTT.hs
+BZTT.o : BZTT.lhs
 BZTT.o : ./CLPSWrite.hi
 BZTT.o : ./CLPSType.hi
 BZTT.o : ./Errors.hi
@@ -146,112 +147,112 @@ BZTT.o : ./Eval.hi
 BZTT.o : ./Optimize.hi
 BZTT.o : ./Subs.hi
 BZTT.o : AST.hi
-CLPSTests.o : CLPSTests.hs
+CLPSTests.o : CLPSTests.lhs
 CLPSTests.o : ./CLPSWrite.hi
 CLPSTests.o : ./Formatter.hi
 CLPSTests.o : ./Errors.hi
 CLPSTests.o : ./Unfold.hi
 CLPSTests.o : ./Parse.hi
 CLPSTests.o : AST.hi
-CLPSType.o : CLPSType.hs
+CLPSType.o : CLPSType.lhs
 CLPSType.o : AST.hi
 CLPSType.o : ./Errors.hi
-CLPSWrite.o : CLPSWrite.hs
+CLPSWrite.o : CLPSWrite.lhs
 CLPSWrite.o : CLPSType.hi
 CLPSWrite.o : ./Eval.hi
 CLPSWrite.o : ./Errors.hi
 CLPSWrite.o : AST.hi
-EParseLib.o : EParseLib.hs
-EParseTest.o : EParseTest.hs
+EParseLib.o : EParseLib.lhs
+EParseTest.o : EParseTest.lhs
 EParseTest.o : EParseLib.hi
-Errors.o : Errors.hs
+Errors.o : Errors.lhs
 Errors.o : AST.hi
-Eval.o : Eval.hs
+Eval.o : Eval.lhs
 Eval.o : ./Reorder.hi
 Eval.o : ./Subs.hi
 Eval.o : ./FiniteSets.hi
 Eval.o : ./SetSize.hi
 Eval.o : Errors.hi
 Eval.o : AST.hi
-Eval_Test.o : Eval_Test.hs
+Eval_Test.o : Eval_Test.lhs
 Eval_Test.o : ./FiniteSets.hi
 Eval_Test.o : Errors.hi
 Eval_Test.o : Eval.hi
-Formatter.o : Formatter.hs
+Formatter.o : Formatter.lhs
 Formatter.o : ./FiniteSets.hi
 Formatter.o : ./Parse.hi
 Formatter.o : AST.hi
-Formatter_Test.o : Formatter_Test.hs
+Formatter_Test.o : Formatter_Test.lhs
 Formatter_Test.o : ./Test_Strings.hi
 Formatter_Test.o : Formatter.hi
 Formatter_Test.o : ./Parse.hi
 Formatter_Test.o : AST.hi
-HigherOrder.o : HigherOrder.hs
-Lexer.o : Lexer.hs
+HigherOrder.o : HigherOrder.lhs
+Lexer.o : Lexer.lhs
 Lexer.o : EParseLib.hi
-Lexer_Test.o : Lexer_Test.hs
+Lexer_Test.o : Lexer_Test.lhs
 Lexer_Test.o : Lexer.hi
 Lexer_Test.o : EParseLib.hi
-MyDebug.o : MyDebug.hs
-Optimize.o : Optimize.hs
+MyDebug.o : MyDebug.lhs
+Optimize.o : Optimize.lhs
 Optimize.o : MyDebug.hi
 Optimize.o : Eval.hi
 Optimize.o : ./Unfold.hi
 Optimize.o : ./Reorder.hi
 Optimize.o : ./Subs.hi
 Optimize.o : AST.hi
-Parse.o : Parse.hs
+Parse.o : Parse.lhs
 Parse.o : Errors.hi
 Parse.o : AST.hi
 Parse.o : Lexer.hi
 Parse.o : EParseLib.hi
-Parse_Test.o : Parse_Test.hs
+Parse_Test.o : Parse_Test.lhs
 Parse_Test.o : ./Test_Strings.hi
 Parse_Test.o : Lexer.hi
 Parse_Test.o : Parse.hi
-Reorder.o : Reorder.hs
+Reorder.o : Reorder.lhs
 Reorder.o : Parse.hi
 Reorder.o : MyDebug.hi
 Reorder.o : ./Subs.hi
 Reorder.o : ./SetSize.hi
 Reorder.o : AST.hi
-ReorderTest.o : ReorderTest.hs
+ReorderTest.o : ReorderTest.lhs
 ReorderTest.o : Reorder.hi
 ReorderTest.o : Formatter.hi
 ReorderTest.o : ./Unfold.hi
 ReorderTest.o : Parse.hi
 ReorderTest.o : Errors.hi
 ReorderTest.o : AST.hi
-SetSize.o : SetSize.hs
+SetSize.o : SetSize.lhs
 SetSize.o : ./FiniteSets.hi
 SetSize.o : Errors.hi
 SetSize.o : AST.hi
-Subs.o : Subs.hs
+Subs.o : Subs.lhs
 Subs.o : ./FiniteSets.hi
 Subs.o : AST.hi
-Subs_Test.o : Subs_Test.hs
+Subs_Test.o : Subs_Test.lhs
 Subs_Test.o : Formatter.hi
 Subs_Test.o : ./Unfold.hi
 Subs_Test.o : Parse.hi
 Subs_Test.o : Subs.hi
 Subs_Test.o : Errors.hi
 Subs_Test.o : AST.hi
-Test.o : Test.hs
-Test_Strings.o : Test_Strings.hs
+Test.o : Test.lhs
+Test_Strings.o : Test_Strings.lhs
 Test_Strings.o : AST.hi
-TextUI.o : TextUI.hs
+TextUI.o : TextUI.lhs
 TextUI.o : Formatter.hi
 TextUI.o : Animate.hi
 TextUI.o : Errors.hi
 TextUI.o : AST.hi
-Unfold.o : Unfold.hs
+Unfold.o : Unfold.lhs
 Unfold.o : Subs.hi
 Unfold.o : ./FiniteSets.hi
 Unfold.o : Errors.hi
 Unfold.o : AST.hi
-Unfold_Test.o : Unfold_Test.hs
+Unfold_Test.o : Unfold_Test.lhs
 Unfold_Test.o : Unfold.hi
-Z2BZP.o : Z2BZP.hs
+Z2BZP.o : Z2BZP.lhs
 Z2BZP.o : Formatter.hi
 Z2BZP.o : Animate.hi
 Z2BZP.o : Errors.hi

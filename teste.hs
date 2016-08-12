@@ -1,1 +1,0 @@
-quadrado x = x * x

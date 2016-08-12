@@ -1,12 +1,24 @@
-ZGivenSetDecl ("NAME",[])
-ZGivenSetDecl ("DATE",[])
-ZSchemaDef (ZSPlain "BirthdayBook") (ZSchema [Choose ("known",[]) (ZCall (ZVar ("\\power",[])) (ZVar ("NAME",[]))),Choose ("birthday",[]) (ZCall (ZVar ("\\pfun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("DATE",[])])),Check (ZEqual (ZVar ("known",[])) (ZCall (ZVar ("\\dom",[])) (ZVar ("birthday",[]))))])
-ZSchemaDef (ZSPlain "AddBirthday") (ZSchema [Include (ZSRef (ZSDelta "BirthdayBook") [] []),Choose ("name",["?"]) (ZVar ("NAME",[])),Choose ("date",["?"]) (ZVar ("DATE",[])),Check (ZNot (ZMember (ZVar ("name",["?"])) (ZVar ("known",[])))),Check (ZEqual (ZVar ("birthday",["'"])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZVar ("birthday",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("name",["?"]),ZVar ("date",["?"])])]])))])
-ZSchemaDef (ZSPlain "FindBirthday") (ZSchema [Include (ZSRef (ZSXi "BirthdayBook") [] []),Choose ("name",["?"]) (ZVar ("NAME",[])),Choose ("date",["!"]) (ZVar ("DATE",[])),Check (ZMember (ZVar ("name",["?"])) (ZVar ("known",[]))),Check (ZEqual (ZVar ("date",["!"])) (ZCall (ZVar ("birthday",[])) (ZVar ("name",["?"]))))])
-ZSchemaDef (ZSPlain "Remind") (ZSchema [Include (ZSRef (ZSXi "BirthdayBook") [] []),Choose ("today",["?"]) (ZVar ("DATE",[])),Choose ("cards",["!"]) (ZCall (ZVar ("\\power",[])) (ZVar ("NAME",[]))),Check (ZEqual (ZVar ("cards",["!"])) (ZSetComp [Choose ("n",[]) (ZVar ("known",[])),Check (ZEqual (ZCall (ZVar ("birthday",[])) (ZVar ("n",[]))) (ZVar ("today",["?"])))] Nothing))])
-ZSchemaDef (ZSPlain "InitBirthdayBook") (ZSchema [Include (ZSRef (ZSPlain "BirthdayBook") [] []),Check (ZEqual (ZVar ("known",[])) (ZVar ("\\emptyset",[])))])
-ZFreeTypeDef ("REPORT",[]) [ZBranch0 ("ok",[]),ZBranch0 ("already\\_known",[]),ZBranch0 ("not\\_known",[])]
-ZSchemaDef (ZSPlain "Success") (ZSchema [Choose ("result",["!"]) (ZVar ("REPORT",[])),Check (ZEqual (ZVar ("result",["!"])) (ZVar ("ok",[])))])
-ZSchemaDef (ZSPlain "AlreadyKnown") (ZSchema [Include (ZSRef (ZSXi "BirthdayBook") [] []),Choose ("name",["?"]) (ZVar ("NAME",[])),Choose ("result",["!"]) (ZVar ("REPORT",[])),Check (ZMember (ZVar ("name",["?"])) (ZVar ("known",[]))),Check (ZEqual (ZVar ("result",["!"])) (ZVar ("already\\_known",[])))])
-ZSchemaDef (ZSPlain "RAddBirthday") (ZSchema [Include (ZSRef (ZSDelta "BirthdayBook") [] []),Choose ("name",["?"]) (ZVar ("NAME",[])),Choose ("date",["?"]) (ZVar ("DATE",[])),Choose ("result",["!"]) (ZVar ("REPORT",[])),Check (ZNot (ZMember (ZVar ("name",["?"])) (ZVar ("known",[])))),Check (ZEqual (ZVar ("birthday",["'"])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZVar ("birthday",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("name",["?"]),ZVar ("date",["?"])])]]))),Check (ZEqual (ZVar ("result",["!"])) (ZVar ("ok",[])))])
-ZSchemaDef (ZSPlain "NotKnown") (ZSchema [Include (ZSRef (ZSXi "BirthdayBook") [] []),Choose ("name",["?"]) (ZVar ("NAME",[])),Choose ("result",["!"]) (ZVar ("REPORT",[])),Check (ZNot (ZMember (ZVar ("name",["?"])) (ZVar ("known",[])))),Check (ZEqual (ZVar ("result",["!"])) (ZVar ("not\\_known",[])))])
+ZGivenSetDecl ("HOUR",[])
+ZGivenSetDecl ("MINUTE",[])
+ZAbbreviation ("TIME",[]) (ZSetComp [Choose ("h",[]) (ZVar ("HOUR",[])),Choose ("m",[]) (ZVar ("MINUTE",[]))] (Just (ZTuple [ZVar ("h",[]),ZVar ("m",[])])))
+ZAbbreviation ("INTEGER",[]) (ZSetDisplay [ZCall (ZVar ("\\upto",[])) (ZTuple [ZInt 0,ZInt 100])])
+ZFreeTypeDef ("BUTTON",[]) [ZBranch0 ("ON",[]),ZBranch0 ("OFF",[])]
+ZFreeTypeDef ("SWITCH",[]) [ZBranch0 ("ENABLED",[]),ZBranch0 ("DISABLED",[])]
+ZFreeTypeDef ("DIRECTION",[]) [ZBranch0 ("FORWARD",[]),ZBranch0 ("BACKWARDS",[])]
+ZFreeTypeDef ("STATEPHASE",[]) [ZBranch0 ("connectThePatient",[]),ZBranch0 ("initPhase",[]),ZBranch0 ("prepPhase",[]),ZBranch0 ("endPhase",[])]
+ZFreeTypeDef ("ACTIVITY",[]) [ZBranch0 ("rinsingEBC",[]),ZBranch0 ("applicationArterialBolus",[]),ZBranch0 ("anticoagDelivRun",[]),ZBranch0 ("reinfProcess",[]),ZBranch0 ("preparationOfDF",[]),ZBranch0 ("priming",[]),ZBranch0 ("rinsing",[]),ZBranch0 ("idle",[])]
+ZFreeTypeDef ("LID",[]) [ZBranch0 ("OPEN",[]),ZBranch0 ("CLOSED",[])]
+ZFreeTypeDef ("CONCENTRATE",[]) [ZBranch0 ("ACID",[]),ZBranch0 ("ACETATE",[]),ZBranch0 ("BICARBONATE",[])]
+ZFreeTypeDef ("HDMODE",[]) [ZBranch0 ("RUN",[]),ZBranch0 ("ALARM",[]),ZBranch0 ("BYPASS",[])]
+ZFreeTypeDef ("LAMP",[]) [ZBranch0 ("GREEN",[]),ZBranch0 ("YELLOW",[])]
+ZFreeTypeDef ("BOOL",[]) [ZBranch0 ("TRUE",[]),ZBranch0 ("FALSE",[])]
+CircChannel [CChan "preparationPhase",CChan "therapyInitiation"]
+CircChannel [CChan "connectingToPatient",CChan "duringTherapy",CChan "therapyEnding"]
+CircChannel [CChan "autSelfTest",CChan "atrialTubing"]
+CircChannel [CChan "ventricularTubing",CChan "connectDialyzer"]
+CircChannel [CChan "stopBloodFlow",CChan "produceAlarmSound",CChan "stopBP"]
+CircChannel [CChan "disconnectDF",CChan "stopFlowDialyzer",CChan "stopCoagulantFlow"]
+CircChannel [CChan "fillArterialDrip",CChan "connPatientArterially",CChan "connPatientVenously"]
+CircChannel [CChan "insertHeparinSyringe",CChan "heparinLineIsVented"]
+CircChannel [CChanDecl "salineBagLevel" (ZCross [ZVar ("INTEGER",[]),ZVar ("CONCENTRATE",[])]),CChanDecl "connectingConcentrate" (ZVar ("CONCENTRATE",[]))]
+Process (CProcess "SysClock" (ProcDef (ProcStalessMain [CParAction "Clock" (CircusAction (CSPRecursion "X" (CSPSeq (CSPInterleave (CSPCommAction (ChanComm "tick" []) CSPSkip) (CSPCommAction (ChanComm "getCurrentTime" [ChanInp "time"]) CSPSkip)) (CActionName "X")))),CParAction "Wait" (CircusAction (CActionCommand (CIf (CircThenElse (CircGAction (ZMember (ZTuple [ZVar ("n",[]),ZInt 0]) (ZVar (">",[]))) (CSPCommAction (ChanComm "tick" []) CSPSkip)) (CircGAction (ZEqual (ZVar ("n",[])) (ZInt 0)) CSPSkip)))))] (CActionName "Clock"))))

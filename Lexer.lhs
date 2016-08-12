@@ -454,7 +454,7 @@ zlexz c ls ('\\':s)
   | cmd=="circfi"               = tok L_CIRCFI
   | cmd=="Extchoice"            = tok L_REPEXTCHOICE
   | cmd=="extchoice"            = tok L_EXTCHOICE
-  | cmd=="IntChoice"            = tok L_REPINTCHOICE
+  | cmd=="Intchoice"            = tok L_REPINTCHOICE
   | cmd=="intchoice"            = tok L_INTCHOICE
   | cmd=="Interleave"           = tok L_REPINTERLEAVE
   | cmd=="interleave"           = tok L_INTERLEAVE

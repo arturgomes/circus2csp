@@ -27,29 +27,44 @@ mapping_Circus (x:xs)
 \begin{code}
 mapping_CircParagraphs :: ZPara -> [Char]
 
-mapping_CircParagraphs (ZGivenSetDecl gs)
-  = (fst gs) ++ " = {}"
-mapping_CircParagraphs (ZSchemaDef zsn zse)
-  = undefined
-mapping_CircParagraphs (ZAbbreviation zv ze)
-  = undefined
-mapping_CircParagraphs (ZFreeTypeDef zv zbs)
-  = "datatype " ++ zv ++ " = " ++ (mapping_ZBranch zbs)
-mapping_CircParagraphs (ZPredicate zp)
-  = undefined
-mapping_CircParagraphs (ZAxDef zgfs)
-  = undefined
-mapping_CircParagraphs (ZGenDef zgfs)
-  = undefined
+mapping_CircParagraphs (ZFreeTypeDef (a,b) zbs)
+  = "datatype " ++ a ++ " = " ++ (mapping_ZBranch_list zbs)
 mapping_CircParagraphs (Process cp)
   = mapping_ProcDecl cp
 mapping_CircParagraphs (CircChanSet cn c2)
   = cn ++ " = " ++ (mapping_CSExp c2) ++ "\n"
 mapping_CircParagraphs (CircChannel cc2)
   = mapping_CDecl cc2
+-- mapping_CircParagraphs (ZGivenSetDecl gs)
+--   = undefined
+-- mapping_CircParagraphs (ZSchemaDef zsn zse)
+--   = undefined
+-- mapping_CircParagraphs (ZAbbreviation zv ze)
+--   = undefined
+-- mapping_CircParagraphs (ZPredicate zp)
+--   = undefined
+-- mapping_CircParagraphs (ZAxDef zgfs)
+--   = undefined
+-- mapping_CircParagraphs (ZGenDef zgfs)
+--   = undefined
+mapping_CircParagraphs x  
+  = fail ("not implemented by mapping_CircParagraphs: " ++ show x)
 \end{code}
 \begin{code}
-mapping_ZBranch = get_channel_type_list
+-- ZFreeTypeDef ("MYTYPE",[]) [ZBranch0 ("A",[]),ZBranch1 ("B",[]) (ZCross [ZVar ("\\nat",[]),ZVar ("\\nat",[])])]
+
+mapping_ZBranch_list [x]
+  = (mapping_ZBranch x)
+mapping_ZBranch_list (x:xs)
+  = (mapping_ZBranch x) ++ " | " ++ (mapping_ZBranch_list xs)
+mapping_ZBranch (ZBranch0 (a,b))
+  = a
+mapping_ZBranch (ZBranch1 (a,xb) (ZCross b))
+  = a ++ "." ++ (mapping_ZBranch_cross b)
+mapping_ZBranch_cross [ZVar (a,b)]
+  = a
+mapping_ZBranch_cross ((ZVar (a,b)):xs)
+  = a ++ "." ++ (mapping_ZBranch_cross xs)
 \end{code}
 \subsection{Mapping Circus Channels}
 \begin{code}
@@ -245,18 +260,19 @@ mapping_CProc (CSeq a b)
   = mapping_CProc(a)
     ++ " ; "
     ++ mapping_CProc(b)
-mapping_CProc (CGenProc zn (x:xs))
-  = undefined
-mapping_CProc (CParamProc zn (x:xs))
-  = undefined
-mapping_CProc (CSimpIndexProc zn (x:xs))
-  = undefined
-mapping_CProc (ProcMain zp (x:xs) ca)
-  = undefined
 mapping_CProc (ProcStalessMain pps ca)
   = "\n\tlet \n\t\t" ++ (mapping_PPar_list pps)
     ++ "within " ++ (mapping_CAction ca) ++ "\n"
-
+-- mapping_CProc (CGenProc zn (x:xs))
+--   = undefined
+-- mapping_CProc (CParamProc zn (x:xs))
+--   = undefined
+-- mapping_CProc (CSimpIndexProc zn (x:xs))
+--   = undefined
+-- mapping_CProc (ProcMain zp (x:xs) ca)
+--   = undefined
+mapping_CProc x  
+  = fail ("not implemented by mapping_CProc: " ++ show x)
 \end{code}
 
 \subsection{Mapping Circus Processes Paragraphs}
@@ -406,7 +422,10 @@ mapping_CAction (CSPStop)
   = "STOP"
 mapping_CAction (CSPChaos)
   = "CHAOS"
+mapping_CAction x  
+  = fail ("not implemented by mapping_CAction: " ++ show x)
 \end{code}
+
 \subsection{Mapping Circus Commands}
 NOTE: $CAssumpt$, $CommandBrace$, $CommandBracket$ not implemented yet
 \begin{code}
@@ -417,16 +436,18 @@ mapping_CCommand (CAssumpt (x:xs) zpa zpb)
   = undefined
 mapping_CCommand (CIf cga)
   = mapping_CGActions cga
-mapping_CCommand (CommandBrace zp)
-  = undefined
-mapping_CCommand (CommandBracket zp)
-  = undefined
-mapping_CCommand (CResDecl (x:xs) ca)
-  = undefined
-mapping_CCommand (CVarDecl (x:xs) ca)
-  = undefined
-mapping_CCommand (CVResDecl (x:xs) ca)
-  = undefined
+-- mapping_CCommand (CommandBrace zp)
+--   = undefined
+-- mapping_CCommand (CommandBracket zp)
+--   = undefined
+-- mapping_CCommand (CResDecl (x:xs) ca)
+--   = undefined
+-- mapping_CCommand (CVarDecl (x:xs) ca)
+--   = undefined
+-- mapping_CCommand (CVResDecl (x:xs) ca)
+--   = undefined
+mapping_CCommand x  
+  = fail ("not implemented by mapping_CCommand: " ++ show x)
 \end{code}
 
 \subsection{Mapping Circus Guarded Actions}
@@ -453,31 +474,35 @@ mapString f (x:xs) = (f x) ++ (mapString f xs)
 \end{code}
 \begin{code}
 mapping_CParameter :: CParameter -> [Char]
-mapping_CParameter (ChanDotExp ze)
-  = undefined
 mapping_CParameter (ChanInp zn)
   = zn
 mapping_CParameter (ChanInpPred zn zp)
   = zn ++ (mapping_predicate zp)
-mapping_CParameter (ChanOutExp ze)
-  = undefined
+-- mapping_CParameter (ChanOutExp ze)
+--   = undefined
+-- mapping_CParameter (ChanDotExp ze)
+--   = undefined
+mapping_CParameter x  
+  = fail ("not implemented by mapping_CParameter: " ++ show x)
 \end{code}
 
 \subsection{Mapping Circus Namesets}
 \begin{code}
 mapping_NSExp :: NSExp -> [Char]
-mapping_NSExp (NSExpEmpty)
-  = undefined
-mapping_NSExp (NSExprMult (x:xs))
-  = undefined
-mapping_NSExp (NSExprSngl zn)
-  = undefined
-mapping_NSExp (NSHide nse1 nse2)
-  = undefined
-mapping_NSExp (NSIntersect nse1 nse2)
-  = undefined
-mapping_NSExp (NSUnion nse1 nse2)
-  = undefined
+-- mapping_NSExp (NSExpEmpty)
+--   = undefined
+-- mapping_NSExp (NSExprMult (x:xs))
+--   = undefined
+-- mapping_NSExp (NSExprSngl zn)
+--   = undefined
+-- mapping_NSExp (NSHide nse1 nse2)
+--   = undefined
+-- mapping_NSExp (NSIntersect nse1 nse2)
+--   = undefined
+-- mapping_NSExp (NSUnion nse1 nse2)
+--   = undefined
+mapping_NSExp x  
+  = fail ("not implemented by mapping_NSExp: " ++ show x)
 \end{code}
 
 \section{Mapping Functions from Circus to CSP - Based on D24.1 - COMPASS}

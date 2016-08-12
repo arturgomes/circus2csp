@@ -8,6 +8,9 @@
 \usepackage{circus}
 
 \begin{document}
+\begin{zed}
+MYTYPE ::= A | B\ldata \nat \cross \nat \rdata \\
+\end{zed}
 \begin{schema}{State}
 var1 : \power \{1,2,3\}\\
 var2 : \{a1:\nat; a2:\nat | a1 \neq a2 @ (a1,a2)\}
@@ -26,8 +29,7 @@ var2' = \emptyset
 \begin{circus}
 \circprocess Register \circdef\\
 	\circbegin \circstate RegSt \defs [ value : NAT]\\
-	A2 \circdef (\circvar x \circspot (x := e)) \\
-	A4 \circdef (\circvar x \circspot \Skip)\\
+	A4 \circdef (((a \then b \then c \then \Skip) \extchoice d \then \Skip) \circseq (e \then \Skip))\\
 	\circspot (value := 0) \\
 	\circend\\
 \end{circus}

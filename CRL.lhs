@@ -1,11 +1,11 @@
-\section{Introduction}
+\section{Circus Refinement Laws}
 
-This is a trivial program that prints the first 20 factorials.
 \ignore{
 \begin{code}
 module CRL
 where
 import AST
+import DefSets
 
 \end{code}
 }
@@ -939,14 +939,95 @@ getCommName (ChanGenComm n _ _) = n
 \end{code}
 Function for the proviso $c \in usedC(A)$
 \begin{code}
-inSet c acls
-  = case (head (head (filter (\(x:xs) -> x == c) acls))) of
-    [x]   -> Just c
-    _   -> Nothing
+inChanSet c (CChanSet acls)
+  = case length m of
+      0       -> Nothing
+      _      -> Just c
+    where
+      m = (inSet c acls)
+\end{code}
+Function used for $initials$
+\begin{code}
+initials (CSPCommAction x c) = [getCommName x]
+initials (CSPGuard _ c) = initials c
+initials (CSPSeq ca cb) = (initials ca)
+initials (CSPExtChoice ca cb) = (initials ca) ++ (initials cb)
+initials (CSPIntChoice ca cb) = (initials ca) ++ (initials cb)
+initials (CSPNSParal _ _ _ ca cb) = (initials ca) ++ (initials cb)
+initials (CSPParal _ ca cb) = (initials ca) ++ (initials cb)
+initials (CSPNSInter _ _ ca cb) = (initials ca) ++ (initials cb)
+initials (CSPInterleave ca cb) = (initials ca) ++ (initials cb)
+initials (CSPHide c _) = initials c
+initials (CSPRecursion _ c) = initials c
+initials (CSPRepSeq _ c) = initials c
+initials (CSPRepExtChoice _ c) = initials c
+initials (CSPRepIntChoice _ c) = initials c
+initials (CSPRepParalNS _ _ _ c) = initials c
+initials (CSPRepParal _ _ c) = initials c
+initials (CSPRepInterlNS _ _ c) = initials c
+initials (CSPRepInterl _ c) = initials c
+initials CSPSkip = ["tick"]
+initials _ = [[]]
+\end{code}
+Function used for $deterministic$
+\begin{code}
+deterministic (CSPCommAction x c) = deterministic c
+deterministic (CSPGuard _ c) = deterministic c
+deterministic (CSPSeq ca cb) =
+  case (da == Nothing)
+    && (da == db)
+    of
+        false -> Just "Deterministic"
+  where
+    da = (deterministic ca)
+    db = (deterministic cb)
+
+deterministic (CSPExtChoice ca cb) =
+  case (da == Nothing)
+    && (da == db)
+    of
+        false -> Just "Deterministic"
+  where
+    da = (deterministic ca)
+    db = (deterministic cb)
+
+deterministic (CSPIntChoice ca cb) = Nothing
+deterministic (CSPNSParal _ _ _ ca cb) = Nothing
+deterministic (CSPParal _ ca cb) =  Nothing
+deterministic (CSPNSInter _ _ ca cb) =
+  case (da == Nothing)
+    && (da == db)
+    of
+        false -> Just "Deterministic"
+  where
+    da = (deterministic ca)
+    db = (deterministic cb)
+
+deterministic (CSPInterleave ca cb) =
+  case (da == Nothing)
+    && (da == db)
+    of
+        false -> Just "Deterministic"
+  where
+    da = (deterministic ca)
+    db = (deterministic cb)
+deterministic (CSPHide c _) = Nothing
+deterministic (CSPRecursion _ c) = deterministic c
+deterministic (CSPRepSeq _ c) = deterministic c
+deterministic (CSPRepExtChoice _ c) = deterministic c
+deterministic (CSPRepIntChoice _ c) = Nothing
+deterministic (CSPRepParalNS _ _ _ c) = Nothing
+deterministic (CSPRepParal _ _ c) = Nothing
+deterministic (CSPRepInterlNS _ _ c) = deterministic c
+deterministic (CSPRepInterl _ c) = deterministic c
+deterministic CSPSkip = Just "Deterministic"
+deterministic _ = Just "Undefined"
 \end{code}
 \begin{code}
-inChanSet c (CChanSet acls)
-  = case (head (head (filter (\(x:xs) -> [x] ==[getCommName c]) acls))) of
-    [x]   -> Just c
-    _   -> Nothing
+isDeterministic a
+  = case x of
+      Just "Deterministic" -> "Deterministic"
+      Just x               -> "undefined"
+      Nothing              -> "Non-deterministic"
+    where x = (deterministic a)
 \end{code}
