@@ -596,6 +596,7 @@ data NSExp
   = NSExpEmpty                             -- \{\}
   | NSExprMult [ZName]                     -- \{N^{+}\}
   | NSExprSngl ZName                       -- N
+  | NSExprParam ZName [ZExpr]              -- N(Exp)
   | NSUnion NSExp NSExp                    -- NSExp \union NSExp
   | NSIntersect NSExp NSExp                -- NSExp \intersect NSExp
   | NSHide NSExp NSExp                     -- NSExp \circhide \NSExp
@@ -616,7 +617,7 @@ data CAction
  = CActionSchemaExpr ZSExpr               -- \lschexpract S \rschexpract
  | CActionCommand CCommand
  | CActionName ZName
- 
+
  | CSPSkip | CSPStop | CSPChaos
  | CSPCommAction Comm CAction             -- Comm \then Action
  | CSPGuard ZPred CAction                 -- Pred \circguard Action
@@ -624,12 +625,14 @@ data CAction
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
  | CSPIntChoice CAction CAction           -- Action \intchoice Action
  | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
- | CSPParal CSExp CAction CAction -- Action \lpar CSExp \rpar Action
- | CSPNSInter NSExp NSExp CAction CAction    -- Action \linter NSExp | NSExp \rinter Action
+ | CSPParal CSExp CAction CAction         -- Action \lpar CSExp \rpar Action
+ | CSPNSInter NSExp NSExp CAction CAction -- Action \linter NSExp | NSExp \rinter Action
  | CSPInterleave CAction CAction          -- Action \interleave Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
- | CSPParAction ZName [ZExpr]             -- ParAction(Exp^{+})
+ | CSPParAction ZName [ZExpr]             -- Action(Exp^{+})
+ | CSPRenAction ZName [CReplace]          -- Action[x/y,z/n)
  | CSPRecursion ZName CAction             -- \circmu N \circspot Action
+ | CSPUnParAction [ZGenFilt] CAction ZName     -- (Decl \circspot Action) (ZName)
  | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
  | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
  | CSPRepIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
@@ -670,6 +673,10 @@ data CGActions
  | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
  | CircElse ParAction    -- \circelse CAction
  deriving (Eq,Ord,Show)
+
+data CReplace
+  = CRename ZVar ZVar           -- A[yi / xi] = CRename (ZVar xi []) (ZVar yi [])
+  deriving (Eq,Ord,Show)
 ---
 --- end Circus
 ---

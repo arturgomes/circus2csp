@@ -523,7 +523,7 @@ zexpression_4
 		     do {op <- zpost_fun_decor;
 			 return (ZCall (ZVar op) e)} +++
 		     do {tok L_BSUP;
-			 e2 <- zexpression;
+				 e2 <- zexpression;
 			 tok L_ESUP;
 			 let {op = make_zvar "iter" []};
 			 -- iter is curried: 'R\bsup k \esep' means 'iter R k'
@@ -1038,7 +1038,7 @@ csexpr_ecsn
 			optnls;
 			xx <- circuscsexpr;
 			optnls;
-			tok L_CLOSEPAREN; -- \lchanset \rchanset
+			tok L_CLOSEPAREN;
 			return xx}
 
 -- ProcDecl	::= \circprocess N \circdef ProcDef
@@ -1089,7 +1089,10 @@ circus_proc_def
   	return (ProcDefIndex (concat decls) prc)}
   	+++ do {prc <- circus_process; -- Proc
   		return (ProcDef prc)}
-  	+++ do {tok L_OPENPAREN; cp <- circus_proc_def; tok L_CLOSEPAREN; return cp}
+  	+++ do {tok L_OPENPAREN;
+  			cp <- circus_proc_def;
+  			tok L_CLOSEPAREN;
+  			return cp}
 
 --Proc 		::= \circbegin PPar*
 			-- \circstate SchemaExp PPar*
@@ -1139,39 +1142,37 @@ circus_process
 			optnls;
  			csex <- circuscsexpr;
 			optnls;
-			tok L_RPAR;
-			optnls;
+			tok L_RPAR;;
 			decls <- zdeclaration;
 	  		optnls;
 	  		tok L_CIRCSPOT ;
 			cut;
 			optnls;
 	  		prc <- circus_process;
-	  		return (CRepParalProc csex (concat decls)  prc)}
+	  		return (CRepParalProc csex (concat decls) prc)}
 	-- \IntChoice Decl \circspot Proc
 	+++  do {tok L_REPINTCHOICE;
-			optnls;
 			decls <- zdeclaration;
 	  		optnls;
-	  		tok L_CIRCSPOT ;
-			cut;
-			optnls;
-	  		prcx <- circus_process;
-	  		return (CRepIntChProc (concat decls) prcx)}
-	-- \Extchoice Decl \circspot Proc
-	+++ do {tok L_REPEXTCHOICE;
-			decls <- zdeclaration;
-	  		optnls;
-	  		tok L_CIRCSPOT ;
+	  		tok L_CIRCSPOT;
 			cut;
 			optnls;
 	  		prc <- circus_process;
-	  		return (CRepExtChProc (concat decls)  prc)}
+	  		return (CRepIntChProc (concat decls) prc)}
+	-- \Extchoice Decl \circspot Proc
+	+++ do {tok L_REPEXTCHOICE;
+	  		decls <- zdeclaration;
+	  		optnls;
+	  		tok L_CIRCSPOT;
+			cut;
+			optnls;
+	  		prc <- circus_process;
+	  		return (CRepExtChProc (concat decls) prc)}
 	-- \Semi Decl \circspot Proc
 	+++ do {tok L_REPSEMI;
 			decls <- zdeclaration;
 	  		optnls;
-	  		tok L_CIRCSPOT ;
+	  		tok L_CIRCSPOT;
 			cut;
 			optnls;
 	  		prc <- circus_process;
@@ -1229,8 +1230,8 @@ circus_process_u
 	+++ circus_process_hide
 	-- Action rename
 circus_process_rename :: EParser ZToken CProc
-circus_process_rename	
-	= do {nm <- zword; optnls; 
+circus_process_rename
+	= do {nm <- zword; optnls;
 			tok L_OPENBRACKET;
 			ws <- sepbycomma1 zword;
 	 		tok L_ASSIGN;
@@ -1240,10 +1241,12 @@ circus_process_rename
 -- Proc \circhide CSExp
 circus_process_hide :: EParser ZToken CProc
 circus_process_hide
-	= do {tok L_OPENPAREN; optnls;
+	= do {tok L_OPENPAREN;
+			optnls;
 			cp1 <- circus_process;
 			optnls;
 			tok L_CIRCHIDE;
+			optnls;
 			csex <- circuscsexpr;
 			optnls;
 			tok L_CLOSEPAREN;
@@ -1258,7 +1261,9 @@ circus_process_name
 circus_process_paren_proc :: EParser ZToken CProc
 circus_process_paren_proc
 	= do {tok L_OPENPAREN;
+			optnls;
 			xp <- circus_process;
+			optnls;
 			tok L_CLOSEPAREN ;
 			return xp}
 -- N(Exp^{+})
@@ -1389,10 +1394,19 @@ nsexp_nset_mult
 nsexp_nset_sgl ::  EParser ZToken NSExp
 nsexp_nset_sgl
  = do {wd <- zword; return (NSExprSngl wd)}
-
+-- N(Exp+)
+nsexp_nset_param ::  EParser ZToken NSExp
+nsexp_nset_param
+ = do {pa <- zword;
+			optnls;
+			tok L_OPENPAREN;
+			ze <- zexpressions;
+			tok L_CLOSEPAREN;
+			return (NSExprParam pa ze)}
 nsexp_ensn ::  EParser ZToken NSExp
 nsexp_ensn
  = nsexp_nset_sgl
+ +++ nsexp_nset_param
  +++ nsexp_nset_mult
  +++ nsexp_empty
 
@@ -1502,6 +1516,7 @@ circus_action
 			decls <- zdecl_part;
 	  		optnls;
 	  		tok L_CIRCSPOT;
+			cut;
 			optnls;
 	  		tok L_LINTER;
 			optnls;
@@ -1707,6 +1722,23 @@ circus_action_u
 			optnls;
 			tok L_CLOSEPAREN;
 			return (CSPParAction pa ze)}
+	-- unamed param action (x : T \circspot A(x))(e)
+	+++ do {tok L_OPENPAREN;
+			decls <- zbasic_decl;
+	  		optnls;
+	  		tok L_CIRCSPOT;
+	 		optnls;
+			ze <- circus_action;
+			optnls;
+			tok L_CLOSEPAREN;
+			tok L_OPENPAREN;
+			zw <- zword;
+			tok L_CLOSEPAREN;
+			return (CSPUnParAction decls ze zw)}
+	--  CSPRenAction ZName [CReplace]
+	+++ do {cc <- zword;
+			cac <- creplace;
+			return (CSPRenAction cc cac)}
 	-- Action name
 	+++ do {nm <- zword; return (CActionName nm)}
 	-- \Skip
@@ -1966,9 +1998,7 @@ circus_command_if
 			return (CIf gc)}
 
 --CGActions 	::= Pred \circthen Action
--- | Pred \circthen Action \circelse CGActions
-
-
+-- 				| Pred \circthen Action \circelse CGActions
 circus_guarded_commands :: EParser ZToken CGActions
 circus_guarded_commands
 	= do {tok L_CIRCELSE;
@@ -1989,4 +2019,18 @@ circus_guarded_command
 	  		tok L_CIRCTHEN; optnls;
 	  		prc <- circus_action;
 	  		return (CircGAction decls prc)}
+
+creplace :: EParser ZToken [CReplace]
+creplace
+  = do  {tok L_OPENBRACKET;
+	 reps <- crename `sepby1` comma;
+	 tok L_CLOSEBRACKET;
+	 return reps}
+
+crename :: EParser ZToken CReplace
+crename
+  = do  {dn1 <- zdecl_name;
+	 tok L_SLASH;
+	 dn2 <- zdecl_name;
+	 return (CRename dn2 dn1)}
 \end{code}

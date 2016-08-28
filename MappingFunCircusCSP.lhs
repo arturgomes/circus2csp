@@ -1,6 +1,6 @@
-\section{MappingFunCircusCSP}
+\section{Mapping Functions - Circus to CSP}
 
-MappingFunCircusCSP MappingFunCircusCSP MappingFunCircusCSP MappingFunCircusCSP
+Mapping Functions - Circus to CSP
 \ignore{
 \begin{code}
 module MappingFunCircusCSP
@@ -47,7 +47,7 @@ mapping_CircParagraphs (CircChannel cc2)
 --   = undefined
 -- mapping_CircParagraphs (ZGenDef zgfs)
 --   = undefined
-mapping_CircParagraphs x  
+mapping_CircParagraphs x
   = fail ("not implemented by mapping_CircParagraphs: " ++ show x)
 \end{code}
 \begin{code}
@@ -271,7 +271,7 @@ mapping_CProc (ProcStalessMain pps ca)
 --   = undefined
 -- mapping_CProc (ProcMain zp (x:xs) ca)
 --   = undefined
-mapping_CProc x  
+mapping_CProc x
   = fail ("not implemented by mapping_CProc: " ++ show x)
 \end{code}
 
@@ -422,7 +422,7 @@ mapping_CAction (CSPStop)
   = "STOP"
 mapping_CAction (CSPChaos)
   = "CHAOS"
-mapping_CAction x  
+mapping_CAction x
   = fail ("not implemented by mapping_CAction: " ++ show x)
 \end{code}
 
@@ -446,7 +446,7 @@ mapping_CCommand (CIf cga)
 --   = undefined
 -- mapping_CCommand (CVResDecl (x:xs) ca)
 --   = undefined
-mapping_CCommand x  
+mapping_CCommand x
   = fail ("not implemented by mapping_CCommand: " ++ show x)
 \end{code}
 
@@ -482,7 +482,7 @@ mapping_CParameter (ChanInpPred zn zp)
 --   = undefined
 -- mapping_CParameter (ChanDotExp ze)
 --   = undefined
-mapping_CParameter x  
+mapping_CParameter x
   = fail ("not implemented by mapping_CParameter: " ++ show x)
 \end{code}
 
@@ -501,7 +501,7 @@ mapping_NSExp :: NSExp -> [Char]
 --   = undefined
 -- mapping_NSExp (NSUnion nse1 nse2)
 --   = undefined
-mapping_NSExp x  
+mapping_NSExp x
   = fail ("not implemented by mapping_NSExp: " ++ show x)
 \end{code}
 

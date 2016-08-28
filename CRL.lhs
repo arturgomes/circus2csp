@@ -11,7 +11,6 @@ import DefSets
 }
 
 Law 1 (var-exp-par) - TODO: implement proviso
-TODO: implement proviso
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
 %     \begin{circus}
@@ -27,11 +26,15 @@ TODO: implement proviso
 %   \label{law:var-exp-par}
 % \end{lawn}
 \begin{code}
-crl_var_exp_par (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose d t)] a1)) a2)
-  = (CActionCommand (CVarDecl [(Choose d t)] (CSPNSParal ns1 cs ns2 a1 a2)))
+crl_var_exp_par (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[]) t)] a1)) a2)
+  = case p1
+    of
+      True -> (CActionCommand (CVarDecl [(Choose (d,[]) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
+      False -> (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[]) t)] a1)) a2)
+    where
+      p1 = isEmpty (intersectionSet ([(d,[]),(d,["'"])]) (getFV a2))
 \end{code}
 Law 2 (var-exp-par-2)
-
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
 %     \begin{circus}
@@ -48,17 +51,19 @@ Law 2 (var-exp-par-2)
 % \end{lawn}
 \begin{code}
 crl_var_exp_par2 (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
-  = case (d1 == d2) of _
-                        | True       -> (CActionCommand (CVarDecl d1 (CSPNSParal ns1 cs ns2 a1 a2)))
-                        | otherwise   -> (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
+  = case (d1 == d2)
+    of
+      True      -> (CActionCommand (CVarDecl d1 (CSPNSParal ns1 cs ns2 a1 a2)))
+      otherwise -> (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl d1 a1)) (CActionCommand (CVarDecl d2 a2)))
 \end{code}
  Law 3 - (var-exp-rec)
  TODO: implement proviso
 \begin{code}
 crl_var_exp_rec (CSPRecursion x1 (CActionCommand (CVarDecl [(Choose xv t)] (CSPParAction f [ZVar (x2,[])]))))
-  = case (x1 == x2) of _
-                        | True       -> (CActionCommand (CVarDecl [(Choose xv t)]  (CSPRecursion x1 (CSPParAction f [ZVar (x1,[])]))))
-                        | otherwise   -> (CSPRecursion x1 (CActionCommand (CVarDecl [(Choose xv t)] (CSPParAction f [ZVar (x2,[])]))))
+  = case (x1 == x2)
+    of
+      True        -> (CActionCommand (CVarDecl [(Choose xv t)]  (CSPRecursion x1 (CSPParAction f [ZVar (x1,[])]))))
+      otherwise   -> (CSPRecursion x1 (CActionCommand (CVarDecl [(Choose xv t)] (CSPParAction f [ZVar (x2,[])]))))
 \end{code}
 Law 4 (var-exp-seq)
 % \begin{lawn}[Variable block/Sequence---extension$^*$]\sl
@@ -73,10 +78,14 @@ Law 4 (var-exp-seq)
 %  \end{law}
 %  \label{law:variableBlockSequenceExtension}
 % \end{lawn}
-TODO: implement proviso
 \begin{code}
 crl_variableBlockSequenceExtension (CSPSeq (CSPSeq a1 (CActionCommand (CVarDecl [(Choose x t)] a2))) a3)
-  = CActionCommand (CVarDecl [(Choose x t)] (CSPSeq (CSPSeq a1 a2) a3))
+  = case p1
+    of
+      True -> CActionCommand (CVarDecl [(Choose x t)] (CSPSeq (CSPSeq a1 a2) a3))
+      False -> (CSPSeq (CSPSeq a1 (CActionCommand (CVarDecl [(Choose x t)] a2))) a3)
+    where
+      p1 = isEmpty (intersectionSet ([(x,[]),(x,["'"])]) (unionSet (getFV a2)(getFV a1)))
 \end{code}
 Law 5 (Variable Substitution) TODO
 % \begin{lawn}[Variable Substitution$^*$]\sl
@@ -108,12 +117,30 @@ Law 6 (Variable block introduction)
 %  \end{law}
 %  \label{law:variableBlockIntroduction}
 % \end{lawn}
-TODO: implement proviso
 \begin{code}
-crl_variableBlockIntroduction a x t = CActionCommand (CVarDecl [(Choose x t)] a)
+crl_variableBlockIntroduction a x t
+  = case p1
+    of
+      True -> CActionCommand (CVarDecl [(Choose x t)] a)
+      False -> a
+    where
+      p1 = notinSet x (getFV a)
 \end{code}
+Law 7 (join---blocks)
+% \begin{lawn}[join---blocks]\sl
+%   \begin{law}
+%     \begin{circus}
+%         \circvar\ x:T_1 \circspot \circvar\ x:T_2 \circspot A2  = \circvar\ x:T_1 ; x:T_2 \circspot A2
+%     \end{circus}%
+%     \begin{prov}
+%         $x \notin FV(A_1) \cup FV(A_3)$
+%     \end{prov}
+
+%   \end{law}
+%   \label{law:joinBlocks}
+% \end{lawn}
 \begin{code}
-crl07 (CActionCommand (CVarDecl [(Choose x t1)] (CActionCommand (CVarDecl [(Choose y t2)] a))))
+crl_joinBlocks (CActionCommand (CVarDecl [(Choose x t1)] (CActionCommand (CVarDecl [(Choose y t2)] a))))
   = (CActionCommand (CVarDecl [(Choose x t1),(Choose y t2)] a))
 \end{code}
 Law 8 (Sequence unit)
@@ -187,13 +214,27 @@ Law 11 (Parallelism composition introduction 1$^*$)
 %   \label{law:parallelismIntroduction1}
 % \end{lawn}
 \begin{code}
-crl_parallelismIntroduction1a (CSPCommAction c a) ns1 cs ns2
-  = (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction c a) (CSPCommAction c CSPSkip))
-crl_parallelismIntroduction1b (CSPCommAction (ChanComm c [ChanDotExp e]) a)  ns1 cs ns2
-  = (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction (ChanComm c [ChanDotExp e]) a) (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip))
+crl_parallelismIntroduction1b (CSPCommAction (ChanComm c [ChanDotExp e]) a)  (NSExprMult ns1) cs (NSExprMult ns2)
+  = case p1 && p2
+    of
+      True -> (CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2) (CSPCommAction (ChanComm c [ChanDotExp e]) a) (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip))
+      False -> (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+    where
+      p1 = (notinSet c (usedC a))
+      p2 = (subsetEq (getWrtV a) ns1)
+
+crl_parallelismIntroduction1a (CSPCommAction (ChanComm c e) a) (NSExprMult ns1) cs (NSExprMult ns2)
+  = case p1 && p2
+    of
+      True -> (CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2) (CSPCommAction (ChanComm c e) a) (CSPCommAction (ChanComm c e) CSPSkip))
+      False -> (CSPCommAction (ChanComm c e) a)
+    where
+      p1 = (notinSet c (usedC a))
+      p2 = (subsetEq (getWrtV a) ns1)
+
+
 \end{code}
 Law 12 (Channel extension 1)
-TODO: implement proviso
 % \begin{lawn}[Channel extension 1]\sl\label{law:chanExt1}
 %   \begin{law}
 %     \begin{zed}
@@ -205,8 +246,13 @@ TODO: implement proviso
 %   \end{law}
 % \end{lawn}
 \begin{code}
-crl_chanExt1 (CSPNSParal ns1 cs ns2 a1 a2) c
-  = (CSPNSParal ns1 (ChanSetUnion cs (CChanSet [c])) ns2 a1 a2)
+crl_chanExt1 (CSPNSParal ns1 (CChanSet cs) ns2 a1 a2) c
+  = case p1
+    of
+      True -> (CSPNSParal ns1 (ChanSetUnion (CChanSet cs) (CChanSet [c])) ns2 a1 a2)
+      False -> (CSPNSParal ns1 (CChanSet cs) ns2 a1 a2)
+    where
+      p1 = (notinSet c (unionSet (usedC a1) (usedC a2)))
 \end{code}
 Law 13 (Hiding expansion 2$^*$)
 % \begin{lawn}[Hiding expansion 2$^*$]\sl
@@ -220,8 +266,13 @@ Law 13 (Hiding expansion 2$^*$)
 %   \label{law:hidingExpansion2}
 % \end{lawn}
 \begin{code}
-crl_hidingExpansion2 (CSPHide a cs) c
-  = (CSPHide a (ChanSetUnion cs (CChanSet [c])))
+crl_hidingExpansion2 (CSPHide a (CChanSet cs)) c
+  = case p1
+    of
+      True -> (CSPHide a (ChanSetUnion (CChanSet cs) (CChanSet [c])))
+      False -> (CSPHide a (CChanSet cs))
+    where
+      p1 = (notinSet c cs)
 \end{code}
 Law 14 (Prefix/Hiding$^*$)
 % \begin{lawn}[Prefix/Hiding$^*$]\sl
@@ -255,8 +306,13 @@ Law 15 (Hiding Identity$^*$)
 %   \label{law:hidingIdentity}
 % \end{lawn}
 \begin{code}
-crl_hidingIdentity (CSPHide a cs)
-  = a
+crl_hidingIdentity (CSPHide a (CChanSet cs))
+  = case p1
+    of
+      True -> a
+      False -> (CSPHide a (CChanSet cs))
+    where
+      p1 = isEmpty(intersectionSet cs (usedC a))
 \end{code}
 Law 16 (Parallelism composition/External choice---exchange)
 % \begin{lawn}[Parallelism composition/External choice---exchange]\sl\label{law:parExtChoiceExchange}
@@ -294,8 +350,14 @@ Law 17 (Parallelism composition/External choice---distribution$^*$)
 % \label{law:parallelismExternalChoiceDistribution}
 % \end{lawn}
 \begin{code}
-crl_parallelismExternalChoiceDistribution (CSPRepExtChoice i (CSPNSParal ns1 cs ns2 ai a))
-  = (CSPNSParal ns1 cs ns2 (CSPRepExtChoice i ai) a)
+crl_parallelismExternalChoiceDistribution (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
+  = case p1 && p2
+    of
+      True  -> (CSPNSParal ns1 (CChanSet cs) ns2 (CSPRepExtChoice i ai) a)
+      False -> (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
+    where
+      p1 = (subsetEq (initials a) cs)
+      p2 = maybeToBool (deterministic a)
 \end{code}
 Law 18 (External choice unit)
 % \begin{lawn}[External choice unit]\sl
@@ -334,8 +396,13 @@ Law 20 (Hiding/External choice---distribution$^*$)
 %   \label{law:hidingExternalChoiceDistribution}
 % \end{lawn}
 \begin{code}
-crl_hidingExternalChoiceDistribution (CSPHide (CSPExtChoice a1 a2) cs)
-  = (CSPExtChoice (CSPHide a1 cs) (CSPHide a2 cs))
+crl_hidingExternalChoiceDistribution (CSPHide (CSPExtChoice a1 a2) (CChanSet cs))
+  = case p1
+    of
+      True  -> (CSPExtChoice (CSPHide a1 (CChanSet cs)) (CSPHide a2 (CChanSet cs)))
+      False -> (CSPHide (CSPExtChoice a1 a2) (CChanSet cs))
+    where
+      p1 = isEmpty (intersectionSet (unionSet (initials a1) (initials a2)) cs)
 \end{code}
 Law 21 (Hiding/External choice---distribution$^*$)
 % \begin{lawn}[Parallelism composition Deadlocked 1$^*$]\sl
@@ -354,9 +421,15 @@ Law 21 (Hiding/External choice---distribution$^*$)
 %   \label{law:parallelismDeadlocked1}
 % \end{lawn}
 \begin{code}
-crl_parallelismDeadlocked1 (CSPNSParal ns1 cs ns2 (CSPCommAction c1 a1) (CSPCommAction c2 a2))
-  = (CSPNSParal ns1 cs ns2 CSPStop (CSPCommAction c2 a2))
-crl_parallelismDeadlocked1 (CSPNSParal ns1 cs ns2 CSPStop (CSPCommAction c2 a2))
+crl_parallelismDeadlocked1 (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction (ChanComm c1 x) a1) (CSPCommAction (ChanComm c2 y) a2))
+  = case p1 && p2
+    of
+    True -> (CSPNSParal ns1 (CChanSet cs) ns2 CSPStop (CSPCommAction (ChanComm c2 y) a2))
+    False -> (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction (ChanComm c1 x) a1) (CSPCommAction (ChanComm c2 y) a2))
+    where
+      p1 = (c1 == c2)
+      p2 = (subsetEq [c1,c2] cs)
+crl_parallelismDeadlocked1 (CSPNSParal ns1 (CChanSet cs) ns2 CSPStop (CSPCommAction c2 a2))
   = CSPStop
 \end{code}
 Law 22 (Sequence zero)
@@ -430,11 +503,23 @@ Law 25 (Channel extension 4$^*$)
 %   \label{law:channelExtension4}
 % \end{lawn}
 \begin{code}
-crl_channelExtension4 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2) (ChanComm c [ChanOutExp (e)])
-  = (CSPHide (CSPNSParal ns1 cs1 ns2 (CSPCommAction (ChanComm c [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c [ChanOutExp (e)]) a2)) cs2)
+crl_channelExtension4 (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2)) (ChanComm c [ChanOutExp (e)])
+  = case p1 && p2
+    of
+      True -> (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c [ChanOutExp (e)]) a2)) (CChanSet cs2))
+      False -> (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2))
+    where
+      p1 = (False == isEmpty (inSet c cs1))
+      p2 = (False == isEmpty (inSet c cs2))
 
-crl_channelExtension4 (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2) c
-  = (CSPHide (CSPNSParal ns1 cs1 ns2 (CSPCommAction c a1) (CSPCommAction c a2)) cs2)
+crl_channelExtension4 (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2)) (ChanComm c e)
+  = case p1 && p2
+    of
+      True -> (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c e) a1) (CSPCommAction (ChanComm c e) a2)) (CChanSet cs2))
+      False -> (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2))
+    where
+      p1 = (False == isEmpty (inSet c cs1))
+      p2 = (False == isEmpty (inSet c cs2))
 \end{code}
 Law 26 (prom-var-state)
 \begin{code}
@@ -968,6 +1053,24 @@ initials (CSPRepInterlNS _ _ c) = initials c
 initials (CSPRepInterl _ c) = initials c
 initials CSPSkip = ["tick"]
 initials _ = [[]]
+\end{code}
+\begin{code}
+--trace (CSPCommAction (ChanComm x _) c) =
+--  [[],[x],map (x:) (trace c)]
+--trace (CSPCommAction (ChanGenComm x _ _) c) =
+--  [[],[x],map (x:) (trace c)]
+--trace (CSPSeq ca cb) = (trace ca)
+--trace (CSPExtChoice ca cb) = (trace ca) ++ (trace cb)
+data CSPOp = Com Char CSPOp | Seq CSPOp CSPOp | ExtCh CSPOp CSPOp | CSPSkp
+trace :: CSPOp -> [[Char]]
+trace (Com a p)
+ = map (a:) (trace p)
+trace (Seq a b)
+ = (trace a) ++ (trace b)
+trace (ExtCh a b)
+ = (trace a)++ (trace b)
+trace (CSPSkp)
+ = [[]]
 \end{code}
 Function used for $deterministic$
 \begin{code}
