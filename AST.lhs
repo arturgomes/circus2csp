@@ -1,9 +1,9 @@
-\section{Introduction}
-
-This is a trivial program that prints the first 20 factorials.
-
+\section{Abstract Syntax Trees}
 \begin{code}
-module AST
+module AST where
+\end{code}
+
+\begin{verbatim}
 --
 -- $Id: AST.hs,v 1.58 2005-03-26 13:07:43 marku Exp $
 --
@@ -99,18 +99,23 @@ module AST
 -- * The Maybe parts of ZSetComp and ZMu are always filled in
 --   after the unfold phase.  That is, they are not 'Nothing'.
 -- * All schema expressions are removed during the Unfold phase.
+\end{verbatim}
 
-where
+\subsection{Z Abstract Syntax}
 
+\subsubsection{Z Given Sets}
+\begin{code}
 type GivenSet = ZVar      -- names of given sets.
 type GivenValue = String  -- members of given sets are strings
 type ZInt = Integer       -- If you change this, you must also change
 			  -- the definition of L_NUMBER in Lexer.hs
 type ZFSet = [ZExpr]      -- But always manipulate via FiniteSets functions.
+\end{code}
 
-----------------------------------------------------------------------
--- TODO: Make this a separate module, perhaps combined with VarSet.
+TODO: Make this a separate module, perhaps combined with \texttt{VarSet}.
 
+\subsubsection{Z Names and Decorations}
+\begin{code}
 type ZDecor = String      -- a decoration: ''', '!', '?' or '_N'
 type ZVar = (String, [ZDecor]) -- all kinds of Z names
 type ZName = String
@@ -159,10 +164,10 @@ show_zvar (s,dl) = s ++ concat dl
 
 show_zvars :: [ZVar] -> String
 show_zvars = concatMap ((' ':) . show_zvar)
+\end{code}
 
-----------------------------------------------------------------------
-
-
+\subsubsection{Z Relations and Functions}
+\begin{code}
 data ZReln   -- binary toolkit relations (all take one arg: a pair)
   = ZLessThan        -- 3 < 4
   | ZLessThanEq      -- 3 \leq 3
@@ -185,7 +190,7 @@ data ZFunc1  -- prefix and postfix unary functions
 	     -- (These all take an argument that is not a pair)
   = ZDom     -- \dom
   | ZRan     -- \ran
-  | ZSizeof  -- \#
+  | ZSizeof  -- slash hash-symbol
   | ZBigCup  -- \bigcup
   | ZBigCap  -- \bigcap
   | ZId      -- \id    -- changed into ZSetComp by Unfold.hs
@@ -243,38 +248,42 @@ data ZStrange -- toolkit functions/sets that defy categorization!
   = ZIter     -- iter n R (or R^n) is curried: takes two arguments.
   | ZDisjoint -- is a set of functions of type: Index \pfun \power Elem
   deriving (Eq,Ord,Show)
+\end{code}
+
+\newpage
+\subsubsection{Z Generators and Filters}
+These 'Generator or Filter' terms are used to represent the
+search space within quantifiers, set comprehensions, schemas.
+All (Include ...) terms should be expanded out before being
+passed to the eval... functions.
+
+The scope of declared names is complex here.
+Immediately after parsing, the usual Z scope rules apply.
+That is, in $[x:T;y:U;P;Q]$ the scope of $x$ and $y$ includes any predicates
+such as $P$ and $Q$, but excludes all types, $T$ and $U$.  This allows
+signatures (declarations) to be reordered with impunity.
+
+AFTER the unfold and uniquify stages (see Unfold.hs), the scope
+rules are basically left to right.  A variable x is in scope
+immediately AFTER its declaration.  Note that in 'Choose x t',
+the t is not in the scope of the newly declared x, but following
+predicates and declarations are in the scope of x.  Similarly for
+'Evaluate x e t' --- e and t are outside the scope of x.
+This means that one must be careful when reordering elements
+of a [GenFilt] not to move terms further left than the declarations
+the their free variables.
+
+Note: to implement these scoping rules, a common trick that we use
+      in several places (eg. \verb"Eval::gen_and_filter") is to pass around
+      TWO environments as we recurse through a [ZGenFilt].
+      One environment is the environment from outside the whole list,
+      and is used to evaluate/manipulate the type expressions, while
+      the other environment is the internal one (which is extended as
+      we go left to right into the list) and is used on the other
+      expressions and predicates.
 
 
--- These 'Generator or Filter' terms are used to represent the
--- search space within quantifiers, set comprehensions, schemas.
--- All (Include ...) terms should be expanded out before being
--- passed to the eval... functions.
---
--- The scope of declared names is complex here.
--- Immediately after parsing, the usual Z scope rules apply.
--- That is, in [x:T;y:U;P;Q] the scope of x and y includes any predicates
--- such as P and Q, but excludes all types, T and U.  This allows
--- signatures (declarations) to be reordered with impunity.
---
--- AFTER the unfold and uniquify stages (see Unfold.hs), the scope
--- rules are basically left to right.  A variable x is in scope
--- immediately AFTER its declaration.  Note that in 'Choose x t',
--- the t is not in the scope of the newly declared x, but following
--- predicates and declarations are in the scope of x.  Similarly for
--- 'Evaluate x e t' -- e and t are outside the scope of x.
--- This means that one must be careful when reordering elements
--- of a [GenFilt] not to move terms further left than the declarations
--- the their free variables.
---
--- Note: to implement these scoping rules, a common trick that we use
---       in several places (eg. Eval::gen_and_filter) is to pass around
---       TWO environments as we recurse through a [ZGenFilt].
---       One environment is the environment from outside the whole list,
---       and is used to evaluate/manipulate the type expressions, while
---       the other environment is the internal one (which is extended as
---       we go left->right into the list) and is used on the other
---       expressions and predicates.
---
+\begin{code}
 data ZGenFilt
   = Include ZSExpr     -- Schema inclusion
   | Choose ZVar ZExpr  -- (Choose x T) means x:T
@@ -290,8 +299,10 @@ genfilt_names (Check _:gfs)        = genfilt_names gfs
 genfilt_names (Evaluate v _ _:gfs) = v : genfilt_names gfs
 genfilt_names (Include s:gfs)
   = error ("genfilt_names called before "++show s++" expanded.")
+\end{code}
 
-
+\subsubsection{Z Expressions}
+\begin{code}
 data ZExpr
   = ---------- Basic Z values (non-set values) ----------
     ZVar ZVar           -- for non-schema names (may include decorations)
@@ -324,7 +335,7 @@ data ZExpr
 	      is_total::Bool,        -- dom R = domset
 	      is_onto::Bool,         -- ran R = ranset
 	      is_one2one::Bool,      -- injective
-	      is_sequence::Bool,     -- dom is 1..#s
+	      is_sequence::Bool,     -- dom is 1.. length s
 	      is_non_empty::Bool,
 	      is_finite::Bool}
   | ZSetComp [ZGenFilt] (Maybe ZExpr) -- set comprehensions
@@ -344,12 +355,14 @@ data ZExpr
   | ZSelect ZExpr ZVar                -- e.field
   | ZTheta ZSExpr                     -- \theta S (removed in Unfold)
   deriving (Eq,Ord,Show)
+\end{code}
 
--- ZValue is a synonym for ZExpr, but is used for the result of
--- evaluations, where the last group of ZExpr alternatives above
--- are the most common kinds of results.
+\texttt{ZValue} is a synonym for \texttt{ZExpr}, but is used for the result of
+evaluations, where the last group of \texttt{ZExpr} alternatives above
+are the most common kinds of results.
+
+\begin{code}
 type ZValue = ZExpr
-
 is_pair :: ZValue -> Bool
 is_pair (ZTuple [_,_]) = True
 is_pair _              = False
@@ -382,7 +395,10 @@ zrelations = ZFuncSet{domset=ZUniverse,
 		      is_sequence =False,
 		      is_non_empty=False,
 		      is_finite   =False}
+\end{code}
 
+\subsubsection{Z Predicates}
+\begin{code}
 data ZPred
   = ZFalse{reason::[ZPred]}
   | ZTrue{reason::[ZPred]}
@@ -403,7 +419,10 @@ data ZPred
 
 ztrue = ZTrue{reason=[]}
 zfalse = ZFalse{reason=[]}
+\end{code}
 
+\subsubsection{Z Schemas}
+\begin{code}
 data ZSExpr
   = ZSchema [ZGenFilt]
   | ZSRef ZSName [ZDecor] [ZReplace]
@@ -436,8 +455,10 @@ data ZS2
   = ZSAnd | ZSOr | ZSImplies | ZSIff
   | ZSProject | ZSSemi | ZSPipe
   deriving (Eq,Ord,Show)
+\end{code}
 
-
+\subsubsection{Z Paragraphs}
+\begin{code}
 data ZPara
   = ZGivenSetDecl GivenSet       -- [XXX]
   | ZSchemaDef ZSName ZSExpr     -- \begin{schema}{XXX}...\end{schema}
@@ -467,10 +488,13 @@ isBranch0 (ZBranch0 _) = True
 isBranch0 _            = False
 
 type ZSpec = [ZPara]
+\end{code}
 
 
--- Any ZExpr/ZValue that satisfies 'isCanonical' is fully evaluated into
--- a unique form.  For such terms, == is equivalent to semantic equality.
+Any \texttt{ZExpr}/\texttt{ZValue} that satisfies 'isCanonical'
+is fully evaluated into a unique form.
+For such terms, \verb"==" is equivalent to semantic equality.
+\begin{code}
 isCanonical :: ZExpr -> Bool
 isCanonical (ZInt _)      = True
 isCanonical (ZFSet _)     = True  -- an invariant of the system
@@ -480,15 +504,16 @@ isCanonical (ZFree0 _)    = True
 isCanonical (ZFree1 _ v)  = isCanonical v
 isCanonical (ZBinding bs) = all (isCanonical . snd) bs
 isCanonical _             = False
+\end{code}
 
-
--- isDefined e is true when e is obviously well defined
--- (though it may be too big to compute).  Any canonical value is defined,
--- but so are some infinite sets like \nat:  (ZIntSet (Just 0) Nothing)
--- When isDefined is false, the term may still be defined.
--- NOTE: isDefined ignores type correctness.
---       E.g. {1, {1}} is treated as being defined.
---
+\texttt{isDefined e} is true when e is obviously well defined
+(though it may be too big to compute).
+Any canonical value is defined,
+but so are some infinite sets like $\nat$:  \texttt{(ZIntSet (Just 0) Nothing)}
+When \texttt{isDefined} is false, the term may still be defined.
+NOTE: \texttt{isDefined} ignores type correctness.
+      E.g. \{1, \{1\}\} is treated as being defined.
+\begin{code}
 isDefined :: ZExpr -> Bool
 isDefined (ZInt _)        = True
 isDefined (ZIntSet _ _)   = True
@@ -505,19 +530,25 @@ isDefined (ZFree1 _ _)    = True   -- Note (1)
 isDefined (ZBinding bs)   = all (isDefined . snd) bs
 isDefined v               = False
 
--- Note 1: ZFree1 terms initially only appear as the body of lambda
---         terms.  The reduction of those lambda terms checks domain
---         membership, which includes proving definedness.  So any
---         standalone ZFree1 term must be defined.
 
----
---- begin Circus
----
+\end{code}
+Note 1:
+\texttt{ZFree1} terms initially only appear as the body of lambda terms.
+The reduction of those lambda terms checks domain membership,
+which includes proving definedness.
+So any standalone \texttt{ZFree1} term must be defined.
 
+\section{Circus Abstract Syntax}
+
+\begin{verbatim}
 --------------------------------------
 -------------   Circus   -------------
 --    Artur Oliveira - May 2016     --
 --------------------------------------
+\end{verbatim}
+
+\subsubsection{Circus Program}
+\begin{code}
 type CProgram = [ZPara]
 
 --
@@ -541,7 +572,10 @@ and therefore, would need to define it in terms of the Z parser
 -- | SchemaExp -- left out for now
 
 -}
+\end{code}
 
+\subsubsection{Circus Channel Expression}
+\begin{code}
 data CSExp
   = CSExpr ZName                           -- a chanset decl from another chanset
   | CSEmpty                                -- Empty chanset
@@ -550,9 +584,11 @@ data CSExp
   | ChanSetInter CSExp CSExp               -- chanset intersection
   | ChanSetDiff CSExp CSExp                -- chanset hidding chanset
   deriving (Eq,Ord,Show)
---
--- Proccess declaration
---
+
+\end{code}
+
+\subsubsection{Circus Process}
+\begin{code}
 data ProcDecl
   = CProcess ZName ProcessDef              -- \circprocess N \circdef ProcDef
   | CGenProcess ZName [ZName] ProcessDef     -- \circprocess N[N^{+}] \circdef ProcDef
@@ -591,7 +627,11 @@ data CProc
                                            --   \circspot Action
                                            --   \circend
  deriving (Eq,Ord,Show)
+\end{code}
 
+\subsubsection{Circus Name-Sets}
+
+\begin{code}
 data NSExp
   = NSExpEmpty                             -- \{\}
   | NSExprMult [ZName]                     -- \{N^{+}\}
@@ -602,7 +642,10 @@ data NSExp
   | NSHide NSExp NSExp                     -- NSExp \circhide \NSExp
   | NSBigUnion ZExpr
   deriving (Eq,Ord,Show)
+\end{code}
 
+\subsubsection{Circus Actions}
+\begin{code}
 data PPar
  = ProcZPara ZPara                         -- Par
  | CParAction ZName ParAction              -- N \circdef ParAction
@@ -642,7 +685,11 @@ data CAction
  | CSPRepInterlNS [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
  | CSPRepInterl [ZGenFilt] CAction        -- \Interleave Decl \circspot  Action
  deriving (Eq,Ord,Show)
+\end{code}
 
+\subsubsection{Circus Communication}
+
+\begin{code}
 data Comm
   = ChanComm ZName [CParameter]           -- N CParameter*
   | ChanGenComm ZName [ZExpr] [CParameter]-- N [Exp^{+}] CParameter *
@@ -655,7 +702,11 @@ data CParameter
    | ChanOutExp ZExpr                     -- !Exp
    | ChanDotExp ZExpr                     -- .Exp
    deriving (Eq,Ord,Show)
+\end{code}
 
+\subsubsection{Circus Commands}
+
+\begin{code}
 data CCommand
   = CAssign [ZVar] [ZExpr]               -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
@@ -678,25 +729,31 @@ data CGActions
 data CReplace
   = CRename ZVar ZVar           -- A[yi / xi] = CRename (ZVar xi []) (ZVar yi [])
   deriving (Eq,Ord,Show)
----
---- end Circus
----
+\end{code}
 
-----------------------------------------------------------------------
--- Environments.  Used during traversal/evaluation of terms
-----------------------------------------------------------------------
--- Environments contain stacks (lists), with new bound variables
--- being pushed onto the front of the list.
---
--- The environment also stores information about how large the
--- search space is, and how hard we want to search:
---   'search_space' starts at 1, and is multiplied by the size of
---    the type sets as we search inside [ZGenFilt] lists.
---   If search_space gets larger than max_search_space, we stop searching
---    (and return a search space error).
---   If we try to generate a finite set larger than max_set_size, we
---    return a setsize error.
+\subsection{Environments}
 
+Used during traversal/evaluation of terms
+
+Environments contain stacks (lists),
+with new bound variables being pushed onto the front of the list.
+
+The environment also stores information
+about how large the search space is,
+and how hard we want to search:
+\begin{itemize}
+  \item
+     \verb"search_space" starts at 1, and is multiplied by the size of
+      the type sets as we search inside [ZGenFilt] lists.
+  \item
+     If \verb"search_space" gets larger than \verb"max_search_space",
+      we stop searching (and return a search space error).
+  \item
+     If we try to generate a finite set larger than \verb"max_set_size", we
+      return a setsize error.
+\end{itemize}
+
+\begin{code}
 type SearchSpace = [(ZVar,Int)]  -- the max number of choices for each var.
 type GlobalDefs  = [(ZVar,ZExpr)]
 
@@ -768,10 +825,11 @@ envLookupVar v env =
 			 Just e  -> return e
 			 Nothing -> fail ("unknown variable: " ++ show_zvar v)
 
-----------------------------------------------------------------------
--- Visitor Classes for Z terms
-----------------------------------------------------------------------
+\end{code}
 
+\subsection{Visitor Classes for Z Terms}
+
+\begin{code}
 data ZTerm
     = ZExpr ZExpr
     | ZPred ZPred
@@ -859,40 +917,40 @@ pushGFType :: Visitor m => ZGenFilt -> m ()
 pushGFType (Evaluate v e t) = pushLocal v t
 pushGFType (Choose v t) = pushLocal v t
 pushGFType _ = return ()
+\end{code}
 
+\subsubsection{Default Traversal Functions}
 
-----------------------------------------------------------------------
--- Default Traversal Functions
-----------------------------------------------------------------------
--- The following 'traverse*' functions are useful defaults
--- for visitor methods.  They recurse through Z terms, invoking
--- the VISITOR methods at each level (NOT the traverse* functions!).
---
--- This gives an inheritance-like effect, which allows instances of
--- the Visitor class to define a method M which overrides just the few
--- cases it is interested in, then call one of these traverse* functions
--- to handle the remaining cases (subterms within those cases will invoke
--- M, not just traverse*).  Thus the effective visitor method will be
--- the fixed-point of traverse overridden by M etc.
---
--- The goal of this design is that when the data structures change
--- (adding/removing/changing cases), then updating the traversal*
--- functions here should update ALL traversals within Jaza.
--- (The code that does something specific with the changed cases will
--- still need updating manually within each traversal, but this is
--- usually a small fraction of the possible cases).
---
--- These default traversal methods extend the environment by
--- pushing the TYPE expression of each local variable.
+The following \verb"traverse*" functions are useful defaults
+for visitor methods.  They recurse through Z terms, invoking
+the VISITOR methods at each level (NOT the \verb"traverse*" functions!).
 
--- WARNING: traverseSExpr currently does nothing.
---   This implies that: all schema inclusions are ignored as ZGenFilt lists
---   are being processed, which means that inner terms will not
---   have the right environment.  This is not a problem once
---   all schema expressions have been unfolded.
---   This problem will be fixable (if necessary) after typechecking
---   is implemented.
+This gives an inheritance-like effect, which allows instances of
+the Visitor class to define a method M which overrides just the few
+cases it is interested in, then call one of these \verb"traverse*" functions
+to handle the remaining cases (subterms within those cases will invoke
+M, not just \verb"traverse*").  Thus the effective visitor method will be
+the fixed-point of traverse overridden by M etc.
 
+The goal of this design is that when the data structures change
+(adding/removing/changing cases), then updating the traversal*
+functions here should update ALL traversals within Jaza.
+(The code that does something specific with the changed cases will
+still need updating manually within each traversal, but this is
+usually a small fraction of the possible cases).
+
+These default traversal methods extend the environment by
+pushing the TYPE expression of each local variable.
+
+WARNING: \texttt{traverseSExpr} currently does nothing.
+  This implies that: all schema inclusions are ignored as ZGenFilt lists
+  are being processed, which means that inner terms will not
+  have the right environment.  This is not a problem once
+  all schema expressions have been unfolded.
+  This problem will be fixable (if necessary) after typechecking
+  is implemented.
+
+\begin{code}
 traverseExpr e@(ZVar _) = return e
 traverseExpr e@(ZInt _) = return e
 traverseExpr e@(ZGiven _) = return e
@@ -1077,13 +1135,14 @@ traverseTerm (ZExpr e)  = visitExpr e >>= (return . ZExpr)
 traverseTerm (ZPred p)  = visitPred p >>= (return . ZPred)
 traverseTerm (ZSExpr e) = visitSExpr e >>= (return . ZSExpr)
 traverseTerm (ZNull)    = return ZNull
+\end{code}
 
+\subsubsection{Circus Traversal}
+
+\begin{code}
 traverseCDecl cd = fail "traverseCDecl is not implemented"
 --traverseCDecl (CChan v) = visitCDecl v >>= (return . CChan)
 --traverseCDecl (CChanDecl v e ) = visitCDecl v e >>= (return . CChanDecl)
 --traverseCDecl (CMultChanDecl v e ) = visitCDecl v e >>= (return . CMultChanDecl)
 --traverseCDecl (CGenChanDecl  v1 v2 e ) = visitCDecl v1 v2 e >>= (return . CGenChanDecl)
-
-
--- Circus traverse
 \end{code}
