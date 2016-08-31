@@ -537,7 +537,10 @@ zexpressions
 			 e1 <- zexpression;
 			 return e1});
 	 return (e : el)}
-
+zexpressions1 :: EParser ZToken [ZExpr]
+zexpressions1
+  = do  {e <- zexpression `sepby1` do {optnls; tok L_COMMA; optnls};
+	 		return e}
 zexpression_4a :: EParser ZToken ZExpr
 zexpression_4a
   = do  {vn <- zvar_name; return (ZVar vn)} +++
@@ -591,16 +594,16 @@ zset_exp
 	 --   At this stage in parsing, we do not know which names are
 	 --   schemas, so we leave it as a set display.
 	 --   The Unfold module translates them to set comprehensions.
-	 return (ZSetDisplay el) } +++
-    do  {tok L_OPENSET;
-	 st <- zschema_text;
-	 e <- opt Nothing (do {optnls;
-			       tok L_AT;
-			       optnls;
-			       exp <- zexpression;
-			       return (Just exp)});
-	 tok L_CLOSESET;
-	 return (ZSetComp st e)}
+	 return (ZSetDisplay el) }
+	+++ do {tok L_OPENSET;
+				st <- zschema_text;
+				e <- opt Nothing (do {optnls;
+									tok L_AT;
+									optnls;
+									exp <- zexpression;
+									return (Just exp)});
+				tok L_CLOSESET;
+				return (ZSetComp st e)}
 
 
 zpredicate :: EParser ZToken ZPred
@@ -1346,6 +1349,7 @@ circusnsexpr ::  EParser ZToken NSExp
 circusnsexpr
  = nsexp_ensn
  +++ circusnsexpr_union
+ +++ circusnsexpr_bigunion
  +++ circusnsexpr_intersect
  +++ circusnsexpr_hide
 
@@ -1356,6 +1360,12 @@ circusnsexpr_union
 	 		optnls; tok L_UNION; optnls;
 	 		cs2 <- circusnsexpr;
 	 		return (NSUnion cs1 cs2)}
+-- \bigcup NSExp
+circusnsexpr_bigunion ::  EParser ZToken NSExp
+circusnsexpr_bigunion
+ = do {tok L_BIGCUP; optnls;
+	 		cs <- zset_exp;
+	 		return (NSBigUnion cs)}
 
 -- NSExp \intersect NSExp
 circusnsexpr_intersect ::  EParser ZToken NSExp
@@ -1383,32 +1393,32 @@ nsexp_empty
 -- \{N^{+}\}
 nsexp_nset_mult ::  EParser ZToken NSExp
 nsexp_nset_mult
- = do {tok L_OPENBRACE; -- \{N^{+}\}
-	 		optnls;
+	= do {tok L_OPENBRACE; -- \{N^{+}\}
 	  		ws <- zword `sepby1` comma;
-			optnls;
 	 		tok L_CLOSEBRACE;
 	 		return (NSExprMult ws)}
 
 -- N
 nsexp_nset_sgl ::  EParser ZToken NSExp
 nsexp_nset_sgl
- = do {wd <- zword; return (NSExprSngl wd)}
+	= do {wd <- zword;
+			return (NSExprSngl wd)}
 -- N(Exp+)
 nsexp_nset_param ::  EParser ZToken NSExp
 nsexp_nset_param
- = do {pa <- zword;
+	= do {pa <- zword;
 			optnls;
 			tok L_OPENPAREN;
-			ze <- zexpressions;
+			ze <- zexpression `sepby1` comma;
 			tok L_CLOSEPAREN;
 			return (NSExprParam pa ze)}
+
 nsexp_ensn ::  EParser ZToken NSExp
 nsexp_ensn
- = nsexp_nset_sgl
- +++ nsexp_nset_param
- +++ nsexp_nset_mult
- +++ nsexp_empty
+	= nsexp_nset_param
+		+++ nsexp_nset_sgl
+		+++ nsexp_nset_mult
+		+++ nsexp_empty
 
 
 
@@ -1516,12 +1526,9 @@ circus_action
 			decls <- zdecl_part;
 	  		optnls;
 	  		tok L_CIRCSPOT;
-			cut;
 			optnls;
 	  		tok L_LINTER;
-			optnls;
 			ns<- circusnsexpr;
-			optnls;
 			tok L_RINTER;
 	 		optnls;
 	  		cp1<- circus_action;
@@ -1836,7 +1843,7 @@ circus_comm_param_input_pred
 			optnls;
 			tok L_COLON;
 			optnls;
-	  		p <- zpredicate;
+	  		p <- zexpression;
 			return (ChanInpPred zn p)}
 
 -- !Exp

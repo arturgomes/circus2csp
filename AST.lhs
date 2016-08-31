@@ -600,6 +600,7 @@ data NSExp
   | NSUnion NSExp NSExp                    -- NSExp \union NSExp
   | NSIntersect NSExp NSExp                -- NSExp \intersect NSExp
   | NSHide NSExp NSExp                     -- NSExp \circhide \NSExp
+  | NSBigUnion ZExpr
   deriving (Eq,Ord,Show)
 
 data PPar
@@ -650,7 +651,7 @@ data Comm
 
 data CParameter
    = ChanInp ZName                        -- ?N
-   | ChanInpPred ZName ZPred              -- ?N : Pred
+   | ChanInpPred ZName ZExpr              -- ?N : Pred
    | ChanOutExp ZExpr                     -- !Exp
    | ChanDotExp ZExpr                     -- .Exp
    deriving (Eq,Ord,Show)

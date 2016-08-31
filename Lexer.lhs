@@ -105,6 +105,7 @@ data ZToken
   | L_UNION
   | L_CINPUT
   | L_COUTPUT
+  | L_BIGCUP
   -- end Circus Tokens
 
   -- Now some common keywords and separators.
@@ -364,7 +365,7 @@ zlexz c ls ('\\':s)
   | cmd=="cap"    = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="cap"    = tok L_INTERSECT
   | cmd=="cup"    = tok (L_IN_FUN 3 ('\\':cmd))
-  | cmd=="cup"    = tok L_UNION
+  | cmd=="bigcup"    = tok L_BIGCUP
   | cmd=="setminus"= tok (L_IN_FUN 3 ('\\':cmd))
   | cmd=="finset" && underscore1
       = tok_1 (L_PRE_GEN ("\\finset_1"))

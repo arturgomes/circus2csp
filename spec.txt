@@ -1,24 +1,3 @@
-ZGivenSetDecl ("HOUR",[])
-ZGivenSetDecl ("MINUTE",[])
-ZAbbreviation ("TIME",[]) (ZSetComp [Choose ("h",[]) (ZVar ("HOUR",[])),Choose ("m",[]) (ZVar ("MINUTE",[]))] (Just (ZTuple [ZVar ("h",[]),ZVar ("m",[])])))
-ZAbbreviation ("INTEGER",[]) (ZSetDisplay [ZCall (ZVar ("\\upto",[])) (ZTuple [ZInt 0,ZInt 100])])
-ZFreeTypeDef ("BUTTON",[]) [ZBranch0 ("ON",[]),ZBranch0 ("OFF",[])]
-ZFreeTypeDef ("SWITCH",[]) [ZBranch0 ("ENABLED",[]),ZBranch0 ("DISABLED",[])]
-ZFreeTypeDef ("DIRECTION",[]) [ZBranch0 ("FORWARD",[]),ZBranch0 ("BACKWARDS",[])]
-ZFreeTypeDef ("STATEPHASE",[]) [ZBranch0 ("connectThePatient",[]),ZBranch0 ("initPhase",[]),ZBranch0 ("prepPhase",[]),ZBranch0 ("endPhase",[])]
-ZFreeTypeDef ("ACTIVITY",[]) [ZBranch0 ("rinsingEBC",[]),ZBranch0 ("applicationArterialBolus",[]),ZBranch0 ("anticoagDelivRun",[]),ZBranch0 ("reinfProcess",[]),ZBranch0 ("preparationOfDF",[]),ZBranch0 ("priming",[]),ZBranch0 ("rinsing",[]),ZBranch0 ("idle",[])]
-ZFreeTypeDef ("LID",[]) [ZBranch0 ("OPEN",[]),ZBranch0 ("CLOSED",[])]
-ZFreeTypeDef ("CONCENTRATE",[]) [ZBranch0 ("ACID",[]),ZBranch0 ("ACETATE",[]),ZBranch0 ("BICARBONATE",[])]
-ZFreeTypeDef ("HDMODE",[]) [ZBranch0 ("RUN",[]),ZBranch0 ("ALARM",[]),ZBranch0 ("BYPASS",[])]
-ZFreeTypeDef ("LAMP",[]) [ZBranch0 ("GREEN",[]),ZBranch0 ("YELLOW",[])]
-ZFreeTypeDef ("BOOL",[]) [ZBranch0 ("TRUE",[]),ZBranch0 ("FALSE",[])]
-CircChannel [CChan "preparationPhase",CChan "therapyInitiation"]
-CircChannel [CChan "connectingToPatient",CChan "duringTherapy",CChan "therapyEnding"]
-CircChannel [CChan "autSelfTest",CChan "atrialTubing"]
-CircChannel [CChan "ventricularTubing",CChan "connectDialyzer"]
-CircChannel [CChan "stopBloodFlow",CChan "produceAlarmSound",CChan "stopBP"]
-CircChannel [CChan "disconnectDF",CChan "stopFlowDialyzer",CChan "stopCoagulantFlow"]
-CircChannel [CChan "fillArterialDrip",CChan "connPatientArterially",CChan "connPatientVenously"]
-CircChannel [CChan "insertHeparinSyringe",CChan "heparinLineIsVented"]
-CircChannel [CChanDecl "salineBagLevel" (ZCross [ZVar ("INTEGER",[]),ZVar ("CONCENTRATE",[])]),CChanDecl "connectingConcentrate" (ZVar ("CONCENTRATE",[]))]
-Process (CProcess "SysClock" (ProcDef (ProcStalessMain [CParAction "Clock" (CircusAction (CSPRecursion "X" (CSPSeq (CSPInterleave (CSPCommAction (ChanComm "tick" []) CSPSkip) (CSPCommAction (ChanComm "getCurrentTime" [ChanInp "time"]) CSPSkip)) (CActionName "X")))),CParAction "Wait" (CircusAction (CActionCommand (CIf (CircThenElse (CircGAction (ZMember (ZTuple [ZVar ("n",[]),ZInt 0]) (ZVar (">",[]))) (CSPCommAction (ChanComm "tick" []) CSPSkip)) (CircGAction (ZEqual (ZVar ("n",[])) (ZInt 0)) CSPSkip)))))] (CActionName "Clock"))))
+CircChannel [CChanDecl "store" (ZVar ("NAT",[])),CChanDecl "add" (ZVar ("NAT",[])),CChanDecl "out" (ZVar ("NAT",[]))]
+CircChannel [CChan "result",CChan "reset"]
+Process (CProcess "Register" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "RegSt") (ZSchema [Choose ("value",[]) (ZVar ("NAT",[]))])) [CParAction "A41" (CircusAction (CSPHide (CSPNSParal NSExpEmpty (CSExpr "MEMI") NSExpEmpty (CSPNSParal NSExpEmpty (CSExpr "cs") NSExpEmpty (CSPHide (CSPNSParal NSExpEmpty (CSExpr "MEMI") NSExpEmpty (CSPSeq (CActionName "A1") (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "MemoryMerge" [ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("v0",[]),ZVar ("vv0",[])])],ZVar ("LEFT",[])])) (CSExpr "MEMI")) (CSPHide (CSPNSParal NSExpEmpty (CSExpr "MEMI") NSExpEmpty (CSPSeq (CActionName "A2") (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "MemoryMerge" [ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("v0",[]),ZVar ("vv0",[])])],ZVar ("LEFT",[])])) (CSExpr "MEMI"))) (CActionName "Merge")) (CChanSet ["mleft","mright"])))] (CActionCommand (CAssign [("value",[])] [ZInt 0])))))
