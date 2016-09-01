@@ -13,11 +13,11 @@ import DefSets
 Law 1 (var-exp-par) - TODO: implement proviso
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
-%     \begin{circus}
-%         (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar A2 \\ %
-%         = \\ %
-%         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
-%     \end{circus}%
+    \begin{circus}
+        (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar A2 \\ %
+        = \\ %
+        (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
+    \end{circus}%
 %     \begin{prov}
 %         $\{d,d'\} \cap FV(A2) = \emptyset$
 %     \end{prov}
@@ -37,11 +37,11 @@ crl_var_exp_par (CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[])
 Law 2 (var-exp-par-2)
 % \begin{lawn}[var-exp-par^*$]\sl
 %   \begin{law}
-%     \begin{circus}
-%         (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar (\circvar\ d:T \circspot A2) \\ %
-%         = \\ %
-%         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
-%     \end{circus}%
+    \begin{circus}
+        (\circvar\ d:T \circspot A1) \lpar ns1 | cs | ns2 \rpar (\circvar\ d:T \circspot A2) \\ %
+        = \\ %
+        (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
+    \end{circus}%
 %     \begin{prov}
 %         $\{d,d'\} \cap FV(A2) = \emptyset$
 %     \end{prov}
@@ -68,9 +68,9 @@ crl_var_exp_rec (CSPRecursion x1 (CActionCommand (CVarDecl [(Choose xv t)] (CSPP
 Law 4 (var-exp-seq)
 % \begin{lawn}[Variable block/Sequence---extension$^*$]\sl
 %  \begin{law}
-%    \begin{circus}
-%        A1 \Semi\ (\circvar\ x:T \circspot A2) \Semi\ A3 = (\circvar\ x:T \circspot A1 \Semi\ A2 \Semi\ A3) %
-%    \end{circus}%
+   \begin{circus}
+       A1 \Semi\ (\circvar\ x:T \circspot A2) \Semi\ A3 = (\circvar\ x:T \circspot A1 \Semi\ A2 \Semi\ A3) %
+   \end{circus}%
 %    \begin{prov}
 %        $x \notin FV(A1) \cup FV(A3)$
 %    \end{prov}
@@ -90,9 +90,9 @@ crl_variableBlockSequenceExtension (CSPSeq (CSPSeq a1 (CActionCommand (CVarDecl 
 Law 5 (Variable Substitution) TODO
 % \begin{lawn}[Variable Substitution$^*$]\sl
 %  \begin{law}
-%    \begin{circus}
-%        A(x) = \circvar\ y \circspot y \prefixcolon [y'=x] \circseq\ A(y)%
-%    \end{circus}%
+   \begin{circus}
+       A(x) = \circvar\ y \circspot y \prefixcolon [y'=x] \circseq\ A(y)%
+   \end{circus}%
 %    \begin{prov}
 %        $y$ is not free in A
 %    \end{prov}
@@ -108,9 +108,9 @@ crl_variableSubstitution (CSPParAction a exp)
 Law 6 (Variable block introduction)
 % \begin{lawn}[Variable block introduction$^*$]\sl
 %  \begin{law}
-%    \begin{circus}
-%        A = \circvar\ x:T \circspot A %
-%    \end{circus}%
+   \begin{circus}
+       A = \circvar\ x:T \circspot A %
+   \end{circus}%
 %    \begin{prov}
 %        $x \notin FV(A)$
 %    \end{prov}
@@ -129,9 +129,9 @@ crl_variableBlockIntroduction a x t
 Law 7 (join---blocks)
 % \begin{lawn}[join---blocks]\sl
 %   \begin{law}
-%     \begin{circus}
-%         \circvar\ x:T_1 \circspot \circvar\ x:T_2 \circspot A2  = \circvar\ x:T_1 ; x:T_2 \circspot A2
-%     \end{circus}%
+    \begin{circus}
+        \circvar\ x:T_1 \circspot \circvar\ x:T_2 \circspot A2  = \circvar\ x:T_1 ; x:T_2 \circspot A2
+    \end{circus}%
 %     \begin{prov}
 %         $x \notin FV(A_1) \cup FV(A_3)$
 %     \end{prov}
@@ -146,10 +146,10 @@ crl_joinBlocks (CActionCommand (CVarDecl [(Choose x t1)] (CActionCommand (CVarDe
 Law 8 (Sequence unit)
 % \begin{lawn}[Sequence unit]\sl
 %  \begin{law}
-%    \begin{zed}
-%      (A) Skip; A \\ %
-%      (B) A = A; Skip %
-%    \end{zed}
+   \begin{zed}
+     (A) Skip; A \\ %
+     (B) A = A; Skip %
+   \end{zed}
 %  \end{law}
 %  \label{law:seqSkipUnit}
 % \end{lawn}
@@ -160,9 +160,9 @@ crl_seqSkipUnit_b a = (CSPSeq a CSPSkip)
 Law 9 (Recursion unfold)
 % \begin{lawn}[Recursion unfold]\sl
 %  \begin{law}
-%    \begin{zed}
-%      \mu X \circspot F(X) = F(\mu X \circspot F(X))
-%    \end{zed}
+   \begin{zed}
+     \mu X \circspot F(X) = F(\mu X \circspot F(X))
+   \end{zed}
 %  \end{law}
 %  \label{law:recUnfold}
 % \end{lawn}
@@ -176,18 +176,18 @@ crl_recUnfold (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])]))
 Law 10 (Parallelism composition/External choice—expansion)
 % \begin{lawn}[Parallelism composition/External choice---expansion$^*$]\sl
 %  \begin{law}
-%    \begin{circus}
-%        (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar (\Extchoice j \circspot b_j \then B_j) \\ %
-%        = \\ %
-%        (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar ((\Extchoice j \circspot b_j \then B_j) \extchoice (c \then C)) \\ %
-%    \end{circus}%
-%    provided
-%    \begin{itemize}
-%        \item $\bigcup_i \{ a_i \} \subseteq cs$
-%        \item $c \in cs$ %
-%        \item $c \notin \bigcup_i \{ a_i \} $%
-%        \item $c \notin \bigcup_j \{ b_j \}$%
-%    \end{itemize}
+   \begin{circus}
+       (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar (\Extchoice j \circspot b_j \then B_j) \\ %
+       = \\ %
+       (\Extchoice i \circspot a_i \then A_i) \lpar ns1 | cs | ns2 \rpar ((\Extchoice j \circspot b_j \then B_j) \extchoice (c \then C)) \\ %
+   \end{circus}%
+   provided
+   \begin{itemize}
+       \item $\bigcup_i \{ a_i \} \subseteq cs$
+       \item $c \in cs$ %
+       \item $c \notin \bigcup_i \{ a_i \} $%
+       \item $c \notin \bigcup_j \{ b_j \}$%
+   \end{itemize}
 
 %  \end{law}
 %  \label{law:parallelismExternalChoiceExpansion}
@@ -200,11 +200,11 @@ crl_parallelismExternalChoiceExpansion (CSPNSParal ns1 cs ns2 (CSPRepExtChoice i
 Law 11 (Parallelism composition introduction 1$^*$)
 % \begin{lawn}[Parallelism composition introduction 1$^*$]\sl
 %   \begin{law}
-%     \begin{circus}
-%         c \then A = (c \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c \then Skip)%
-%         \also
-%         c.e \then A = (c.e \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c.e \then Skip)%
-%     \end{circus}%
+    \begin{circus}
+        c \then A = (c \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c \then Skip)%
+        \also
+        c.e \then A = (c.e \then A \lpar ns1 | \lchanset c \rchanset | ns2 \rpar c.e \then Skip)%
+    \end{circus}%
 %     \begin{provs}
 %         \item $c \notin usedC(A)$
 %         \item $wrtV(A) \subseteq ns1$
