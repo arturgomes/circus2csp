@@ -9,47 +9,7 @@ import AST
 \end{code}
 }
 
-\subsection{Manipulating Sets}
-Notation for $x \in T$
-\begin{code}
-inSet c t = [ x | x <- t, x == c]
-\end{code}
-Notation for $x \notin T$
-\begin{code}
-notinSet c t = isEmpty [ x | x <- t, x == c]
-\end{code}
-Notation for $x \subseteq y$
-\begin{code}
-subsetEq as bs = isPrefixOf as bs
-\end{code}
-Notation for intersection between sets
-\begin{code}
-intersectionSet as bs
-  = let ns = [ a | a <- as, elem a bs] in [ b | b <- bs, elem b ns]
-\end{code}
-Notation for union between sets
-\begin{code}
-unionSet as bs
-  = let ns = [ a | a <- as++bs]
-  	in [x | (x,y) <- zip ns [0..], x `notElem` (take y as)]
-\end{code}
-Checking for empty set.
-\begin{code}
-isEmpty xs
-  = case xs of
-      [] -> True
-      _  -> False
-\end{code}
-Checking for non-empty set.
-\begin{code}
-isNotEmpty xs
-  = case xs of
-      [] -> True
-      _  -> False
-\end{code}
-
-
-
+\subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
 \begin{code}
 -- TODO: Need to do it
@@ -59,9 +19,16 @@ getWrtV xs = []
 \subsection{Bits for FreeVariables (FV(X))}
 \subsection{Free Variables -- $FV(A)$. }
 Need to know how to calculate for Actions.
-% \begin{code}
-% getFV xs = free_var_ZPred xs
-% \end{code}
+\begin{code}
+getFV xs = []
+\end{code}
+
+\begin{code}
+free_var_CAction :: CAction -> [ZVar]
+
+free_var_CAction x
+  = []
+\end{code}
 
 \begin{code}
 free_var_ZExpr :: ZExpr -> [ZVar]
@@ -123,7 +90,7 @@ free_var_ZExpr(ZStrange zs )
 free_var_ZExpr(ZMu zgls mex)
 	= error "Don't know what free vars of ZMu are right now. Check back later"
 free_var_ZExpr(ZELet ves pr)
-	= (setDif (free_var_ZExpr(pr)) (map fst ves)) ++ fvs(map snd ves)
+	= ((free_var_ZExpr(pr)) \\ (map fst ves)) ++ fvs(map snd ves)
 free_var_ZExpr(ZIf_Then_Else zp ex ex1)
 	= error "Don't know what free vars of ZIf_Then_Else are right now. Check back later"
 -- free_var_ZExpr(ZIf_Then_Else zp ex ex1)
@@ -149,19 +116,19 @@ free_var_ZPred (ZIff a b)
 free_var_ZPred (ZNot a)
   = free_var_ZPred a
 free_var_ZPred (ZExists [Choose v e] a)
-  = setDif (free_var_ZPred a) [v]
+  = (free_var_ZPred a) \\ [v]
 free_var_ZPred (ZExists ls a)
 	= error "Don't know what free vars of ZExists are right now. Check back later"
 free_var_ZPred (ZExists_1 [Choose v e] a)
-  = setDif (free_var_ZPred a) [v]
+  = (free_var_ZPred a) \\ [v]
 free_var_ZPred (ZExists_1 ls a)
 	= error "Don't know what free vars of ZExists_1 are right now. Check back later"
 free_var_ZPred (ZForall [Choose v e] a)
-  = setDif (free_var_ZPred a) [v]
+  = (free_var_ZPred a) \\ [v]
 free_var_ZPred (ZForall ls a)
 	= error "Don't know what free vars of ZForall are right now. Check back later"
---free_var_ZPred (ZPLet ls a )
---	= error "Don't know what free vars of ZPLet are right now. Check back later"
+-- free_var_ZPred (ZPLet ls a )
+--	 = error "Don't know what free vars of ZPLet are right now. Check back later"
 free_var_ZPred (ZEqual expa expb)
   = free_var_ZExpr expa ++ free_var_ZExpr expb
 free_var_ZPred (ZEqual expa expb)
@@ -172,31 +139,15 @@ free_var_ZPred (ZPre zsexpr)
 	= error "Don't know what free vars of ZPre are right now. Check back later"
 free_var_ZPred (ZPSchema zsexpr)
 	= error "Don't know what free vars of ZPSchema are right now. Check back later"
+\end{code}
 
+\begin{code}
 fvs [] = []
 fvs (e:es)
   = free_var_ZExpr(e) ++ fvs(es)
-
-removeItem x list  = [y | y <- list, y/=x]
-setDif z [] = z
-setDif xs (y:ys)
-  = setDif (removeItem y xs) ys
-
 \end{code}
 \subsection{Others -- No specific topic}
-Just inverting boolean values
-\begin{code}
-invertBool x
-  = case x of
-      False -> True
-      True  -> False
-\end{code}
 
-Converting $Maybe$ to $Bool$
 \begin{code}
-maybeToBool x
- = case x
- of
-  Just _  -> True
-  Nothing -> False
+subset xs ys = all (`elem` ys) xs
 \end{code}

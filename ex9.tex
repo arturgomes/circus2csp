@@ -8,7 +8,7 @@
 \usepackage{circus}
 
 \begin{document}
-
+\begin{zed}NAME ::= Artur | Lidiane\end{zed}
 \begin{circus}
 \circchannel store, add, out : NAT\\
 \circchannel result, reset\\
@@ -16,17 +16,10 @@
 \begin{circus}
 \circprocess Register \circdef\\
 \circbegin \circstate RegSt \defs [value : NAT]\\
-A41 \circdef(
-				(
-					(
-						(((A1 \circseq (terminate \then \Skip)) \lpar {} | MEMI | {} \rpar MemoryMerge(\{v0 \mapsto vv0\},LEFT)) \circhide MEMI)
-						\lpar {} | cs | {} \rpar
-						(((A2 \circseq (terminate \then \Skip)) \lpar {} | MEMI | {} \rpar MemoryMerge(\{v0 \mapsto vv0\},LEFT)) \circhide MEMI)
-					)
-					\lpar {} | MEMI | {} \rpar
-					Merge
-			) \circhide \lchanset mleft, mright \rchanset)
-
+A4 \circdef (x1:=x2)\\
+A5 \circdef A[y2,x2:=y1,x1]\\
+A6 \circdef A[x2/x1]\\
+A7 \circdef A[x1,x2,x3/y1,y2,y3]\\
 \circspot (value := 0) \\
 \circend\\
 \end{circus}

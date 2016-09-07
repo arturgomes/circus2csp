@@ -13,6 +13,20 @@
 % {~\rulebefore\small\verbatim}%
 % {\endverbatim\normalsize\ruleafter}
 
+\newcounter{examplecounter}
+\newenvironment{lawn}[1][]{%
+    \refstepcounter{examplecounter}%
+  \textbf{Law \arabic{examplecounter} (#1)}%
+  \quad
+}{%
+}
+% \numberwithin{examplecounter}{section}
+\newenvironment{prov}
+  {\newline\noindent\ provided }
+  {}
+\newenvironment{provs}
+  {\newline\noindent\ provided\begin{itemize}}
+  {\end{itemize}}
 
 \author{Artur Oliveira Gomes}
 

@@ -674,7 +674,7 @@ data CAction
  | CSPInterleave CAction CAction          -- Action \interleave Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
  | CSPParAction ZName [ZExpr]             -- Action(Exp^{+})
- | CSPRenAction ZName [CReplace]          -- Action[x/y,z/n)
+ | CSPRenAction ZName CReplace            -- Action[x/y,z/n]
  | CSPRecursion ZName CAction             -- \circmu N \circspot Action
  | CSPUnParAction [ZGenFilt] CAction ZName     -- (Decl \circspot Action) (ZName)
  | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
@@ -708,11 +708,13 @@ data CParameter
 
 \begin{code}
 data CCommand
-  = CAssign [ZVar] [ZExpr]               -- N^{+} := Exp^{+}
+  = CAssign [ZVar] [ZExpr]                -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
   | CAssumpt [ZName] ZPred ZPred          -- N^{+} \prefixcolon [Pred,Pred]
-  | CPrefix ZPred ZPred          -- \prefixcolon [Pred,Pred]
+  | CAssumpt1 [ZName] ZPred               -- N^{+} \prefixcolon [Pred,Pred]
+  | CPrefix ZPred ZPred                   -- \prefixcolon [Pred,Pred]
+  | CPrefix1 ZPred                        -- \prefixcolon [Pred]
   | CommandBrace ZPred                    -- \{Pred\}
   | CommandBracket ZPred                  -- [Pred]
   | CValDecl [ZGenFilt] CAction           -- \circval Decl \circspot Action
@@ -727,7 +729,8 @@ data CGActions
  deriving (Eq,Ord,Show)
 
 data CReplace
-  = CRename ZVar ZVar           -- A[yi / xi] = CRename (ZVar xi []) (ZVar yi [])
+  = CRename [ZVar] [ZVar]        -- A[yi / xi] = CRename (ZVar xi []) (ZVar yi [])
+  | CRenameAssign [ZVar] [ZVar]  -- A[yi := xi] = CRenameAssign (ZVar xi []) (ZVar yi [])
   deriving (Eq,Ord,Show)
 \end{code}
 

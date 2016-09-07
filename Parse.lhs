@@ -1742,9 +1742,13 @@ circus_action_u
 			zw <- zword;
 			tok L_CLOSEPAREN;
 			return (CSPUnParAction decls ze zw)}
-	--  CSPRenAction ZName [CReplace]
+	--  CSPRenAction ZName [ZReplace]
 	+++ do {cc <- zword;
-			cac <- creplace;
+			tok L_OPENBRACKET;
+	  		optnls;
+			cac <- circus_replace;
+	  		optnls;
+	  		tok L_CLOSEBRACKET;
 			return (CSPRenAction cc cac)}
 	-- Action name
 	+++ do {nm <- zword; return (CActionName nm)}
@@ -1877,9 +1881,11 @@ circus_command
 	+++ circus_command_var
 	+++ circus_command_assign
 	+++	circus_command_prefix
+	+++	circus_command_prefix1
 	+++	circus_command_bracket
 	+++	circus_command_brace
 	+++ circus_command_assumption
+	+++ circus_command_assumption1
 	+++ circus_command_if
 
 circus_command_vres :: EParser ZToken CCommand
@@ -1955,6 +1961,19 @@ circus_command_assumption
 	  		optnls;
 	  		tok L_CLOSEBRACKET;
 			return (CAssumpt ws pred1 pred2)}
+
+circus_command_assumption1 :: EParser ZToken CCommand
+circus_command_assumption1
+	= do {ws <- zword `sepby1` comma;
+	  		optnls;
+			tok L_COLON;
+	  		optnls;
+	  		tok L_OPENBRACKET;
+	  		optnls;
+			pred1 <- zpredicate;
+	  		optnls;
+	  		tok L_CLOSEBRACKET;
+			return (CAssumpt1 ws pred1)}
 circus_command_prefix :: EParser ZToken CCommand
 circus_command_prefix
 	= do {tok L_COLON;
@@ -1969,15 +1988,25 @@ circus_command_prefix
 	  		optnls;
 	  		tok L_CLOSEBRACKET;
 			return (CPrefix pred1 pred2)}
+circus_command_prefix1 :: EParser ZToken CCommand
+circus_command_prefix1
+	= do {tok L_COLON;
+	  		optnls;
+	  		tok L_OPENBRACKET;
+	  		optnls;
+			pred1 <- zpredicate;
+	  		optnls;
+	  		tok L_CLOSEBRACKET;
+			return (CPrefix1 pred1)}
 --  N^{+} := Exp^{+}
 circus_command_assign :: EParser ZToken CCommand
 circus_command_assign
 	= do {tok L_OPENPAREN; optnls;
-			ws <- sepbycomma1 zword;
+			ws <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
 			optnls;
 			tok L_ASSIGN;
 			optnls;
-			zxprs <- sepbycomma zexpression;
+			zxprs <- opt [] (zexpression `sepby1` do {optnls; tok L_COMMA; optnls});
 			optnls;
 			tok L_CLOSEPAREN;
 			return (CAssign ws zxprs)}
@@ -2027,17 +2056,26 @@ circus_guarded_command
 	  		prc <- circus_action;
 	  		return (CircGAction decls prc)}
 
-creplace :: EParser ZToken [CReplace]
-creplace
-  = do  {tok L_OPENBRACKET;
-	 reps <- crename `sepby1` comma;
-	 tok L_CLOSEBRACKET;
-	 return reps}
+circus_replace =
+	do {ws <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
+			optnls;
+			tok L_ASSIGN;
+			optnls;
+			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});	return (CRenameAssign ws zxprs)}
+	+++ do {ws <- zdef_lhs;
+			optnls;
+			tok L_ASSIGN;
+			optnls;
+			zxprs <- zdef_lhs;	return (CRenameAssign [ws] [zxprs])}
+	+++ do {ws <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
+			optnls;
+			tok L_SLASH;
+			optnls;
+			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});	return (CRename ws zxprs)}
+	+++ do {ws <- zdef_lhs;
+			optnls;
+			tok L_SLASH;
+			optnls;
+			zxprs <- zdef_lhs;	return (CRename [ws] [zxprs])}
 
-crename :: EParser ZToken CReplace
-crename
-  = do  {dn1 <- zdecl_name;
-	 tok L_SLASH;
-	 dn2 <- zdecl_name;
-	 return (CRename dn2 dn1)}
 \end{code}
