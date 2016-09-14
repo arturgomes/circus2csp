@@ -7,6 +7,7 @@ where
 import AST
 import DefSets
 import Data.List
+import Data.Maybe
 
 \end{code}
 }
@@ -396,7 +397,7 @@ crl_parallelismExternalChoiceDistribution
       False -> (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
     where
       p1 = (subset (initials a) cs)
-      p2 = maybeToBool (deterministic a)
+      p2 = isJust (deterministic a)
 \end{code}
 % Law 18 (External choice unit)
 \begin{lawn}[External choice unit]\sl

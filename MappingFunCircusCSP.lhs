@@ -13,6 +13,7 @@ import FormatterToCSP
 showexpr = zexpr_string (pinfo_extz 80)
 \end{code}
 }
+\ignore{
 \subsection{Mapping Circus Paragraphs}
 The following functions are used to map Circus Channels into CSP. However, generic circus channels are not yet captured by the tool.
 \begin{code}
@@ -39,8 +40,7 @@ mapping_CircParagraphs (CircChannel cc2)
 --   = undefined
 -- mapping_CircParagraphs (ZSchemaDef zsn zse)
 --   = undefined
--- mapping_CircParagraphs (ZAbbreviation zv ze)
---   = undefined
+-- mapping_CircParagraphs (ZAbbreviation (name,[]) (ZSetComp [Choose ("x",[]) (ZVar ("\\nat",[])),Check (ZMember (ZTuple [ZVar ("x",[]),ZInt 10]) (ZVar ("\\leq",[])))] (Just (ZCall (ZVar ("*",[])) (ZTuple [ZVar ("x",[]),ZVar ("x",[])])))) ) = undefined
 -- mapping_CircParagraphs (ZPredicate zp)
 --   = undefined
 -- mapping_CircParagraphs (ZAxDef zgfs)
@@ -50,6 +50,8 @@ mapping_CircParagraphs (CircChannel cc2)
 mapping_CircParagraphs x
   = fail ("not implemented by mapping_CircParagraphs: " ++ show x)
 \end{code}
+
+Definition of Free Types
 \begin{code}
 -- ZFreeTypeDef ("MYTYPE",[]) [ZBranch0 ("A",[]),ZBranch1 ("B",[]) (ZCross [ZVar ("\\nat",[]),ZVar ("\\nat",[])])]
 
@@ -151,6 +153,7 @@ mapping_CSExp (CSEmpty)
 mapping_CSExp (CSExpr zn)
   = show zn
 \end{code}
+Transforms a channel set into a list of channels in the CSP format
 \begin{code}
 mapping_CSExp_get_cs :: Show a => [a] -> [Char]
 mapping_CSExp_get_cs []
@@ -283,6 +286,9 @@ mapping_PPar :: PPar -> [Char]
 --  = undefined
 mapping_PPar (CParAction zn pa)
   = zn ++ (mapping_ParAction pa)
+
+mapping_PPar x
+  = fail ("Not implemented by mapping_PPar: " ++ show x)
 --mapping_PPar (ProcZPara zp)
 --  = undefined
 \end{code}
@@ -303,9 +309,10 @@ mapping_ParAction (CircusAction ca)
 mapping_ParAction (ParamActionDecl xl pa)
   = "("++(mapping_ZGenFilt_list xl ) ++ ") = " ++ (mapping_ParAction pa)
 \end{code}
-
+}
 \subsection{Mapping Circus Actions}
 NOTE: $CActionSchemaExpr$, $CSPNSInter$, $CSPParAction$ is not yet implemented.
+
 \begin{code}
 mapping_CAction :: CAction -> [Char]
 mapping_CAction (CActionCommand cc)
@@ -314,53 +321,141 @@ mapping_CAction (CActionName zn)
   = zn
 --mapping_CAction (CActionSchemaExpr zse)
 --  = undefined
-mapping_CAction (CSPCommAction co CSPSkip)
-  = (get_channel_name co)
+\end{code}
+\begin{circus}
+\Upsilon(c?x : P \then A)
+\defs~\tco{c?x : \{x | x <- } \delta(c)\tco{,} \Upsilon_{\mathbb{B}} (P(x))~\tco{\}->} \Upsilon(A)
+\end{circus}
+
+% \begin{code}
+% mapping_CAction (CSPCommAction (ChanComm c [ChanInpPred x (ZVar (p,[]))]) a)
+%   = (get_channel_name (ChanComm c [ChanInpPred x (ZVar (p,[]))]))
+%     ++ "?"
+%     ++ show x
+%     ++ " : \{ x | x <- "
+%     ++ mapping_CAction(a)
+% \end{code}
+\begin{circus}
+\Upsilon(c?x\then A)\circdef~\tco{c?x -> } \Upsilon(A)
+\end{circus}
+
+% \begin{circus}
+% \Upsilon(c.v\then\ A)\circdef~\tco{c.v -> }\Upsilon(A)
+% \end{circus}
+% \begin{code}
+% mapping_CAction (CSPCommAction (ChanComm c [ChanDotExp (ZVar (x,y))]) a)
+%   = (get_channel_name (ChanComm c [ChanDotExp (ZVar (x,y))]))
+%     ++ " -> "
+%     ++ show x
+%     ++ mapping_CAction(a)
+% \end{code}
+
+\begin{circus}
+\Upsilon(c!v \then\ A)\circdef~\tco{c!v -> }\Upsilon(A)
+\end{circus}
+\begin{code}
+mapping_CAction (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[]))]) a)
+  = (get_channel_name (ChanComm c [ChanOutExp (ZVar (x,[]))]))
     ++ " -> "
-    ++ mapping_CAction(CSPSkip)
+    ++ mapping_CAction(a)
+\end{code}
+
+
+\begin{circus}
+\Upsilon(c\then\ A)\circdef~\tco{c -> }\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPCommAction c a)
   = (get_channel_name c)
     ++ " -> "
     ++ mapping_CAction(a)
+\end{code}
+
+\begin{circus}
+\Upsilon(A \extchoice B) \circdef~\Upsilon(A) ~\tco{[]} \Upsilon(B)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPExtChoice a b)
   = mapping_CAction(a)
     ++ " [] "
     ++ mapping_CAction(b)
+\end{code}
+
+\begin{circus}
+\Upsilon(g \& A)\circdef~\Upsilon_{\mathbb{B}}(g)~\tco{\&}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPGuard g ac)
   = mapping_predicate(g)
     ++ " & "
     ++ mapping_CAction(ac)
+\end{code}
+
+\begin{circus}
+\Upsilon (A \circhide cs) \circdef~\Upsilon(A)~\tco{\textbackslash} \Upsilon_{\mathbb{P}^{cs}} (cs)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPHide a cs)
   = mapping_CAction(a)
     ++  "\\"
     ++ mapping_predicate_cs (cs)
+\end{code}
+
+\begin{circus}
+\Upsilon(A \intchoice B) \circdef~\Upsilon(A)~\tco{|\textasciitilde|} \Upsilon(B)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPIntChoice a b)
   = mapping_CAction(a)
     ++ " |~| "
     ++ mapping_CAction(b)
+\end{code}
+\begin{code}
 mapping_CAction (CSPInterleave ca cb)
   = mapping_CAction(ca)
     ++ " ||| "
     ++ mapping_CAction(cb)
---mapping_CAction (CSPNSInter ns1 ns2 a b)
---  = mapping_CAction(a)
---    ++ "|||"
---    ++ mapping_CAction(b)
+\end{code}
+
+\begin{circus}
+\Upsilon(A |[ns1 | ns2]| B) \circdef~\Upsilon(A)~\tco{|||}~\Upsilon(B)
+\end{circus}
+\begin{code}
+mapping_CAction (CSPNSInter ns1 ns2 a b)
+  = mapping_CAction(a)
+    ++ "|||"
+    ++ mapping_CAction(b)
+\end{code}
+
+\begin{circus}
+\Upsilon(A\lpar ns1|cs|ns2\rpar B)\circdef~\Upsilon(A)~\tco{[|}~\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|]}\Upsilon(B)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPNSParal ns1 cs ns2 a b)
   = mapping_CAction(a)
     ++ " [| "
     ++ mapping_predicate_cs(cs)
     ++ " |] "
     ++ mapping_CAction(b)
---mapping_CAction (CSPParAction zn xl)
---  = (show zn)
---    ++ "(" ++ (mapping_ZGenFilt_list xl) ++ ")"
-mapping_CAction (CSPParal cs a b)
-  = mapping_CAction(a)
-    ++ " [| "
-    ++ mapping_predicate_cs(cs)
-    ++ " |] "
-    ++ mapping_CAction(b)
+\end{code}
+% \begin{code}
+% --mapping_CAction (CSPParAction zn xl)
+% --  = (show zn)
+% --    ++ "(" ++ (mapping_ZGenFilt_list xl) ++ ")"
+% \end{code}
+% \begin{code}
+% mapping_CAction (CSPParal cs a b)
+%   = mapping_CAction(a)
+%     ++ " [| "
+%     ++ mapping_predicate_cs(cs)
+%     ++ " |] "
+%     ++ mapping_CAction(b)
+% \end{code}
+
+\begin{circus}
+\Upsilon (\circmu X \circspot\ A(X )) \circdef~\tco{let Arec =}~\Upsilon(A(A_{rec}))~\tco{within Arec}
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRecursion x a)
   = "let "
     ++ x
@@ -368,6 +463,12 @@ mapping_CAction (CSPRecursion x a)
     ++ mapping_CAction(a)
     ++ " within "
     ++ x
+\end{code}
+
+\begin{circus}
+\Upsilon(\Extchoice x : S \circspot A)\circdef~\tco{[] x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRepExtChoice [(Choose x s)] a)
   = "[] "
     ++  show x
@@ -375,6 +476,12 @@ mapping_CAction (CSPRepExtChoice [(Choose x s)] a)
     ++ mapping_set_exp(s)
     ++ " @ "
     ++ mapping_CAction(a)
+\end{code}
+
+\begin{circus}
+\Upsilon(\Intchoice x : S \circspot A)\circdef~\tco{|\textasciitilde| x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRepIntChoice [(Choose x s)] a)
   = "|~| "
     ++  show x
@@ -382,13 +489,22 @@ mapping_CAction (CSPRepIntChoice [(Choose x s)] a)
     ++ mapping_set_exp(s)
     ++ " @ "
     ++ mapping_CAction(a)
-mapping_CAction (CSPRepInterl [(Choose x s)] a)
-  = "||| "
-    ++  show x
-    ++ " : "
-    ++ mapping_set_exp(s)
-    ++ " @ "
-    ++ mapping_CAction(a)
+\end{code}
+
+% \begin{code}
+% mapping_CAction (CSPRepInterl [(Choose x s)] a)
+%   = "||| "
+%     ++  show x
+%     ++ " : "
+%     ++ mapping_set_exp(s)
+%     ++ " @ "
+%     ++ mapping_CAction(a)
+% \end{code}
+
+\begin{circus}
+\Upsilon(\Interleave x : S \circspot \lpar \emptyset \rpar A) \circdef~\tco{||| x:}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRepInterlNS [(Choose x s)] NSExpEmpty a)
   = "||| "
     ++  show x
@@ -396,6 +512,12 @@ mapping_CAction (CSPRepInterlNS [(Choose x s)] NSExpEmpty a)
     ++ mapping_set_exp(s)
     ++ " @ "
     ++ mapping_CAction(a)
+\end{code}
+
+\begin{circus}
+\Upsilon(\lpar cs \rpar x : S \circspot \lpar \emptyset \rpar A)\circdef~\tco{[|}\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|] x :}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRepParalNS cs [(Choose x s)] NSExpEmpty a)
   = "[| "
     ++ mapping_predicate_cs (cs)
@@ -405,6 +527,12 @@ mapping_CAction (CSPRepParalNS cs [(Choose x s)] NSExpEmpty a)
     ++ mapping_set_exp(s)
     ++ " @ "
     ++ mapping_CAction(a)
+\end{code}
+
+\begin{circus}
+\Upsilon(\Semi x : S \circspot A)\circdef~\tco{; x :}\Upsilon_{seq}(S)~\tco{@}~\Upsilon(A)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPRepSeq [(Choose x s)] a)
   = "; "
     ++  show x
@@ -412,16 +540,42 @@ mapping_CAction (CSPRepSeq [(Choose x s)] a)
     ++ mapping_seq(s)
     ++ " @ "
     ++ mapping_CAction(a)
+\end{code}
+
+\begin{circus}
+\Upsilon(A \circseq B) \circdef~\Upsilon(A)~\tco{;}~\Upsilon(B)
+\end{circus}
+\begin{code}
 mapping_CAction (CSPSeq a b)
   = mapping_CAction(a)
     ++ " ; "
     ++ mapping_CAction(b)
+\end{code}
+
+\begin{circus}
+\Upsilon(\Skip) \defs~\tco{SKIP}
+\end{circus}
+\begin{code}
 mapping_CAction (CSPSkip)
   = "SKIP"
+\end{code}
+
+\begin{circus}
+\Upsilon(\Stop) \defs~\tco{STOP}
+\end{circus}
+\begin{code}
 mapping_CAction (CSPStop)
   = "STOP"
+\end{code}
+
+\begin{circus}
+\Upsilon(\Chaos) \defs~\tco{CHAOS}
+\end{circus}
+\begin{code}
 mapping_CAction (CSPChaos)
   = "CHAOS"
+\end{code}
+\begin{code}
 mapping_CAction x
   = fail ("not implemented by mapping_CAction: " ++ show x)
 \end{code}
@@ -476,8 +630,8 @@ mapString f (x:xs) = (f x) ++ (mapString f xs)
 mapping_CParameter :: CParameter -> [Char]
 mapping_CParameter (ChanInp zn)
   = zn
-mapping_CParameter (ChanInpPred zn zp)
-  = zn ++ (mapping_predicate zp)
+--mapping_CParameter (ChanInpPred zn zp)
+--  = zn ++ (mapping_predicate zp)
 -- mapping_CParameter (ChanOutExp ze)
 --   = undefined
 -- mapping_CParameter (ChanDotExp ze)
@@ -535,12 +689,13 @@ mapping_numbers x
 
 \end{code}
 \subsection{Mapping Functions for Predicates}
+
 \begin{code}
 mapping_predicate :: ZPred -> [Char]
--- NOt sure what "if then else" is about
+-- NOt sure what "if then  else" is about
 -- mapping_predicate (ZIf_Then_Else b x1 x2)
 --   = "if " ++ (mapping_predicate b) ++
---     " then " ++ (mapping_predicate x1) ++
+--     " then  " ++ (mapping_predicate x1) ++
 --     " else " ++ (mapping_predicate x2)
 mapping_predicate ( (ZMember (ZTuple [a,b]) (ZVar ("\\geq",[]))))
   = (mapping_numbers a) ++ " >= " ++ (mapping_numbers b)
@@ -589,7 +744,7 @@ mapping_set_exp ((ZCall (ZVar ("\\bigcup",[])) (ZTuple [a,b])))
   = "Union("++mapping_set_exp(a)++","++mapping_set_exp(b)++")"
 mapping_set_exp ((ZCall (ZVar ("\\bigcap",[])) (ZTuple [a,b])))
   = "Inter("++mapping_set_exp(a)++","++mapping_set_exp(b)++")"
-mapping_set_exp (ZCall (ZVar ("\\#",[])) a)
+mapping_set_exp (ZCall (ZVar ("\\\035",[])) a)
   = "card("++mapping_set_exp(a)++")"
 mapping_set_exp (ZCall (ZVar ("\\ran",[])) a)
   = "set("++mapping_set_exp(a)++")"
@@ -597,6 +752,8 @@ mapping_set_exp (ZCall (ZVar ("\\power",[])) a)
   ="Set("++mapping_set_exp(a)++")"
 mapping_set_exp (ZCall (ZVar ("\\seq",[])) a)
   = "Seq("++mapping_set_exp(a)++")"
+mapping_set_exp (ZVar (x,_))
+  = show x
 mapping_set_exp x
   = fail ("not implemented by mapping_set_exp: " ++ show x)
 
@@ -635,8 +792,8 @@ mapping_seq (ZCall (ZVar ("tail",[])) s)
   = "tail("++mapping_seq(s)++")"
 mapping_seq (ZCall (ZVar ("head",[])) s)
   = "head("++mapping_seq(s)++")"
-mapping_seq (ZCall (ZVar ("\\#",[])) a)
-  = "#(" ++ mapping_seq(a)++")"
+mapping_seq (ZCall (ZVar ("\\035",[])) a)
+  = "\035(" ++ mapping_seq(a)++")"
 mapping_seq (ZCall (ZVar ("\\cat",[])) (ZTuple [a,b]))
   = mapping_seq(a)++"^"++mapping_seq(b)
 mapping_seq (ZCall (ZSeqDisplay x) _)

@@ -13,9 +13,12 @@
 % {~\rulebefore\small\verbatim}%
 % {\endverbatim\normalsize\ruleafter}
 
+\newcommand*{\fcourier}{\fontfamily{pcr}\selectfont}
+\DeclareTextFontCommand{\tco}{\fcourier}
+
 \newcounter{examplecounter}
 \newenvironment{lawn}[1][]{%
-    \refstepcounter{examplecounter}%
+    \refstepco unter{bexamplecounter}%
   \textbf{Law \arabic{examplecounter} (#1)}%
   \quad
 }{%
@@ -42,9 +45,9 @@
 %\input{Formatter.lhs}
 %\input{FormatterToCSP.lhs}
 %\input{Lexer.lhs}
-%\input{MappingFunCircusCSP.lhs}
-\input{MappingFunStatelessCircus.lhs}
-\input{DefSets.lhs}
+\input{MappingFunCircusCSP.lhs}
+% \input{MappingFunStatelessCircus.lhs}
+% \input{DefSets.lhs}
 %\input{Parse.lhs}
 % \input{circus_ref_laws.lhs}
 % \input{new.lhs}

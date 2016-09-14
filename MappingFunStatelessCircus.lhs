@@ -387,7 +387,7 @@ NOTE: Besides the transformation rules for $[g]$ and ${g}$, the remaining transf
 \subsection{Definitions of $\Omega'_{A}$}
 
 \begin{circus}
- \Omega'_{A}  (c \then A) \circdef c \then  \Omega'_{A} (A)
+ \Omega'_{A}  (c \then A) \circdef c \then \Omega'_{A} (A)
 \end{circus}
 
 is written in Haskell as:

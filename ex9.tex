@@ -8,19 +8,30 @@
 \usepackage{circus}
 
 \begin{document}
-\begin{zed}NAME ::= Artur | Lidiane\end{zed}
-\begin{circus}
-\circchannel store, add, out : NAT\\
-\circchannel result, reset\\
+
+\begin{circus}%
+  \circprocess\ ~SysClock ~\circdef~\circbegin
 \end{circus}
+\begin{schema}{SysClockS}
+ time : \nat
+\end{schema}
+\begin{circusaction}
+  ResetClock ~\circdef~
+  \\\t2  Clock\\
+\end{circusaction}
+\begin{circusaction}
+  Clock ~\circdef~
+  \\\t2  \circmu~X \circspot  (tick \then \Skip \interleave getCurrentTime!time \then \Skip)\circseq X
+\end{circusaction}
+\begin{circusaction}
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+\end{circusaction}
 \begin{circus}
-\circprocess Register \circdef\\
-\circbegin \circstate RegSt \defs [value : NAT]\\
-A4 \circdef (x1:=x2)\\
-A5 \circdef A[y2,x2:=y1,x1]\\
-A6 \circdef A[x2/x1]\\
-A7 \circdef A[x1,x2,x3/y1,y2,y3]\\
-\circspot (value := 0) \\
-\circend\\
+  \circspot ResetClock
+  \circend
 \end{circus}
+
 \end{document}
