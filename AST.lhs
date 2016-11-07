@@ -591,7 +591,8 @@ data CSExp
 \begin{code}
 data ProcDecl
   = CProcess ZName ProcessDef              -- \circprocess N \circdef ProcDef
-  | CGenProcess ZName [ZName] ProcessDef     -- \circprocess N[N^{+}] \circdef ProcDef
+  | CParamProcess ZName [ZName] ProcessDef  -- \circprocess N[N^{+}] \circdef ProcDef
+  | CGenProcess ZName [ZName] ProcessDef   -- \circprocess N[N^{+}] \circdef ProcDef
   deriving (Eq,Ord,Show)
 
 data ProcessDef
@@ -615,7 +616,7 @@ data CProc
   | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
   | CParamProc ZName [ZExpr]              -- N(Exp^{+})
   -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
-  | CProcRename ZName [ZVar] [ZExpr]        -- Proc[N^{+}:=N^{+}] -- TODO
+  | CProcRename ZName [Comm] [Comm]        -- Proc[N^{+}:=N^{+}] -- TODO
   | CSeq CProc CProc                       -- Proc \cirCSeq Proc
   | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
   | CircusProc ZName                       -- N
@@ -698,7 +699,7 @@ data Comm
 
 data CParameter
    = ChanInp ZName                        -- ?N
-   | ChanInpPred ZName ZExpr              -- ?N : Pred
+   | ChanInpPred ZName ZPred              -- ?N : Pred
    | ChanOutExp ZExpr                     -- !Exp
    | ChanDotExp ZExpr                     -- .Exp
    deriving (Eq,Ord,Show)

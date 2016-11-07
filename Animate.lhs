@@ -1,6 +1,6 @@
-\section{Introduction}
+% \section{Introduction}
 
-This is a trivial program that prints the first 20 factorials.
+% This is a trivial program that prints the first 20 factorials.
 
 \begin{code}
 module Animate
@@ -23,7 +23,9 @@ module Animate
   showspec,         -- shows summary of whole spec
   showunfolded,     -- shows one definition (in unfolded form)
   showcode,         -- shows schema that is/has just executed
-  SyntaxError       -- from Errors module
+  SyntaxError,       -- from Errors module
+  omegaCircus,       -- Omega function for the Circus translator
+  upslonCircus       -- Upslon function for the Circus translator
 )
 where
 
@@ -35,6 +37,10 @@ import Eval
 import BZTT
 import Errors
 import Data.Char
+import MappingFunStatelessCircus
+import MappingFunCircusCSP
+
+
 
 -- This data structure contains all the internal state of the animator.
 -- We use named fields so that it can easily be extended with new fields.
@@ -169,6 +175,7 @@ data Answer
   | Pred ZPred
   | BoolValue Bool
   | Defn ZPara
+  | Spec [ZPara]
   | SchemaCode String ZExpr Int   -- optimized code of a schema
 
 errstr s = ErrorMsg [MStr s]
@@ -214,16 +221,39 @@ pushfile filename contents anim
 
 poppara :: Animator -> (Animator,Answer)
 poppara anim
-  | null (spec anim) = (anim, errstr "Specification is empty")
+  | null (spec anim) = (anim, errstr "Pop command: Specification is empty")
   | otherwise        = (newanim, Done msg)
   where
   msg = "Popped: " ++ fmtpara (head (spec anim))
   newanim = anim{spec=tail (spec anim)}
 
+-- Artur:
+-- This is my first attempt in trying to apply
+-- the Omega function into the spec
+omegaCircus :: Animator -> (Animator,Answer)
+omegaCircus anim
+  | null (spec anim) = (anim, errstr "Omega command: Specification is empty")
+  | otherwise        = (newanim, Done msg)
+  where
+  msg = "Omega function applied to the current spec"
+  newanim = anim{spec=(applyOmega anim)}
+
+applyOmega :: Animator -> [ZParaInfo]
+applyOmega anim
+  = fromOk (process_paras [] (omega_Circus (map origpara (spec anim)) (map origpara (spec anim))))
+
+-- Artur:
+-- This is my first attempt in trying to apply
+-- the Omega function into the spec
+-- upslonCircus :: Animator -> Answer
+upslonCircus anim = Done (applyUpslon anim)
+
+applyUpslon anim
+  = (mapping_Circus (map origpara (spec anim)) (map origpara (spec anim)))
 
 resetanimator :: Animator -> (Animator,Answer)
 resetanimator anim
-  = (animator0, Done "Specification is now empty.")
+  = (animator0, Done "Reset command: Specification is now empty.")
 
 
 -- Evaluates a given Z expression.
@@ -419,6 +449,7 @@ popstate anim
 showspec :: Animator -> Answer
 showspec = Done . unlines . map fmtpara . reverse . spec
 
+getspec = map fmtpara . reverse . spec
 -- reverse example:
 -- Input: reverse [1..5]
 -- Output: [5,4,3,2,1]
@@ -496,23 +527,6 @@ get_info s anim
 process_paras :: [ZParaInfo] -> [ZPara] -> ErrorOr [ZParaInfo]
 process_paras spec []
   = return spec
- -- | CircusProcess{origpara::ZPara,procunfolded::ProcDecl}
-process_paras spec (p@(CircChannel s) : ps)
-  = do let newp = CircusChannel{origpara=p,
-           chanunfolded=s}
-       let newspec = newp:spec
-       process_paras newspec ps
-process_paras spec (p@(CircChanSet v s) : ps)
-  = do let newp = CircusChanSet{origpara=p,
-           defcname=v,
-           chansetunfolded=s}
-       let newspec = newp:spec
-       process_paras newspec ps
-process_paras spec (p@(Process s) : ps)
-  = do let newp = CircusProcess{origpara=p,
-           procunfolded=s}
-       let newspec = newp:spec
-       process_paras newspec ps
 process_paras spec (p@(ZGivenSetDecl s) : ps)
   = do let newp = ZParaDefn{origpara=p,
            defname=s,
@@ -557,6 +571,23 @@ process_paras spec (p@(ZPredicate pred) : ps)
         let newp = ZParaPred{origpara=p,
            predunfolded=upred}
         process_paras (newp:spec) ps
+process_paras spec (p@(CircChannel s) : ps)
+  = do let newp = CircusChannel{origpara=p,
+           chanunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
+process_paras spec (p@(CircChanSet v s) : ps)
+  = do let newp = CircusChanSet{origpara=p,
+           defcname=v,
+           chansetunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
+process_paras spec (p@(Process s) : ps)
+  = do let newp = CircusProcess{origpara=p,
+           procunfolded=s}
+       let newspec = newp:spec
+       process_paras newspec ps
+
 process_paras spec (para : ps)
   = fail ("Not implemented yet: " ++ show para)
 

@@ -1,3 +1,4 @@
+%!TEX root = MAIN.tex
 \section{Circus Refinement Laws}
 
 \ignore{

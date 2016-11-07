@@ -16,7 +16,7 @@ COREOBJ=AST.o Errors.o MyDebug.o
 LEXEROBJ=EParseLib.o Lexer.o
 PARSEOBJ=$(LEXEROBJ) Parse.o
 EVALOBJ=$(PARSEOBJ) FiniteSets.o Subs.o Reorder.o SetSize.o Eval.o
-ANIMOBJ=$(COREOBJ) $(EVALOBJ) Formatter.o Animate.o Optimize.o Unfold.o
+ANIMOBJ=$(COREOBJ) $(EVALOBJ) Formatter.o Animate.o Optimize.o Unfold.o MappingFunStatelessCircus.o
 CLPSOBJ=CLPSType.o CLPSWrite.o BZTT.o
 
 all: $(PROGS) $(TESTS)
@@ -81,7 +81,7 @@ tags:
 	hstags $(GHC_FLAGS) *.hs *.lhs
 
 clean:
-	rm -f *.o *.hi *.aux *.log *.out
+	rm -f *.o *.hi *.aux *.log *.out *.fls *.fdb_latexmk
 
 depend:
 	ghc -M $(GHCFLAGS) *.lhs FiniteSets.lhs
@@ -131,6 +131,8 @@ reorder_test: $(COREOBJ) $(PARSEOBJ) Unfold.o FiniteSets.o Formatter.o Subs.o Se
 # DO NOT DELETE: Beginning of Haskell dependencies
 AST.o : AST.lhs
 Animate.o : Animate.lhs
+Animate.o : MappingFunCircusCSP.hi
+Animate.o : MappingFunStatelessCircus.hi
 Animate.o : ./Errors.hi
 Animate.o : ./BZTT.hi
 Animate.o : ./Eval.hi
@@ -162,6 +164,9 @@ CLPSWrite.o : CLPSType.hi
 CLPSWrite.o : ./Eval.hi
 CLPSWrite.o : ./Errors.hi
 CLPSWrite.o : AST.hi
+CRL.o : CRL.lhs
+CRL.o : DefSets.hi
+CRL.o : AST.hi
 EParseLib.o : EParseLib.lhs
 EParseTest.o : EParseTest.lhs
 EParseTest.o : EParseLib.hi
@@ -194,6 +199,14 @@ Lexer_Test.o : Lexer_Test.lhs
 Lexer_Test.o : Lexer.hi
 Lexer_Test.o : EParseLib.hi
 MyDebug.o : MyDebug.lhs
+MappingFunCircusCSP.o : MappingFunCircusCSP.lhs
+MappingFunCircusCSP.o : FormatterToCSP.hi
+MappingFunCircusCSP.o : CRL.hi
+MappingFunCircusCSP.o : AST.hi
+MappingFunStatelessCircus.o : MappingFunStatelessCircus.lhs
+MappingFunStatelessCircus.o : FormatterToCSP.hi
+MappingFunStatelessCircus.o : DefSets.hi
+MappingFunStatelessCircus.o : AST.hi
 Optimize.o : Optimize.lhs
 Optimize.o : MyDebug.hi
 Optimize.o : Eval.hi
@@ -245,6 +258,12 @@ TextUI.o : Formatter.hi
 TextUI.o : Animate.hi
 TextUI.o : Errors.hi
 TextUI.o : AST.hi
+CircusUI.o : CircusUI.lhs
+CircusUI.o : MappingFunStatelessCircus.hi
+CircusUI.o : Formatter.hi
+CircusUI.o : Animate.hi
+CircusUI.o : Errors.hi
+CircusUI.o : AST.hi
 Unfold.o : Unfold.lhs
 Unfold.o : Subs.hi
 Unfold.o : ./FiniteSets.hi

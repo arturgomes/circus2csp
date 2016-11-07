@@ -987,9 +987,9 @@ SoftwareRequirements~\circdef~
               \\\interleave~UltrafiltrationReq) \circseq X\\
 \end{circusaction}
 
-\section{Therapy Processes}
-
-\subsection{Therapy Preparation}
+% \section{Therapy Processes}
+% 
+% \subsection{Therapy Preparation}
 
 \begin{circusaction}
 AutomatedSelfTest~\circdef~autSelfTest \then (signalLamp := GREEN)
@@ -1000,22 +1000,6 @@ ConnectingTheConcentrate~\circdef~
 \\\t3  connectingConcentrate?bicarbonateAcetate \then \Skip
 \end{circusaction}
 
-\begin{schema}{SetRinsingParameters}
-    setFBPRate?~:~\nat\\
-    setRBPRate?~:~\nat\\
-    setRTime?~:~\nat\\
-    setUFRFRinsing?~:~\nat\\
-    setUFVFRinsing?~:~\nat\\
-    setBFFCPatient?~:~\nat\\
-    \Delta HDState
-  \where
-    fillingBPRate'~=~setFBPRate?\\
-    rinsingBPRate'~=~setRBPRate?\\
-    rinsingTime'~=~setRTime?\\
-    ufRateForRinsing'~=~setUFRFRinsing?\\
-    ufVolForRinsing'~=~setUFVFRinsing?\\
-    bloodFlowForConnectingPatient'~=~setBFFCPatient?\\
-\end{schema}
 
 \begin{circusaction}
 StdAtrialTubing~\circdef~atrialTubing~\then~\Skip
@@ -1033,66 +1017,6 @@ StdAtrialTubing~\circdef~atrialTubing~\then~\Skip
 
 \begin{circusaction}
 PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\Skip\end{circusaction}
-
-\begin{schema}{SetDFParameters}
-    setConductivity?~:~\nat\\
-    setBicarbonateAcetate?~:~CONCENTRATE\\
-    setBicarbonateConductivity?~:~\nat\\
-    setDFTemperature?~:~\nat\\
-    setRinsingTime?~:~\nat\\
-    setDFFlow?~:~\nat\\
-    \Delta HDState
-  \where
-    conductivity'~=~setConductivity?\\
-    bicarbonateAcetate'~=~setBicarbonateAcetate?\\
-    bicarbonateConductivity'~=~setBicarbonateConductivity?\\
-    dfTemperature'~=~setDFTemperature?\\
-    rinsingTime'~=~setRinsingTime?\\
-    dfFlow'~=~setDFFlow?\\
-\end{schema}
-
-\begin{schema}{SetUFParameters}
-    setUFVol?~:~\nat\\
-    setTherapyTime?~:~\nat\\
-    setMinUFRate?~:~\nat\\
-    MaxUFRat?~:~\nat\\
-    \Delta HDState
-  \where
-    ufVol'~=~setUFVol?\\
-    therapyTime'~=~setTherapyTime?\\
-    minUFRate'~=~setMinUFRate?\\
-    maxUFRate'~=~MaxUFRat?
-\end{schema}
-
-\begin{schema}{SetPressureParameters}
-    setLimitDeltaMinMaxAP?~:~\nat\\
-    setActualTMPMaxTMP?~:~\nat\\
-    setLimitsTMP?~:~SWITCH\\
-    setLowHigh?~:~\nat\\
-    setExtendedTMPLimitRange?~:~SWITCH\\
-    \Delta HDState
-\where
-    limitDeltaMinMaxAP'~=~setLimitDeltaMinMaxAP?\\
-    actualTMPMaxTMP'~=~setActualTMPMaxTMP?\\
-    limitsTMP'~=~setLimitsTMP?\\
-    lowHigh'~=~setLowHigh?\\
-    extendedTMPLimitRange'~=~setExtendedTMPLimitRange?
-\end{schema}
-
-\begin{schema}{SetHeparinParameters}
-    setHSTime?~:~TIME\\
-    setHBVol?~:~\nat\\
-    setHPRate?~:~\nat\\
-    setTWHeparin?~:~SWITCH\\
-    setSType?~:~\nat\\
-    \Delta HDState
-  \where
-    heparinStopTime'~=~setHSTime?\\
-    heparinBolusVol'~=~setHBVol?\\
-    heparinProfileRate'~=~setHPRate?\\
-    treatmentWithoutHeparin'~=~setTWHeparin?\\
-    syringeType'~=~setSType?
-\end{schema}
 
 \begin{circusaction}
 SetTreatmentParameters~\circdef~ SetDFParameters \circseq SetUFParameters \circseq

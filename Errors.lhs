@@ -116,8 +116,10 @@ isOk _      = False
 notOk :: ErrorOr a -> Bool
 notOk = not . isOk
 
-fromOk :: ErrorOr a -> a
+-- fromOk :: ErrorOr a -> a
 fromOk (Ok a) = a
+fromOk Fail = error "Fail fromOk"
+fromOk x = error  (error_message x) -- input spec had syntax errors
 
 isUndef (Undefined _) = True
 isUndef _ = False

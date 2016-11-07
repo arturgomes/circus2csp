@@ -1,134 +1,141 @@
-\documentclass{llncs}
-\usepackage{llncsdoc}
-
-\newcommand{\universe}{\mathbb{U}}
-
-\usepackage{circus}
-
-\raggedbottom
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.5in]{geometry}
+\usepackage{xcolor}
+\usepackage[color]{circus}
+\usepackage{listings}
+\usepackage{lstlhs}
 
 \begin{document}
 
 \begin{circus}
-    maxbuff == \nat_1 \\
-    maxring == maxbuff - 1 \\
-    Value == \nat \\
-    CellId == 1 \range maxring \\
-    Direction ::=  req | ack
-    \also
-    \circchannel\ input, output : Value \\
-    \circchannel\ write, read, rd\_i, wrt\_i: CellId \cross Direction \cross Value \\
-    \circchannel\ rrd, wrt: Direction \cross Value \\
-    \circchannelset Ctr\_I == \lchanset rd\_i, wrt\_i \rchanset \\
-    \also
-    NAME ::=   v | top | bot | cache | size \\
-    \also BINDING == NAME \fun \universe \\
-    \delta == \{v \mapsto Value, top \mapsto CellId, bot \mapsto CellId, cache \mapsto Value, size \mapsto \nat \}
-    \also
-    \circchannel\ mget, mset: NAME \cross \universe \\
-    \circchannel\ terminate \\
-    \circchannelset MEM\_I == \lchanset mset, mget, terminate \rchanset \\
+    [Universe]
+    \also maxbuff == \nat_1 \\
+    \also maxring == maxbuff - 1 \\
+    \also Value == \nat \\
+    \also CellId == 1 \upto maxring \\
+    \also Direction ::=  req | ack
+    \also \circchannel\ input, output : Value \\
+    \also \circchannel\ write, read, rd\_i, wrt\_i: CellId \cross Direction \cross Value \\
+    \also \circchannel\ rrd, wrt: Direction \cross Value \\
+    \also \circchannelset\ Ctr\_I == \lchanset rd\_i, wrt\_i \rchanset \\
+    \also NAME ::= v | top | bot | cache | size \\
+    \also BINDING == NAME \fun Universe \\
+    \also \delta == \{v \mapsto Value, top \mapsto CellId, bot \mapsto CellId, cache \mapsto Value, size \mapsto \nat \}
+    \also \circchannel\ mget, mset: NAME \cross Universe \\
+    \also \circchannel\ terminate \\
+    \also \circchannelset\ MEM\_I == \lchanset mset, mget, terminate \rchanset \\
 \end{circus}%
 \begin{circus}
     \circprocess\ RingCell \circdef \\
     \circbegin\\
     \t1
-        Memory \circdef
-                \circvres\ b:BINDING \circspot \\
-            \t1 (\Extchoice n:\dom b \circspot mget.n!b(n) \then Memory(b)) \\
-                \extchoice (\Extchoice n:\dom b 
-                \circspot mset.n?nv:(nv \in \delta(n)) 
-                \then Memory(b \oplus \{n \mapsto nv\}))\\
-                \extchoice (terminate \then \Skip) \\
-                    \\
-        \circspot
-                \circvar\ b:\{x:BINDING | v \in Value\} \circspot \\
+        Memory \circdef 
+            \circvres b:BINDING \circspot \\
             \t1
-            (
-                (
-                    (\Intchoice v:Value \circspot mget.v?vv:(\delta(v)) \then mset.v!vv \then \Skip) \circseq\\
-                    (\circmu X 
-                     \circspot (mget.v?vv:(\delta(v)) \then \\
-                                (rd.req?dumb \then rd.ack!v \then \Skip \\
-                                    \extchoice wrt.req?x \then mset.v!x \then wrt.ack?dumb \then \Skip )
-                            ) \circseq\ X )
-                ) \\
-                \lpar \emptyset | MEM_I | \{ b \} \rpar \\
-                Memory(b)
-            ) \\
-            \t1 \hide MEM_I
+                (\Extchoice n:\dom b \circspot mget.n!b(n) \then Memory(b)) \\
+                \extchoice (\Extchoice n:\dom b \circspot mset.n?nv:(nv \in \delta(n)) \then Memory(b \oplus \{n \mapsto nv\}))\\
+                \extchoice terminate \then \Skip \\
         \\
+        \circspot
+            \circvar\ b:\{x:BINDING | v \in Value\} \circspot \\
+            \t1
+            ((( 
+                        (\Intchoice v:Value \circspot mget.v?vv:(vv \in \delta(v)) \then mset.v!vv \then \Skip) \circseq \\
+                            ( \circmu X \circspot
+                                ( mget.v?vv:(vv \in \delta(v)) \then \\
+                                    ( rd.req?dumb \then rd.ack!v \then \Skip \\
+                                      \extchoice wrt.req?x \then mset.v!x 
+                                                \then wrt.ack?dumb \then \Skip
+                                    )
+                                ) \circseq\ X
+                            )
+                        ) \\
+                        \lpar {} | MEM\_I | { b } \rpar Memory(b))
+                        \circhide MEM\_I)
     \circend
     \\
-    \circusprocess IRCell(i) \circdef RingCell [rrd,wrt := rd\_i.i, wrt\_i.i]
+    \circprocess IRCell(i) \circdef RingCell[rrd,wrt:=rd\_i.i,wrt\_i.i]
     \\
-    \circusprocess DRing \circdef \Interleave i: CellId \circspot IRCell(i)
+    \circprocess DRing \circdef \Interleave i: CellId \circspot IRCell(i)
 \end{circus}%
 \begin{circus}
     \circprocess\ Controller \circdef \\
-    \circbegin\ \\
+    \circbegin \\
     \t1
-        Memory \circdef\
-                \circvres\ b:BINDING \circspot \\
-            \t1 (\ExtChoice n:\dom b \circspot mget.n!b(n) \then Memory(b)) \\
-                \extchoice (\ExtChoice n:\dom b \circspot mset.n?nv:(nv \in \delta(n)) \then Memory(b \oplus \{n \mapsto nv\}))\\
-                \extchoice terminate \then \Skip \\
-                    \\
-        \circspot
-                \circvar\ b:\{x:BINDING | cache \in Value \land size \in \nat \land top \in CellId \land bot \in CellId \} \circspot \\
+        Memory \circdef
+            \circvres b:BINDING \circspot \\
             \t1
-            (
-                (
-                    mget.cache?vcache:(\delta(cache)) \then \\
-                    mget.size?vsize:(\delta(size)) \then \\
-                    mget.top?vtop:(\delta(top)) \then \\
-                    mget.bot?vbot:(\delta(bot)) \then \\
-                    mset.cache.0 \then \\
-                    mset.size.0 \then \\
-                    mset.top.1 \then \\
-                    mset.bot.1 \then \\
-                    \circmu X \circspot
-                    (
-                        mget.cache?vcache:(\delta(cache)) \then \\
-                        mget.size?vsize:(\delta(size)) \then \\
-                        mget.top?vtop:(\delta(top)) \then \\
-                        mget.bot?vbot:(\delta(bot)) \then \\
-                        \t1 \lcircguard vsize < maxbuff \rcircguard \circguard \\
-                            \t1 input?x \then \\
-                                \t1 \lcircguard vsize = 0 \rcircguard \circguard \\
-                                    \t1 mset.cache.x \then \\
-                                        mset.size.1 \then \Skip \\
-                                    \extchoice \lcircguard vsize > 0 \rcircguard \circguard \\
-                                    \t1 write.vtop.req!x \then \\
-                                        write.vtop.ack?dumb \then \\
-                                        mset.size.(vsize+1) \then \\
-                                        mset.top.(vtop~\mod~vmaxring) \then \\
-                                        \Skip
-                                                                                                                \\
-                            \extchoice
-                            \lcircguard vsize > 0 \rcircguard \circguard \\
-                            \t1 output!cache \then \\
-                                \t1 \lcircguard vsize > 1 \rcircguard \circguard \\
-                                    \t1 ( \IntChoice dumb:Value \circspot \\
-                                            \t1 read.vbot.ack?x \then \\
-                                                mset.cache.x \then \Skip )\Semi\ \\
-                                        mset.size.(vsize-1) \then \\
-                                        mset.bot.((vbot~\mod~maxring)+1) \then \\
-                                        \Skip
-                                                                    \\
-                                    \extchoice \lcircguard vsize = 1 \rcircguard \circguard 
-                                        mset.size.0 \then \Skip ); X
-                ) \\
-                \lpar \emptyset | MEM_I | \{ b \} \rpar \\
-                Memory(b)
-            ) \\
-            \t1 \circhide MEM_I
+                (\Extchoice n:\dom b \circspot mget.n!b(n) \then Memory(b)) \\
+                \extchoice (\Extchoice n:\dom b \circspot mset.n?nv:(nv \in \delta(n)) \then Memory(b \oplus \{n \mapsto nv\}))\\
+                \extchoice terminate \then \Skip \\
         \\
+        \circspot
+            \circvar\ b:\{x:BINDING | cache \in Value \land size \in \nat \land top \in CellId \land bot \in CellId \} \circspot \\
+            \t1
+            ((
+            (
+                mget.cache?vcache:(vcache \in \delta(cache)) \then \\
+                mget.size?vsize:(vsize \in \delta(size)) \then \\
+                mget.top?vtop:(vtop \in \delta(top)) \then \\
+                mget.bot?vbot:(vbot \in \delta(bot)) \then \\
+                mset.cache.0 \then \\
+                mset.size.0 \then \\
+                mset.top.1 \then \\
+                mset.bot.1 \then \\
+                \circmu X \circspot
+                (
+                    mget.cache?vcache:(vcache \in \delta(cache)) \then \\
+                    mget.size?vsize:(vsize \in \delta(size)) \then \\
+                    mget.top?vtop:(vtop \in \delta(top)) \then \\
+                    mget.bot?vbot:(vbot \in \delta(bot)) \then \\
+                    \t1
+                (\lcircguard vsize < maxbuff \rcircguard \\
+                 \circguard
+                     input?x \then \\
+                     \t1
+                         ((\lcircguard vsize = 0 \rcircguard \circguard \\
+                             \t1
+                                 mset.cache.x \then \\
+                                 mset.size.1 \then \Skip)
+                             \\
+                             \extchoice 
+                             (\lcircguard vsize > 0 \rcircguard \circguard \\
+                             \t1
+                                 write.vtop.req!x \then \\
+                                 write.vtop.ack?dumb \then \\
+                                 mset.size.(vsize+1) \then \\
+                                 mset.top.(vtop~\mod~vmaxring) \then \\
+                                 \Skip))) \\
+                        \extchoice
+                    (\lcircguard vsize > 0 \rcircguard \circguard \\
+                    \t1
+                        output!cache \then \\
+                        \t1
+                            ((\lcircguard vsize > 1 \rcircguard \circguard \\
+                                                                \t1
+                            (
+                            \Intchoice dumb:Value \circspot \\
+                            \t1
+                            read.vbot.req.dumb \then \\
+                            read.vbot.ack?x \then \\
+                            mset.cache.x \then \Skip
+                            )\circseq\ \\
+                            (mset.size.(vsize-1) \then \\
+                                    mset.bot.((vbot~\mod~maxring)+1) \then \\
+                                    \Skip))
+                        \\
+                        \extchoice (\lcircguard vsize = 1 \rcircguard 
+                                    \circguard mset.size.0 \then \Skip))))
+                \circseq X
+            ) \\
+            \lpar {} | MEM\_I | { b } \rpar Memory(b)
+        ) \circhide MEM\_I)
+    \\
     \circend
     \\
-    \circusprocess ControllerR \circdef Controller [read, write:=rd\_i, wrt\_i]
+    \circprocess ControllerR \circdef\ Controller [read, write:=rd\_i, wrt\_i]
     \\
-    \circusprocess DBuffer \circdef (ControllerR \lpar Ctr_I \rpar DRing) \circhide Ctr_I
+    \circprocess DBuffer \circdef\ ((ControllerR \lpar Ctr\_I \rpar DRing) \circhide Ctr\_I)
 \end{circus}%
 
 \end{document}

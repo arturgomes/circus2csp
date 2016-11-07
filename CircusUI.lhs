@@ -16,6 +16,7 @@ import Data.Char
 import Formatter
 import System.IO          -- Standard IO library, so we can catch IO errors etc.
 import Control.Exception
+import MappingFunStatelessCircus
 --import System.Console.Readline  -- was Readline
 
 prompt1 = "CircusParser> " -- prompt for each command
@@ -30,7 +31,7 @@ output_zpara = zpara_stdout pinfo
 
 main :: IO ()
 main
-  = do  putStrLn "Welcome to Circus Parser, version 0.1.  June 2016"
+  = do  putStrLn "Welcome to Circus Parser, version 0.2.  September 2016"
         putStrLn "Author: Artur Oliveira Gomes (gomesa at tcd.ie)"
         putStrLn "This is based on JAZA (Just Another Z Animator), see below."
         putStrLn "Copyright(C) 1999-2005 Mark Utting (marku@cs.waikato.ac.nz)."
@@ -123,6 +124,8 @@ help =
    fmtcmd "\\begin{..}..\\end{..}" "Enter a Z paragraph",
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "show"                   "Display a summary of whole spec.",
+   fmtcmd "tocsp"                   "Map the whole spec into CSP.",
+   fmtcmd "omega"                  "Apply the Omega function to Circus spec",
    -- fmtcmd "show N"                 "Display unfolded definition of N",
    -- fmtcmd "pop"                    "Delete last Z paragraph",
    fmtcmd "reset"                  "Reset the whole specification",
@@ -154,6 +157,8 @@ help =
 -- For convenience, the Hugs ":load" command is similar to "quit".
 --  (I often forget to get out of the animator before doing a
 --   ":load" command while developing the animator in Emacs).
+
+do_cmd :: [Char] -> String -> Animator -> IO ()
 do_cmd cmd args anim
   | cmd == "quit" =
       return ()
@@ -168,7 +173,6 @@ do_cmd cmd args anim
       catch
 	  (do {putStrLn ("Loading '"++args++"' ...");
 	       spec <- readFile args;
-         --done_cmd (pushfile args spec anim)})
 	       done_cmd (pushfile args spec anim)})
 	  (\err ->
 	      do {putStrLn (show (err :: IOException));
@@ -179,6 +183,10 @@ do_cmd cmd args anim
       done_cmd (resetanimator anim)
   | cmd == "show" =
       done_cmd (anim, showinfo args)
+  | cmd == "tocsp" =
+      done_cmd (anim, upslonCircus anim)
+  | cmd == "omega" =
+      done_cmd (omegaCircus anim)
   | cmd == "do" =
       do  let (anim2,ans) = execschema args anim
 	  if isDone ans
@@ -259,6 +267,7 @@ do_settings _ anim =
 
 done_cmd :: (Animator, Answer) -> IO ()
 done_cmd (anim, Done s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
+-- done_cmd (anim, Spec s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
 done_cmd (anim, ErrorMsg m)   = do {putErrorMsg m; get_cmd anim}
 done_cmd (anim, ErrorLocns es)= do {putStrLn (unlines (map fmtperr es));
 				    get_cmd anim}
@@ -266,6 +275,7 @@ done_cmd (anim, Value v)      = do {output_zexpr v; get_cmd anim}
 done_cmd (anim, Pred p)       = do {output_zpred p; get_cmd anim}
 done_cmd (anim, BoolValue v)  = do {putStrLn (show v); get_cmd anim}
 done_cmd (anim, Defn v)       = do {output_zpara v; get_cmd anim}
+-- done_cmd (anim, Spec sp)       = do {map_circus sp sp; get_cmd anim}
 done_cmd (anim, SchemaCode name (ZSetComp gfs (Just (ZBinding bs))) depth) =
     do  -- output_zpara (ZSchemaDef (ZSPlain name) (ZSchema gfs))
 	-- Here is a alternative to the above line, that numbers the lines.
@@ -290,7 +300,7 @@ fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
 fmtgfs (n,gf) =
    show n ++ "  " ++ zgenfilt_string pinfo gf
 
-
+-- map_circus xls (x:xs) = (mapping_Circus xls x)++(map_circus xls xs)
 checktrue, checkundef :: Answer -> String -> IO ()
 checktrue (BoolValue True) pred = return ()  -- ignore successful results
 checktrue ans pred = checkpred ans ("checktrue " ++ pred)

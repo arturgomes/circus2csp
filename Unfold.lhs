@@ -157,6 +157,7 @@ unftypecheck b msg = unfoldError (typecheck b msg)
 -- This function sometimes returns a schema (ZESchema ...) but unfoldexpr
 -- always catches those and does further processing (e.g., to turn a
 -- schema into a set of bindings).   TODO: clean this up?
+
 unfold_name :: ZVar -> UnfoldVisitor ZExpr
 unfold_name n =
     lookupVar n

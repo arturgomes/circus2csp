@@ -2,16 +2,7 @@
 \begin{zed}
 [NAT,ZED]
 \end{zed}
-\begin{schema}{Mysch}
-value : NAT
-\end{schema}
 
-\begin{schema}{MyOP}
-\Delta Mysch\\
-x? : NAT
-\where
-value' = x? - value
-\end{schema}
 
 \begin{circus}
 \circchannel store, add, out : NAT\\
