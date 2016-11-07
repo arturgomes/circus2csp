@@ -108,7 +108,7 @@ module AST where
 type GivenSet = ZVar      -- names of given sets.
 type GivenValue = String  -- members of given sets are strings
 type ZInt = Integer       -- If you change this, you must also change
-			  -- the definition of L_NUMBER in Lexer.hs
+        -- the definition of L_NUMBER in Lexer.hs
 type ZFSet = [ZExpr]      -- But always manipulate via FiniteSets functions.
 \end{code}
 
@@ -187,7 +187,7 @@ data ZReln   -- binary toolkit relations (all take one arg: a pair)
   deriving (Eq,Ord,Show)
 
 data ZFunc1  -- prefix and postfix unary functions
-	     -- (These all take an argument that is not a pair)
+       -- (These all take an argument that is not a pair)
   = ZDom     -- \dom
   | ZRan     -- \ran
   | ZSizeof  -- slash hash-symbol
@@ -318,26 +318,26 @@ data ZExpr
   | ZSeqDisplay [ZExpr]   -- sequence displays, like <1,2,4>
   | ZFSet ZFSet           -- all elements must be in canonical form.
   | ZIntSet (Maybe ZInt) (Maybe ZInt) -- integer range with lo/hi bounds.
-			  --   ZIntSet (Just lo) (Just hi) means lo..hi.
-			  --   ZIntSet Nothing   (Just hi) means -infinity..hi.
-			  --   ZIntSet (Just lo) Nothing   means lo..+infinity.
-			  --   ZIntSet Nothing   Nothing   means \num
+        --   ZIntSet (Just lo) (Just hi) means lo..hi.
+        --   ZIntSet Nothing   (Just hi) means -infinity..hi.
+        --   ZIntSet (Just lo) Nothing   means lo..+infinity.
+        --   ZIntSet Nothing   Nothing   means \num
   | ZGenerator ZReln ZExpr -- sets that are useful for iterating through.
-			  -- ZGenerator r e = { x:ZUniverse | x rel e }
+        -- ZGenerator r e = { x:ZUniverse | x rel e }
   | ZCross [ZExpr]        -- a \cross b \cross c
   | ZFreeType ZVar [ZBranch] -- an entire free type (all branches)
   | ZPowerSet{baseset::ZExpr, -- power set types
-	      is_non_empty::Bool,
-	      is_finite::Bool}
+        is_non_empty::Bool,
+        is_finite::Bool}
   | ZFuncSet{ domset::ZExpr, -- relation/function/sequence types
-	      ranset::ZExpr,
-	      is_function::Bool,
-	      is_total::Bool,        -- dom R = domset
-	      is_onto::Bool,         -- ran R = ranset
-	      is_one2one::Bool,      -- injective
-	      is_sequence::Bool,     -- dom is 1.. length s
-	      is_non_empty::Bool,
-	      is_finite::Bool}
+        ranset::ZExpr,
+        is_function::Bool,
+        is_total::Bool,        -- dom R = domset
+        is_onto::Bool,         -- ran R = ranset
+        is_one2one::Bool,      -- injective
+        is_sequence::Bool,     -- dom is 1.. length s
+        is_non_empty::Bool,
+        is_finite::Bool}
   | ZSetComp [ZGenFilt] (Maybe ZExpr) -- set comprehensions
   | ZLambda [ZGenFilt] ZExpr          -- only for parsing (removed in Unfold)
   | ZESchema ZSExpr                   -- sets of bindings (removed in Unfold)
@@ -387,14 +387,14 @@ zemptyset = ZFSet []
 -- This is the union of all Z relations:  ZUniverse <-> ZUniverse
 zrelations :: ZExpr
 zrelations = ZFuncSet{domset=ZUniverse,
-		      ranset=ZUniverse,
-		      is_function =False,
-		      is_total    =False,
-		      is_onto     =False,
-		      is_one2one  =False,
-		      is_sequence =False,
-		      is_non_empty=False,
-		      is_finite   =False}
+          ranset=ZUniverse,
+          is_function =False,
+          is_total    =False,
+          is_onto     =False,
+          is_one2one  =False,
+          is_sequence =False,
+          is_non_empty=False,
+          is_finite   =False}
 \end{code}
 
 \subsubsection{Z Predicates}
@@ -462,16 +462,16 @@ data ZS2
 data ZPara
   = ZGivenSetDecl GivenSet       -- [XXX]
   | ZSchemaDef ZSName ZSExpr     -- \begin{schema}{XXX}...\end{schema}
-				                         -- or XXX \defs [...|...]
+                                 -- or XXX \defs [...|...]
   | ZAbbreviation ZVar ZExpr     -- XXX == expression
   | ZFreeTypeDef ZVar [ZBranch]  -- XXX ::= A | B | ...
   | ZPredicate ZPred
   | ZAxDef [ZGenFilt]            -- \begin{axdef}...\end{axdef}
   | ZGenDef [ZGenFilt]           -- \begin{gendef}...\end{gendef}
   | ZMachineDef{machName::String,   -- a state machine.
-		machState::String,
-		machInit::String,
-		machOps::[String]}
+    machState::String,
+    machInit::String,
+    machOps::[String]}
     -- Inclusion of Circus Paragraphs
   | CircChannel [CDecl]         -- \circchannel CDecl
   | CircChanSet ZName CSExp     -- \circchanset N == CSExp
@@ -763,24 +763,24 @@ type GlobalDefs  = [(ZVar,ZExpr)]
 
 data Env =
     Env{search_space::Integer,
-	search_vars::SearchSpace, -- search_space = product of these nums
-	max_search_space::Integer,
-	max_set_size::Integer,
-	global_values::GlobalDefs,
-	local_values::[(ZVar,ZExpr)]
-	--avoid_variables::VarSet   TODO: add later?
+  search_vars::SearchSpace, -- search_space = product of these nums
+  max_search_space::Integer,
+  max_set_size::Integer,
+  global_values::GlobalDefs,
+  local_values::[(ZVar,ZExpr)]
+  --avoid_variables::VarSet   TODO: add later?
        }
     deriving Show
 
 empty_env :: GlobalDefs -> Env
 empty_env gdefs =
     Env{search_space=1,
-	search_vars=[],
-	max_search_space=100000,
-	max_set_size=1000,
-	global_values=gdefs,
-	local_values=[]
-	--avoid_variables=vs
+  search_vars=[],
+  max_search_space=100000,
+  max_set_size=1000,
+  global_values=gdefs,
+  local_values=[]
+  --avoid_variables=vs
        }
 
 -- an environment for temporary evaluations.
@@ -812,22 +812,22 @@ envIsSchema env v =
 envLookupLocal :: (Monad m) => ZVar -> Env -> m ZValue
 envLookupLocal v env =
     case lookup v (local_values env) of
-	 Just e  -> return e
-	 Nothing -> fail ("unknown local variable: " ++ show_zvar v)
+   Just e  -> return e
+   Nothing -> fail ("unknown local variable: " ++ show_zvar v)
 
 envLookupGlobal :: (Monad m) => ZVar -> Env -> m ZValue
 envLookupGlobal v env =
     case lookup v (global_values env) of
-	 Just e  -> return e
-	 Nothing -> fail ("unknown global variable: " ++ show_zvar v)
+   Just e  -> return e
+   Nothing -> fail ("unknown global variable: " ++ show_zvar v)
 
 envLookupVar :: (Monad m) => ZVar -> Env -> m ZValue
 envLookupVar v env =
     case lookup v (local_values env) of
-	 Just e  -> return e
-	 Nothing -> case lookup v (global_values env) of
-			 Just e  -> return e
-			 Nothing -> fail ("unknown variable: " ++ show_zvar v)
+   Just e  -> return e
+   Nothing -> case lookup v (global_values env) of
+       Just e  -> return e
+       Nothing -> fail ("unknown variable: " ++ show_zvar v)
 
 \end{code}
 
@@ -880,7 +880,7 @@ class (Monad m) => Visitor m where
     pushBinder  :: [ZGenFilt] -> m ()
     currEnv     :: m Env         -- returns the current environment
     setEnv      :: Env -> m ()   -- changes to use the given environment
-				 -- (It is generally better to use withEnv)
+         -- (It is generally better to use withEnv)
     withEnv     :: Env -> m a -> m a  -- uses the given environment
     localEnv    :: m a -> m a    -- uses the current env then discards it
 
@@ -908,11 +908,11 @@ class (Monad m) => Visitor m where
     pushGenFilt    = pushGFType
     pushBinder     = mapM_ pushGenFilt
     withEnv e m =
-	do  origenv <- currEnv
-	    setEnv e
-	    res <- m
-	    setEnv origenv
-	    return res
+  do  origenv <- currEnv
+      setEnv e
+      res <- m
+      setEnv origenv
+      return res
     localEnv m = do {env <- currEnv; withEnv env m}
 
 
@@ -961,137 +961,137 @@ traverseExpr e@(ZGiven _) = return e
 traverseExpr e@(ZFree0 _) = return e
 traverseExpr (ZFree1 n e) =
     do  e2 <- visitExpr e
-	return (ZFree1 n e2)
+  return (ZFree1 n e2)
 traverseExpr (ZTuple es) =
     do  es2 <- mapM visitExpr es
-	return (ZTuple es2)
+  return (ZTuple es2)
 traverseExpr (ZBinding ves) =
     do  ves2 <- mapM traverseZVarExpr ves
-	return (ZBinding ves2)
+  return (ZBinding ves2)
 traverseExpr (ZSetDisplay es) =
     do  es2 <- mapM visitExpr es
-	return (ZSetDisplay es2)
+  return (ZSetDisplay es2)
 traverseExpr (ZSeqDisplay es) =
     do  es2 <- mapM visitExpr es
-	return (ZSeqDisplay es2)
+  return (ZSeqDisplay es2)
 traverseExpr e@(ZFSet vals) = return e
 traverseExpr e@(ZIntSet lo hi) = return e
 traverseExpr (ZGenerator r e) =
     do  e2 <- visitExpr e
-	return (ZGenerator r e2)
+  return (ZGenerator r e2)
 traverseExpr (ZCross es) =
     do  es2 <- mapM visitExpr es
-	return (ZCross es2)
+  return (ZCross es2)
 traverseExpr e@(ZFreeType name bs) =
     do  bs2 <- localEnv (pushLocal name e >> mapM visitBranch bs)
-	return (ZFreeType name bs2)
+  return (ZFreeType name bs2)
 traverseExpr e@ZPowerSet{} =
     do  base2 <- visitExpr (baseset e)
-	return e{baseset=base2}
+  return e{baseset=base2}
 traverseExpr e@ZFuncSet{} =
     do  dom2 <- visitExpr (domset e)
-	ran2 <- visitExpr (ranset e)
-	return e{domset=dom2, ranset=ran2}
+  ran2 <- visitExpr (ranset e)
+  return e{domset=dom2, ranset=ran2}
 traverseExpr (ZSetComp gfs (Just e)) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-	return (ZSetComp gfs2 (Just e2))
+  return (ZSetComp gfs2 (Just e2))
 traverseExpr (ZLambda gfs e) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-	return (ZLambda gfs2 e2)
+  return (ZLambda gfs2 e2)
 traverseExpr (ZESchema se) =
     do  se2 <- visitSExpr se
-	return (ZESchema se2)
+  return (ZESchema se2)
 traverseExpr e@(ZGivenSet _) = return e
 traverseExpr e@ZUniverse = return e
 traverseExpr (ZCall f e) =
     do  f2 <- visitExpr f
-	e2 <- visitExpr e
-	return (ZCall f2 e2)
+  e2 <- visitExpr e
+  return (ZCall f2 e2)
 traverseExpr e@(ZReln rel) = return e
 traverseExpr e@(ZFunc1 f)  = return e
 traverseExpr e@(ZFunc2 f)  = return e
 traverseExpr e@(ZStrange _) = return e
 traverseExpr (ZMu gfs (Just e)) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-	return (ZMu gfs2 (Just e2))
+  return (ZMu gfs2 (Just e2))
 traverseExpr (ZELet defs e) =
     do  defs2 <- mapM traverseZVarExpr defs
-	e2 <- visitExpr e
-	return (ZELet defs2 e2)
+  e2 <- visitExpr e
+  return (ZELet defs2 e2)
 traverseExpr (ZIf_Then_Else p thn els) =
     do  p2 <- visitPred p
-	thn2 <- visitExpr thn
-	els2 <- visitExpr els
-	return (ZIf_Then_Else p2 thn2 els2)
+  thn2 <- visitExpr thn
+  els2 <- visitExpr els
+  return (ZIf_Then_Else p2 thn2 els2)
 traverseExpr (ZSelect e v) =
     do  e2 <- visitExpr e
-	return (ZSelect e2 v)
+  return (ZSelect e2 v)
 traverseExpr (ZTheta se) =
     do  se2 <- visitSExpr se
-	return (ZTheta se2)
+  return (ZTheta se2)
 
 
 -- helper functions
 traverseZVarExpr (v,e) =
     do  e2 <- visitExpr e
-	return (v,e2)
+  return (v,e2)
 
 
 traverseMaybeExpr Nothing =
     return Nothing
 traverseMaybeExpr (Just e) =
     do  e2 <- visitExpr e
-	return (Just e2)
+  return (Just e2)
 
 
 traversePred e@ZFalse{} = return e
 traversePred e@ZTrue{} = return e
 traversePred (ZAnd p q) =
     do  p2 <- visitPred p
-	q2 <- visitPred q
-	return (ZAnd p2 q2)
+  q2 <- visitPred q
+  return (ZAnd p2 q2)
 traversePred (ZOr p q) =
     do  p2 <- visitPred p
-	q2 <- visitPred q
-	return (ZOr p2 q2)
+  q2 <- visitPred q
+  return (ZOr p2 q2)
 traversePred (ZImplies p q) =
     do  p2 <- visitPred p
-	q2 <- visitPred q
-	return (ZImplies p2 q2)
+  q2 <- visitPred q
+  return (ZImplies p2 q2)
 traversePred (ZIff p q) =
     do  p2 <- visitPred p
-	q2 <- visitPred q
-	return (ZIff p2 q2)
+  q2 <- visitPred q
+  return (ZIff p2 q2)
 traversePred (ZNot p) =
     do  p2 <- visitPred p
-	return (ZNot p2)
+  return (ZNot p2)
 traversePred (ZExists gfs p) =
     do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-	return (ZExists gfs2 p2)
+  return (ZExists gfs2 p2)
 traversePred (ZExists_1 gfs p) =
     do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-	return (ZExists_1 gfs2 p2)
+  return (ZExists_1 gfs2 p2)
 traversePred (ZForall gfs p) =
     do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-	return (ZForall gfs2 p2)
+  return (ZForall gfs2 p2)
 traversePred (ZPLet defs p) =
     do  defs2 <- mapM traverseZVarExpr defs
-	p2 <- visitPred p
-	return (ZPLet defs2 p2)
+  p2 <- visitPred p
+  return (ZPLet defs2 p2)
 traversePred (ZEqual p q) =
     do  p2 <- visitExpr p
-	q2 <- visitExpr q
-	return (ZEqual p2 q2)
+  q2 <- visitExpr q
+  return (ZEqual p2 q2)
 traversePred (ZMember p q) =
     do  p2 <- visitExpr p
-	q2 <- visitExpr q
-	return (ZMember p2 q2)
+  q2 <- visitExpr q
+  return (ZMember p2 q2)
 traversePred (ZPre se) =
     do  se2 <- visitSExpr se
-	return (ZPre se2)
+  return (ZPre se2)
 traversePred (ZPSchema se) =
     do  se2 <- visitSExpr se
-	return (ZPSchema se2)
+  return (ZPSchema se2)
 
 
 -- instances should override this.
@@ -1104,7 +1104,7 @@ traverseBranch e@(ZBranch0 _) =
     return e
 traverseBranch (ZBranch1 name e) =
     do  e2 <- visitExpr e
-	return (ZBranch1 name e2)
+  return (ZBranch1 name e2)
 
 
 -- The default traversal for binders obeys the Jaza (post-unfold)
@@ -1112,16 +1112,16 @@ traverseBranch (ZBranch1 name e) =
 -- after the declaration (so includes following declaration types).
 traverseGenFilt (Choose v t) =
     do  t2 <- visitExpr t
-	pushLocal v t2
-	return (Choose v t2)
+  pushLocal v t2
+  return (Choose v t2)
 traverseGenFilt (Check p) =
     do  p2 <- visitPred p
-	return (Check p2)
+  return (Check p2)
 traverseGenFilt (Evaluate v e t) =
     do  e2 <- visitExpr e
-	t2 <- visitExpr t
-	pushLocal v t2
-	return (Evaluate v e2 t2)
+  t2 <- visitExpr t
+  pushLocal v t2
+  return (Evaluate v e2 t2)
 traverseGenFilt (Include p) =
     fail "traverseGenFilt should not see schema inclusions"
 
@@ -1130,9 +1130,9 @@ traverseBinder gfs term =
     localEnv trav2
     where
     trav2 = do gfs2 <- mapM visitGenFilt gfs
-	       term2 <- visitTerm term
-	       env <- currEnv
-	       return (gfs2,term2,env)
+         term2 <- visitTerm term
+         env <- currEnv
+         return (gfs2,term2,env)
 
 
 traverseTerm (ZExpr e)  = visitExpr e >>= (return . ZExpr)
