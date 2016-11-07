@@ -908,11 +908,11 @@ class (Monad m) => Visitor m where
     pushGenFilt    = pushGFType
     pushBinder     = mapM_ pushGenFilt
     withEnv e m =
-  do  origenv <- currEnv
-      setEnv e
-      res <- m
-      setEnv origenv
-      return res
+      do  origenv <- currEnv
+          setEnv e
+          res <- m
+          setEnv origenv
+          return res
     localEnv m = do {env <- currEnv; withEnv env m}
 
 
@@ -961,137 +961,137 @@ traverseExpr e@(ZGiven _) = return e
 traverseExpr e@(ZFree0 _) = return e
 traverseExpr (ZFree1 n e) =
     do  e2 <- visitExpr e
-  return (ZFree1 n e2)
+        return (ZFree1 n e2)
 traverseExpr (ZTuple es) =
     do  es2 <- mapM visitExpr es
-  return (ZTuple es2)
+        return (ZTuple es2)
 traverseExpr (ZBinding ves) =
     do  ves2 <- mapM traverseZVarExpr ves
-  return (ZBinding ves2)
+        return (ZBinding ves2)
 traverseExpr (ZSetDisplay es) =
     do  es2 <- mapM visitExpr es
-  return (ZSetDisplay es2)
+        return (ZSetDisplay es2)
 traverseExpr (ZSeqDisplay es) =
     do  es2 <- mapM visitExpr es
-  return (ZSeqDisplay es2)
+        return (ZSeqDisplay es2)
 traverseExpr e@(ZFSet vals) = return e
 traverseExpr e@(ZIntSet lo hi) = return e
 traverseExpr (ZGenerator r e) =
     do  e2 <- visitExpr e
-  return (ZGenerator r e2)
+        return (ZGenerator r e2)
 traverseExpr (ZCross es) =
     do  es2 <- mapM visitExpr es
-  return (ZCross es2)
+        return (ZCross es2)
 traverseExpr e@(ZFreeType name bs) =
     do  bs2 <- localEnv (pushLocal name e >> mapM visitBranch bs)
-  return (ZFreeType name bs2)
+        return (ZFreeType name bs2)
 traverseExpr e@ZPowerSet{} =
     do  base2 <- visitExpr (baseset e)
-  return e{baseset=base2}
+        return e{baseset=base2}
 traverseExpr e@ZFuncSet{} =
     do  dom2 <- visitExpr (domset e)
-  ran2 <- visitExpr (ranset e)
-  return e{domset=dom2, ranset=ran2}
+        ran2 <- visitExpr (ranset e)
+        return e{domset=dom2, ranset=ran2}
 traverseExpr (ZSetComp gfs (Just e)) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-  return (ZSetComp gfs2 (Just e2))
+        return (ZSetComp gfs2 (Just e2))
 traverseExpr (ZLambda gfs e) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-  return (ZLambda gfs2 e2)
+        return (ZLambda gfs2 e2)
 traverseExpr (ZESchema se) =
     do  se2 <- visitSExpr se
-  return (ZESchema se2)
+        return (ZESchema se2)
 traverseExpr e@(ZGivenSet _) = return e
 traverseExpr e@ZUniverse = return e
 traverseExpr (ZCall f e) =
     do  f2 <- visitExpr f
-  e2 <- visitExpr e
-  return (ZCall f2 e2)
+        e2 <- visitExpr e
+        return (ZCall f2 e2)
 traverseExpr e@(ZReln rel) = return e
 traverseExpr e@(ZFunc1 f)  = return e
 traverseExpr e@(ZFunc2 f)  = return e
 traverseExpr e@(ZStrange _) = return e
 traverseExpr (ZMu gfs (Just e)) =
     do  (gfs2,ZExpr e2,_) <- visitBinder gfs (ZExpr e)
-  return (ZMu gfs2 (Just e2))
+        return (ZMu gfs2 (Just e2))
 traverseExpr (ZELet defs e) =
     do  defs2 <- mapM traverseZVarExpr defs
-  e2 <- visitExpr e
-  return (ZELet defs2 e2)
+        e2 <- visitExpr e
+        return (ZELet defs2 e2)
 traverseExpr (ZIf_Then_Else p thn els) =
     do  p2 <- visitPred p
-  thn2 <- visitExpr thn
-  els2 <- visitExpr els
-  return (ZIf_Then_Else p2 thn2 els2)
+        thn2 <- visitExpr thn
+        els2 <- visitExpr els
+        return (ZIf_Then_Else p2 thn2 els2)
 traverseExpr (ZSelect e v) =
     do  e2 <- visitExpr e
-  return (ZSelect e2 v)
+        return (ZSelect e2 v)
 traverseExpr (ZTheta se) =
     do  se2 <- visitSExpr se
-  return (ZTheta se2)
+        return (ZTheta se2)
 
 
 -- helper functions
 traverseZVarExpr (v,e) =
     do  e2 <- visitExpr e
-  return (v,e2)
+        return (v,e2)
 
 
 traverseMaybeExpr Nothing =
     return Nothing
 traverseMaybeExpr (Just e) =
     do  e2 <- visitExpr e
-  return (Just e2)
+        return (Just e2)
 
 
 traversePred e@ZFalse{} = return e
 traversePred e@ZTrue{} = return e
 traversePred (ZAnd p q) =
-    do  p2 <- visitPred p
-  q2 <- visitPred q
-  return (ZAnd p2 q2)
+  do  p2 <- visitPred p
+      q2 <- visitPred q
+      return (ZAnd p2 q2)
 traversePred (ZOr p q) =
-    do  p2 <- visitPred p
-  q2 <- visitPred q
-  return (ZOr p2 q2)
+  do  p2 <- visitPred p
+      q2 <- visitPred q
+      return (ZOr p2 q2)
 traversePred (ZImplies p q) =
-    do  p2 <- visitPred p
-  q2 <- visitPred q
-  return (ZImplies p2 q2)
+  do  p2 <- visitPred p
+      q2 <- visitPred q
+      return (ZImplies p2 q2)
 traversePred (ZIff p q) =
-    do  p2 <- visitPred p
-  q2 <- visitPred q
-  return (ZIff p2 q2)
+  do  p2 <- visitPred p
+      q2 <- visitPred q
+      return (ZIff p2 q2)
 traversePred (ZNot p) =
-    do  p2 <- visitPred p
-  return (ZNot p2)
+  do  p2 <- visitPred p
+      return (ZNot p2)
 traversePred (ZExists gfs p) =
-    do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-  return (ZExists gfs2 p2)
+  do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
+      return (ZExists gfs2 p2)
 traversePred (ZExists_1 gfs p) =
-    do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-  return (ZExists_1 gfs2 p2)
+  do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
+      return (ZExists_1 gfs2 p2)
 traversePred (ZForall gfs p) =
-    do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
-  return (ZForall gfs2 p2)
+  do  (gfs2,ZPred p2,_) <- visitBinder gfs (ZPred p)
+      return (ZForall gfs2 p2)
 traversePred (ZPLet defs p) =
-    do  defs2 <- mapM traverseZVarExpr defs
-  p2 <- visitPred p
-  return (ZPLet defs2 p2)
+  do  defs2 <- mapM traverseZVarExpr defs
+      p2 <- visitPred p
+      return (ZPLet defs2 p2)
 traversePred (ZEqual p q) =
-    do  p2 <- visitExpr p
-  q2 <- visitExpr q
-  return (ZEqual p2 q2)
+  do  p2 <- visitExpr p
+      q2 <- visitExpr q
+      return (ZEqual p2 q2)
 traversePred (ZMember p q) =
-    do  p2 <- visitExpr p
-  q2 <- visitExpr q
-  return (ZMember p2 q2)
+  do  p2 <- visitExpr p
+      q2 <- visitExpr q
+      return (ZMember p2 q2)
 traversePred (ZPre se) =
-    do  se2 <- visitSExpr se
-  return (ZPre se2)
+  do  se2 <- visitSExpr se
+      return (ZPre se2)
 traversePred (ZPSchema se) =
-    do  se2 <- visitSExpr se
-  return (ZPSchema se2)
+  do  se2 <- visitSExpr se
+      return (ZPSchema se2)
 
 
 -- instances should override this.
@@ -1103,25 +1103,25 @@ traverseSExpr se = fail "traverseSExpr is not implemented"
 traverseBranch e@(ZBranch0 _) =
     return e
 traverseBranch (ZBranch1 name e) =
-    do  e2 <- visitExpr e
-  return (ZBranch1 name e2)
+  do  e2 <- visitExpr e
+      return (ZBranch1 name e2)
 
 
 -- The default traversal for binders obeys the Jaza (post-unfold)
 -- scope rules: the scope of a declared variable starts immediately
 -- after the declaration (so includes following declaration types).
 traverseGenFilt (Choose v t) =
-    do  t2 <- visitExpr t
-  pushLocal v t2
-  return (Choose v t2)
+  do  t2 <- visitExpr t
+      pushLocal v t2
+      return (Choose v t2)
 traverseGenFilt (Check p) =
-    do  p2 <- visitPred p
-  return (Check p2)
+  do  p2 <- visitPred p
+      return (Check p2)
 traverseGenFilt (Evaluate v e t) =
-    do  e2 <- visitExpr e
-  t2 <- visitExpr t
-  pushLocal v t2
-  return (Evaluate v e2 t2)
+  do  e2 <- visitExpr e
+      t2 <- visitExpr t
+      pushLocal v t2
+      return (Evaluate v e2 t2)
 traverseGenFilt (Include p) =
     fail "traverseGenFilt should not see schema inclusions"
 
@@ -1130,9 +1130,9 @@ traverseBinder gfs term =
     localEnv trav2
     where
     trav2 = do gfs2 <- mapM visitGenFilt gfs
-         term2 <- visitTerm term
-         env <- currEnv
-         return (gfs2,term2,env)
+               term2 <- visitTerm term
+               env <- currEnv
+               return (gfs2,term2,env)
 
 
 traverseTerm (ZExpr e)  = visitExpr e >>= (return . ZExpr)
