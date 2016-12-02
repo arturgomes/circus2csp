@@ -8,12 +8,13 @@ File: MappingFunStatelessCircus.lhs
 module MappingFunStatelessCircus
 ( 
   omega_CAction,
-  omega_CircParagraphs ,
+  omega_CircParagraphs,
   omega_Circus,
   omega_CProc,
   omega_ParAction,
   omega_ProcDecl,
-  omega_ProcessDef
+  omega_ProcessDef,
+  def_mem_st_Circus_aux
 )
 where
 import AST
@@ -24,15 +25,14 @@ import CRL
 
 showexpr = zexpr_string (pinfo_extz 80)
 \end{code}
-\begin{code}
-join_name n v = n ++ "_" ++ v
-\end{code}
+
 \begin{code}
 def_delta_mapping :: [(ZName, ZVar, ZExpr)] -> [ZExpr]
 def_delta_mapping [(n,(v,[]),t)] 
   = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name n v),[]),t])]
 def_delta_mapping ((n,(v,[]),t):xs) 
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name n v),[]),t])] ++ (def_delta_mapping xs)
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name n v),[]),t])] 
+    ++ (def_delta_mapping xs)
 def_delta_mapping [] = []
 \end{code}
 
@@ -41,42 +41,36 @@ def_delta_name :: [(ZName, ZVar, ZExpr)] -> [ZBranch]
 def_delta_name [(n,(v,[]),t)] 
   = [ZBranch0 ((join_name n v),[])]
 def_delta_name ((n,(v,[]),t):xs) 
-  = [ZBranch0 ((join_name n v),[])] ++ (def_delta_name xs)
+  = [ZBranch0 ((join_name n v),[])] 
+    ++ (def_delta_name xs)
 def_delta_name [] = []
 \end{code}
 \begin{code}
 get_pre_Circ_proc :: [ZPara] -> [ZPara]
-get_pre_Circ_proc ((ZGivenSetDecl gs):xs) 
-  = (ZGivenSetDecl gs):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZSchemaDef n s):xs) 
-  = (ZSchemaDef n s):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZAbbreviation v z):xs) 
-  = (ZAbbreviation v z):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZFreeTypeDef v zb):xs) 
-  = (ZFreeTypeDef v zb):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZPredicate p):xs) 
-  = (ZPredicate p):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZAxDef ad):xs) 
-  = (ZAxDef ad):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((ZGenDef gd):xs) 
-  = (ZGenDef gd):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((CircChannel cd):xs) 
-  = (CircChannel cd):(get_pre_Circ_proc xs)
-get_pre_Circ_proc ((CircChanSet zn cs):xs) 
-  = (CircChanSet zn cs):(get_pre_Circ_proc xs)
-get_pre_Circ_proc (_:xs) 
+get_pre_Circ_proc ((Process cp):xs) 
   = (get_pre_Circ_proc xs)
+get_pre_Circ_proc (x:xs) 
+  = x:(get_pre_Circ_proc xs)
 get_pre_Circ_proc []
   = []
 \end{code}
 \begin{code}
-omega_Circus :: [ZPara] -> [ZPara] -> [ZPara]
-omega_Circus spec spec1
-  = (get_pre_Circ_proc spec) ++
-    -- [ZGivenSetDecl ("Universe",[]),ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec spec1)),ZAbbreviation ("BINDING",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("Universe",[])])),ZAbbreviation ("\\delta",[]) (ZSetDisplay []),CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])])],CircChannel [CChan "terminate"],CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
-    [ZGivenSetDecl ("Universe",[]),ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),ZAbbreviation ("BINDING",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("Universe",[])])),ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux  spec1))),CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])])],CircChannel [CChan "terminate"],CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
-
-    ++ (omega_Circus_aux spec spec1)
+omega_Circus :: [ZPara] -> [ZPara]
+omega_Circus spec1
+  = (get_pre_Circ_proc spec1) ++
+    [ZGivenSetDecl ("Universe",[]),
+      ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
+      ZAbbreviation ("BINDING",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("Universe",[])])), 
+      ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
+      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])]),
+      CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])])],
+      CircChannel [CChan "terminate"],
+      CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
+    ++ (omega_Circus_aux spec spec)
+    where 
+      spec = (map_mp1 rename_vars_ZPara1 (def_mem_st_Circus_aux spec1) spec1)
+    -- HERE YOU HAVE TO PUT A AUXILIARY FUNCTION 
+    -- THAT WILL CHANGE THE NAE TO PROC_VAR
 \end{code}
 \subsection{Creating the Memory process}
 \begin{code}
@@ -106,7 +100,7 @@ def_mem_st_ProcDecl (CProcess zn pd)
 
 \begin{code}
 def_mem_st_ProcessDef :: ZName -> ProcessDef -> [(ZName, ZVar, ZExpr)]
-def_mem_st_ProcessDef  name (ProcDefSpot xl pd)
+def_mem_st_ProcessDef name (ProcDefSpot xl pd)
   = (def_mem_st_ProcessDef name pd)
 def_mem_st_ProcessDef name (ProcDefIndex xl pd)
   = (def_mem_st_ProcessDef name pd)
@@ -139,9 +133,13 @@ get_state_var_aux _ _ = []
 omega_Circus_aux :: [ZPara] -> [ZPara] -> [ZPara]
 
 omega_Circus_aux spec [(Process cp)]
-  = [(Process (omega_ProcDecl spec cp))]
+  = [(Process (omega_ProcDecl spec ncp))]
+  where
+    ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
 omega_Circus_aux spec ((Process cp):xs)
-  = [(Process (omega_ProcDecl spec cp))]++(omega_Circus_aux spec xs)
+  = [(Process (omega_ProcDecl spec ncp))]++(omega_Circus_aux spec xs)
+  where
+    ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
 omega_Circus_aux spec _
   = []
 \end{code}
@@ -180,12 +178,15 @@ omega_CircParagraphs spec x
 omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
 omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
   = (CGenProcess zn (x:xs) (omega_ProcessDef spec pd))
+    where
+      npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
 omega_ProcDecl spec (CProcess zn pd)
   = (CProcess zn (omega_ProcessDef spec pd))
+    where
+      npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
 \end{code}
 
 \subsection{Mapping Circus Processes Definition}
-NOTE:Process definition index is not yet defined.
 \begin{code}
 omega_ProcessDef :: [ZPara] -> ProcessDef -> ProcessDef
 omega_ProcessDef spec (ProcDefSpot xl pd)
@@ -224,8 +225,10 @@ omega_CProc spec (CRepSeqProc [(Choose x s)] a)
   = (CRepSeqProc [(Choose x s)] (omega_CProc spec a))
 omega_CProc spec (CSeq a b)
   = (CSeq (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (ProcStalessMain (x:xs) ca)
-  = (ProcStalessMain (map_mp omega_PPar (def_mem_st_Circus_aux spec) (x:xs)) (omega_CAction (def_mem_st_Circus_aux spec) ca))
+omega_CProc spec (ProcStalessMain xls ca)
+  = (ProcStalessMain (map_mp omega_PPar nstate xls) (omega_CAction nstate ca))
+    where 
+      nstate = (def_mem_st_Circus_aux spec)
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))
 omega_CProc spec (CParamProc zn (x:xs))
@@ -236,8 +239,10 @@ omega_CProc spec (ProcMain zp (x:xs) ca)
   = (ProcStalessMain 
     [make_memory_proc] 
     (get_main_action 
-      (map_mp omega_PPar (def_mem_st_Circus_aux spec) (x:xs)) 
-      (omega_CAction (def_mem_st_Circus_aux spec) ca)))
+      (map_mp omega_PPar nstate (x:xs)) 
+      (omega_CAction nstate ca)))
+    where 
+      nstate = (def_mem_st_Circus_aux spec)
 omega_CProc spec x
   = x
 \end{code}
@@ -296,7 +301,7 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 is written in Haskell as:
 \begin{code}
 omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
-  = make_get_com lst lxs (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction lst a))
+  = make_get_com lst lxs (rename_vars_CAction (map fst lxs) (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction lst a)))
   where lxs = (get_chan_param ((ChanDotExp e):xs)) `intersect` (filter_state_comp lst)
 \end{code}
 
@@ -318,7 +323,7 @@ omega_CAction lst (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
 is written in Haskell as:
 \begin{code}
 omega_CAction lst (CSPGuard g a)
-  = make_get_com lst lxs (CSPGuard g (omega_prime_CAction lst a))
+  = make_get_com lst lxs (rename_vars_CAction (map fst lxs) (CSPGuard (rename_ZPred (map fst lxs) g) (omega_prime_CAction lst a)))
   where lxs = nub $ free_var_ZPred(g) `intersect` (filter_state_comp lst)
 \end{code}
 
@@ -337,9 +342,9 @@ is written in Haskell as:
 \begin{code}
 omega_CAction lst (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   = case not (elem x (getWrtV(a))) of
-    True -> make_get_com lst lsx (CSPCommAction
+    True -> make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CSPCommAction
              (ChanComm c [ChanInpPred x p])
-                 (omega_prime_CAction lst a))
+                 (omega_prime_CAction lst a)))
     _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   where lsx = free_var_ZPred(p)
 \end{code}
@@ -373,7 +378,7 @@ omega_CAction lst (CSPIntChoice ca cb)
 is written in Haskell as:
 \begin{code}
 omega_CAction lst (CSPExtChoice ca cb)
-  = make_get_com lst lsx (CSPExtChoice (omega_prime_CAction lst ca) (omega_prime_CAction lst cb))
+  = make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CSPExtChoice (omega_prime_CAction lst ca) (omega_prime_CAction lst cb)))
    where
     lsx = nub $ (free_var_CAction (CSPExtChoice ca cb)) `intersect` (filter_state_comp lst)
 \end{code}
@@ -410,7 +415,7 @@ omega_CAction lst (CSPExtChoice ca cb)
 
 \begin{code}
 omega_CAction lst (CSPNSParal ns1 cs ns2 a1 a2)
-  = make_get_com lst lsx (CSPHide
+  = make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CSPHide
    (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
      (CSPNSParal NSExpEmpty cs NSExpEmpty
       (CSPHide
@@ -428,7 +433,7 @@ omega_CAction lst (CSPNSParal ns1 cs ns2 a1 a2)
                 ZVar ("RIGHT",[])]))
        (CSExpr "MEMi")))
       (CActionName "Merge"))
-      (CChanSet ["mleft","mright"]))
+      (CChanSet ["mleft","mright"])))
    where
     lsx = (free_var_CAction a1) `union` (free_var_CAction a2)
 \end{code}
@@ -525,7 +530,7 @@ omega_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
 
 \begin{code}
 omega_CAction lst (CActionCommand (CAssign varls valls))
-  = make_get_com lst varls (make_set_com lst varls valls CSPSkip)
+  = make_get_com lst varls (rename_vars_CAction (map fst (filter_state_comp lst)) (make_set_com lst varls valls CSPSkip))
 \end{code}
 \begin{circus}
 \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
@@ -535,8 +540,8 @@ omega_CAction lst (CActionCommand (CAssign varls valls))
 \end{circus}
 \begin{code}
 omega_CAction lst (CActionCommand (CIf (CircGAction g a)))
-  = make_get_com lst lsx (CActionCommand
-             (CIf (CircGAction g (omega_prime_CAction lst a))))
+  = make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand
+             (CIf (CircGAction g (omega_prime_CAction lst a)))))
   where
    lsx = free_var_ZPred g
 
@@ -559,7 +564,7 @@ omega_CAction lst (CActionCommand (CIf (CircGAction g a)))
 
 \begin{code}
 omega_CAction lst (CActionCommand (CIf (CircThenElse gl glx)))
-  = make_get_com lst lsx (CActionCommand (CIf (mk_guard_pair lst guard_pair)))
+  = make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand (CIf (mk_guard_pair lst guard_pair))))
   where
    guard_pair = get_guard_pair (CircThenElse gl glx)
    lsx = nub $ concat $ map free_var_ZPred (map fst guard_pair)
@@ -1053,22 +1058,21 @@ make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 make_get_com :: [(ZName, ZVar, ZExpr)] -> [ZVar] -> CAction -> CAction
 make_get_com lst [(x,[])] c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[])),ChanInp ("v"++x)]) c)
+    [ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanInp ("v"++(get_proc_name x lst)++"_"++x)]) c)
 make_get_com lst ((x,[]):xs) c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[])),ChanInp ("v"++x)]) (make_get_com lst xs c))
+    [ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanInp ("v"++(get_proc_name x lst)++"_"++x)]) (make_get_com lst xs c))
 make_get_com lst x c = c    
 \end{code}
-
 
 \begin{code}
 make_set_com :: [(ZName, ZVar, ZExpr)] -> [ZVar] -> [ZExpr] -> CAction -> CAction
 make_set_com lst [(x,[])] [y] c
   = (CSPCommAction (ChanComm "mset"
-    [ChanDotExp (ZVar (x,[])),ChanOutExp y]) (omega_CAction lst c))
+    [ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanOutExp y]) (omega_CAction lst c))
 make_set_com lst (((x,[])):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
-     [ChanDotExp (ZVar (x,[])),ChanOutExp y]) (make_set_com lst xs ys c))
+     [ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanOutExp y]) (make_set_com lst xs ys c))
 \end{code}
 
 Given $\{v_0,\ldots,v_n\}$, the function $make\_maps\_to$ returns $\{v_0 \mapsto vv_o, \ldots, v_n \mapsto vv_n\}$.

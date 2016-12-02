@@ -240,7 +240,7 @@ omegaCircus anim
 
 applyOmega :: Animator -> [ZParaInfo]
 applyOmega anim
-  = fromOk (process_paras [] (omega_Circus (map origpara (spec anim)) (map origpara (spec anim))))
+  = fromOk (process_paras [] (omega_Circus (map origpara (spec anim))))
 
 -- Artur:
 -- This is my first attempt in trying to apply
@@ -249,8 +249,8 @@ applyOmega anim
 upslonCircus anim = Done (applyUpslon anim)
 
 applyUpslon anim
-  = (mapping_Circus (map origpara (spec anim)) (map origpara (spec anim)))
-
+  = upslonHeader ++ (mapping_Circus (reverse (map origpara (spec anim))) (reverse (map origpara (spec anim))))
+upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
 resetanimator :: Animator -> (Animator,Answer)
 resetanimator anim
   = (animator0, Done "Reset command: Specification is now empty.")

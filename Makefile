@@ -200,10 +200,13 @@ Lexer_Test.o : Lexer.hi
 Lexer_Test.o : EParseLib.hi
 MyDebug.o : MyDebug.lhs
 MappingFunCircusCSP.o : MappingFunCircusCSP.lhs
+MappingFunCircusCSP.o : DefSets.hi
+MappingFunCircusCSP.o : MappingFunStatelessCircus.hi
 MappingFunCircusCSP.o : FormatterToCSP.hi
 MappingFunCircusCSP.o : CRL.hi
 MappingFunCircusCSP.o : AST.hi
 MappingFunStatelessCircus.o : MappingFunStatelessCircus.lhs
+MappingFunStatelessCircus.o : CRL.hi
 MappingFunStatelessCircus.o : FormatterToCSP.hi
 MappingFunStatelessCircus.o : DefSets.hi
 MappingFunStatelessCircus.o : AST.hi
