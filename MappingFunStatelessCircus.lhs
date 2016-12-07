@@ -57,8 +57,7 @@ get_pre_Circ_proc []
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec1
-  = (get_pre_Circ_proc spec1) ++
-    [ZGivenSetDecl ("Universe",[]),
+  = [ZGivenSetDecl ("Universe",[]),
       ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
       ZAbbreviation ("BINDING",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("Universe",[])])), 
       ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
@@ -136,12 +135,13 @@ omega_Circus_aux spec [(Process cp)]
   = [(Process (omega_ProcDecl spec ncp))]
   where
     ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
+omega_Circus_aux spec [x] = [x]
 omega_Circus_aux spec ((Process cp):xs)
   = [(Process (omega_ProcDecl spec ncp))]++(omega_Circus_aux spec xs)
   where
     ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
-omega_Circus_aux spec _
-  = []
+omega_Circus_aux spec (x:xs)
+  = [x]++(omega_Circus_aux spec xs)
 \end{code}
 \begin{code}
 
@@ -696,7 +696,7 @@ omega_prime_CAction lst (CSPGuard g a)
 
 
 \begin{circus}
-\Omega_A (A_1 \circseq A_2) \circdef \Omega_A (A_1) \circseq \Omega_A (A_2)
+\Omega'_A (A_1 \circseq A_2) \circdef \Omega_A (A_1) \circseq \Omega_A (A_2)
 \end{circus}
 is written in Haskell as:
 \begin{code}
@@ -705,7 +705,7 @@ omega_prime_CAction lst (CSPSeq ca cb)
 \end{code}
 
 \begin{circus}
-\Omega_A (A_1 \intchoice A_2) \circdef \Omega_A (A_1) \intchoice \Omega_A (A_2)
+\Omega'_A (A_1 \intchoice A_2) \circdef \Omega_A (A_1) \intchoice \Omega_A (A_2)
 \end{circus}
 is written in Haskell as:
 \begin{code}
@@ -715,7 +715,7 @@ omega_prime_CAction lst (CSPIntChoice ca cb)
 
 % TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
 \begin{circus}
-\Omega_A (A_1 \extchoice A_2) \circdef
+\Omega'_A (A_1 \extchoice A_2) \circdef
 \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
 \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
 \\\t2 (\Omega'_A (A_1) \extchoice \Omega'_A (A_2))
@@ -729,7 +729,7 @@ omega_prime_CAction lst (CSPExtChoice ca cb)
 \end{code}
 
 \begin{circus}
-\Omega_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
+\Omega'_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
 \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
 \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
       \\\t2\left (\begin{array}{l}
@@ -784,7 +784,7 @@ omega_prime_CAction lst (CSPNSParal ns1 cs ns2 a1 a2)
 \end{code}
 
 \begin{circus}
-\Omega_A (\Semi x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\circseq \ldots \circseq A(v_n))
+\Omega'_A (\Semi x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\circseq \ldots \circseq A(v_n))
 \end{circus}
 is written in Haskell as:
 \begin{code}
@@ -798,7 +798,7 @@ omega_prime_CAction lst (CSPRepSeq [Choose (x,[]) v] act)
 \end{code}
 
 \begin{circus}
-\Omega_A (\Extchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\extchoice \ldots \extchoice A(v_n))
+\Omega'_A (\Extchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\extchoice \ldots \extchoice A(v_n))
 \end{circus}
 is written in Haskell as:
 \begin{code}
@@ -813,7 +813,7 @@ omega_prime_CAction lst (CSPRepExtChoice [Choose (x,[]) v]
 \end{code}
 
 \begin{circus}
-\Omega_A (\Intchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\intchoice \ldots \intchoice A(v_n))
+\Omega'_A (\Intchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Omega_A (A(v_1)\intchoice \ldots \intchoice A(v_n))
 \end{circus}
 is written in Haskell as:
 \begin{code}
@@ -828,7 +828,7 @@ omega_prime_CAction lst (CSPRepIntChoice [Choose (x,[]) v] act)
 \end{code}
 
 \begin{circus}
-\Omega_A (\lpar cs \rpar x : \langle v_1,...,v_n \rangle \circspot \lpar ns(x) \rpar A(x)) \circdef
+\Omega'_A (\lpar cs \rpar x : \langle v_1,...,v_n \rangle \circspot \lpar ns(x) \rpar A(x)) \circdef
 \\\t1
 \left (\begin{array}{l}A(v_1)
    \\ \lpar ns(v_1) | cs | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
@@ -869,7 +869,7 @@ omega_prime_CAction lst (CActionCommand (CAssign varls valls))
 \end{code}
 
 \begin{circus}
-\Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
+\Omega'_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
 
    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
 \end{circus}
@@ -879,7 +879,7 @@ omega_prime_CAction lst (CActionCommand (CIf (CircGAction g a)))
 
 \end{code}
 \begin{circus}
-\Omega_A
+\Omega'_A
    \left (\begin{array}{l}
    \circif g_0 (v_0,...,v_n,l_0,...,l_m) \circthen A_0
    \\\t1\circelse \ldots
@@ -900,7 +900,7 @@ omega_prime_CAction lst (CActionCommand (CIf (CircThenElse gl glx)))
 \end{code}
 
 \begin{circus}
-\Omega_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
+\Omega'_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
 \end{circus}
 
 is written in Haskell as:
@@ -910,7 +910,7 @@ omega_prime_CAction lst (CSPHide a cs) = (CSPHide (omega_prime_CAction lst a) cs
 \end{code}
 
 \begin{circus}
-\Omega_A (\circmu X \circspot A(X)) \circdef \circmu X \circspot \Omega_A(A(X))
+\Omega'_A (\circmu X \circspot A(X)) \circdef \circmu X \circspot \Omega_A(A(X))
 \end{circus}
 
 is written in Haskell as:
@@ -920,7 +920,7 @@ omega_prime_CAction lst (CSPRecursion x c) = (CSPRecursion x (omega_prime_CActio
 \end{code}
 
 \begin{circus}
-\Omega_A (\Interleave x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef
+\Omega'_A (\Interleave x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef
 \\\t1
 \left (\begin{array}{l}A(v_1)
    \\ \lpar ns(v_1) | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
@@ -953,7 +953,7 @@ omega_prime_CAction lst (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
 \end{code}
 
 \begin{circus}
-\Omega_A (\{g\}) \circdef \prefixcolon [g, true]
+\Omega'_A (\{g\}) \circdef \prefixcolon [g, true]
 \end{circus}
 
 \begin{code}
@@ -962,7 +962,7 @@ omega_prime_CAction lst (CActionCommand (CommandBrace g))
 \end{code}
 
 \begin{circus}
-\Omega_A ([g]) \circdef \prefixcolon [g]
+\Omega'_A ([g]) \circdef \prefixcolon [g]
 \end{circus}
 
 \begin{code}
@@ -971,7 +971,7 @@ omega_prime_CAction lst (CActionCommand (CommandBracket g))
 \end{code}
 
 \begin{circus}
-\Omega_A (A[old_1,...,old_n := new_1,...,new_n) \circdef
+\Omega'_A (A[old_1,...,old_n := new_1,...,new_n) \circdef
 \\\t1A[new_1,...,new_n/old_1,...,old_n)
 \end{circus}
 

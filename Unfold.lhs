@@ -182,8 +182,7 @@ unfold_name n =
 			    Check (ZEqual (ZTheta primed) (ZTheta unprimed)) ]
 	 ZSchema gfs <- unfsexpr xi
 	 return (ZESchema (ZSchema gfs))
-    unfoldDeltaXi n = unfoldError (IllFormed [MStr "unknown name: ",
-					      MExpr (ZVar n)])
+    unfoldDeltaXi n = unfoldError (IllFormed [MStr "unknown name: ", MExpr (ZVar n)])
 
 
 unfexpr :: ZExpr -> UnfoldVisitor ZExpr

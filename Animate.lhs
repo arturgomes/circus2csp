@@ -37,6 +37,7 @@ import Eval
 import BZTT
 import Errors
 import Data.Char
+import Data.List
 import MappingFunStatelessCircus
 import MappingFunCircusCSP
 
@@ -240,7 +241,7 @@ omegaCircus anim
 
 applyOmega :: Animator -> [ZParaInfo]
 applyOmega anim
-  = fromOk (process_paras [] (omega_Circus (map origpara (spec anim))))
+  = fromOk (process_paras_omega (spec anim) (omega_Circus (map origpara (spec anim))))
 
 -- Artur:
 -- This is my first attempt in trying to apply
@@ -250,7 +251,9 @@ upslonCircus anim = Done (applyUpslon anim)
 
 applyUpslon anim
   = upslonHeader ++ (mapping_Circus (reverse (map origpara (spec anim))) (reverse (map origpara (spec anim))))
+
 upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
+
 resetanimator :: Animator -> (Animator,Answer)
 resetanimator anim
   = (animator0, Done "Reset command: Specification is now empty.")
@@ -595,7 +598,50 @@ process_paras spec (para : ps)
 adddefn :: ZParaInfo -> [ZParaInfo] -> ErrorOr [ZParaInfo]
 adddefn def spec
     | defname def `elem` [n | ZParaDefn{defname=n} <- spec]
-      = fail ("redeclaration of: " ++ show_zvar(defname def))
+      = return (def:spec)
+      -- = fail ("redeclaration of: " ++ show_zvar(defname def))
     | otherwise
       = return (def:spec)
+\end{code}
+The following is similar to $process_paras$ but here it works for applying the Omega functions. It will replace the existing definitions of Processes
+\begin{code}
+-- process_paras_omega spec newp.
+--
+--  This pushes new paragraphs (newp) onto the existing specification (spec).
+--
+process_paras_omega :: [ZParaInfo] -> [ZPara] -> ErrorOr [ZParaInfo]
+process_paras_omega spec []
+  = return spec
+process_paras_omega spec (p@(Process s) : ps)
+  = do let newp = CircusProcess{origpara=p,
+           procunfolded=s}
+       let newspec = newp:(remove_proc_para spec s)
+       process_paras_omega newspec ps
+process_paras_omega spec (para : ps)
+  = process_paras_omega spec ps
+\end{code}
+\begin{code}
+remove_proc_para [CircusProcess{origpara=x, procunfolded=pd1}] cp
+  = case (compare_proc pd1 cp) of
+      True -> []
+      _ -> [CircusProcess{origpara=x,procunfolded=pd1}]
+remove_proc_para ((CircusProcess{origpara=x, procunfolded=pd1}):xs) cp 
+  = case (compare_proc pd1 cp) of
+      True -> xs
+      _ -> ((CircusProcess{origpara=x,procunfolded=pd1}):(remove_proc_para xs cp))
+
+\end{code}
+\begin{code}
+compare_proc (CProcess zn1 pd1) (CProcess zn2 pd2)
+  = case (zn1 == zn2) of 
+      True -> True
+      _ -> False
+compare_proc (CParamProcess zn1 znls1 pd1) (CParamProcess zn2 znls2 pd2)
+  = case (zn1 == zn2) of 
+      True -> True
+      _ -> False
+compare_proc (CGenProcess zn1 znls1 pd1) (CGenProcess zn2 znls2 pd2)
+  = case (zn1 == zn2) of 
+      True -> True
+      _ -> False
 \end{code}

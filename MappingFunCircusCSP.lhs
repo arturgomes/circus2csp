@@ -1,3 +1,5 @@
+%!TEX root = MAIN.tex
+
 \section{Mapping Functions - Circus to CSP}
 
 Mapping Functions - Circus to CSP
