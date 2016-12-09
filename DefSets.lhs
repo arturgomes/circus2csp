@@ -5,6 +5,7 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 \begin{code}
 module DefSets where
 import Data.List
+import Data.Text hiding (map,concat,all)
 import AST
 \end{code}
 }
@@ -384,16 +385,6 @@ filter_state_comp ((_, v, _):xs) = [v]++(filter_state_comp xs)
 \end{code}
 
 \begin{code}
-map_mp f p1 [] = []
-map_mp f p1 [x] = (f p1 x)
-map_mp f p1 (x:xs) = (f p1 x)++(map_mp f p1 xs)
-\end{code}
-\begin{code}
-map_mp1 f p1 [] = []
-map_mp1 f p1 [x] = [f p1 x]
-map_mp1 f p1 (x:xs) = [f p1 x]++(map_mp1 f p1 xs)
-\end{code}
-\begin{code}
 inListVar x []
  = False
 inListVar x [va]
@@ -422,6 +413,10 @@ bindingsVar lst (((va,x),b):xs)
 \end{code}
 
 \begin{code}
+rename_ZVar lst (va,x)
+  = case (inListVar va lst) of
+     True -> (ZVar ("v_"++va,x))
+     False -> (ZVar (va,x))
 rename_ZExpr lst (ZVar (va,x))
  = case (inListVar va lst) of
    True -> (ZVar ("v_"++va,x))
@@ -435,13 +430,13 @@ rename_ZExpr lst (ZFree0 va)
 rename_ZExpr lst (ZFree1 va xpr)
  = (ZFree1 va (rename_ZExpr lst xpr))
 rename_ZExpr lst (ZTuple xprlst)
- = (ZTuple (map_mp1 rename_ZExpr lst xprlst))
+ = (ZTuple (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZBinding xs)
  = (ZBinding (bindingsVar lst xs))
 rename_ZExpr lst (ZSetDisplay xprlst)
- = (ZSetDisplay (map_mp1 rename_ZExpr lst xprlst))
+ = (ZSetDisplay (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZSeqDisplay xprlst)
- = (ZSeqDisplay (map_mp1 rename_ZExpr lst xprlst))
+ = (ZSeqDisplay (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZFSet zf)
  = (ZFSet zf)
 rename_ZExpr lst (ZIntSet i1 i2)
@@ -449,7 +444,7 @@ rename_ZExpr lst (ZIntSet i1 i2)
 rename_ZExpr lst (ZGenerator zrl xpr)
  = (ZGenerator zrl (rename_ZExpr lst xpr))
 rename_ZExpr lst (ZCross xprlst)
- = (ZCross (map_mp1 rename_ZExpr lst xprlst))
+ = (ZCross (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZFreeType va lst1)
  = (ZFreeType va lst1)
 rename_ZExpr lst (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
@@ -570,7 +565,7 @@ rename_vars_CAction lst (CSPInterleave a1 a2)
 rename_vars_CAction lst (CSPHide a cs)
  = (CSPHide (rename_vars_CAction lst a) cs)
 rename_vars_CAction lst (CSPParAction zn zexprls)
- = (CSPParAction zn (map_mp1 rename_ZExpr lst zexprls))
+ = (CSPParAction zn (map (rename_ZExpr lst) zexprls))
 rename_vars_CAction lst (CSPRenAction zn crpl)
  = (CSPRenAction zn (rename_vars_CReplace lst crpl))
 rename_vars_CAction lst (CSPRecursion zn a)
@@ -595,9 +590,9 @@ rename_vars_CAction lst (CSPRepInterl zgf a)
 
 \begin{code}
 rename_vars_Comm lst (ChanComm zn cpls)
- = (ChanComm zn (map_mp1 rename_vars_CParameter lst cpls))
+ = (ChanComm zn (map (rename_vars_CParameter lst) cpls))
 rename_vars_Comm lst (ChanGenComm zn zexprls cpls)
- = (ChanGenComm zn (map_mp1 rename_ZExpr lst zexprls) (map_mp1 rename_vars_CParameter lst cpls))
+ = (ChanGenComm zn (map (rename_ZExpr lst) zexprls) (map (rename_vars_CParameter lst) cpls))
 \end{code}
 
 \begin{code}
@@ -613,7 +608,7 @@ rename_vars_CParameter lst (ChanDotExp ze)
 
 \begin{code}
 rename_vars_CCommand lst (CAssign zvarls1 zexprls)
- = (CAssign zvarls1 (map_mp1 rename_ZExpr lst zexprls))
+ = (CAssign zvarls1 (map (rename_ZExpr lst) zexprls))
 rename_vars_CCommand lst (CIf ga)
  = (CIf (rename_vars_CGActions lst ga))
 rename_vars_CCommand lst (CVarDecl zgf a)
@@ -719,7 +714,7 @@ rename_vars_CProc1 lst (CSimpIndexProc zn zxp)
 rename_vars_CProc1 lst (CircusProc zn)
   = (CircusProc zn)
 rename_vars_CProc1 lst (ProcMain zp ppl ca)
-  = (ProcMain zp (map_mp1 rename_vars_PPar1 lst ppl) (rename_vars_CAction1 lst ca))
+  = (ProcMain zp (map (rename_vars_PPar1 lst) ppl) (rename_vars_CAction1 lst ca))
 rename_vars_CProc1 lst (ProcStalessMain ppl ca)
   = (ProcStalessMain ppl (rename_vars_CAction1 lst ca))
 \end{code}
@@ -780,7 +775,7 @@ rename_vars_CAction1 lst (CSPInterleave a1 a2)
 rename_vars_CAction1 lst (CSPHide a cs)
  = (CSPHide (rename_vars_CAction1 lst a) cs)
 rename_vars_CAction1 lst (CSPParAction zn zexprls)
- = (CSPParAction zn (map_mp1 rename_vars_ZExpr1 lst zexprls))
+ = (CSPParAction zn (map (rename_vars_ZExpr1 lst) zexprls))
 rename_vars_CAction1 lst (CSPRenAction zn crpl)
  = (CSPRenAction zn (rename_vars_CReplace1 lst crpl))
 rename_vars_CAction1 lst (CSPRecursion zn a)
@@ -806,9 +801,9 @@ rename_vars_CAction1 lst (CSPRepInterl zgf a)
 \begin{code}
 rename_vars_Comm1 :: [(ZName, ZVar, ZExpr)] -> Comm -> Comm
 rename_vars_Comm1 lst (ChanComm zn cpls)
- = (ChanComm zn (map_mp1 rename_vars_CParameter1 lst cpls))
+ = (ChanComm zn (map (rename_vars_CParameter1 lst) cpls))
 rename_vars_Comm1 lst (ChanGenComm zn zexprls cpls)
- = (ChanGenComm zn (map_mp1 rename_vars_ZExpr1 lst zexprls) (map_mp1 rename_vars_CParameter1 lst cpls))
+ = (ChanGenComm zn (map (rename_vars_ZExpr1 lst) zexprls) (map (rename_vars_CParameter1 lst) cpls))
 \end{code}
 
 \begin{code}
@@ -830,7 +825,7 @@ rename_vars_CParameter1 lst (ChanDotExp ze)
 \begin{code}
 rename_vars_CCommand1 :: [(ZName, ZVar, ZExpr)] -> CCommand -> CCommand
 rename_vars_CCommand1 lst (CAssign zvarls1 zexprls)
- = (CAssign zvarls1 (map_mp1 rename_vars_ZExpr1 lst zexprls))
+ = (CAssign zvarls1 (map (rename_vars_ZExpr1 lst) zexprls))
 rename_vars_CCommand1 lst (CIf ga)
  = (CIf (rename_vars_CGActions1 lst ga))
 rename_vars_CCommand1 lst (CVarDecl zgf a)
@@ -921,13 +916,13 @@ rename_vars_ZExpr1 lst (ZFree0 va)
 rename_vars_ZExpr1 lst (ZFree1 va xpr)
  = (ZFree1 va (rename_vars_ZExpr1 lst xpr))
 rename_vars_ZExpr1 lst (ZTuple xpr)
- = (ZTuple (map_mp1 rename_vars_ZExpr1 lst xpr))
+ = (ZTuple (map (rename_vars_ZExpr1 lst) xpr))
 rename_vars_ZExpr1 lst (ZBinding xs)
  = (ZBinding (bindingsVar1 lst xs))
 rename_vars_ZExpr1 lst (ZSetDisplay xpr)
- = (ZSetDisplay (map_mp1 rename_vars_ZExpr1 lst xpr))
+ = (ZSetDisplay (map (rename_vars_ZExpr1 lst) xpr))
 rename_vars_ZExpr1 lst (ZSeqDisplay xpr)
- = (ZSeqDisplay (map_mp1 rename_vars_ZExpr1 lst xpr))
+ = (ZSeqDisplay (map (rename_vars_ZExpr1 lst) xpr))
 rename_vars_ZExpr1 lst (ZFSet zf)
  = (ZFSet zf)
 rename_vars_ZExpr1 lst (ZIntSet i1 i2)
@@ -935,7 +930,7 @@ rename_vars_ZExpr1 lst (ZIntSet i1 i2)
 rename_vars_ZExpr1 lst (ZGenerator zrl xpr)
  = (ZGenerator zrl (rename_vars_ZExpr1 lst xpr))
 rename_vars_ZExpr1 lst (ZCross xpr)
- = (ZCross (map_mp1 rename_vars_ZExpr1 lst xpr))
+ = (ZCross (map (rename_vars_ZExpr1 lst) xpr))
 rename_vars_ZExpr1 lst (ZFreeType va pname1)
  = (ZFreeType va pname1)
 rename_vars_ZExpr1 lst (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
@@ -1030,3 +1025,71 @@ get_delta_names_aux [(ZBranch0 (a,[]))]
 get_delta_names_aux ((ZBranch0 (a,[])):xs)
   = [a]++(get_delta_names_aux xs)
 \end{code}
+
+Construction of the Universe set in CSP
+\begin{code}
+def_U_NAME x = ("U_"++Data.Text.unpack(Data.Text.toUpper(Data.Text.take 3 (pack x))))
+def_U_prefix x = (Data.Text.unpack(Data.Text.toTitle(Data.Text.take 3 (Data.Text.pack x))))
+
+mk_universe [] 
+  = ""
+mk_universe [(a,b,c,d)] 
+  = c++"."++d
+mk_universe ((a,b,c,d):xs)
+  = c++"."++d++" | "++(mk_universe xs)
+
+mk_subtype [] 
+  = ""
+mk_subtype [(a,b,c,d)] 
+  = "subtype "++b++" = "++c++"."++d++"\n"
+mk_subtype ((a,b,c,d):xs)
+  = "subtype "++b++" = "++c++"."++d++"\n"++(mk_subtype xs)
+
+mk_value [] 
+  = ""
+mk_value [(a,b,c,d)] 
+  = "value("++c++".v) = v\n"
+mk_value ((a,b,c,d):xs)
+  = "value("++c++".v) = v\n"++(mk_value xs)
+
+mk_type [] 
+  = ""
+mk_type [(a,b,c,d)] 
+  = a++" then "++b
+mk_type ((a,b,c,d):xs)
+  = a++" then "++b++"\n\t else if x == "++(mk_type xs)
+
+mk_tag [] 
+  = ""
+mk_tag [(a,b,c,d)] 
+  = a++" then "++c
+mk_tag ((a,b,c,d):xs)
+  = a++" then "++c++"\n\t else if x == "++(mk_tag xs)
+\end{code}
+\begin{code}
+-- extract the delta variables and types in here'
+def_universe [(ZAbbreviation ("\\delta",[]) (ZSetDisplay xs))]
+  = def_universe_aux xs
+def_universe ((ZAbbreviation ("\\delta",[]) (ZSetDisplay xs)):xss) 
+  = (def_universe_aux xs)++(def_universe xss)
+def_universe (_:xs) 
+  = (def_universe xs)
+def_universe [] 
+  = []
+\end{code}
+
+\begin{code}
+def_universe_aux []
+  = [] 
+def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "Nat", "NatValue")]
+def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])] = [(b,(def_U_NAME c), (def_U_prefix c), c)]
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "Nat", "NatValue"):(def_universe_aux xs))
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
+\end{code}
+
+\begin{code}
+filter_types_universe [(a,b,c,d)] = [(b,b,c,d)]
+filter_types_universe ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe xs))
+\end{code}
+
+

@@ -598,8 +598,7 @@ process_paras spec (para : ps)
 adddefn :: ZParaInfo -> [ZParaInfo] -> ErrorOr [ZParaInfo]
 adddefn def spec
     | defname def `elem` [n | ZParaDefn{defname=n} <- spec]
-      = return (def:spec)
-      -- = fail ("redeclaration of: " ++ show_zvar(defname def))
+      = fail ("redeclaration of: " ++ show_zvar(defname def))
     | otherwise
       = return (def:spec)
 \end{code}
@@ -617,6 +616,44 @@ process_paras_omega spec (p@(Process s) : ps)
            procunfolded=s}
        let newspec = newp:(remove_proc_para spec s)
        process_paras_omega newspec ps
+process_paras_omega spec (p@(CircChannel s) : ps)
+  = do let newp = CircusChannel{origpara=p,
+           chanunfolded=s}
+       let newspec = newp:(remove_chan_para spec (CircChannel s))
+       process_paras_omega newspec ps
+process_paras_omega spec (p@(CircChanSet v s) : ps)
+  = do let newp = CircusChanSet{origpara=p,
+           defcname=v,
+           chansetunfolded=s}
+       let newspec = newp:(remove_chan_para spec (CircChanSet v s))
+       process_paras_omega newspec ps
+process_paras_omega spec (p@(ZGivenSetDecl ("UNIVERSE",[])) : ps)
+  = do let newp = ZParaDefn{origpara=p,
+           defname=("UNIVERSE",[]),
+           defunfolded=ZGivenSet ("UNIVERSE",[])}
+       newspec <- adddefn newp spec
+       process_paras_omega newspec ps
+process_paras_omega spec (p@(ZAbbreviation ("BINDINGS",[]) e) : ps)
+  = do ue <- unfoldexpr (uenv spec) e
+       let newp = ZParaDefn{origpara=p,
+           defname=("BINDING",[]),
+           defunfolded=ue}
+       newspec <- adddefn newp spec
+       process_paras_omega newspec ps
+process_paras_omega spec (p@(ZAbbreviation ("\\delta",[]) e) : ps)
+  = do ue <- unfoldexpr (uenv spec) e
+       let newp = ZParaDefn{origpara=p,
+           defname=("\\delta",[]),
+           defunfolded=ue}
+       newspec <- adddefn newp spec
+       process_paras_omega newspec ps
+process_paras_omega spec (p@(ZFreeTypeDef ("NAME",[]) bs) : ps)
+  = do  ue <- unfoldexpr (uenv spec) (ZFreeType ("NAME",[]) bs)
+        let newp = ZParaDefn{origpara=p,
+           defname=("NAME",[]),
+           defunfolded=ue}
+        newspec <- adddefn newp spec
+        process_paras_omega newspec ps
 process_paras_omega spec (para : ps)
   = process_paras_omega spec ps
 \end{code}
@@ -625,11 +662,37 @@ remove_proc_para [CircusProcess{origpara=x, procunfolded=pd1}] cp
   = case (compare_proc pd1 cp) of
       True -> []
       _ -> [CircusProcess{origpara=x,procunfolded=pd1}]
+remove_proc_para [x] cp
+  = [x]
 remove_proc_para ((CircusProcess{origpara=x, procunfolded=pd1}):xs) cp 
   = case (compare_proc pd1 cp) of
       True -> xs
       _ -> ((CircusProcess{origpara=x,procunfolded=pd1}):(remove_proc_para xs cp))
+remove_proc_para (x:xs) cp 
+  = x:(remove_proc_para xs cp)
 
+\end{code}
+\begin{code}
+remove_chan_para [CircusChannel{origpara=x, chanunfolded=pd1}] (CircChannel cp)
+  = case pd1 == cp of
+      True -> []
+      _ -> [CircusChannel{origpara=x, chanunfolded=pd1}]
+remove_chan_para [CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}] (CircChanSet v s)
+  = case v == n of
+      True -> []
+      _ -> [CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}]
+remove_chan_para [x] cp
+  = [x]
+remove_chan_para ((CircusChannel{origpara=x, chanunfolded=pd1}):xs) (CircChannel cp) 
+  = case pd1 == cp of
+      True -> xs
+      _ -> ((CircusChannel{origpara=x, chanunfolded=pd1}):(remove_chan_para xs (CircChannel cp)))
+remove_chan_para ((CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}):xs) (CircChanSet v cp) 
+  = case v == n of
+      True -> xs
+      _ -> ((CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}):(remove_chan_para xs (CircChanSet v cp)))
+remove_chan_para (x:xs) cp 
+  = x:(remove_chan_para xs cp)
 \end{code}
 \begin{code}
 compare_proc (CProcess zn1 pd1) (CProcess zn2 pd2)

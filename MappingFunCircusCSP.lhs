@@ -12,7 +12,9 @@ where
 import AST
 import CRL
 import FormatterToCSP
-import Data.Char
+import Data.List
+import Data.Text hiding (map,concat)
+import Data.Char hiding (toUpper, toTitle)
 import MappingFunStatelessCircus
 import DefSets
 
@@ -40,6 +42,27 @@ mapping_Circus spec (x:xs)
 \begin{code}
 
 mapping_CircParagraphs :: [ZPara] -> ZPara -> String
+mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
+  = "\n--------------------------------"++
+    "\n-- The universe of values"++
+    "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
+    "\n\n--------------------------------"++
+    "\n--Conversions\n"++(mk_subtype funivlst)++
+    "\n"++(mk_value funivlst)++
+    "\ntype(x) ="++
+    "\n\t if x == "++(mk_type univlst)++
+    "\n\t else {}\n"  ++
+    "\ntag(x) ="++
+    "\n\t if x == "++(mk_tag univlst)++
+    "\n\t else Nat\n\n\n"  
+  where
+    univlst = (def_universe spec)
+    funivlst = nub (filter_types_universe univlst)
+mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
+  = "\n--------------------------------"++
+    "\n-- All possible bidings"++
+    "\nNAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})"++ 
+    "\nBINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}\n"
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
   = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list spec zbs) 
 mapping_CircParagraphs spec (Process cp)
@@ -150,6 +173,10 @@ display_chann_CChanDecl (x:xs)
 \end{code}
 \begin{code}
 get_channel_type :: ZExpr -> String
+get_channel_type (ZVar ("\\nat",b))
+  = "NatValue"
+get_channel_type (ZVar ("\\nat_1",b))
+  = "NatValue"
 get_channel_type (ZVar (a,b))
   = a
 get_channel_type (ZCross xs)
@@ -463,12 +490,12 @@ mapping_CAction spec (CSPIntChoice a b)
     ++ " |~| "
     ++ mapping_CAction spec (b) ++ " )"
 \end{code}
-% \begin{code}
-% mapping_CAction spec (CSPInterleave ca cb)
-%   = mapping_CAction spec (ca)
-%     ++ " ||| "
-%     ++ mapping_CAction spec (cb)
-% \end{code}
+\begin{code}
+mapping_CAction spec (CSPInterleave ca cb)
+   = "( " ++ mapping_CAction spec (ca)
+     ++ " ||| "
+     ++ mapping_CAction spec (cb) ++ " )"
+\end{code}
 
 \begin{circus}
 \Upsilon_A(A |[ns1 | ns2]| B) \circdef~\Upsilon_A(A)~\tco{|||}~\Upsilon_A(B)
@@ -493,7 +520,7 @@ mapping_CAction spec (CSPNSParal ns1 cs ns2 a b)
 \end{code}
 \begin{code}
 mapping_CAction spec (CSPParAction zn xl)
-  = zn ++ "(" ++ concat (map_mp1 mapping_ZExpr (get_delta_names spec) xl) ++ ")"
+  = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
 \end{code}
 % \begin{code}
 % mapping_CAction spec (CSPParal cs a b)
@@ -648,8 +675,12 @@ mapping_CCommand spec (CIf cga)
 --   = undefined
 -- mapping_CCommand spec (CResDecl (x:xs) ca)
 --   = undefined
--- mapping_CCommand spec (CVarDecl (x:xs) ca)
---   = undefined
+mapping_CCommand spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
+ = " let restrict(bs) = dres(bs,{"++(mapping_ZExpr_def (get_delta_names spec))++"})"
+    ++"\n\t\twithin"
+    ++"\n\t\t|~| b:BINDINGS @ Memorise("++(mapping_CAction spec ca)++", restrict(b))\n"
+mapping_CCommand spec (CValDecl (x:xs) ca)
+   = undefined
 -- mapping_CCommand spec (CVResDecl (x:xs) ca)
 --   = undefined
 mapping_CCommand spec x
@@ -788,7 +819,7 @@ get_channel_name :: [ZPara] -> Comm -> ZName
 get_channel_name spec (ChanComm "mget" ((ChanDotExp (ZVar (x,[]))):xs))
   = "mget."++x++"?v"++x++":(type("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mset."++x++".((tag("++x++"))"++(get_channel_name_cont spec xs)++")"
+  = "mset."++x++".tag("++x++")"++(get_channel_name_cont spec xs)
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -846,6 +877,8 @@ get_chan_list _ = []
 \end{code}
 
 \begin{code}
+mapping_ZTuple [ZVar ("\\nat",_)] = "NatValue"
+mapping_ZTuple [ZVar ("\\nat_1",_)] = "NatValue"
 mapping_ZTuple [ZVar (v,_)] = v
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
 mapping_ZTuple ((ZVar (v,_)):xs) = (v) ++ "," ++ (mapping_ZTuple xs)
@@ -863,16 +896,12 @@ mapping_ZCross _ = ""
 \begin{code}
 -- aux functions
 mapping_ZExpr_def :: [ZName] -> String
-mapping_ZExpr_def [x] = (show x)
-mapping_ZExpr_def (x:xs) = (show x)++","++(mapping_ZExpr_def xs)
+mapping_ZExpr_def [x] = x
+mapping_ZExpr_def (x:xs) = x++","++(mapping_ZExpr_def xs)
 \end{code}
 \begin{code}
 mapping_ZExpr_def_f f [x] = (f x)
 mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
-\end{code}
-\begin{code}
-mapping_ZExpr_def_f1 f a [x] = (f a x)
-mapping_ZExpr_def_f1 f a (x:xs) = (f a x)++","++(mapping_ZExpr_def_f1 f a xs)
 \end{code}
 
 \subsection{Mapping Function for Expressions}
@@ -937,7 +966,7 @@ mapping_ZExpr lst (ZSeqDisplay []) = "<>"
 mapping_ZExpr lst (ZSeqDisplay _) = ""
 mapping_ZExpr lst (ZSetComp _ _ ) = ""
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f1 mapping_ZExpr lst x)++"}"
+mapping_ZExpr lst (ZSetDisplay x) = "{"++(concat (map (mapping_ZExpr lst) x))++"}"
 mapping_ZExpr lst (ZStrange _) = ""
 mapping_ZExpr lst (ZTheta _) = ""
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"

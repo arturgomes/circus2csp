@@ -8,7 +8,6 @@ File: MappingFunStatelessCircus.lhs
 module MappingFunStatelessCircus
 ( 
   omega_CAction,
-  omega_CircParagraphs,
   omega_Circus,
   omega_CProc,
   omega_ParAction,
@@ -57,17 +56,16 @@ get_pre_Circ_proc []
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec1
-  = [ZGivenSetDecl ("Universe",[]),
+  = [ZGivenSetDecl ("UNIVERSE",[]),
       ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
-      ZAbbreviation ("BINDING",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("Universe",[])])), 
+      ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])), 
       ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
-      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])]),
-      CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("Universe",[])])],
+      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
       CircChannel [CChan "terminate"],
       CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
     ++ (omega_Circus_aux spec spec)
     where 
-      spec = (map_mp1 rename_vars_ZPara1 (def_mem_st_Circus_aux spec1) spec1)
+      spec = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec1)) spec1)
     -- HERE YOU HAVE TO PUT A AUXILIARY FUNCTION 
     -- THAT WILL CHANGE THE NAE TO PROC_VAR
 \end{code}
@@ -143,32 +141,6 @@ omega_Circus_aux spec ((Process cp):xs)
 omega_Circus_aux spec (x:xs)
   = [x]++(omega_Circus_aux spec xs)
 \end{code}
-\begin{code}
-
-omega_CircParagraphs :: [ZPara] -> ZPara -> ZPara
--- omega_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
---   = (ZFreeTypeDef (a,b) zbs)
-omega_CircParagraphs spec (Process cp)
-  = (Process (omega_ProcDecl spec cp))
-omega_CircParagraphs spec (CircChanSet cn c2)
-  = (CircChanSet cn c2)
-omega_CircParagraphs spec (CircChannel cc2)
-  = (CircChannel cc2)
--- omega_CircParagraphs spec (ZGivenSetDecl gs)
---  = undefined
--- omega_CircParagraphs spec (ZSchemaDef zsn zse)
---  = undefined
--- omega_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetDisplay ls)) 
--- = (ZAbbreviation (n,[]) (ZSetDisplay ls)) 
--- omega_CircParagraphs spec (ZPredicate zp)
---  = undefined
--- omega_CircParagraphs spec (ZAxDef zgfs)
---  = undefined
--- omega_CircParagraphs spec (ZGenDef zgfs)
---  = undefined
-omega_CircParagraphs spec x
-  = x
-\end{code}
 
 
 
@@ -226,7 +198,7 @@ omega_CProc spec (CRepSeqProc [(Choose x s)] a)
 omega_CProc spec (CSeq a b)
   = (CSeq (omega_CProc spec a) (omega_CProc spec b))
 omega_CProc spec (ProcStalessMain xls ca)
-  = (ProcStalessMain (map_mp omega_PPar nstate xls) (omega_CAction nstate ca))
+  = (ProcStalessMain (concat (map (omega_PPar nstate) xls)) (mk_main_action_bind nstate (omega_CAction nstate ca)))
     where 
       nstate = (def_mem_st_Circus_aux spec)
 omega_CProc spec (CGenProc zn (x:xs))
@@ -239,14 +211,28 @@ omega_CProc spec (ProcMain zp (x:xs) ca)
   = (ProcStalessMain 
     [make_memory_proc] 
     (get_main_action 
-      (map_mp omega_PPar nstate (x:xs)) 
-      (omega_CAction nstate ca)))
+      (concat (map (omega_PPar nstate) (x:xs)))
+      (mk_main_action_bind nstate (omega_CAction nstate ca))))
     where 
       nstate = (def_mem_st_Circus_aux spec)
 omega_CProc spec x
   = x
 \end{code}
+Here I'm making the bindings for the main action. So far, I'm not implementing
+any invariants.
+\begin{code}
+mk_main_action_bind :: [(ZName, ZVar, ZExpr)] -> CAction -> CAction
+mk_main_action_bind lst ca
+  = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst) ] Nothing)] ca))
+\end{code}
+\begin{code}
+mk_inv :: [(ZName, ZVar, ZExpr)] -> ZPred
+mk_inv [(a,b,ZVar c)] 
+  = (ZMember (ZVar b) (ZVar c))
+mk_inv ((a,b,ZVar c):xs) 
+  = (ZAnd (mk_inv xs) (ZMember (ZVar b) (ZVar c)) ) 
 
+\end{code}
 \subsection{Mapping Parameterised Circus Actions}
 \begin{code}
 omega_PPar :: [(ZName, ZVar, ZExpr)] -> PPar -> [PPar]

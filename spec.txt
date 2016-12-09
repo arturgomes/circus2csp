@@ -1,29 +1,10 @@
-include "sequence_aux.csp"
-include "function_aux.csp"
-
-
-maxbuff = 3
-maxring = (1 - maxbuff)
-Value = {0..2}
-CellId = {1..10}
-datatype Direction = req | ack
-channel input, output : Value
-channel write, read, rdi, wrti : CellId.Direction.Value
-channel rrd, wrt : Direction.Value
-CtrI = {| rdi,wrti |}
-
-DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
-
-ControllerR = Controller[[read <- rdi, write <- wrti]]
-
-Controller = 
-	let Memory(b) =( ( ( [] n : dom(b) @ mget.n?vn:(type(n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.((tag(n))?nv:type(n)) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
-	within ( mget.Controller_cache?vController_cache:(type(Controller_cache)) -> mget.Controller_size?vController_size:(type(Controller_size)) -> mget.Controller_top?vController_top:(type(Controller_top)) -> mget.Controller_bot?vController_bot:(type(Controller_bot)) -> mset.Controller_cache.((tag(Controller_cache)).0) -> mset.Controller_size.((tag(Controller_size)).0) -> mset.Controller_top.((tag(Controller_top)).1) -> mset.Controller_bot.((tag(Controller_bot)).1) -> SKIP ; ( let X = ( ( mget.Controller_cache?vController_cache:(type(Controller_cache)) -> mget.Controller_size?vController_size:(type(Controller_size)) -> mget.Controller_top?vController_top:(type(Controller_top)) -> ( ( Controller_size < maxbuff & input?x -> ( Controller_size == 0 & ( mset.Controller_cache.((tag(Controller_cache)).x) -> SKIP ; mset.Controller_size.((tag(Controller_size)).1) -> SKIP ) ) ) [] ( Controller_size > 0 & write.Controller_top.req.x -> write.Controller_top.ack?dumb -> ( mset.Controller_size.((tag(Controller_size)).(1 + Controller_size)) -> SKIP ; mset.Controller_top.((tag(Controller_top)).(1 + maxring % Controller_top)) -> SKIP ) )) [] mget.Controller_size?vController_size:(type(Controller_size)) -> mget.Controller_bot?vController_bot:(type(Controller_bot)) -> ( ( Controller_size > 0 & output.Controller_cache -> ( Controller_size > 1 & ( ( |~| dumb : Value @ read.Controller_bot.req.dumb -> read.Controller_bot.ack?x -> SKIP ) ; ( mset.Controller_size.((tag(Controller_size)).(1 - Controller_size)) -> SKIP ; mset.Controller_bot.((tag(Controller_bot)).(1 + maxring % Controller_bot)) -> SKIP ) ) ) ) [] ( Controller_size == 1 & mset.Controller_size.((tag(Controller_size)).0) -> SKIP ))) ; X ) within X ) )
-
-DRing = |||i : CellId @ IRCell(i)
-
-IRCell(i) = RingCell[[rrd <- rdii, wrt <- wrtii]]
-
-RingCell = 
-	let Memory(b) =( ( ( [] n : dom(b) @ mget.n?vn:(type(n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.((tag(n))?nv:type(n)) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
-	within ( ( |~| x : Value @ mget.RingCell_v?vRingCell_v:(type(RingCell_v)) -> mset.RingCell_v.((tag(RingCell_v)).x) -> SKIP ) ; ( let X = ( mget.RingCell_v?vRingCell_v:(type(RingCell_v)) -> ( ( wrt.req?x -> mset.RingCell_v.((tag(RingCell_v)).x) -> SKIP ; wrt.ack.x -> SKIP ) [] rrd.req?dumb -> rrd.ack.RingCell_v -> SKIP) ; X ) within X ) )
+ZGivenSetDecl ("UNIVERSE",[])
+ZFreeTypeDef ("NAME",[]) [ZBranch0 ("SysClock_time",[])]
+ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]))
+ZAbbreviation ("\\delta",[]) (ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("SysClock_time",[]),ZVar ("\\nat",[])])])
+CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])]
+CircChannel [CChan "terminate"]
+CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])
+Process (CProcess "SysClock" (ProcDef (ProcStalessMain [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[]) (ZVar ("BINDING",[]))] (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[])),ChanOutExp (ZCall (ZVar ("b",[])) (ZVar ("n",[])))]) (CSPParAction "Memory" [ZVar ("b",[])]))) (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[])))] Nothing)] (CSPSeq (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("SysClock_time",[])),ChanInp "vSysClock_time"]) (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("SysClock_time",[])),ChanOutExp (ZInt 0)]) CSPSkip)) (CSPRecursion "X" (CSPSeq (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("SysClock_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("SysClock_time",[]))]) CSPSkip)) (CActionName "X")))))))))
+CircChannel [CChan "tick"]
+CircChannel [CChanDecl "getCurrentTime" (ZVar ("\\nat",[]))]
