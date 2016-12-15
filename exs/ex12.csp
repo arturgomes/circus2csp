@@ -1,0 +1,60 @@
+include "ring-buffer-marcel/csp/sequence_aux.csp"
+include "ring-buffer-marcel/csp/function_aux.csp"
+
+CtrI = {| rdi,wrti |}
+channel rrd, wrt : Direction.Value
+channel write, read, rdi, wrti : CellId.Direction.Value
+channel input, output : Value
+datatype Direction = req | ack
+datatype NAME = Controller_cache | Controller_size | Controller_top | Controller_bot | RingCell_v
+channel mget, mset : NAME.Universe
+channel terminate
+MEMi = {| mset,mget,terminate |}
+
+DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
+
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+	let 
+		Memory(b) =( ( ( [] n : dom(b) @ mget.n!apply(b,n) -> (Memory(b)) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> (Memory(over(b,n,nv))) )) [] terminate -> (SKIP))
+	within 
+	( 
+		mget.cache?vcache -> 
+		(mget.size?vsize -> 
+		(mget.top?vtop -> 
+		(mget.bot?vbot -> 
+		(mset.cache!0 -> 
+		(mset.size!0 -> 
+		(mset.top!1 -> (mset.bot!1 -> (SKIP)))))))) ; 
+		( let 
+			X = 
+				((mget.size?vsize -> 
+				(mget.cache?vcache -> 
+				(mget.top?vtop -> 
+				(((vsize < maxbuff 
+					& input?x -> 
+					(( vsize == 0 
+						& ( mset.cache!x -> (SKIP) ; mset.size!1 -> (SKIP) ) )) ) 
+					[] ( vsize > 0 
+						& write.top.req!x -> 
+							(write.top.ack?dumb -> 
+							(( mset.size!vsize -> (SKIP) ; mset.top!vtop -> (SKIP) ))) ))))) 
+				[] mget.size?vsize -> 
+				(mget.cache?vcache -> 
+				(mget.bot?vbot -> 
+					(( ( vsize > 0 
+						& output!cache -> 
+							(( vsize > 1 & ( ( |~| dumb : Value @ read.bot.req.dumb -> (read.bot.ack?x -> (Skip)) ) ; ( mset.size!vsize -> (SKIP) ; mset.bot!vbot -> (SKIP) ) ) )) ) 
+						[] ( vsize == 1 & mset.size!0 -> (SKIP) )))))) ; 
+			X ) 
+			within X ) )
+
+DRing = |||i : CellId @ IRCell(i)
+
+IRCell = RingCell[[rrd <- rdi, wrt <- wrti]]
+
+RingCell = 
+	let 
+		Memory(b) =( ( ( [] n : dom(b) @ mget.n!apply(b,n) -> (Memory(b)) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> (Memory(over(b,n,nv))) )) [] terminate -> (SKIP))
+	within ( ( |~| x : Value @ mget.v?vv -> (mset.v!x -> (SKIP)) ) ; ( let X = ( mget.v?vv -> (( ( wrt.req?x -> (mset.v!x -> (SKIP)) ; wrt.ack.x -> (SKIP) ) [] rrd.req?dumb -> (rrd.ack!v -> (Skip)))) ; X ) within X ) )

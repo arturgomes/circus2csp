@@ -1,0 +1,19 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+
+\begin{circus}%
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+  ResetClock ~\circdef~ \lcircguard \lnot (2+5 > 3+3) \land ((3-1) = 2) \rcircguard \circguard A\\
+  \circspot ResetClock
+  \circend
+\end{circus}
+
+\end{document}

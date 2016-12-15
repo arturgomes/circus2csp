@@ -1,0 +1,62 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.5in]{geometry}
+\usepackage{xcolor}
+\usepackage[color]{circus}
+\usepackage{listings}
+\usepackage{lstlhs}
+
+\begin{document}
+\begin{circus}
+
+maxbuff == 3 \\
+maxring == maxbuff - 1 \\
+Value == 0 \upto 2 \\
+CellId == 1 \upto 10 \\
+Direction ::=  req | ack
+\also \circchannel\ input, output : Value \\
+\circchannel\ write, read, rdi, wrti: CellId \cross Direction \cross Value \\
+\circchannel\ rrd, wrt: Direction \cross Value \\
+\circchannelset CtrI == \lchanset rdi, wrti \rchanset \\
+
+\circprocess\ RingCell \circdef\\
+\circbegin
+\t1 \circstate\ CellState \defs [v:Value]
+\t1 InitCell \circdef (\Intchoice x : Value \circspot (v:= x)) \\
+\t1 Cell \circdef ((wrt.req?x \then (v:= x)) \circseq (wrt.ack.x \then \Skip))  \\
+\t1 \t1         \extchoice rrd.req?dumb \then rrd.ack!v \then \Skip \\
+\t1 \circspot InitCell \circseq (\circmu X \circspot Cell \circseq X)
+\\
+\circend
+\\
+\circprocess\ IRCell \circdef i: CellId \circspot RingCell[rrd,wrt:=rdi.i, wrti.i]
+\\
+\circprocess\ DRing \circdef \Interleave i: CellId \circspot IRCell(i)
+\also
+\circprocess\ Controller \circdef \\
+\circbegin\\
+\t1 \circstate\ CtrState \defs [cache:Value; size:\nat; top:CellId; bot:CellId] \\
+
+\t1 InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 1) \\
+\t1 Input \circdef  
+	(\lcircguard size < maxbuff \rcircguard 
+		\circguard input?x \then 
+			(\lcircguard size = 0 \rcircguard 
+				\circguard ((cache:=x) \circseq (size:=1))))\\
+\t2 \extchoice \lcircguard size > 0 \rcircguard \circguard write.top.req!x \then \\
+\t3 write.top.ack?dumb \then ((size:=size+1) \circseq\ (top:=(top~\mod~maxring)+1))
+    \\
+ Output \circdef \\
+ \t1 \lcircguard size > 0 \rcircguard \circguard output!cache \then\\
+ \t2 (\lcircguard size > 1 \rcircguard \circguard 
+ 	(\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then \Skip) \circseq \\
+ 	((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))\\
+ \t2 \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0) \\
+\t1 \circspot InitCtr \circseq\ \circmu X \circspot ((Input \extchoice Output)\circseq X)
+\\
+\circend
+\\
+\circprocess\ ControllerR \circdef\ Controller[read,write:=rdi,wrti]
+\\
+\circprocess\ DBuffer \circdef\ ((ControllerR \lpar CtrI \rpar DRing) \circhide CtrI)
+\end{circus}%
+\end{document}

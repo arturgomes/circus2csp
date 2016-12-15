@@ -1,0 +1,10 @@
+\begin{circus}%
+TYPE ::= blue | black | yellow | green\\
+TYPES == \{~blue,black,yellow,green~\}\\
+\circchannel x1,x2 : TYPES\\
+ \circprocess\ ~SimpleExample ~\circdef~\circbegin
+  A1 \circdef x1?y \then \Skip
+  A2 \circdef \Extchoice x:\{black,yellow,green\} \circspot x2?x \then \Skip
+  \circspot  A1 \intchoice A2
+  \circend
+\end{circus}

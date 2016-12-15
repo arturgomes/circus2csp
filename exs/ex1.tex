@@ -1,0 +1,13 @@
+\begin{circus}
+	[Universe]
+	\also NAME ::= v | top | bot | cache | size \\
+    \also BINDING == NAME \fun Universe \\
+    \also \delta == \{v \mapsto Universe, top \mapsto Universe, bot \mapsto Universe, cache \mapsto Universe, size \mapsto \nat \}
+    \also \circchannel\ mget, mset: NAME \cross Universe \\
+    \also \circchannel\ terminate \\
+    \also \circchannelset\ MEM\_I == \lchanset mset, mget, terminate \rchanset \\
+\end{circus}
+
+
+
+

@@ -1,0 +1,9 @@
+\begin{circus}
+\circprocess MYp \circdef
+	\circbegin
+		A1 \circdef \Intchoice x:\langle a,b,c,d,e,f,g,h \rangle \circspot P(x)
+		\circspot A1
+		\circend
+\end{circus}
+
+[Process (CProcess "MYp" (ProcDef (ProcStalessMain [CParAction "A1" (CircusAction (CSPRepIntChoice [Choose ("x",[]) (ZSeqDisplay [ZVar ("v1",[]),ZVar ("v3",[]),ZVar ("v4",[])])] (CSPParAction "P" [ZVar ("x",[])])))] (CActionName "A1"))))]

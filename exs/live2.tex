@@ -1,0 +1,9 @@
+\begin{circus}%
+[TYPE]\\
+\circchannel x1,x2 : TYPE\\
+ \circprocess\ ~SimpleExample ~\circdef~\circbegin
+  A1 \circdef x1?y \then \Skip
+  A2 \circdef x2?x \then \Skip
+  \circspot  A1 \intchoice A2
+  \circend
+\end{circus}

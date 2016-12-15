@@ -1,0 +1,42 @@
+##### Spec in Latex (exs/live2.tex)
+
+\begin{circus}%
+[TYPE]\\
+\circchannel x1,x2 : TYPE\\
+ \circprocess\ ~SimpleExample ~\circdef~\circbegin
+  A1 \circdef x1?y \then \Skip
+  A2 \circdef x2?x \then \Skip
+  \circspot  A1 \intchoice A2
+  \circend
+\end{circus}
+
+##### Is read in JAZA as
+ZGivenSetDecl ("TYPE",[])
+CircChannel [CChanDecl "x1" (ZVar ("TYPE",[])),CChanDecl "x2" (ZVar ("TYPE",[]))]
+Process (CProcess "SimpleExample" 
+	(ProcDef (ProcStalessMain 
+		[CParAction "A1" (CircusAction (CSPCommAction (ChanComm "x1" [ChanInpPred "y" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip)),
+		 CParAction "A2" (CircusAction (CSPCommAction (ChanComm "x2" [ChanInpPred "x" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip))] 
+		(CSPIntChoice (CActionName "A1") (CActionName "A2")))))
+
+
+
+
+
+##### To execute in GHCi
+
+mapping_Circus [ZGivenSetDecl ("TYPE",[]), CircChannel [CChanDecl "x1" (ZVar ("TYPE",[])),CChanDecl "x2" (ZVar ("TYPE",[]))], Process (CProcess "SimpleExample"(ProcDef (ProcStalessMain [CParAction "A1" (CircusAction (CSPCommAction (ChanComm "x1" [ChanInpPred "y" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip)), CParAction "A2" (CircusAction (CSPCommAction (ChanComm "x2" [ChanInpPred "x" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip))] (CSPIntChoice (CActionName "A1") (CActionName "A2")))))]  [ZGivenSetDecl ("TYPE",[]), CircChannel [CChanDecl "x1" (ZVar ("TYPE",[])),CChanDecl "x2" (ZVar ("TYPE",[]))], Process (CProcess "SimpleExample"(ProcDef (ProcStalessMain [CParAction "A1" (CircusAction (CSPCommAction (ChanComm "x1" [ChanInpPred "y" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip)), CParAction "A2" (CircusAction (CSPCommAction (ChanComm "x2" [ChanInpPred "x" (ZPSchema (ZSRef (ZSPlain "\\true") [] []))]) CSPSkip))] (CSPIntChoice (CActionName "A1") (CActionName "A2")))))] 
+
+##### Result
+
+"channel x1 : TYPE\nchannel x2 : TYPE\nSimpleExample = \n\tlet \n\t\tA1 = x1?y -> SKIP\n\t\tA2 = x2?x -> SKIP\n\twithin A1 |~| A2\n"
+
+##### replacing \n
+channel x1 : TYPE
+channel x2 : TYPE
+SimpleExample = 
+	let 
+		A1 = x1?y -> SKIP
+		A2 = x2?x -> SKIP
+	within A1 |~| A2
+

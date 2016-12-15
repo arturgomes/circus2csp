@@ -1,0 +1,32 @@
+
+\begin{circus}
+  \circchannel getCurrentTime~:~\nat\\
+  \circchannel tick
+\end{circus}
+
+
+\begin{circus}%
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClocS
+\end{circus}
+\begin{schema}{SysClockS}
+ time : \nat
+\end{schema}
+\begin{circusaction}
+  ResetClock ~\circdef~
+  \\\t2  (time := 0) \circseq Clock\\
+\end{circusaction}
+\begin{circusaction}
+  Clock ~\circdef~
+  \\\t2  \circmu~X \circspot  (tick \then (time := time+1) \interleave getCurrentTime!time \then \Skip)\circseq X
+\end{circusaction}
+\begin{circusaction}
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+\end{circusaction}
+\begin{circus}
+  \circspot ResetClock
+  \circend
+\end{circus}
