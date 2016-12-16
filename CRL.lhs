@@ -1154,12 +1154,9 @@ initials _ = [[]]
 --trace (CSPExtChoice ca cb) = (trace ca) ++ (trace cb)
 data CSPOp = Com Char CSPOp | Seq CSPOp CSPOp | ExtCh CSPOp CSPOp | CSPSkp
 trace :: CSPOp -> [[Char]]
-trace (Com a p)
- = map (a:) (trace p)
-trace (Seq a b)
- = (trace a) ++ (trace b)
-trace (ExtCh a b)
- = (trace a)++ (trace b)
+trace (Com a p) = map (a:) (trace p)
+trace (Seq a b) = (trace a) ++ (trace b)
+trace (ExtCh a b) = (trace a)++ (trace b)
 trace (CSPSkp)
  = [[]]
 \end{code}

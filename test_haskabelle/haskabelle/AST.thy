@@ -2,6 +2,8 @@ theory AST
 imports Prelude
 begin
  
+type_synonym GivenValue = string
+ 
 type_synonym ZInt = int
  
 type_synonym ZDecor = string
@@ -9,8 +11,6 @@ type_synonym ZDecor = string
 type_synonym ZVar = "string * (ZDecor list)"
  
 type_synonym GivenSet = ZVar
- 
-type_synonym GivenValue = string
  
 type_synonym ZName = string
  
@@ -333,8 +333,6 @@ where
 | "update_reason x (ZFalse _) = (ZFalse x)"
 
  
-type_synonym ZFSet = "ZExpr list"
- 
 fun genfilt_names :: "ZGenFilt list \<Rightarrow> ZVar list"
 where
   "genfilt_names Nil = Nil"
@@ -364,17 +362,6 @@ where
 | "pair_snd _ = error ''pair_snd applied to non-pair value''"
 
  
-fun isZFSet :: "ZExpr \<Rightarrow> bool"
-where
-  "isZFSet (ZFSet _) = True"
-| "isZFSet _ = False"
-
- 
-definition zemptyset :: "ZExpr"
-where
-  "zemptyset = ZFSet Nil"
-
- 
 definition zrelations :: "ZExpr"
 where
   "zrelations = ZFuncSet ZUniverse ZUniverse False False False False False False False"
@@ -399,7 +386,6 @@ where
 fun isCanonical :: "ZExpr \<Rightarrow> bool"
 where
   "isCanonical (ZInt _) = True"
-| "isCanonical (ZFSet _) = True"
 | "isCanonical (ZTuple v) = list_all isCanonical v"
 | "isCanonical (ZGiven _) = True"
 | "isCanonical (ZFree0 _) = True"
@@ -412,7 +398,6 @@ fun isDefined :: "ZExpr \<Rightarrow> bool"
 where
   "isDefined (ZInt _) = True"
 | "isDefined (ZIntSet _ _) = True"
-| "isDefined (ZFSet _) = True"
 | "isDefined (ZTuple v) = list_all isDefined v"
 | "isDefined (ZReln _) = True"
 | "isDefined (ZGiven _) = True"

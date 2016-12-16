@@ -111,7 +111,6 @@ type GivenSet = ZVar      -- names of given sets.
 type GivenValue = String  -- members of given sets are strings
 type ZInt = Integer       -- If you change this, you must also change
         -- the definition of L_NUMBER in Lexer.hs
-type ZFSet = [ZExpr]      -- But always manipulate via FiniteSets functions.
 {-
 \end{code}
 
@@ -387,14 +386,9 @@ pair_snd :: ZValue -> ZValue
 pair_snd (ZTuple [_,y]) = y
 pair_snd _ = error "pair_snd applied to non-pair value"
 
-isZFSet :: ZExpr -> Bool
-isZFSet (ZFSet _) = True
-isZFSet _         = False
 
 -- This is equivalent to (ZFSet FiniteSets.emptyset), but
 -- for convenience we define it directly here.
-zemptyset :: ZExpr
-zemptyset = ZFSet []
 
 -- This is the union of all Z relations:  ZUniverse <-> ZUniverse
 zrelations :: ZExpr
@@ -517,7 +511,6 @@ For such terms, \verb"==" is equivalent to semantic equality.
 -}
 isCanonical :: ZExpr -> Bool
 isCanonical (ZInt _)      = True
-isCanonical (ZFSet _)     = True  -- an invariant of the system
 isCanonical (ZTuple v)    = all isCanonical v
 isCanonical (ZGiven _)    = True
 isCanonical (ZFree0 _)    = True
@@ -539,7 +532,6 @@ NOTE: \texttt{isDefined} ignores type correctness.
 isDefined :: ZExpr -> Bool
 isDefined (ZInt _)        = True
 isDefined (ZIntSet _ _)   = True
-isDefined (ZFSet _)       = True  -- an invariant of the system
 isDefined (ZTuple v)      = all isDefined v
 isDefined (ZReln _)       = True
 isDefined (ZGiven _)      = True

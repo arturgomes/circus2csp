@@ -39,9 +39,8 @@ where
 | "omega_CAction lst (CSPRepParalNS v va vb vc) = (CSPRepParalNS v va vb vc)"
 | "omega_CAction lst (CSPRepSeq v va) = (CSPRepSeq v va)"
 | "omega_CAction lst (CSPUnParAction v va vb) = (CSPUnParAction v va vb)"
-(*
 | "omega_CAction lst (CActionCommand (CommandBrace g)) = omega_CAction lst (CActionCommand (CPrefix g (ZTrue Nil)))"
-| "omega_CAction lst (CActionCommand (CommandBracket g)) = omega_CAction lst (CActionCommand (CPrefix1 g))"
+(*| "omega_CAction lst (CActionCommand (CommandBracket g)) = omega_CAction lst (CActionCommand (CPrefix1 g))"
 | "omega_CAction lst (CSPCommAction (ChanComm c ((ChanOutExp e) # xs)) a) = omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) a)"
 | "omega_CAction lst (CSPCommAction (ChanComm c Nil) a) = (CSPCommAction (ChanComm c Nil) (omega_CAction lst a))"
 | "omega_CAction lst (CSPHide a cs) = (CSPHide (omega_CAction lst a) cs)"

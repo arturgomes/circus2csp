@@ -1,0 +1,72 @@
+-- %!TEX root = MAIN.tex
+-- \section{Circus Refinement Laws}
+
+-- \ignore{
+-- \begin{code}
+module CRL
+where
+import AST
+import DefSets
+-- import Data.List
+-- import Data.Maybe
+
+crl_var_exp_par (CSPNSParal ns1 cs ns2 (CActionCommand
+                    (CVarDecl [(Choose (d,[]) t)] a1)) a2)
+  = case p1 of
+      True -> (CActionCommand (CVarDecl [(Choose (d,[]) t)]
+                  (CSPNSParal ns1 cs ns2 a1 a2)))
+      False -> (CSPNSParal ns1 cs ns2
+                  (CActionCommand (CVarDecl [(Choose (d,[]) t)] a1)) a2)
+    where
+      p1 = False
+      --p1 = isEmpty (intersectionSet ([(d,[]),(d,["'"])]) (getFV a2))
+
+
+crl_var_exp_rec (CSPRecursion x1 (CActionCommand
+                  (CVarDecl [(Choose xv t)]
+                    (CSPParAction f [ZVar (x2,[])]))))
+  = case (x1 == x2) of
+      True  -> (CActionCommand (CVarDecl [(Choose xv t)]
+                  (CSPRecursion x1 (CSPParAction f [ZVar (x1,[])]))))
+      False -> (CSPRecursion x1 (CActionCommand (CVarDecl [(Choose xv t)]
+                   (CSPParAction f [ZVar (x2,[])]))))
+
+crl_variableBlockSequenceExtension
+      (CSPSeq (CSPSeq a1
+            (CActionCommand (CVarDecl [(Choose x t)] a2))) a3)
+  = case p1 of
+      True -> CActionCommand (CVarDecl
+                [(Choose x t)] (CSPSeq (CSPSeq a1 a2) a3))
+      False -> (CSPSeq (CSPSeq a1 (CActionCommand
+                  (CVarDecl [(Choose x t)] a2))) a3)
+    where
+      p1 = null (([(x,[]),(x,["'"])]) `intersect` ((getFV a2) `union`(getFV a1)))
+
+
+crl_variableSubstitution (CSPParAction a exp)
+-- = CVarDecl [(ZVar ("y",[]))] (CSPSeq (CActionCommand (CAssumpt [("y")] ZTrue{reason=[]} )))
+  = undefined
+
+
+
+crl_recUnfold (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])]))
+  -- = case (x1 == x2) of _
+  --                       | True         -> (CSPParAction f (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])])))
+  --                       | otherwise    -> (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])]))
+  = undefined
+
+
+crl_joinBlocks (CActionCommand (CVarDecl
+                [(Choose x t1)] (CActionCommand
+                  (CVarDecl [(Choose y t2)] a))))
+  = (CActionCommand (CVarDecl [(Choose x t1),(Choose y t2)] a))
+
+--
+crl_alternationZero = undefined
+
+
+
+crl_alternation = undefined
+
+
+-- \end{code}
