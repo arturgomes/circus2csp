@@ -256,7 +256,7 @@ make_set_com lst (((x,[])):xs) (y:ys) c = (CSPCommAction (ChanComm "mset"[ChanDo
 
 
 -- All that should be found in the Defsets.hs file
-
+getWrtV :: t -> [t1]
 getWrtV xs = []
 
 free_var_CAction :: CAction -> [ZVar]
@@ -282,9 +282,11 @@ free_var_CAction (CSPRepInterlNS lst ns c) = (free_var_CAction c) \\ (fvs free_v
 free_var_CAction (CSPRepInterl lst c) = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
 free_var_CAction _ = []
 
+free_var_ZGenFilt :: ZGenFilt -> [ZVar]
 free_var_ZGenFilt (Choose v e) = [v]
 free_var_ZGenFilt _ = []
 
+free_var_comnd :: CCommand -> [ZVar]
 free_var_comnd (CAssign v e) = v
 free_var_comnd (CIf ga) = free_var_if ga
 free_var_comnd (CVarDecl z c) = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
@@ -295,6 +297,7 @@ free_var_comnd (CResDecl z c) = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z
 free_var_comnd (CVResDecl z c) = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
 free_var_comnd _ = []
  
+free_var_if :: CGActions -> [ZVar]
 free_var_if (CircGAction p a) = (free_var_ZPred p)++(free_var_CAction a)
 free_var_if (CircThenElse ga gb) = (free_var_if ga)++(free_var_if gb)
 free_var_if (CircElse (CircusAction a)) = (free_var_CAction a)
@@ -339,6 +342,7 @@ free_var_ZPred (ZPre zsexpr)
 free_var_ZPred (ZPSchema zsexpr)
   = error "Don't know what free vars of ZPSchema are right now. Check back later"
 
+fvs :: (t -> [t1]) -> [t] -> [t1]
 fvs f [] = []
 fvs f (e:es)
  = f(e) ++ (fvs f (es))
@@ -362,6 +366,7 @@ free_var_ZExpr _ = []
 
 
 
+rename_vars_CAction :: [String] -> CAction -> CAction
 rename_vars_CAction lst (CActionSchemaExpr zsexp) = (CActionSchemaExpr zsexp)
 rename_vars_CAction lst (CActionCommand cmd) = (CActionCommand (rename_vars_CCommand lst cmd))
 rename_vars_CAction lst (CActionName zn) = (CActionName zn)
@@ -391,6 +396,7 @@ rename_vars_CAction lst (CSPRepInterlNS zgf ns a) = (CSPRepInterlNS zgf ns (rena
 rename_vars_CAction lst (CSPRepInterl zgf a) = (CSPRepInterl zgf (rename_vars_CAction lst a))
 rename_vars_CAction lst x = x
 
+rename_vars_CCommand :: [String] -> CCommand -> CCommand
 rename_vars_CCommand lst (CAssign zvarls1 zexprls) = (CAssign zvarls1 (map (rename_ZExpr lst) zexprls))
 rename_vars_CCommand lst (CIf ga) = (CIf (rename_vars_CGActions lst ga))
 rename_vars_CCommand lst (CVarDecl zgf a) = (CVarDecl zgf (rename_vars_CAction lst a))
@@ -404,21 +410,26 @@ rename_vars_CCommand lst (CValDecl zgf a) = (CValDecl zgf (rename_vars_CAction l
 rename_vars_CCommand lst (CResDecl zgf a) = (CResDecl zgf (rename_vars_CAction lst a))
 rename_vars_CCommand lst (CVResDecl zgf a) = (CVResDecl zgf (rename_vars_CAction lst a))
 
+rename_vars_CReplace :: t -> CReplace -> CReplace
 rename_vars_CReplace lst (CRename zvarls1 zvarls) = (CRename zvarls1 zvarls)
 rename_vars_CReplace lst (CRenameAssign zvarls1 zvarls) = (CRenameAssign zvarls1 zvarls)
 
+rename_vars_Comm :: [String] -> Comm -> Comm
 rename_vars_Comm lst (ChanComm zn cpls) = (ChanComm zn (map (rename_vars_CParameter lst) cpls))
 rename_vars_Comm lst (ChanGenComm zn zexprls cpls) = (ChanGenComm zn (map (rename_ZExpr lst) zexprls) (map (rename_vars_CParameter lst) cpls))
 
+rename_vars_CParameter :: [String] -> CParameter -> CParameter
 rename_vars_CParameter lst (ChanInp zn) = (ChanInp zn)
 rename_vars_CParameter lst (ChanInpPred zn zp) = (ChanInpPred zn (rename_ZPred lst zp))
 rename_vars_CParameter lst (ChanOutExp ze) = (ChanOutExp (rename_ZExpr lst ze))
 rename_vars_CParameter lst (ChanDotExp ze) = (ChanDotExp (rename_ZExpr lst ze))
 
+rename_vars_CGActions :: [String] -> CGActions -> CGActions
 rename_vars_CGActions lst (CircGAction zp a) = (CircGAction (rename_ZPred lst zp) (rename_vars_CAction lst a))
 rename_vars_CGActions lst (CircThenElse cga1 cga2) = (CircThenElse (rename_vars_CGActions lst cga1) (rename_vars_CGActions lst cga2))
 rename_vars_CGActions lst (CircElse pa) = (CircElse pa)
 
+rename_ZExpr :: [String] -> ZExpr -> ZExpr
 rename_ZExpr lst (ZVar (va,x))
  = case (inListVar va lst) of
    True -> (ZVar ("v_"++va,x))
@@ -431,7 +442,6 @@ rename_ZExpr lst (ZTuple xprlst) = (ZTuple (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZBinding xs) = (ZBinding (bindingsVar lst xs))
 rename_ZExpr lst (ZSetDisplay xprlst) = (ZSetDisplay (map (rename_ZExpr lst) xprlst))
 rename_ZExpr lst (ZSeqDisplay xprlst) = (ZSeqDisplay (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZFSet zf) = (ZFSet zf)
 rename_ZExpr lst (ZIntSet i1 i2) = (ZIntSet i1 i2)
 rename_ZExpr lst (ZGenerator zrl xpr) = (ZGenerator zrl (rename_ZExpr lst xpr))
 rename_ZExpr lst (ZCross xprlst) = (ZCross (map (rename_ZExpr lst) xprlst))
@@ -455,6 +465,7 @@ rename_ZExpr lst (ZIf_Then_Else zp xpr1 xpr2) = (ZIf_Then_Else zp (rename_ZExpr 
 rename_ZExpr lst (ZSelect xpr va) = (ZSelect xpr va)
 rename_ZExpr lst (ZTheta zs) = (ZTheta zs)
 
+rename_ZPred :: [String] -> ZPred -> ZPred
 rename_ZPred lst (ZFalse{reason=a}) = (ZFalse{reason=a})
 rename_ZPred lst (ZTrue{reason=a}) = (ZTrue{reason=a})
 rename_ZPred lst (ZAnd p1 p2) = (ZAnd (rename_ZPred lst p1) (rename_ZPred lst p2))
@@ -471,6 +482,7 @@ rename_ZPred lst (ZMember xpr1 xpr2) = (ZMember (rename_ZExpr lst xpr1) (rename_
 rename_ZPred lst (ZPre sp) = (ZPre sp)
 rename_ZPred lst (ZPSchema sp) = (ZPSchema sp)
 
+inListVar :: Eq a => a -> [a] -> Bool
 inListVar x []
  = False
 inListVar x [va]
@@ -482,7 +494,7 @@ inListVar x (va:vst)
   True -> True
   _ -> inListVar x vst
 
-
+bindingsVar :: [String] -> [(ZVar, ZExpr)] -> [(ZVar, ZExpr)]
 bindingsVar lst []
  = []
 bindingsVar lst [((va,x),b)]
@@ -602,10 +614,8 @@ nub l                   = nub' l []             -- '
 -- user-supplied equality predicate instead of the overloaded '=='
 -- function.
 nubBy                   :: (a -> a -> Bool) -> [a] -> [a]
-#ifdef USE_REPORT_PRELUDE
 nubBy eq []             =  []
 nubBy eq (x:xs)         =  x : nubBy eq (filter (\ y -> not (eq x y)) xs)
-#else
 nubBy eq l              = nubBy' l []
   where
     nubBy' [] _         = []
@@ -621,4 +631,3 @@ nubBy eq l              = nubBy' l []
 elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
 elem_by _  _ []         =  False
 elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
-#endif

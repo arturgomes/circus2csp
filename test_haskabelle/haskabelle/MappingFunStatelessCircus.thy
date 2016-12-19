@@ -5,24 +5,27 @@ begin
 fun filter_state_comp :: "((ZName * ZVar) * ZExpr) list \<Rightarrow> ZVar list"
 where
   "filter_state_comp Nil = Nil"
-| "filter_state_comp [(_, (v, _))] = [v]"
-| "filter_state_comp ((_, (v, _)) # xs) = ([v] @ (filter_state_comp xs))"
+| "filter_state_comp [(u1, (v, u2))] = [v]"
+| "filter_state_comp ((u1, (v, u2)) # xs) = ([v] @ (filter_state_comp xs))"
 
  
 fun get_guard_pair :: "CGActions \<Rightarrow> (ZPred * CAction) list"
 where
   "get_guard_pair (CircThenElse (CircGAction g2 a2) (CircGAction g3 a3)) = [(g2, a2), (g3, a3)]"
 | "get_guard_pair (CircThenElse (CircGAction g1 a1) glx) = ([(g1, a1)] @ (get_guard_pair glx))"
+| "get_guard_pair _ = []"
 
  
 fun get_proc_name :: "ZName \<Rightarrow> ((ZName * ZVar) * ZExpr) list \<Rightarrow> ZName"
 where
-  "get_proc_name x [(a, ((va, x1), b))] = (case eq x va of
-                                              True \<Rightarrow> a
-                                            | _ \<Rightarrow> '''')"
-| "get_proc_name x ((a, ((va, x1), b)) # vst) = (case eq x va of
-                                                    True \<Rightarrow> a
-                                                  | _ \<Rightarrow> get_proc_name x vst)"
+  "get_proc_name x [(a, ((va, x1), b))] 
+      = (case eq x va of
+              True \<Rightarrow> a
+            | _ \<Rightarrow> '''')"
+| "get_proc_name x ((a, ((va, x1), b)) # vst)
+       = (case eq x va of
+              True \<Rightarrow> a
+            | _ \<Rightarrow> get_proc_name x vst)"
 
  
 fun make_get_com :: "((ZName * ZVar) * ZExpr) list \<Rightarrow> ZVar list \<Rightarrow> CAction \<Rightarrow> CAction"
@@ -32,30 +35,30 @@ where
 | "make_get_com lst x c = c"
 
  
-fun getWrtV
+fun getWrtV :: "'t \<Rightarrow> 't1 list"
 where
   "getWrtV xs = Nil"
 
  
-fun free_var_ZGenFilt
+fun free_var_ZGenFilt :: "ZGenFilt \<Rightarrow> ZVar list"
 where
   "free_var_ZGenFilt (Choose v e) = [v]"
 | "free_var_ZGenFilt _ = Nil"
 
  
-fun fvs
+fun fvs :: "('t \<Rightarrow> 't1 list) \<Rightarrow> 't list \<Rightarrow> 't1 list"
 where
   "fvs f Nil = Nil"
 | "fvs f (e # es) = (f e @ (fvs f es))"
 
  
-fun rename_vars_CReplace
+fun rename_vars_CReplace :: "'t \<Rightarrow> CReplace \<Rightarrow> CReplace"
 where
   "rename_vars_CReplace lst (CRename zvarls1 zvarls) = (CRename zvarls1 zvarls)"
 | "rename_vars_CReplace lst (CRenameAssign zvarls1 zvarls) = (CRenameAssign zvarls1 zvarls)"
 
  
-fun inListVar
+fun inListVar :: "('a :: eq) \<Rightarrow> ('a :: eq) list \<Rightarrow> bool"
 where
   "inListVar x Nil = False"
 | "inListVar x [va] = (case eq x va of
@@ -66,8 +69,8 @@ where
                               | _ \<Rightarrow> inListVar x vst)"
 
  
-fun rename_ZExpr and 
-    bindingsVar
+fun rename_ZExpr :: "string list \<Rightarrow> ZExpr \<Rightarrow> ZExpr" and 
+    bindingsVar :: "string list \<Rightarrow> (ZVar * ZExpr) list \<Rightarrow> (ZVar * ZExpr) list"
 where
   "rename_ZExpr lst (ZVar (va, x)) = (case (inListVar va lst) of
                                          True \<Rightarrow> (ZVar (''v_'' @ va, x))
@@ -80,7 +83,6 @@ where
 | "rename_ZExpr lst (ZBinding xs) = (ZBinding (bindingsVar lst xs))"
 | "rename_ZExpr lst (ZSetDisplay xprlst) = (ZSetDisplay (map (rename_ZExpr lst) xprlst))"
 | "rename_ZExpr lst (ZSeqDisplay xprlst) = (ZSeqDisplay (map (rename_ZExpr lst) xprlst))"
-| "rename_ZExpr lst (ZFSet zf) = (ZFSet zf)"
 | "rename_ZExpr lst (ZIntSet i1 i2) = (ZIntSet i1 i2)"
 | "rename_ZExpr lst (ZGenerator zrl xpr) = (ZGenerator zrl (rename_ZExpr lst xpr))"
 | "rename_ZExpr lst (ZCross xprlst) = (ZCross (map (rename_ZExpr lst) xprlst))"
@@ -112,7 +114,7 @@ where
                                            | False \<Rightarrow> [((va, x), (rename_ZExpr lst b))] @ (bindingsVar lst xs))"
 
  
-fun rename_ZPred
+fun rename_ZPred :: "string list \<Rightarrow> ZPred \<Rightarrow> ZPred"
 where
   "rename_ZPred lst (ZFalse a) = (ZFalse a)"
 | "rename_ZPred lst (ZTrue a) = (ZTrue a)"
@@ -131,7 +133,7 @@ where
 | "rename_ZPred lst (ZPSchema sp) = (ZPSchema sp)"
 
  
-fun rename_vars_CParameter
+fun rename_vars_CParameter :: "string list \<Rightarrow> CParameter \<Rightarrow> CParameter"
 where
   "rename_vars_CParameter lst (ChanInp zn) = (ChanInp zn)"
 | "rename_vars_CParameter lst (ChanInpPred zn zp) = (ChanInpPred zn (rename_ZPred lst zp))"
@@ -139,15 +141,15 @@ where
 | "rename_vars_CParameter lst (ChanDotExp ze) = (ChanDotExp (rename_ZExpr lst ze))"
 
  
-fun rename_vars_Comm
+fun rename_vars_Comm :: "string list \<Rightarrow> Comm \<Rightarrow> Comm"
 where
   "rename_vars_Comm lst (ChanComm zn cpls) = (ChanComm zn (map (rename_vars_CParameter lst) cpls))"
 | "rename_vars_Comm lst (ChanGenComm zn zexprls cpls) = (ChanGenComm zn (map (rename_ZExpr lst) zexprls) (map (rename_vars_CParameter lst) cpls))"
 
  
-fun rename_vars_CAction and 
-    rename_vars_CCommand and 
-    rename_vars_CGActions
+fun rename_vars_CAction :: "string list \<Rightarrow> CAction \<Rightarrow> CAction" and 
+    rename_vars_CCommand :: "string list \<Rightarrow> CCommand \<Rightarrow> CCommand" and 
+    rename_vars_CGActions :: "string list \<Rightarrow> CGActions \<Rightarrow> CGActions"
 where
   "rename_vars_CAction lst (CActionSchemaExpr zsexp) = (CActionSchemaExpr zsexp)"
 | "rename_vars_CAction lst (CActionCommand cmd) = (CActionCommand (rename_vars_CCommand lst cmd))"
@@ -328,7 +330,8 @@ where
 | "omega_CAction lst CSPStop = CSPStop"
 | "omega_CAction lst CSPChaos = CSPChaos"
 | "omega_CAction lst (CSPCommAction (ChanComm c Nil) a) = (CSPCommAction (ChanComm c Nil) (omega_CAction lst a))"
-| "omega_CAction lst (CSPCommAction (ChanComm c ((ChanOutExp e) # xs)) a) = omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) a)"
+| "omega_CAction lst (CSPCommAction (ChanComm c ((ChanOutExp e) # xs)) a) 
+    = omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) a)"
 | "omega_CAction lst (CSPSeq ca cb) = (CSPSeq (omega_CAction lst ca) (omega_CAction lst cb))"
 | "omega_CAction lst (CSPIntChoice ca cb) = (CSPIntChoice (omega_CAction lst ca) (omega_CAction lst cb))"
 | "omega_CAction lst (CSPCommAction (ChanComm c Nil) a) = (CSPCommAction (ChanComm c Nil) (omega_CAction lst a))"
@@ -337,34 +340,53 @@ where
 | "omega_CAction lst (CActionCommand (CommandBrace g)) = omega_CAction lst (CActionCommand (CPrefix g (ZTrue Nil)))"
 | "omega_CAction lst (CActionCommand (CommandBracket g)) = omega_CAction lst (CActionCommand (CPrefix1 g))"
 | "omega_CAction lst (CSPRenAction a (CRenameAssign left right)) = (CSPRenAction a (CRename right left))"
-| "omega_CAction lst (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                              True \<Rightarrow> omega_CAction lst (rep_CSPRepSeq lst act xs)
-                                                                                                            | _ \<Rightarrow> (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (omega_CAction lst (CSPParAction act [ZVar (x1, Nil)]))))"
-| "omega_CAction lst (CSPRepSeq [Choose (x, Nil) v] act) = (CSPRepSeq [Choose (x, Nil) v] (omega_CAction lst act))"
-| "omega_CAction lst (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                                    True \<Rightarrow> rep_CSPRepExtChoice lst act xs
-                                                                                                                  | _ \<Rightarrow> (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
-| "omega_CAction lst (CSPRepExtChoice [Choose (x, Nil) v] act) = (CSPRepExtChoice [Choose (x, Nil) v] (omega_CAction lst act))"
-| "omega_CAction lst (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                                    True \<Rightarrow> rep_CSPRepIntChoice lst act xs
-                                                                                                                  | _ \<Rightarrow> (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
-| "omega_CAction lst (CSPRepIntChoice [Choose (x, Nil) v] act) = (CSPRepIntChoice [Choose (x, Nil) v] (omega_CAction lst act))"
-| "omega_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) = (case (eq x x1) & (eq x x2) of
-                                                                                                                                                               True \<Rightarrow> rep_CSPRepParalNS lst a cs ns x lsx
-                                                                                                                                                             | _ \<Rightarrow> (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
-| "omega_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) = (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst act))"
-| "omega_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) = (case (eq x x1) & (eq x x2) of
-                                                                                                                                                    True \<Rightarrow> rep_CSPRepInterlNS lst a ns x lsx
-                                                                                                                                                  | _ \<Rightarrow> (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
-| "omega_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) = (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst act))"
-| "omega_CAction lst (CActionCommand (CIf (CircGAction g a))) = (let lsx = free_var_ZPred g
-                                                                 in make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand (CIf (CircGAction g (omega_prime_CAction lst a))))))"
-| "omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) a) = (let lxs = intersect (get_chan_param ((ChanDotExp e) # xs)) (filter_state_comp lst)
-                                                                             in make_get_com lst lxs (rename_vars_CAction (map fst lxs) (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) (omega_prime_CAction lst a))))"
-| "omega_CAction lst (CActionCommand (CAssign varls valls)) = make_get_com lst varls (rename_vars_CAction (map fst (filter_state_comp lst)) (make_set_com lst varls valls CSPSkip))"
-| "omega_CAction lst (CActionCommand (CIf (CircThenElse gl glx))) = (let guard_pair = get_guard_pair (CircThenElse gl glx);
-                                                                         lsx = nub $ (concat $ map free_var_ZPred (map fst guard_pair))
-                                                                     in make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand (CIf (mk_guard_pair lst guard_pair)))))"
+| "omega_CAction lst (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+    = (case eq x x1 of
+            True \<Rightarrow> omega_CAction lst (rep_CSPRepSeq lst act xs)
+          | _ \<Rightarrow> (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] 
+                              (omega_CAction lst (CSPParAction act [ZVar (x1, Nil)]))))"
+| "omega_CAction lst (CSPRepSeq [Choose (x, Nil) v] act) 
+    = (CSPRepSeq [Choose (x, Nil) v] (omega_CAction lst act))"
+| "omega_CAction lst (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+    = (case eq x x1 of
+            True \<Rightarrow> rep_CSPRepExtChoice lst act xs
+          | _ \<Rightarrow> (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
+| "omega_CAction lst (CSPRepExtChoice [Choose (x, Nil) v] act) 
+    = (CSPRepExtChoice [Choose (x, Nil) v] (omega_CAction lst act))"
+| "omega_CAction lst (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+    = (case eq x x1 of
+            True \<Rightarrow> rep_CSPRepIntChoice lst act xs
+          | _ \<Rightarrow> (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
+| "omega_CAction lst (CSPRepIntChoice [Choose (x, Nil) v] act) 
+    = (CSPRepIntChoice [Choose (x, Nil) v] (omega_CAction lst act))"
+| "omega_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] 
+        (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) 
+    = (case (eq x x1) & (eq x x2) of
+           True \<Rightarrow> rep_CSPRepParalNS lst a cs ns x lsx
+          | _ \<Rightarrow> (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] 
+                                (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
+| "omega_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) 
+    = (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst act))"
+| "omega_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] 
+        (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) 
+    = (case (eq x x1) & (eq x x2) of
+          True \<Rightarrow> rep_CSPRepInterlNS lst a ns x lsx
+          | _ \<Rightarrow> (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam  ns [ZVar (x1, Nil)]) 
+                                (omega_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
+| "omega_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) 
+    = (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_CAction lst act))"
+| "omega_CAction lst (CActionCommand (CIf (CircGAction g a))) 
+    = (let lsx = free_var_ZPred g
+          in make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand (CIf (CircGAction g (omega_prime_CAction lst a))))))"
+| "omega_CAction lst (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) a) 
+    = (let lxs = intersect (get_chan_param ((ChanDotExp e) # xs)) (filter_state_comp lst)
+          in make_get_com lst lxs (rename_vars_CAction (map fst lxs) (CSPCommAction (ChanComm c ((ChanDotExp e) # xs)) (omega_prime_CAction lst a))))"
+| "omega_CAction lst (CActionCommand (CAssign varls valls)) 
+    = make_get_com lst varls (rename_vars_CAction (map fst (filter_state_comp lst)) (make_set_com lst varls valls CSPSkip))"
+| "omega_CAction lst (CActionCommand (CIf (CircThenElse gl glx))) 
+    = (let guard_pair = get_guard_pair (CircThenElse gl glx);
+           lsx = nub $ (concat $ map free_var_ZPred (map fst guard_pair))
+       in make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CActionCommand (CIf (mk_guard_pair lst guard_pair)))))"
 | "omega_prime_CAction lst CSPSkip = CSPSkip"
 | "omega_prime_CAction lst CSPChaos = CSPChaos"
 | "omega_prime_CAction lst CSPStop = CSPStop"
@@ -385,23 +407,33 @@ where
 | "omega_prime_CAction lst (CSPSeq ca cb) = (CSPSeq (omega_prime_CAction lst ca) (omega_prime_CAction lst cb))"
 | "omega_prime_CAction lst (CActionCommand (CIf (CircThenElse gl glx))) = (let guard_pair = get_guard_pair (CircThenElse gl glx)
                                                                            in (CActionCommand (CIf (mk_guard_pair lst guard_pair))))"
-| "omega_prime_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) = (case (eq x x1) & (eq x x2) of
-                                                                                                                                                          True \<Rightarrow> rep_CSPRepInterlNS lst a ns x lsx
-                                                                                                                                                        | _ \<Rightarrow> (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
-| "omega_prime_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) = (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst act))"
-| "omega_prime_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) = (case (eq x x1) & (eq x x2) of
-                                                                                                                                                                     True \<Rightarrow> rep_CSPRepParalNS lst a cs ns x lsx
-                                                                                                                                                                   | _ \<Rightarrow> (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
-| "omega_prime_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) = (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst act))"
-| "omega_prime_CAction lst (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                                    True \<Rightarrow> omega_prime_CAction lst (rep_CSPRepSeq lst act xs)
-                                                                                                                  | _ \<Rightarrow> (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (omega_prime_CAction lst (CSPParAction act [ZVar (x1, Nil)]))))"
-| "omega_prime_CAction lst (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                                          True \<Rightarrow> rep_CSPRepExtChoice lst act xs
-                                                                                                                        | _ \<Rightarrow> (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
-| "omega_prime_CAction lst (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) = (case eq x x1 of
-                                                                                                                          True \<Rightarrow> rep_CSPRepIntChoice lst act xs
-                                                                                                                        | _ \<Rightarrow> (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
+| "omega_prime_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) 
+      = (case (eq x x1) & (eq x x2) of
+          True \<Rightarrow> rep_CSPRepInterlNS lst a ns x lsx
+        | _ \<Rightarrow> (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) 
+                            (omega_prime_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
+| "omega_prime_CAction lst (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) 
+      = (CSPRepInterlNS [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst act))"
+| "omega_prime_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] 
+        (NSExprParam ns [ZVar (x1, Nil)]) (CSPParAction a [ZVar (x2, Nil)])) 
+      = (case (eq x x1) & (eq x x2) of
+          True \<Rightarrow> rep_CSPRepParalNS lst a cs ns x lsx 
+          | _ \<Rightarrow> (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] 
+                              (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst (CSPParAction a [ZVar (x2, Nil)]))))"
+| "omega_prime_CAction lst (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) act) 
+      = (CSPRepParalNS (CSExpr cs) [Choose (x, Nil) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1, Nil)]) (omega_prime_CAction lst act))"
+| "omega_prime_CAction lst (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+      = (case eq x x1 of
+            True \<Rightarrow> omega_prime_CAction lst (rep_CSPRepSeq lst act xs)
+          | _ \<Rightarrow> (CSPRepSeq [Choose (x, Nil) (ZSeqDisplay xs)] (omega_prime_CAction lst (CSPParAction act [ZVar (x1, Nil)]))))"
+| "omega_prime_CAction lst (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+      = (case eq x x1 of
+            True \<Rightarrow> rep_CSPRepExtChoice lst act xs
+          | _ \<Rightarrow> (CSPRepExtChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
+| "omega_prime_CAction lst (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])) 
+      = (case eq x x1 of
+            True \<Rightarrow> rep_CSPRepIntChoice lst act xs
+          | _ \<Rightarrow> (CSPRepIntChoice [Choose (x, Nil) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1, Nil)])))"
 | "rep_CSPRepSeq lst a [x] = omega_CAction lst (CSPParAction a [x])"
 | "rep_CSPRepSeq lst a (x # xs) = CSPSeq (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepSeq lst a xs)"
 | "rep_CSPRepIntChoice lst a [x] = omega_CAction lst (CSPParAction a [x])"
@@ -409,9 +441,14 @@ where
 | "rep_CSPRepExtChoice lst a [x] = omega_CAction lst (CSPParAction a [x])"
 | "rep_CSPRepExtChoice lst a (x # xs) = CSPExtChoice (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepExtChoice lst a xs)"
 | "rep_CSPRepParalNS lst a _ _ _ [x] = omega_CAction lst (CSPParAction a [x])"
-| "rep_CSPRepParalNS lst a cs ns y (x # xs) = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepParalNS lst a cs ns y xs))"
+| "rep_CSPRepParalNS lst a cs ns y (x # xs) 
+      = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs) 
+                (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) 
+                (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepParalNS lst a cs ns y xs))"
 | "rep_CSPRepInterlNS lst a _ _ [x] = omega_CAction lst (CSPParAction a [x])"
-| "rep_CSPRepInterlNS lst a ns y (x # xs) = (CSPNSInter (NSExprParam ns [x]) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepInterlNS lst a ns y xs))"
+| "rep_CSPRepInterlNS lst a ns y (x # xs) 
+      = (CSPNSInter (NSExprParam ns [x]) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] 
+          (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (omega_CAction lst (CSPParAction a [x])) (rep_CSPRepInterlNS lst a ns y xs))"
 | "mk_guard_pair lst [(g, a)] = (CircGAction g (omega_prime_CAction lst a))"
 | "mk_guard_pair lst ((g, a) # ls) = (CircThenElse (CircGAction g (omega_prime_CAction lst a)) (mk_guard_pair lst ls))"
 | "make_set_com lst [(x, Nil)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar ((get_proc_name x lst) @ (''_'' @ x), Nil)), ChanOutExp y]) (omega_CAction lst c))"
@@ -419,8 +456,8 @@ where
 
  
 fun free_var_CAction :: "CAction \<Rightarrow> ZVar list" and 
-    free_var_comnd and 
-    free_var_if
+    free_var_comnd :: "CCommand \<Rightarrow> ZVar list" and 
+    free_var_if :: "CGActions \<Rightarrow> ZVar list"
 where
   "free_var_CAction (CActionCommand c) = (free_var_comnd c)"
 | "free_var_CAction (CSPCommAction (ChanComm com xs) c) = ((get_chan_param xs) @ (free_var_CAction c))"
