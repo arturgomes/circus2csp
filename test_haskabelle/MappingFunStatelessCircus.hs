@@ -227,6 +227,7 @@ filter_state_comp ((_, v, _):xs) = [v]++(filter_state_comp xs)
 get_guard_pair :: CGActions -> [(ZPred, CAction)]
 get_guard_pair (CircThenElse (CircGAction g2 a2) (CircGAction g3 a3)) = [(g2,a2),(g3,a3)]
 get_guard_pair (CircThenElse (CircGAction g1 a1) glx) = [(g1,a1)]++(get_guard_pair glx)
+get_guard_pair _ = []
 
 
 mk_guard_pair :: [(ZName, ZVar, ZExpr)] -> [(ZPred, CAction)] -> CGActions

@@ -1096,3 +1096,8 @@ filter_types_universe ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe xs))
 \end{code}
 
 
+\begin{code}
+remdups :: [a] => [a]
+remdups [] = []
+remdups (x:xs) = (if member(x,xs) then remdups xs else x : remdups xs)
+\end{code}
