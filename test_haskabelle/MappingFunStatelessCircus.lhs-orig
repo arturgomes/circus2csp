@@ -11,13 +11,7 @@ omega_CAction lst (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   where lsx = free_var_ZPred(p)
 
 
-omega_CAction lst (CSPExtChoice ca cb)
-  = make_get_com lst lsx (rename_vars_CAction (map fst lsx) (CSPExtChoice (omega_prime_CAction lst ca) (omega_prime_CAction lst cb)))
-   where
-    lsx = nub $ (free_var_CAction (CSPExtChoice ca cb)) `intersect` (filter_state_comp lst)
-omega_CAction lst (CSPGuard g a) 
-  = make_get_com lst lxs (rename_vars_CAction (map fst lxs) (CSPGuard (rename_ZPred (map fst lxs) g) (omega_prime_CAction lst a))) 
-    where lxs = nub $ free_var_ZPred(g) `intersect` (filter_state_comp lst)
+
 
 
 omega_CAction lst (CSPNSParal ns1 cs ns2 a1 a2)

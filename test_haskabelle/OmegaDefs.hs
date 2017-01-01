@@ -1,10 +1,27 @@
 module OmegaDefs
 (
+filter_state_comp,
+free_var_ZExpr,
+free_var_ZGenFilt,
+free_var_ZPred,
+fvs,
+get_chan_param,
+get_guard_pair,
+get_proc_name,
+intersect,
+make_get_com,
+member,
+mk_guard_pair, rename_ZPred,
+remdups,
 rename_vars_CAction,
-free_var_ZGenFilt,fvs,get_chan_param,setminus,intersect,union,member,remdups,
-free_var_ZPred,filter_state_comp,get_guard_pair,get_proc_name,
-make_get_com,free_var_ZExpr,free_var_ZPred
-)
+rep_CSPRepExtChoice, 
+rep_CSPRepIntChoice, 
+rep_CSPRepInterlNS, 
+rep_CSPRepParalNS, 
+rep_CSPRepSeq, 
+setminus,
+union,
+make_set_com, getWrtV)
 where
 import AST
 filter_state_comp :: [(ZName, ZVar, ZExpr)] -> [ZVar]
@@ -51,14 +68,6 @@ free_var_ZPred (ZTrue{reason=p})
   = error "Don't know what free vars of ZTrue are right now. Check back later"
 free_var_ZPred (ZAnd a b)
  = free_var_ZPred a ++ free_var_ZPred b
-free_var_ZPred (ZOr a b)
- = free_var_ZPred a ++ free_var_ZPred b
-free_var_ZPred (ZImplies a b)
- = free_var_ZPred a ++ free_var_ZPred b
-free_var_ZPred (ZIff a b)
- = free_var_ZPred a ++ free_var_ZPred b
-free_var_ZPred (ZNot a)
- = free_var_ZPred a
 
 
 fvs :: (t -> [t1]) -> [t] -> [t1]
@@ -70,7 +79,6 @@ fvs f (e:es) = f(e) ++ (fvs f (es))
 free_var_ZExpr :: ZExpr -> [ZVar]
 free_var_ZExpr(ZVar v) = [v]
 free_var_ZExpr(ZInt c ) = []
-free_var_ZExpr(ZTuple exls ) = fvs free_var_ZExpr exls
 free_var_ZExpr(ZSetDisplay exls ) = fvs free_var_ZExpr exls
 free_var_ZExpr(ZSeqDisplay exls ) = fvs free_var_ZExpr exls
 free_var_ZExpr(ZCall ex ex2) = free_var_ZExpr ex2 -- is this right??
@@ -86,10 +94,6 @@ rename_ZPred :: [String] -> ZPred -> ZPred
 rename_ZPred lst (ZFalse{reason=a}) = (ZFalse{reason=a})
 rename_ZPred lst (ZTrue{reason=a}) = (ZTrue{reason=a})
 rename_ZPred lst (ZAnd p1 p2) = (ZAnd (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZOr p1 p2) = (ZOr (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZImplies p1 p2) = (ZImplies (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZIff p1 p2) = (ZIff (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZNot p) = (ZNot (rename_ZPred lst p))
 
 
 inListVar :: Eq a => a -> [a] -> Bool
@@ -111,12 +115,6 @@ rename_ZExpr lst (ZVar (va,x))
         True -> (ZVar ("v_"++va,x))
         False -> (ZVar (va,x))
 rename_ZExpr lst (ZInt zi) = (ZInt zi)
-rename_ZExpr lst (ZTuple xprlst) = (ZTuple (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZBinding xs) = (ZBinding (bindingsVar lst xs))
-rename_ZExpr lst (ZSetDisplay xprlst) = (ZSetDisplay (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZSeqDisplay xprlst) = (ZSeqDisplay (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZGivenSet gs) = (ZGivenSet gs)
-rename_ZExpr lst (ZUniverse) = (ZUniverse)
 rename_ZExpr lst (ZCall xpr1 xpr2) = (ZCall (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))
 
 
@@ -202,6 +200,51 @@ get_chan_param ((ChanOutExp (ZVar (x,_))):xs) = [(x,[])]++(get_chan_param xs)
 get_chan_param (_:xs) = (get_chan_param xs)
 
 
+
+-- Extra from MappingFunStatelesssCircus.lhs
+rep_CSPRepSeq lst f a [x]
+  = f lst (CSPParAction a [x])
+rep_CSPRepSeq lst f a (x:xs)
+  = CSPSeq (f lst (CSPParAction a [x])) (rep_CSPRepSeq lst f a xs)
+
+rep_CSPRepIntChoice lst f a [x]
+  = f lst (CSPParAction a [x])
+rep_CSPRepIntChoice lst f a (x:xs)
+  = CSPIntChoice (f lst (CSPParAction a [x])) (rep_CSPRepIntChoice lst f a xs)
+
+rep_CSPRepExtChoice lst f a [x]
+  =  f lst (CSPParAction a [x])
+rep_CSPRepExtChoice lst f a (x:xs)
+  = CSPExtChoice ( f lst (CSPParAction a [x])) (rep_CSPRepExtChoice lst f a xs)
+
+rep_CSPRepParalNS lst f a _ _ _ [x]
+  =  f lst (CSPParAction a [x])
+rep_CSPRepParalNS lst f a cs ns y (x:xs)
+  = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs)
+    (NSBigUnion (ZSetComp
+           [Choose (y,[]) (ZSetDisplay xs)]
+           (Just (ZCall (ZVar (ns,[])) (ZVar (y,[])))) ) )
+     ( f lst (CSPParAction a [x])) (rep_CSPRepParalNS lst f a cs ns y xs) )
+
+rep_CSPRepInterlNS lst f a _ _ [x]
+  =  f lst (CSPParAction a [x])
+rep_CSPRepInterlNS lst f a ns y (x:xs)
+  = (CSPNSInter (NSExprParam ns [x])
+    (NSBigUnion (ZSetComp
+           [Choose (y,[]) (ZSetDisplay xs)]
+           (Just (ZCall (ZVar (ns,[])) (ZVar (y,[])))) ) )
+     ( f lst (CSPParAction a [x])) (rep_CSPRepInterlNS lst f a ns y xs) )
+
+--
+
+mk_guard_pair lst f [(g,a)] = (CircGAction g (f lst a))
+mk_guard_pair lst f ((g,a):ls) = (CircThenElse (CircGAction g (f lst a)) (mk_guard_pair lst f ls))
+
+
+make_set_com lst f [(x,[])] [y] c = (CSPCommAction (ChanComm "mset"[ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanOutExp y]) (f lst c))
+make_set_com lst f (((x,[])):xs) (y:ys) c = (CSPCommAction (ChanComm "mset"[ChanDotExp (ZVar ((get_proc_name x lst)++"_"++x,[])),ChanOutExp y]) (make_set_com lst f xs ys c))
+
+
  -- Artur - 15/12/2016
  -- What we find below this line was taken from the Data.List module
  -- It is hard to import such package with Haskabelle, so I had
@@ -265,3 +308,5 @@ deleteBy eq x (y:ys)    = if x `eq` y then ys else y : deleteBy eq x ys
 elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
 elem_by _  _ []         =  False
 elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
+
+

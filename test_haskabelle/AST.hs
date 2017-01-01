@@ -29,7 +29,6 @@ data ZExpr
   = ---------- Basic Z values (non-set values) ----------
     ZVar ZVar           -- for non-schema names (may include decorations)
   | ZInt ZInt           -- an integer constant
-  | ZTuple [ZExpr]      -- (a,b,c)
   | ZSetComp [ZGenFilt] (Maybe ZExpr) -- set comprehensions
   | ZBinding [(ZVar,ZExpr)] -- always in sorted name order (no duplicates)
   ---------- Data structures for sets ----------
@@ -37,8 +36,6 @@ data ZExpr
   | ZSetDisplay [ZExpr]   -- set displays, like {1,2,4}
   | ZSeqDisplay [ZExpr]   -- sequence displays, like <1,2,4>
   -- | ZFSet ZFSet           -- all elements must be in canonical form.
-  | ZGivenSet GivenSet                -- an entire given set
-  | ZUniverse               -- the set of all Z values! (a unit for \cap)
   ---------- Z constructs that are not necessarily sets ----------
   | ZCall ZExpr ZExpr                 -- function call:  f a
   deriving (Eq,Ord,Show)
@@ -47,10 +44,6 @@ data ZPred
   = ZFalse{reason::[ZPred]}
   | ZTrue{reason::[ZPred]}
   | ZAnd ZPred ZPred
-  | ZOr ZPred ZPred
-  | ZImplies ZPred ZPred
-  | ZIff ZPred ZPred
-  | ZNot ZPred
   deriving (Eq,Ord,Show)
 
 {-
@@ -94,12 +87,7 @@ data ProcessDef
   deriving (Eq,Ord,Show)
 
 data CProc
-  = CRepSeqProc [ZGenFilt] CProc           -- \Semi Decl \circspot Proc
-  | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
-  | CRepIntChProc [ZGenFilt] CProc         -- \IntChoice Decl \circspot Proc
-  | CRepParalProc CSExp [ZGenFilt] CProc   -- \lpar CSExp \rpar Decl \circspot Proc
-  | CRepInterlProc [ZGenFilt] CProc        -- \Interleave Decl \circspot Proc
-  | CHide CProc CSExp                      -- Proc \circhide CSExp
+  = CHide CProc CSExp                      -- Proc \circhide CSExp
   | CExtChoice CProc CProc                 -- Proc \extchoice Proc
   | CIntChoice CProc CProc                 -- Proc \intchoice Proc
   | CParParal CSExp CProc CProc            -- Proc \lpar CSExp \rpar Proc

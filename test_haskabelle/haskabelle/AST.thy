@@ -17,10 +17,6 @@ type_synonym ZName = string
 datatype ZPred = ZFalse "ZPred list"
                | ZTrue "ZPred list"
                | ZAnd ZPred ZPred
-               | ZOr ZPred ZPred
-               | ZImplies ZPred ZPred
-               | ZIff ZPred ZPred
-               | ZNot ZPred
  
 primrec reason :: "ZPred \<Rightarrow> ZPred list"
 where
@@ -39,13 +35,10 @@ datatype ZGenFilt = Choose ZVar ZExpr
                   | Evaluate ZVar ZExpr ZExpr
 and      ZExpr = ZVar ZVar
                | ZInt ZInt
-               | ZTuple "ZExpr list"
                | ZSetComp "ZGenFilt list" "ZExpr option"
                | ZBinding "(ZVar * ZExpr) list"
                | ZSetDisplay "ZExpr list"
                | ZSeqDisplay "ZExpr list"
-               | ZGivenSet GivenSet
-               | ZUniverse
                | ZCall ZExpr ZExpr
  
 datatype CSExp = CSExpr ZName
@@ -125,12 +118,7 @@ and      ProcDecl = CProcess ZName ProcessDef
                   | CGenProcess ZName "ZName list" ProcessDef
 and      ProcessDef = ProcDefSpot "ZGenFilt list" ProcessDef
                     | ProcDef CProc
-and      CProc = CRepSeqProc "ZGenFilt list" CProc
-               | CRepExtChProc "ZGenFilt list" CProc
-               | CRepIntChProc "ZGenFilt list" CProc
-               | CRepParalProc CSExp "ZGenFilt list" CProc
-               | CRepInterlProc "ZGenFilt list" CProc
-               | CHide CProc CSExp
+and      CProc = CHide CProc CSExp
                | CExtChoice CProc CProc
                | CIntChoice CProc CProc
                | CParParal CSExp CProc CProc
