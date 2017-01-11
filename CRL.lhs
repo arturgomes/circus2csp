@@ -7,7 +7,7 @@ module CRL
 where
 import AST
 import DefSets
-import Data.List
+import Data.List hiding (union, intersect)
 import Data.Maybe
 
 \end{code}

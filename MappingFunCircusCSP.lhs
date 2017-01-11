@@ -816,8 +816,9 @@ The mapping function for sequence expressions is defined as follows:
 
 \begin{code}
 get_channel_name :: [ZPara] -> Comm -> ZName
-get_channel_name spec (ChanComm "mget" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mget."++x++"?v"++x++":(type("++x++"))"
+
+get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
+  = "mget."++x++"?"++v1++":(type("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
   = "mset."++x++".tag("++x++")"++(get_channel_name_cont spec xs)
 get_channel_name spec (ChanComm x y)

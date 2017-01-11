@@ -2,40 +2,9 @@ theory OmegaDefs
 imports AST Prelude
 begin
  
-fun filter_state_comp :: "(ZName * ZVar * ZExpr) list \<Rightarrow> ZVar list"
+fun join_name
 where
-  "filter_state_comp Nil = Nil"
-| "filter_state_comp [(_, v, _)] = [v]"
-| "filter_state_comp ((_, v, _) # xs) = ([v] @ (filter_state_comp xs))"
-
- 
-fun get_guard_pair :: "CGActions \<Rightarrow> (ZPred * CAction) list"
-where
-  "get_guard_pair (CircThenElse (CircGAction g2 a2) (CircGAction g3 a3)) = [(g2, a2), (g3, a3)]"
-| "get_guard_pair (CircThenElse (CircGAction g1 a1) glx) = ([(g1, a1)] @ (get_guard_pair glx))"
-| "get_guard_pair _ = Nil"
-
- 
-fun get_proc_name :: "ZName \<Rightarrow> (ZName * ZVar * ZExpr) list \<Rightarrow> ZName"
-where
-  "get_proc_name x [(a, ((va, x1), b))] = (case x = va of
-                                              True \<Rightarrow> a
-                                            | _ \<Rightarrow> '''')"
-| "get_proc_name x ((a, ((va, x1), b)) # vst) = (case x = va of
-                                                    True \<Rightarrow> a
-                                                  | _ \<Rightarrow> get_proc_name x vst)"
-
- 
-fun make_get_com :: "(ZName * ZVar * ZExpr) list \<Rightarrow> ZVar list \<Rightarrow> CAction \<Rightarrow> CAction"
-where
-  "make_get_com lst [(x, Nil)] c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar ((get_proc_name x lst) @ (''_'' @ x), Nil)), ChanInp ((''v'' @ (get_proc_name x lst)) @ (''_'' @ x))]) c)"
-| "make_get_com lst ((x, Nil) # xs) c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar ((get_proc_name x lst) @ (''_'' @ x), Nil)), ChanInp ((''v'' @ (get_proc_name x lst)) @ (''_'' @ x))]) (make_get_com lst xs c))"
-| "make_get_com lst x c = c"
-
- 
-fun getWrtV :: "'t \<Rightarrow> 't1 list"
-where
-  "getWrtV xs = Nil"
+  "join_name n v = (n @ (''_'' @ v))"
 
  
 fun free_var_ZGenFilt :: "ZGenFilt \<Rightarrow> ZVar list"
@@ -49,6 +18,7 @@ where
   "free_var_ZPred (ZFalse p) = error ''Don't know what free vars of ZFalse are right now. Check back later''"
 | "free_var_ZPred (ZTrue p) = error ''Don't know what free vars of ZTrue are right now. Check back later''"
 | "free_var_ZPred (ZAnd a b) = (free_var_ZPred a @ free_var_ZPred b)"
+| "free_var_ZPred x = error ''Don't know what free vars of this right now. Check back later''"
 
  
 fun fvs :: "('t \<Rightarrow> 't1 list) \<Rightarrow> 't list \<Rightarrow> 't1 list"
@@ -67,17 +37,59 @@ where
 | "free_var_ZExpr _ = Nil"
 by pat_completeness auto
  
-fun rename_vars_CReplace :: "'t \<Rightarrow> CReplace \<Rightarrow> CReplace"
+fun get_chan_var :: "CParameter list \<Rightarrow> ZVar list"
 where
-  "rename_vars_CReplace lst (CRename zvarls1 zvarls) = (CRename zvarls1 zvarls)"
-| "rename_vars_CReplace lst (CRenameAssign zvarls1 zvarls) = (CRenameAssign zvarls1 zvarls)"
+  "get_chan_var Nil = Nil"
+| "get_chan_var [ChanDotExp (ZVar (x, _))] = [(x, Nil)]"
+| "get_chan_var [ChanOutExp (ZVar (x, _))] = [(x, Nil)]"
+| "get_chan_var [_] = Nil"
+| "get_chan_var ((ChanDotExp (ZVar (x, _))) # xs) = ([(x, Nil)] @ (get_chan_var xs))"
+| "get_chan_var ((ChanOutExp (ZVar (x, _))) # xs) = ([(x, Nil)] @ (get_chan_var xs))"
+| "get_chan_var (_ # xs) = (get_chan_var xs)"
 
  
-fun rename_ZPred :: "string list \<Rightarrow> ZPred \<Rightarrow> ZPred"
+fun get_guard_pair :: "CGActions \<Rightarrow> (ZPred * CAction) list"
 where
-  "rename_ZPred lst (ZFalse a) = (ZFalse a)"
-| "rename_ZPred lst (ZTrue a) = (ZTrue a)"
-| "rename_ZPred lst (ZAnd p1 p2) = (ZAnd (rename_ZPred lst p1) (rename_ZPred lst p2))"
+  "get_guard_pair (CircThenElse (CircGAction g2 a2) (CircGAction g3 a3)) = [(g2, a2), (g3, a3)]"
+| "get_guard_pair (CircThenElse (CircGAction g1 a1) glx) = ([(g1, a1)] @ (get_guard_pair glx))"
+| "get_guard_pair _ = Nil"
+
+ 
+fun make_get_com :: "ZName list \<Rightarrow> CAction \<Rightarrow> CAction"
+where
+  "make_get_com [x] c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) c)"
+| "make_get_com (x # xs) c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) (make_get_com xs c))"
+| "make_get_com x c = c"
+
+ 
+fun make_set_com
+where
+  "make_set_com f [(x, _)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (f c))"
+| "make_set_com f ((x, _) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (make_set_com f xs ys c))"
+
+ 
+fun mk_guard_pair
+where
+  "mk_guard_pair f [(g, a)] = (CircGAction g (f a))"
+| "mk_guard_pair f ((g, a) # ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair f ls))"
+
+ 
+fun getWrtV :: "'t \<Rightarrow> 't1 list"
+where
+  "getWrtV xs = Nil"
+
+ 
+fun rename_ZPred :: "ZPred \<Rightarrow> ZPred"
+where
+  "rename_ZPred (ZFalse a) = (ZFalse a)"
+| "rename_ZPred (ZTrue a) = (ZTrue a)"
+| "rename_ZPred (ZAnd p1 p2) = (ZAnd (rename_ZPred p1) (rename_ZPred p2))"
+
+ 
+fun rename_vars_CReplace :: "CReplace \<Rightarrow> CReplace"
+where
+  "rename_vars_CReplace (CRename zvarls1 zvarls) = (CRename zvarls1 zvarls)"
+| "rename_vars_CReplace (CRenameAssign zvarls1 zvarls) = (CRenameAssign zvarls1 zvarls)"
 
  
 fun inListVar :: "'a \<Rightarrow> 'a list \<Rightarrow> bool"
@@ -91,137 +103,43 @@ where
                               | _ \<Rightarrow> inListVar x vst)"
 
  
-fun rename_ZExpr :: "string list \<Rightarrow> ZExpr \<Rightarrow> ZExpr"
+fun is_Var_or_Int
 where
-  "rename_ZExpr lst (ZVar (va, x)) = (case (inListVar va lst) of
-                                         True \<Rightarrow> (ZVar (''v_'' @ va, x))
-                                       | False \<Rightarrow> (ZVar (va, x)))"
-| "rename_ZExpr lst (ZInt zi) = (ZInt zi)"
-| "rename_ZExpr lst (ZCall xpr1 xpr2) = (ZCall (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))"
+  "is_Var_or_Int [ZVar (a, b)] = True"
+| "is_Var_or_Int [ZInt x] = True"
+| "is_Var_or_Int ((ZVar (a, b)) # xs) = (True & is_Var_or_Int xs)"
+| "is_Var_or_Int ((ZInt x) # xs) = (True & is_Var_or_Int xs)"
+| "is_Var_or_Int _ = False"
 
  
-fun bindingsVar :: "string list \<Rightarrow> (ZVar * ZExpr) list \<Rightarrow> (ZVar * ZExpr) list"
+fun rep_CSPRepSeq :: "ZName \<Rightarrow> ZExpr list \<Rightarrow> CAction"
 where
-  "bindingsVar lst Nil = Nil"
-| "bindingsVar lst [((va, x), b)] = (case (inListVar va lst) of
-                                        True \<Rightarrow> [((''v_'' @ va, x), (rename_ZExpr lst b))]
-                                      | False \<Rightarrow> [((va, x), (rename_ZExpr lst b))])"
-| "bindingsVar lst (((va, x), b) # xs) = (case (inListVar va lst) of
-                                             True \<Rightarrow> [((''v_'' @ va, x), (rename_ZExpr lst b))] @ (bindingsVar lst xs)
-                                           | False \<Rightarrow> [((va, x), (rename_ZExpr lst b))] @ (bindingsVar lst xs))"
+  "rep_CSPRepSeq a [x] = (CSPParAction a [x])"
+| "rep_CSPRepSeq a (x # xs) = CSPSeq (CSPParAction a [x]) (rep_CSPRepSeq a xs)"
 
  
-fun rename_vars_CParameter :: "string list \<Rightarrow> CParameter \<Rightarrow> CParameter"
+fun rep_CSPRepIntChoice :: "ZName \<Rightarrow> ZExpr list \<Rightarrow> CAction"
 where
-  "rename_vars_CParameter lst (ChanInp zn) = (ChanInp zn)"
-| "rename_vars_CParameter lst (ChanInpPred zn zp) = (ChanInpPred zn (rename_ZPred lst zp))"
-| "rename_vars_CParameter lst (ChanOutExp ze) = (ChanOutExp (rename_ZExpr lst ze))"
-| "rename_vars_CParameter lst (ChanDotExp ze) = (ChanDotExp (rename_ZExpr lst ze))"
+  "rep_CSPRepIntChoice a [x] = (CSPParAction a [x])"
+| "rep_CSPRepIntChoice a (x # xs) = CSPIntChoice (CSPParAction a [x]) (rep_CSPRepIntChoice a xs)"
 
  
-fun rename_vars_Comm :: "string list \<Rightarrow> Comm \<Rightarrow> Comm"
+fun rep_CSPRepExtChoice :: "ZName \<Rightarrow> ZExpr list \<Rightarrow> CAction"
 where
-  "rename_vars_Comm lst (ChanComm zn cpls) = (ChanComm zn (map (rename_vars_CParameter lst) cpls))"
-| "rename_vars_Comm lst (ChanGenComm zn zexprls cpls) = (ChanGenComm zn (map (rename_ZExpr lst) zexprls) (map (rename_vars_CParameter lst) cpls))"
+  "rep_CSPRepExtChoice a [x] = (CSPParAction a [x])"
+| "rep_CSPRepExtChoice a (x # xs) = CSPExtChoice (CSPParAction a [x]) (rep_CSPRepExtChoice a xs)"
 
  
-fun rename_vars_CAction :: "string list \<Rightarrow> CAction \<Rightarrow> CAction" and 
-    rename_vars_CCommand :: "string list \<Rightarrow> CCommand \<Rightarrow> CCommand" and 
-    rename_vars_CGActions :: "string list \<Rightarrow> CGActions \<Rightarrow> CGActions"
+fun rep_CSPRepParalNS :: "ZName \<Rightarrow> ZName \<Rightarrow> ZName \<Rightarrow> string \<Rightarrow> ZExpr list \<Rightarrow> CAction"
 where
-  "rename_vars_CAction lst (CActionCommand cmd) = (CActionCommand (rename_vars_CCommand lst cmd))"
-| "rename_vars_CAction lst (CActionName zn) = (CActionName zn)"
-| "rename_vars_CAction lst CSPSkip = CSPSkip"
-| "rename_vars_CAction lst CSPStop = CSPStop"
-| "rename_vars_CAction lst CSPChaos = CSPChaos"
-| "rename_vars_CAction lst (CSPCommAction c a) = (CSPCommAction (rename_vars_Comm lst c) (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPGuard zp a) = (CSPGuard (rename_ZPred lst zp) (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPSeq a1 a2) = (CSPSeq (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPExtChoice a1 a2) = (CSPExtChoice (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPIntChoice a1 a2) = (CSPIntChoice (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPNSParal ns1 cs ns2 a1 a2) = (CSPNSParal ns1 cs ns2 (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPParal cs a1 a2) = (CSPParal cs (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPNSInter ns1 ns2 a1 a2) = (CSPNSInter ns1 ns2 (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPInterleave a1 a2) = (CSPInterleave (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))"
-| "rename_vars_CAction lst (CSPHide a cs) = (CSPHide (rename_vars_CAction lst a) cs)"
-| "rename_vars_CAction lst (CSPParAction zn zexprls) = (CSPParAction zn (map (rename_ZExpr lst) zexprls))"
-| "rename_vars_CAction lst (CSPRenAction zn crpl) = (CSPRenAction zn (rename_vars_CReplace lst crpl))"
-| "rename_vars_CAction lst (CSPRecursion zn a) = (CSPRecursion zn (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPUnParAction zgf a zn) = (CSPUnParAction zgf (rename_vars_CAction lst a) zn)"
-| "rename_vars_CAction lst (CSPRepSeq zgf a) = (CSPRepSeq zgf (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepExtChoice zgf a) = (CSPRepExtChoice zgf (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepIntChoice zgf a) = (CSPRepIntChoice zgf (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepParalNS cs zgf ns a) = (CSPRepParalNS cs zgf ns (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepParal cs zgf a) = (CSPRepParal cs zgf (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepInterlNS zgf ns a) = (CSPRepInterlNS zgf ns (rename_vars_CAction lst a))"
-| "rename_vars_CAction lst (CSPRepInterl zgf a) = (CSPRepInterl zgf (rename_vars_CAction lst a))"
-| "rename_vars_CCommand lst (CAssign zvarls1 zexprls) = (CAssign zvarls1 (map (rename_ZExpr lst) zexprls))"
-| "rename_vars_CCommand lst (CIf ga) = (CIf (rename_vars_CGActions lst ga))"
-| "rename_vars_CCommand lst (CVarDecl zgf a) = (CVarDecl zgf (rename_vars_CAction lst a))"
-| "rename_vars_CCommand lst (CAssumpt znls zp1 zp2) = (CAssumpt znls (rename_ZPred lst zp1) zp2)"
-| "rename_vars_CCommand lst (CAssumpt1 znls zp) = (CAssumpt1 znls zp)"
-| "rename_vars_CCommand lst (CPrefix zp1 zp2) = (CPrefix (rename_ZPred lst zp1) zp2)"
-| "rename_vars_CCommand lst (CPrefix1 zp) = (CPrefix1 zp)"
-| "rename_vars_CCommand lst (CommandBrace zp) = (CommandBrace zp)"
-| "rename_vars_CCommand lst (CommandBracket zp) = (CommandBracket zp)"
-| "rename_vars_CCommand lst (CValDecl zgf a) = (CValDecl zgf (rename_vars_CAction lst a))"
-| "rename_vars_CCommand lst (CResDecl zgf a) = (CResDecl zgf (rename_vars_CAction lst a))"
-| "rename_vars_CCommand lst (CVResDecl zgf a) = (CVResDecl zgf (rename_vars_CAction lst a))"
-| "rename_vars_CGActions lst (CircGAction zp a) = (CircGAction (rename_ZPred lst zp) (rename_vars_CAction lst a))"
-| "rename_vars_CGActions lst (CircThenElse cga1 cga2) = (CircThenElse (rename_vars_CGActions lst cga1) (rename_vars_CGActions lst cga2))"
-| "rename_vars_CGActions lst (CircElse pa) = (CircElse pa)"
-
-fun get_chan_param :: "CParameter list \<Rightarrow> ZVar list"
-where
-  "get_chan_param Nil = Nil"
-| "get_chan_param [ChanDotExp (ZVar (x, _))] = [(x, Nil)]"
-| "get_chan_param [ChanOutExp (ZVar (x, _))] = [(x, Nil)]"
-| "get_chan_param [_] = Nil"
-| "get_chan_param ((ChanDotExp (ZVar (x, _))) # xs) = ([(x, Nil)] @ (get_chan_param xs))"
-| "get_chan_param ((ChanOutExp (ZVar (x, _))) # xs) = ([(x, Nil)] @ (get_chan_param xs))"
-| "get_chan_param (_ # xs) = (get_chan_param xs)"
+  "rep_CSPRepParalNS a _ _ _ [x] = (CSPParAction a [x])"
+| "rep_CSPRepParalNS a cs ns y (x # xs) = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (CSPParAction a [x]) (rep_CSPRepParalNS a cs ns y xs))"
 
  
-fun rep_CSPRepSeq
+fun rep_CSPRepInterlNS :: "ZName \<Rightarrow> ZName \<Rightarrow> string \<Rightarrow> ZExpr list \<Rightarrow> CAction"
 where
-  "rep_CSPRepSeq lst f a [x] = f lst (CSPParAction a [x])"
-| "rep_CSPRepSeq lst f a (x # xs) = CSPSeq (f lst (CSPParAction a [x])) (rep_CSPRepSeq lst f a xs)"
-
- 
-fun rep_CSPRepIntChoice
-where
-  "rep_CSPRepIntChoice lst f a [x] = f lst (CSPParAction a [x])"
-| "rep_CSPRepIntChoice lst f a (x # xs) = CSPIntChoice (f lst (CSPParAction a [x])) (rep_CSPRepIntChoice lst f a xs)"
-
- 
-fun rep_CSPRepExtChoice
-where
-  "rep_CSPRepExtChoice lst f a [x] = f lst (CSPParAction a [x])"
-| "rep_CSPRepExtChoice lst f a (x # xs) = CSPExtChoice (f lst (CSPParAction a [x])) (rep_CSPRepExtChoice lst f a xs)"
-
- 
-fun rep_CSPRepParalNS
-where
-  "rep_CSPRepParalNS lst f a _ _ _ [x] = f lst (CSPParAction a [x])"
-| "rep_CSPRepParalNS lst f a cs ns y (x # xs) = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (f lst (CSPParAction a [x])) (rep_CSPRepParalNS lst f a cs ns y xs))"
-
- 
-fun rep_CSPRepInterlNS
-where
-  "rep_CSPRepInterlNS lst f a _ _ [x] = f lst (CSPParAction a [x])"
-| "rep_CSPRepInterlNS lst f a ns y (x # xs) = (CSPNSInter (NSExprParam ns [x]) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (f lst (CSPParAction a [x])) (rep_CSPRepInterlNS lst f a ns y xs))"
-
- 
-fun mk_guard_pair
-where
-  "mk_guard_pair lst f [(g, a)] = (CircGAction g (f lst a))"
-| "mk_guard_pair lst f ((g, a) # ls) = (CircThenElse (CircGAction g (f lst a)) (mk_guard_pair lst f ls))"
-
- 
-fun make_set_com
-where
-  "make_set_com lst f [(x, Nil)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar ((get_proc_name x lst) @ (''_'' @ x), Nil)), ChanOutExp y]) (f lst c))"
-| "make_set_com lst f ((x, Nil) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar ((get_proc_name x lst) @ (''_'' @ x), Nil)), ChanOutExp y]) (make_set_com lst f xs ys c))"
+  "rep_CSPRepInterlNS a _ _ [x] = (CSPParAction a [x])"
+| "rep_CSPRepInterlNS a ns y (x # xs) = (CSPNSInter (NSExprParam ns [x]) (NSBigUnion (ZSetComp [Choose (y, Nil) (ZSetDisplay xs)] (Some (ZCall (ZVar (ns, Nil)) (ZVar (y, Nil)))))) (CSPParAction a [x]) (rep_CSPRepInterlNS a ns y xs))"
 
  
 fun delete_from_list
@@ -235,27 +153,63 @@ where
                                    | False \<Rightarrow> (v # (delete_from_list x va)))"
 
  
-fun setminus :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"
+fun setminus
 where
   "setminus Nil _ = Nil"
 | "setminus (v # va) Nil = (v # va)"
 | "setminus (v # va) (b # vb) = ((delete_from_list b (v # va)) @ (setminus (v # va) vb))"
 
  
+fun free_var_CAction :: "CAction \<Rightarrow> ZVar list" and 
+    free_var_comnd and 
+    free_var_if
+where
+  "free_var_CAction (CActionCommand c) = (free_var_comnd c)"
+| "free_var_CAction (CSPCommAction (ChanComm com xs) c) = ((get_chan_var xs) @ (free_var_CAction c))"
+| "free_var_CAction (CSPGuard p c) = ((free_var_ZPred p) @ (free_var_CAction c))"
+| "free_var_CAction (CSPSeq ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPExtChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPIntChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPParal cs ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPNSInter ns1 ns2 ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPInterleave ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
+| "free_var_CAction (CSPHide c cs) = (free_var_CAction c)"
+| "free_var_CAction (CSPRecursion nm c) = (free_var_CAction c)"
+| "free_var_CAction (CSPUnParAction lst c nm) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepSeq lst c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepExtChoice lst c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepIntChoice lst c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepParalNS cs lst ns c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepParal cs lst c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepInterlNS lst ns c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction (CSPRepInterl lst c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))"
+| "free_var_CAction _ = Nil"
+| "free_var_comnd (CAssign v e) = v"
+| "free_var_comnd (CIf ga) = free_var_if ga"
+| "free_var_comnd (CVarDecl z c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))"
+| "free_var_comnd (CAssumpt n p1 p2) = Nil"
+| "free_var_comnd (CAssumpt1 n p) = Nil"
+| "free_var_comnd (CPrefix p1 p2) = Nil"
+| "free_var_comnd (CPrefix1 p) = Nil"
+| "free_var_comnd (CommandBrace z) = (free_var_ZPred z)"
+| "free_var_comnd (CommandBracket z) = (free_var_ZPred z)"
+| "free_var_comnd (CValDecl z c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))"
+| "free_var_comnd (CResDecl z c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))"
+| "free_var_comnd (CVResDecl z c) = (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))"
+| "free_var_if (CircGAction p a) = ((free_var_ZPred p) @ (free_var_CAction a))"
+| "free_var_if (CircThenElse ga gb) = ((free_var_if ga) @ (free_var_if gb))"
+| "free_var_if (CircElse (CircusAction a)) = (free_var_CAction a)"
+| "free_var_if (CircElse (ParamActionDecl x (CircusAction a))) = (setminus (free_var_CAction a) (fvs free_var_ZGenFilt x))"
+
+ 
 fun member
 where
   "member x Nil = False"
-| "member x (b # y) = (if x = b then True else member x y)"
+| "member x (b # y) = (if  x= b then True else member x y)"
 
  
-fun intersect :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"
-where
-  "intersect Nil y = Nil"
-| "intersect (a # x) y = (if member a y then a # (intersect x y)
-                          else intersect x y)"
-
- 
-fun union :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a list"
+fun union
 where
   "union Nil y = y"
 | "union (a # x) y = (if (member a y) then (union x y)
@@ -268,50 +222,125 @@ where
 | "remdups (x # xs) = (if member x xs then remdups xs
                        else x # remdups xs)"
 
+ 
 fun elem_by :: "('a \<Rightarrow> 'a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'a list \<Rightarrow> bool"
 where
   "elem_by _ _ Nil = False"
-| "elem_by eq1 y (x # xs) = (eq1 y x | elem_by eq1 y xs)"
-
+| "elem_by eq0 y (x # xs) = (eq0 y x | elem_by eq0 y xs)"
 
  
-fun free_var_CAction :: "CAction \<Rightarrow> ZVar list" and 
-    free_var_comnd :: "CCommand \<Rightarrow> ZVar list" and 
-    free_var_if :: "CGActions \<Rightarrow> ZVar list"
+fun isPrefixOf :: "'a list \<Rightarrow> 'a list \<Rightarrow> bool"
 where
-  "free_var_CAction (CActionCommand c) = (free_var_comnd c)"
-| "free_var_CAction (CSPCommAction (ChanComm com xs) c) = ((get_chan_param xs) @ (free_var_CAction c))"
-| "free_var_CAction (CSPGuard p c) = ((free_var_ZPred p) @ (free_var_CAction c))"
-| "free_var_CAction (CSPSeq ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPExtChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPIntChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPParal cs ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPNSInter ns1 ns2 ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPInterleave ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPHide c cs) = (free_var_CAction c)"
-| "free_var_CAction (CSPRecursion nm c) = (free_var_CAction c)"
-| "free_var_CAction (CSPUnParAction lst c nm) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepSeq lst c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepExtChoice lst c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepIntChoice lst c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepParalNS cs lst ns c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepParal cs lst c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepInterlNS lst ns c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction (CSPRepInterl lst c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst)"
-| "free_var_CAction _ = Nil"
-| "free_var_comnd (CAssign v e) = v"
-| "free_var_comnd (CIf ga) = free_var_if ga"
-| "free_var_comnd (CVarDecl z c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt z)"
-| "free_var_comnd (CommandBrace z) = (free_var_ZPred z)"
-| "free_var_comnd (CommandBracket z) = (free_var_ZPred z)"
-| "free_var_comnd (CValDecl z c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt z)"
-| "free_var_comnd (CResDecl z c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt z)"
-| "free_var_comnd (CVResDecl z c) = setminus (free_var_CAction c) (fvs free_var_ZGenFilt z)"
-| "free_var_comnd _ = Nil"
-| "free_var_if (CircGAction p a) = ((free_var_ZPred p) @ (free_var_CAction a))"
-| "free_var_if (CircThenElse ga gb) = ((free_var_if ga) @ (free_var_if gb))"
-| "free_var_if (CircElse (CircusAction a)) = (free_var_CAction a)"
-| "free_var_if (CircElse (ParamActionDecl x (CircusAction a))) = setminus (free_var_CAction a) (fvs free_var_ZGenFilt x)"
+  "isPrefixOf Nil _ = True"
+| "isPrefixOf _ Nil = False"
+| "isPrefixOf (x # xs) (y # ys) = (x= y & isPrefixOf xs ys)"
+
  
+fun get_ZVar_st
+where
+  "get_ZVar_st (a, x) = (case (isPrefixOf ''st_var_'' a) of
+                            True \<Rightarrow> [a]
+                          | _ \<Rightarrow> Nil)"
+
+ 
+fun is_ZVar_st
+where
+  "is_ZVar_st a = isPrefixOf ''st_var_'' a"
+
+ 
+fun rename_ZExpr :: "ZExpr \<Rightarrow> ZExpr"
+where
+  "rename_ZExpr (ZVar (va, x)) = (case (is_ZVar_st va) of
+                                     True \<Rightarrow> (ZVar (''v_'' @ va, x))
+                                   | False \<Rightarrow> (ZVar (va, x)))"
+| "rename_ZExpr (ZInt zi) = (ZInt zi)"
+| "rename_ZExpr (ZCall xpr1 xpr2) = (ZCall (rename_ZExpr xpr1) (rename_ZExpr xpr2))"
+
+ 
+fun bindingsVar :: "(ZVar * ZExpr) list \<Rightarrow> (ZVar * ZExpr) list"
+where
+  "bindingsVar Nil = Nil"
+| "bindingsVar [((va, x), b)] = (case (is_ZVar_st va) of
+                                    True \<Rightarrow> [((''v_'' @ va, x), (rename_ZExpr b))]
+                                  | False \<Rightarrow> [((va, x), (rename_ZExpr b))])"
+| "bindingsVar (((va, x), b) # xs) = (case (is_ZVar_st va) of
+                                         True \<Rightarrow> [((''v_'' @ va, x), (rename_ZExpr b))] @ (bindingsVar xs)
+                                       | False \<Rightarrow> [((va, x), (rename_ZExpr b))] @ (bindingsVar xs))"
+
+ 
+fun rename_vars_CParameter :: "CParameter \<Rightarrow> CParameter"
+where
+  "rename_vars_CParameter (ChanInp zn) = (ChanInp zn)"
+| "rename_vars_CParameter (ChanInpPred zn zp) = (ChanInpPred zn (rename_ZPred zp))"
+| "rename_vars_CParameter (ChanOutExp ze) = (ChanOutExp (rename_ZExpr ze))"
+| "rename_vars_CParameter (ChanDotExp ze) = (ChanDotExp (rename_ZExpr ze))"
+
+ 
+fun rename_vars_Comm :: "Comm \<Rightarrow> Comm"
+where
+  "rename_vars_Comm (ChanComm zn cpls) = (ChanComm zn (map rename_vars_CParameter cpls))"
+| "rename_vars_Comm (ChanGenComm zn zexprls cpls) = (ChanGenComm zn (map rename_ZExpr zexprls) (map rename_vars_CParameter cpls))"
+
+ 
+fun rename_vars_Zvar
+where
+  "rename_vars_Zvar (a, x) = (case (isPrefixOf ''st_var_'' a) of
+                                 True \<Rightarrow> ((join_name ''v'' a), x)
+                               | _ \<Rightarrow> (a, x))"
+
+ 
+fun rename_vars_CAction :: "CAction \<Rightarrow> CAction" and 
+    rename_vars_CCommand :: "CCommand \<Rightarrow> CCommand" and 
+    rename_vars_CGActions :: "CGActions \<Rightarrow> CGActions"
+where
+  "rename_vars_CAction (CActionCommand cmd) = (CActionCommand (rename_vars_CCommand cmd))"
+| "rename_vars_CAction (CActionName zn) = (CActionName zn)"
+| "rename_vars_CAction CSPSkip = CSPSkip"
+| "rename_vars_CAction CSPStop = CSPStop"
+| "rename_vars_CAction CSPChaos = CSPChaos"
+| "rename_vars_CAction (CSPCommAction c a) = (CSPCommAction (rename_vars_Comm c) (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPGuard zp a) = (CSPGuard (rename_ZPred zp) (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPSeq a1 a2) = (CSPSeq (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPExtChoice a1 a2) = (CSPExtChoice (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPIntChoice a1 a2) = (CSPIntChoice (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPNSParal ns1 cs ns2 a1 a2) = (CSPNSParal ns1 cs ns2 (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPParal cs a1 a2) = (CSPParal cs (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPNSInter ns1 ns2 a1 a2) = (CSPNSInter ns1 ns2 (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPInterleave a1 a2) = (CSPInterleave (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction (CSPHide a cs) = (CSPHide (rename_vars_CAction a) cs)"
+| "rename_vars_CAction (CSPParAction zn zexprls) = (CSPParAction zn (map rename_ZExpr zexprls))"
+| "rename_vars_CAction (CSPRenAction zn crpl) = (CSPRenAction zn crpl)"
+| "rename_vars_CAction (CSPRecursion zn a) = (CSPRecursion zn (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPUnParAction zgf a zn) = (CSPUnParAction zgf (rename_vars_CAction a) zn)"
+| "rename_vars_CAction (CSPRepSeq zgf a) = (CSPRepSeq zgf (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepExtChoice zgf a) = (CSPRepExtChoice zgf (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepIntChoice zgf a) = (CSPRepIntChoice zgf (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepParalNS cs zgf ns a) = (CSPRepParalNS cs zgf ns (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepParal cs zgf a) = (CSPRepParal cs zgf (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepInterlNS zgf ns a) = (CSPRepInterlNS zgf ns (rename_vars_CAction a))"
+| "rename_vars_CAction (CSPRepInterl zgf a) = (CSPRepInterl zgf (rename_vars_CAction a))"
+| "rename_vars_CCommand (CAssign zvarls1 zexprls) = (CAssign (map rename_vars_Zvar zvarls1) (map rename_ZExpr zexprls))"
+| "rename_vars_CCommand (CIf ga) = (CIf (rename_vars_CGActions ga))"
+| "rename_vars_CCommand (CVarDecl zgf a) = (CVarDecl zgf (rename_vars_CAction a))"
+| "rename_vars_CCommand (CAssumpt znls zp1 zp2) = (CAssumpt znls (rename_ZPred zp1) zp2)"
+| "rename_vars_CCommand (CAssumpt1 znls zp) = (CAssumpt1 znls zp)"
+| "rename_vars_CCommand (CPrefix zp1 zp2) = (CPrefix (rename_ZPred zp1) zp2)"
+| "rename_vars_CCommand (CPrefix1 zp) = (CPrefix1 zp)"
+| "rename_vars_CCommand (CommandBrace zp) = (CommandBrace zp)"
+| "rename_vars_CCommand (CommandBracket zp) = (CommandBracket zp)"
+| "rename_vars_CCommand (CValDecl zgf a) = (CValDecl zgf (rename_vars_CAction a))"
+| "rename_vars_CCommand (CResDecl zgf a) = (CResDecl zgf (rename_vars_CAction a))"
+| "rename_vars_CCommand (CVResDecl zgf a) = (CVResDecl zgf (rename_vars_CAction a))"
+| "rename_vars_CGActions (CircGAction zp a) = (CircGAction (rename_ZPred zp) (rename_vars_CAction a))"
+| "rename_vars_CGActions (CircThenElse cga1 cga2) = (CircThenElse (rename_vars_CGActions cga1) (rename_vars_CGActions cga2))"
+| "rename_vars_CGActions (CircElse pa) = (CircElse pa)"
+
+ 
+fun intersect
+where
+  "intersect Nil y = Nil"
+| "intersect (a # x) y = (if member a y then a # (intersect x y)
+                          else intersect x y)"
+
+
 end

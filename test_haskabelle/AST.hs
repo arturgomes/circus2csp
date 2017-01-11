@@ -35,6 +35,8 @@ data ZExpr
   -- These are roughly ordered by how 'large' a set they typically represent.
   | ZSetDisplay [ZExpr]   -- set displays, like {1,2,4}
   | ZSeqDisplay [ZExpr]   -- sequence displays, like <1,2,4>
+  | ZTuple [ZExpr]      -- (a,b,c)
+  | ZCross [ZExpr]        -- a \cross b \cross c
   -- | ZFSet ZFSet           -- all elements must be in canonical form.
   ---------- Z constructs that are not necessarily sets ----------
   | ZCall ZExpr ZExpr                 -- function call:  f a
@@ -44,8 +46,14 @@ data ZPred
   = ZFalse{reason::[ZPred]}
   | ZTrue{reason::[ZPred]}
   | ZAnd ZPred ZPred
+  | ZPSchema ZSExpr             -- removed in Unfold
   deriving (Eq,Ord,Show)
-
+data ZSExpr
+  = ZSchema [ZGenFilt]
+  deriving (Eq,Ord,Show)
+data ZSName                     -- schema names including prefix.
+  = ZSPlain String | ZSDelta String | ZSXi String
+  deriving (Eq,Ord,Show)
 {-
 \end{code}
 
@@ -54,6 +62,7 @@ data ZPred
 -}
 data ZPara
   = Process ProcDecl            -- ProcDecl
+  | ZSchemaDef ZSName ZSExpr     -- \begin{schema}{XXX}...\end{schema}
   deriving (Eq,Ord,Show)
 
 type ZSpec = [ZPara]

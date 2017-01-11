@@ -2,38 +2,75 @@ include "sequence_aux.csp"
 include "function_aux.csp"
 
 
-maxbuff = NatValue
+maxbuff = 3
 maxring = (1 - maxbuff)
-Value = NatValue
-CellId = {1..maxring}
+Value = {0..2}
+CellId = {1..10}
 datatype Direction = req | ack
-channel input, output : Value
-channel write, read, rdi, wrti : CellId.Direction.Value
-channel rrd, wrt : Direction.Value
-CtrI = {| rdi,wrti |}
-datatype NAME = v | top | bot | cache | size
-BINDING = 
-channel mget, mset : NAME.UNIVER
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = VAL.Value | Nat.NatValue | CEL.CellId
+
+--------------------------------
+--Conversions
+subtype U_VAL = VAL.Value
+subtype U_NAT = Nat.NatValue
+subtype U_CEL = CEL.CellId
+
+value(VAL.v) = v
+value(Nat.v) = v
+value(CEL.v) = v
+
+type(x) =
+	 if x == st_var_Controller_st_var_Controller_cache then U_VAL
+	 else if x == st_var_Controller_st_var_Controller_size then U_NAT
+	 else if x == st_var_Controller_st_var_Controller_top then U_CEL
+	 else if x == st_var_Controller_st_var_Controller_bot then U_CEL
+	 else if x == st_var_RingCell_st_var_RingCell_v then U_VAL
+	 else {}
+
+tag(x) =
+	 if x == st_var_Controller_st_var_Controller_cache then VAL
+	 else if x == st_var_Controller_st_var_Controller_size then Nat
+	 else if x == st_var_Controller_st_var_Controller_top then CEL
+	 else if x == st_var_Controller_st_var_Controller_bot then CEL
+	 else if x == st_var_RingCell_st_var_RingCell_v then VAL
+	 else Nat
+
+
+
+datatype NAME = st_var_Controller_st_var_Controller_cache | st_var_Controller_st_var_Controller_size | st_var_Controller_st_var_Controller_top | st_var_Controller_st_var_Controller_bot | st_var_RingCell_st_var_RingCell_v
+--------------------------------
+-- All possible bidings
+NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
+BINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
+
+channel mget, mset : NAME.UNIVERSE
 channel terminate
-MEMI = {| mset,mget,terminate |}
+MEMi = {| mset,mget,terminate |}
 
-RingCell = 
-	let Memory(b) =( ( ( [] n : dom(b) @ mget.n?vn:(type(n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.tag(n)?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
-	within  let restrict(bs) = dres(bs,{v,top,bot,cache,size})
+DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
+
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+	let Memory(b) =( ( ( [] n : dom(b) @ mget.n.apply(b,n) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.tag(n)?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
+	within  let restrict(bs) = dres(bs,{st_var_Controller_st_var_Controller_cache,st_var_Controller_st_var_Controller_size,st_var_Controller_st_var_Controller_top,st_var_Controller_st_var_Controller_bot,st_var_RingCell_st_var_RingCell_v})
 		within
-		|~| b:BINDINGS @ Memorise(( ( ( ( |~| v : Value @ mget.v?vv:(type(v)) -> mset.v.tag(v).vv -> SKIP ) ; ( let X = ( mget.v?vv:(type(v)) -> ( rd.req?dumb -> rd.ack.value(vv) -> SKIP [] wrt.req?x -> mset.v.tag(v).x -> wrt.ack?dumb -> SKIP) ; X ) within X ) ) [| Union({{| c |} | c <- MEMI }) |] Memory(b) )\Union({{| c |} | c <- MEMI }) ), restrict(b))
-
+		|~| b:BINDINGS @ Memorise(( mget.st_var_Controller_cache?v_st_var_Controller_cache:(type(st_var_Controller_cache)) -> mget.st_var_Controller_size?v_st_var_Controller_size:(type(st_var_Controller_size)) -> mget.st_var_Controller_top?v_st_var_Controller_top:(type(st_var_Controller_top)) -> mget.st_var_Controller_bot?v_st_var_Controller_bot:(type(st_var_Controller_bot)) -> mset.v_st_var_Controller_cache.tag(v_st_var_Controller_cache).0 -> mset.v_st_var_Controller_size.tag(v_st_var_Controller_size).0 -> mset.v_st_var_Controller_top.tag(v_st_var_Controller_top).1 -> mset.v_st_var_Controller_bot.tag(v_st_var_Controller_bot).1 -> SKIP ; ( let X = ( ( mget.st_var_Controller_size?v_st_var_Controller_size:(type(st_var_Controller_size)) -> mget.maxbuff?v_maxbuff:(type(maxbuff)) -> mget.st_var_Controller_cache?v_st_var_Controller_cache:(type(st_var_Controller_cache)) -> mget.st_var_Controller_top?v_st_var_Controller_top:(type(st_var_Controller_top)) -> mget.req?v_req:(type(req)) -> mget.x?v_x:(type(x)) -> mget.ack?v_ack:(type(ack)) -> ( ( v_st_var_Controller_size < maxbuff & input?x -> ( v_st_var_Controller_size == 0 & ( mset.v_st_var_Controller_cache.tag(v_st_var_Controller_cache).x -> SKIP ; mset.v_st_var_Controller_size.tag(v_st_var_Controller_size).1 -> SKIP ) ) ) [] ( v_st_var_Controller_size > 0 & write.v_st_var_Controller_top.req.x -> write.v_st_var_Controller_top.ack?dumb -> ( mset.v_st_var_Controller_size.tag(v_st_var_Controller_size).(1 + v_st_var_Controller_size) -> SKIP ; mset.v_st_var_Controller_top.tag(v_st_var_Controller_top).(1 + maxring % v_st_var_Controller_top) -> SKIP ) )) [] mget.st_var_Controller_size?v_st_var_Controller_size:(type(st_var_Controller_size)) -> mget.st_var_Controller_cache?v_st_var_Controller_cache:(type(st_var_Controller_cache)) -> mget.st_var_Controller_bot?v_st_var_Controller_bot:(type(st_var_Controller_bot)) -> mget.req?v_req:(type(req)) -> mget.ack?v_ack:(type(ack)) -> mget.dumb?v_dumb:(type(dumb)) -> ( ( v_st_var_Controller_size > 0 & output.v_st_var_Controller_cache -> ( v_st_var_Controller_size > 1 & ( ( |~| dumb : Value @ read.v_st_var_Controller_bot.req.dumb -> read.v_st_var_Controller_bot.ack?x -> SKIP ) ; ( mset.v_st_var_Controller_size.tag(v_st_var_Controller_size).(1 - v_st_var_Controller_size) -> SKIP ; mset.v_st_var_Controller_bot.tag(v_st_var_Controller_bot).(1 + maxring % v_st_var_Controller_bot) -> SKIP ) ) ) ) [] ( v_st_var_Controller_size == 1 & mset.v_st_var_Controller_size.tag(v_st_var_Controller_size).0 -> SKIP ))) ; X ) within X ) ), restrict(b))
 
 
 DRing = |||i : CellId @ IRCell(i)
 
-Controller = 
-	let Memory(b) =( ( ( [] n : dom(b) @ mget.n?vn:(type(n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.tag(n)?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
-	within  let restrict(bs) = dres(bs,{v,top,bot,cache,size})
+IRCell(i) = RingCell[[rrd <- rdii, wrt <- wrtii]]
+
+RingCell = 
+	let Memory(b) =( ( ( [] n : dom(b) @ mget.n.apply(b,n) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n.tag(n)?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
+	within  let restrict(bs) = dres(bs,{st_var_Controller_st_var_Controller_cache,st_var_Controller_st_var_Controller_size,st_var_Controller_st_var_Controller_top,st_var_Controller_st_var_Controller_bot,st_var_RingCell_st_var_RingCell_v})
 		within
-		|~| b:BINDINGS @ Memorise(( ( mget.cache?vcache:(type(cache)) -> mget.size?vsize:(type(size)) -> mget.top?vtop:(type(top)) -> mget.bot?vbot:(type(bot)) -> mset.cache.tag(cache).(0) -> mset.size.tag(size).(0) -> mset.top.tag(top).(1) -> mset.bot.tag(bot).(1) -> ( let X = ( ( mget.cache?vcache:(type(cache)) -> mget.size?vsize:(type(size)) -> mget.top?vtop:(type(top)) -> mget.bot?vbot:(type(bot)) -> ( vsize < maxbuff & input?x -> ( ( vsize == 0 & mset.cache.tag(cache).x -> mset.size.tag(size).(1) -> SKIP ) [] ( vsize > 0 & write.vtop.req.x -> write.vtop.ack?dumb -> mset.size.tag(size).((1 + vsize)) -> mset.top.tag(top).(vmaxring % vtop) -> SKIP )) ) [] ( vsize > 0 & output.value(vcache) -> ( ( vsize > 1 & ( ( |~| dumb : Value @ read.vbot.req.dumb -> read.vbot.ack?x -> mset.cache.tag(cache).x -> SKIP ) ; mset.size.tag(size).((1 - vsize)) -> mset.bot.tag(bot).((1 + maxring % vbot)) -> SKIP ) ) [] ( vsize == 1 & mset.size.tag(size).(0) -> SKIP )) )) ; X ) within X ) [| Union({{| c |} | c <- MEMI }) |] Memory(b) )\Union({{| c |} | c <- MEMI }) ), restrict(b))
+		|~| b:BINDINGS @ Memorise(( ( |~| x : Value @ mget.st_var_RingCell_v?v_st_var_RingCell_v:(type(st_var_RingCell_v)) -> mset.v_st_var_RingCell_v.tag(v_st_var_RingCell_v).x -> SKIP ) ; ( let X = ( mget.req?v_req:(type(req)) -> mget.st_var_RingCell_v?v_st_var_RingCell_v:(type(st_var_RingCell_v)) -> mget.ack?v_ack:(type(ack)) -> mget.x?v_x:(type(x)) -> ( ( wrt.req?x -> mset.v_st_var_RingCell_v.tag(v_st_var_RingCell_v).x -> SKIP ; wrt.ack.x -> SKIP ) [] rrd.req?dumb -> rrd.ack.v_st_var_RingCell_v -> SKIP) ; X ) within X ) ), restrict(b))
 
-
-ControllerR = Controller[[read <- rdi, write <- wrti]]
-
-DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
+CtrI = {| rdi,wrti |}
+channel rrd, wrt : Direction.Value
+channel write, read, rdi, wrti : CellId.Direction.Value
+channel input, output : Value

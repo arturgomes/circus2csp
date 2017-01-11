@@ -4,8 +4,8 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 \ignore{
 \begin{code}
 module DefSets where
-import Data.List
-import Data.Text hiding (map,concat,all)
+import Data.Char
+-- import Data.Text hiding (map,concat,all,take)
 import AST
 \end{code}
 }
@@ -68,7 +68,7 @@ free_var_ZExpr(ZFuncSet{domset=d, ranset=r, is_function=f, is_total=t, is_onto=o
 free_var_ZExpr(ZSetComp gfls ma)
 	= error "Don't know what free vars of ZSetComp are right now. Check back later"
 free_var_ZExpr(ZLambda [Choose v e] a)
- = (free_var_ZExpr a) \\ [v]
+ = (setminus (free_var_ZExpr a) [v])
 free_var_ZExpr(ZLambda _ a)
  = []
 free_var_ZExpr(ZESchema a)
@@ -90,13 +90,13 @@ free_var_ZExpr(ZStrange zs )
 free_var_ZExpr(ZMu zgls mex)
 	= error "Don't know what free vars of ZMu are right now. Check back later"
 free_var_ZExpr(ZELet ves pr)
-	= ((free_var_ZExpr(pr)) \\ (map fst ves)) ++ fvs free_var_ZExpr (map snd ves)
+	=  (setminus (free_var_ZExpr(pr)) (map fst ves)) ++ fvs free_var_ZExpr (map snd ves)
 free_var_ZExpr(ZIf_Then_Else zp ex ex1)
 	= error "Don't know what free vars of ZIf_Then_Else are right now. Check back later"
 -- free_var_ZExpr(ZIf_Then_Else zp ex ex1)
  -- = free_var_ZPred zp ++ free_var_ZExpr ex ++ free_var_ZExpr ex1
 free_var_ZExpr(ZSelect ex zv)
-	= free_var_ZExpr ex ++ [zv] 
+	= free_var_ZExpr ex ++ [zv]
 free_var_ZExpr(ZTheta zsx)
 	= error "Don't know what free vars of ZTheta are right now. Check back later"
 
@@ -116,15 +116,15 @@ free_var_ZPred (ZIff a b)
 free_var_ZPred (ZNot a)
  = free_var_ZPred a
 free_var_ZPred (ZExists [Choose v e] a)
- = (free_var_ZPred a) \\ [v]
+ = (setminus (free_var_ZPred a) [v])
 free_var_ZPred (ZExists ls a)
 	= error "Don't know what free vars of ZExists are right now. Check back later"
 free_var_ZPred (ZExists_1 [Choose v e] a)
- = (free_var_ZPred a) \\ [v]
+ = (setminus (free_var_ZPred a) [v])
 free_var_ZPred (ZExists_1 ls a)
 	= error "Don't know what free vars of ZExists_1 are right now. Check back later"
 free_var_ZPred (ZForall [Choose v e] a)
- = (free_var_ZPred a) \\ [v]
+ = (setminus (free_var_ZPred a) [v])
 free_var_ZPred (ZForall ls a)
 	= error "Don't know what free vars of ZForall are right now. Check back later"
 free_var_ZPred (ZPLet ls a )
@@ -165,7 +165,7 @@ free_var_CAction (CSPStop)
 free_var_CAction (CSPChaos)
  = []
 free_var_CAction (CSPCommAction (ChanComm com xs) c)
- = (get_chan_param xs)++(free_var_CAction c)
+ = (get_chan_var xs)++(free_var_CAction c)
 free_var_CAction (CSPGuard p c)
  = (free_var_ZPred p)++(free_var_CAction c)
 free_var_CAction (CSPSeq ca cb)
@@ -191,48 +191,48 @@ free_var_CAction (CSPRenAction nm cr)
 free_var_CAction (CSPRecursion nm c)
  = (free_var_CAction c)
 free_var_CAction (CSPUnParAction lst c nm)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepSeq lst c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepExtChoice lst c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepIntChoice lst c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepParalNS cs lst ns c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepParal cs lst c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepInterlNS lst ns c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 free_var_CAction (CSPRepInterl lst c)
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt lst)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
 \end{code}
 
 \begin{code}
-free_var_comnd (CAssign v e) 
+free_var_comnd (CAssign v e)
  = v
-free_var_comnd (CIf ga) 
+free_var_comnd (CIf ga)
  = free_var_if ga
-free_var_comnd (CVarDecl z c) 
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
-free_var_comnd (CAssumpt n p1 p2) 
+free_var_comnd (CVarDecl z c)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
+free_var_comnd (CAssumpt n p1 p2)
  = []
-free_var_comnd (CAssumpt1 n p) 
+free_var_comnd (CAssumpt1 n p)
  = []
-free_var_comnd (CPrefix p1 p2) 
+free_var_comnd (CPrefix p1 p2)
  = []
-free_var_comnd (CPrefix1 p) 
+free_var_comnd (CPrefix1 p)
  = []
-free_var_comnd (CommandBrace z) 
+free_var_comnd (CommandBrace z)
  = (free_var_ZPred z)
-free_var_comnd (CommandBracket z) 
+free_var_comnd (CommandBracket z)
  = (free_var_ZPred z)
-free_var_comnd (CValDecl z c) 
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
-free_var_comnd (CResDecl z c) 
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
-free_var_comnd (CVResDecl z c) 
- = (free_var_CAction c) \\ (fvs free_var_ZGenFilt z)
+free_var_comnd (CValDecl z c)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
+free_var_comnd (CResDecl z c)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
+free_var_comnd (CVResDecl z c)
+ =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
 \end{code}
 \begin{code}
 free_var_ZGenFilt (Include s) = []
@@ -248,10 +248,10 @@ free_var_if (CircThenElse ga gb)
 free_var_if (CircElse (CircusAction a))
  = (free_var_CAction a)
 free_var_if (CircElse (ParamActionDecl x (CircusAction a)))
- = (free_var_CAction a) \\ (fvs free_var_ZGenFilt x)
+ =  (setminus (free_var_CAction a) (fvs free_var_ZGenFilt x))
 \end{code}
 \subsection{Expanding the main action}
-\begin{code}   
+\begin{code}
 get_main_action :: [PPar] -> CAction -> CAction
 get_main_action lst (CActionSchemaExpr x)
  = (CActionSchemaExpr x)
@@ -311,29 +311,29 @@ get_main_action lst (CSPRepInterl lsta c)
  = (CSPRepInterl lsta (get_main_action lst c))
 \end{code}
 \begin{code}
-get_main_action_comnd lst (CAssign v e) 
+get_main_action_comnd lst (CAssign v e)
  = (CAssign v e)
-get_main_action_comnd lst (CIf ga) 
+get_main_action_comnd lst (CIf ga)
  = (CIf (get_if lst ga))
-get_main_action_comnd lst (CVarDecl z a) 
+get_main_action_comnd lst (CVarDecl z a)
  = (CVarDecl z (get_main_action lst a))
-get_main_action_comnd lst (CAssumpt n p1 p2) 
+get_main_action_comnd lst (CAssumpt n p1 p2)
  = (CAssumpt n p1 p2)
-get_main_action_comnd lst (CAssumpt1 n p) 
+get_main_action_comnd lst (CAssumpt1 n p)
  = (CAssumpt1 n p)
-get_main_action_comnd lst (CPrefix p1 p2) 
+get_main_action_comnd lst (CPrefix p1 p2)
  = (CPrefix p1 p2)
-get_main_action_comnd lst (CPrefix1 p) 
+get_main_action_comnd lst (CPrefix1 p)
  = (CPrefix1 p)
-get_main_action_comnd lst (CommandBrace p) 
+get_main_action_comnd lst (CommandBrace p)
  = (CommandBrace p)
-get_main_action_comnd lst (CommandBracket p) 
+get_main_action_comnd lst (CommandBracket p)
  = (CommandBracket p)
-get_main_action_comnd lst (CValDecl z a) 
+get_main_action_comnd lst (CValDecl z a)
  = (CValDecl z (get_main_action lst a))
-get_main_action_comnd lst (CResDecl z a) 
+get_main_action_comnd lst (CResDecl z a)
  = (CResDecl z (get_main_action lst a))
-get_main_action_comnd lst (CVResDecl z a) 
+get_main_action_comnd lst (CVResDecl z a)
  = (CVResDecl z (get_main_action lst a))
 \end{code}
 
@@ -349,8 +349,8 @@ get_if lst (CircElse (ParamActionDecl x (CircusAction a)))
 \end{code}
 
 \begin{code}
-get_action _ [] = error "Action list is empty" 
-get_action name [(CParAction n (CircusAction a))] 
+get_action _ [] = error "Action list is empty"
+get_action name [(CParAction n (CircusAction a))]
  = case name == n of
    True -> a
    False -> error "Action not found"
@@ -362,18 +362,34 @@ get_action name ((CParAction n (CircusAction a)):xs)
 \end{code}
 
 \begin{code}
-get_chan_param :: [CParameter] -> [ZVar]
-get_chan_param [] = [] 
-get_chan_param [ChanDotExp (ZVar (x,_))] 
+get_chan_var :: [CParameter] -> [ZVar]
+get_chan_var [] = []
+get_chan_var [ChanDotExp (ZVar (x,_))]
  = [(x,[])]
-get_chan_param [ChanOutExp (ZVar (x,_))] 
+get_chan_var [ChanOutExp (ZVar (x,_))]
  = [(x,[])]
-get_chan_param [_] 
+get_chan_var [_]
  = []
-get_chan_param ((ChanDotExp (ZVar (x,_))):xs) 
- = [(x,[])]++(get_chan_param xs)
-get_chan_param ((ChanOutExp (ZVar (x,_))):xs) 
- = [(x,[])]++(get_chan_param xs)
+get_chan_var ((ChanDotExp (ZVar (x,_))):xs)
+ = [(x,[])]++(get_chan_var xs)
+get_chan_var ((ChanOutExp (ZVar (x,_))):xs)
+ = [(x,[])]++(get_chan_var xs)
+get_chan_var (_:xs) = (get_chan_var xs)
+\end{code}
+
+\begin{code}
+get_chan_param :: [CParameter] -> [ZExpr]
+get_chan_param [] = []
+get_chan_param [ChanDotExp (ZVar (x,_))]
+ = [ZVar (x,[])]
+get_chan_param [ChanOutExp (ZVar (x,_))]
+ = [ZVar (x,[])]
+get_chan_param [_]
+ = []
+get_chan_param ((ChanDotExp (ZVar (x,_))):xs)
+ = [ZVar (x,[])]++(get_chan_param xs)
+get_chan_param ((ChanOutExp (ZVar (x,_))):xs)
+ = [ZVar (x,[])]++(get_chan_param xs)
 get_chan_param (_:xs) = (get_chan_param xs)
 \end{code}
 
@@ -397,125 +413,129 @@ inListVar x (va:vst)
   _ -> inListVar x vst
 
 \end{code}
+\begin{code}
+is_st_var ('s':'t':'_':'v':'a':'r':'_':xs) = True
+is_st_var _ = False
+\end{code}
+
 
 \begin{code}
-bindingsVar lst []
+bindingsVar []
  = []
-bindingsVar lst [((va,x),b)]
- = case (inListVar va lst) of
-   True -> [(("v_"++va,x),(rename_ZExpr lst b))]
-   False -> [((va,x),(rename_ZExpr lst b))]
-bindingsVar lst (((va,x),b):xs) 
- = case (inListVar va lst) of
-   True -> [(("v_"++va,x),(rename_ZExpr lst b))]++(bindingsVar lst xs)
-   False -> [((va,x),(rename_ZExpr lst b))]++(bindingsVar lst xs)
-
+bindingsVar [((va,x),b)]
+ = case (is_st_var va) of
+   True -> [(("v_"++va,x),(rename_ZExpr b))]
+   False -> [((va,x),(rename_ZExpr b))]
+bindingsVar (((va,x),b):xs)
+ = case (is_st_var va) of
+   True -> [(("v_"++va,x),(rename_ZExpr b))]++(bindingsVar xs)
+   False -> [((va,x),(rename_ZExpr b))]++(bindingsVar xs)
 \end{code}
 
 \begin{code}
-rename_ZVar lst (va,x)
-  = case (inListVar va lst) of
+rename_ZVar (va,x)
+  = case (is_st_var va) of
      True -> ("v_"++va,x)
      False -> (va,x)
-rename_ZExpr lst (ZVar (va,x))
- = case (inListVar va lst) of
+rename_ZExpr (ZVar (va,x))
+ = case (is_st_var va) of
    True -> (ZVar ("v_"++va,x))
    False -> (ZVar (va,x))
-rename_ZExpr lst (ZInt zi)
+rename_ZExpr (ZInt zi)
  = (ZInt zi)
-rename_ZExpr lst (ZGiven gv)
+rename_ZExpr (ZGiven gv)
  = (ZGiven gv)
-rename_ZExpr lst (ZFree0 va)
+rename_ZExpr (ZFree0 va)
  = (ZFree0 va)
-rename_ZExpr lst (ZFree1 va xpr)
- = (ZFree1 va (rename_ZExpr lst xpr))
-rename_ZExpr lst (ZTuple xprlst)
- = (ZTuple (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZBinding xs)
- = (ZBinding (bindingsVar lst xs))
-rename_ZExpr lst (ZSetDisplay xprlst)
- = (ZSetDisplay (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZSeqDisplay xprlst)
- = (ZSeqDisplay (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZFSet zf)
+rename_ZExpr (ZFree1 va xpr)
+ = (ZFree1 va (rename_ZExpr xpr))
+rename_ZExpr (ZTuple xprlst)
+ = (ZTuple (map rename_ZExpr xprlst))
+rename_ZExpr (ZBinding xs)
+ = (ZBinding (bindingsVar xs))
+rename_ZExpr (ZSetDisplay xprlst)
+ = (ZSetDisplay (map rename_ZExpr xprlst))
+rename_ZExpr (ZSeqDisplay xprlst)
+ = (ZSeqDisplay (map rename_ZExpr xprlst))
+rename_ZExpr (ZFSet zf)
  = (ZFSet zf)
-rename_ZExpr lst (ZIntSet i1 i2)
+rename_ZExpr (ZIntSet i1 i2)
  = (ZIntSet i1 i2)
-rename_ZExpr lst (ZGenerator zrl xpr)
- = (ZGenerator zrl (rename_ZExpr lst xpr))
-rename_ZExpr lst (ZCross xprlst)
- = (ZCross (map (rename_ZExpr lst) xprlst))
-rename_ZExpr lst (ZFreeType va lst1)
+rename_ZExpr (ZGenerator zrl xpr)
+ = (ZGenerator zrl (rename_ZExpr xpr))
+rename_ZExpr (ZCross xprlst)
+ = (ZCross (map rename_ZExpr xprlst))
+rename_ZExpr (ZFreeType va lst1)
  = (ZFreeType va lst1)
-rename_ZExpr lst (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
- = (ZPowerSet{baseset=(rename_ZExpr lst xpr), is_non_empty=b1, is_finite=b2})
-rename_ZExpr lst (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
- = (ZFuncSet{ domset=(rename_ZExpr lst expr1), ranset=(rename_ZExpr lst expr2), is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
-rename_ZExpr lst (ZSetComp lst1 (Just xpr)) 
- = (ZSetComp lst1 (Just (rename_ZExpr lst xpr)))
-rename_ZExpr lst (ZSetComp lst1 Nothing) 
+rename_ZExpr (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
+ = (ZPowerSet{baseset=(rename_ZExpr xpr), is_non_empty=b1, is_finite=b2})
+rename_ZExpr (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
+ = (ZFuncSet{ domset=(rename_ZExpr expr1), ranset=(rename_ZExpr expr2), is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
+rename_ZExpr (ZSetComp lst1 (Just xpr))
+ = (ZSetComp lst1 (Just (rename_ZExpr xpr)))
+rename_ZExpr (ZSetComp lst1 Nothing)
  = (ZSetComp lst1 Nothing)
-rename_ZExpr lst (ZLambda lst1 xpr)
- = (ZLambda lst1 (rename_ZExpr lst xpr))
-rename_ZExpr lst (ZESchema zxp)
+rename_ZExpr (ZLambda lst1 xpr)
+ = (ZLambda lst1 (rename_ZExpr xpr))
+rename_ZExpr (ZESchema zxp)
  = (ZESchema zxp)
-rename_ZExpr lst (ZGivenSet gs)
+rename_ZExpr (ZGivenSet gs)
  = (ZGivenSet gs)
-rename_ZExpr lst (ZUniverse)
+rename_ZExpr (ZUniverse)
  = (ZUniverse)
-rename_ZExpr lst (ZCall xpr1 xpr2)
- = (ZCall (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))
-rename_ZExpr lst (ZReln rl)
+rename_ZExpr (ZCall xpr1 xpr2)
+ = (ZCall (rename_ZExpr xpr1) (rename_ZExpr xpr2))
+rename_ZExpr (ZReln rl)
  = (ZReln rl)
-rename_ZExpr lst (ZFunc1 f1)
+rename_ZExpr (ZFunc1 f1)
  = (ZFunc1 f1)
-rename_ZExpr lst (ZFunc2 f2)
+rename_ZExpr (ZFunc2 f2)
  = (ZFunc2 f2)
-rename_ZExpr lst (ZStrange st)
+rename_ZExpr (ZStrange st)
  = (ZStrange st)
-rename_ZExpr lst (ZMu lst1 (Just xpr))
- = (ZMu lst1 (Just (rename_ZExpr lst xpr)))
-rename_ZExpr lst (ZELet lst1 xpr1)
- = (ZELet (bindingsVar lst lst1) (rename_ZExpr lst xpr1))
-rename_ZExpr lst (ZIf_Then_Else zp xpr1 xpr2)
- = (ZIf_Then_Else zp (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))
-rename_ZExpr lst (ZSelect xpr va)
+rename_ZExpr (ZMu lst1 (Just xpr))
+ = (ZMu lst1 (Just (rename_ZExpr xpr)))
+rename_ZExpr (ZELet lst1 xpr1)
+ = (ZELet (bindingsVar lst1) (rename_ZExpr xpr1))
+rename_ZExpr (ZIf_Then_Else zp xpr1 xpr2)
+ = (ZIf_Then_Else zp (rename_ZExpr xpr1) (rename_ZExpr xpr2))
+rename_ZExpr (ZSelect xpr va)
  = (ZSelect xpr va)
-rename_ZExpr lst (ZTheta zs)
+rename_ZExpr (ZTheta zs)
  = (ZTheta zs)
 \end{code}
 
 
 \begin{code}
-rename_ZPred lst (ZFalse{reason=a})
+rename_ZPred (ZFalse{reason=a})
  = (ZFalse{reason=a})
-rename_ZPred lst (ZTrue{reason=a})
+rename_ZPred (ZTrue{reason=a})
  = (ZTrue{reason=a})
-rename_ZPred lst (ZAnd p1 p2)
- = (ZAnd (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZOr p1 p2)
- = (ZOr (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZImplies p1 p2)
- = (ZImplies (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZIff p1 p2)
- = (ZIff (rename_ZPred lst p1) (rename_ZPred lst p2))
-rename_ZPred lst (ZNot p)
- = (ZNot (rename_ZPred lst p))
-rename_ZPred lst (ZExists lst1 p)
- = (ZExists lst1 (rename_ZPred lst p))
-rename_ZPred lst (ZExists_1 lst1 p)
- = (ZExists_1 lst1 (rename_ZPred lst p))
-rename_ZPred lst (ZForall lst1 p)
- = (ZForall lst1 (rename_ZPred lst p))
-rename_ZPred lst (ZPLet varxp p)
- = (ZPLet varxp (rename_ZPred lst p))
-rename_ZPred lst (ZEqual xpr1 xpr2)
- = (ZEqual (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))
-rename_ZPred lst (ZMember xpr1 xpr2)
- = (ZMember (rename_ZExpr lst xpr1) (rename_ZExpr lst xpr2))
-rename_ZPred lst (ZPre sp)
+rename_ZPred (ZAnd p1 p2)
+ = (ZAnd (rename_ZPred p1) (rename_ZPred p2))
+rename_ZPred (ZOr p1 p2)
+ = (ZOr (rename_ZPred p1) (rename_ZPred p2))
+rename_ZPred (ZImplies p1 p2)
+ = (ZImplies (rename_ZPred p1) (rename_ZPred p2))
+rename_ZPred (ZIff p1 p2)
+ = (ZIff (rename_ZPred p1) (rename_ZPred p2))
+rename_ZPred (ZNot p)
+ = (ZNot (rename_ZPred p))
+rename_ZPred (ZExists lst1 p)
+ = (ZExists lst1 (rename_ZPred p))
+rename_ZPred (ZExists_1 lst1 p)
+ = (ZExists_1 lst1 (rename_ZPred p))
+rename_ZPred (ZForall lst1 p)
+ = (ZForall lst1 (rename_ZPred p))
+rename_ZPred (ZPLet varxp p)
+ = (ZPLet varxp (rename_ZPred p))
+rename_ZPred (ZEqual xpr1 xpr2)
+ = (ZEqual (rename_ZExpr xpr1) (rename_ZExpr xpr2))
+rename_ZPred (ZMember xpr1 xpr2)
+ = (ZMember (rename_ZExpr xpr1) (rename_ZExpr xpr2))
+rename_ZPred (ZPre sp)
  = (ZPre sp)
-rename_ZPred lst (ZPSchema sp)
+rename_ZPred (ZPSchema sp)
  = (ZPSchema sp)
 \end{code}
 \begin{code}
@@ -525,138 +545,145 @@ middle (a,b,c) = b
 \subsubsection{rename vars}
 
 \begin{code}
-rename_vars_ParAction lst (CircusAction ca) 
-  = (CircusAction (rename_vars_CAction lst ca))
-rename_vars_ParAction lst (ParamActionDecl zglst pa)
-  = (ParamActionDecl zglst (rename_vars_ParAction lst pa))
+rename_vars_ParAction (CircusAction ca)
+  = (CircusAction (rename_vars_CAction ca))
+rename_vars_ParAction (ParamActionDecl zglst pa)
+  = (ParamActionDecl zglst (rename_vars_ParAction pa))
 \end{code}
 
 \begin{code}
-rename_vars_CAction lst (CActionSchemaExpr zsexp)
+rename_vars_CAction (CActionSchemaExpr zsexp)
  = (CActionSchemaExpr zsexp)
-rename_vars_CAction lst (CActionCommand cmd)
- = (CActionCommand (rename_vars_CCommand lst cmd))
-rename_vars_CAction lst (CActionName zn)
+rename_vars_CAction (CActionCommand cmd)
+ = (CActionCommand (rename_vars_CCommand cmd))
+rename_vars_CAction (CActionName zn)
  = (CActionName zn)
-rename_vars_CAction lst (CSPSkip )
+rename_vars_CAction (CSPSkip )
  = (CSPSkip )
-rename_vars_CAction lst (CSPStop )
+rename_vars_CAction (CSPStop )
  = (CSPStop )
-rename_vars_CAction lst (CSPChaos)
+rename_vars_CAction (CSPChaos)
  = (CSPChaos)
-rename_vars_CAction lst (CSPCommAction c a)
- = (CSPCommAction (rename_vars_Comm lst c) (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPGuard zp a)
- = (CSPGuard (rename_ZPred lst zp) (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPSeq a1 a2)
- = (CSPSeq (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPExtChoice a1 a2)
- = (CSPExtChoice (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPIntChoice a1 a2)
- = (CSPIntChoice (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPNSParal ns1 cs ns2 a1 a2)
- = (CSPNSParal ns1 cs ns2 (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPParal cs a1 a2)
- = (CSPParal cs (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPNSInter ns1 ns2 a1 a2)
- = (CSPNSInter ns1 ns2 (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPInterleave a1 a2)
- = (CSPInterleave (rename_vars_CAction lst a1) (rename_vars_CAction lst a2))
-rename_vars_CAction lst (CSPHide a cs)
- = (CSPHide (rename_vars_CAction lst a) cs)
-rename_vars_CAction lst (CSPParAction zn zexprls)
- = (CSPParAction zn (map (rename_ZExpr lst) zexprls))
-rename_vars_CAction lst (CSPRenAction zn crpl)
- = (CSPRenAction zn (rename_vars_CReplace lst crpl))
-rename_vars_CAction lst (CSPRecursion zn a)
- = (CSPRecursion zn (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPUnParAction zgf a zn)
- = (CSPUnParAction zgf (rename_vars_CAction lst a) zn)
-rename_vars_CAction lst (CSPRepSeq zgf a)
- = (CSPRepSeq zgf (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepExtChoice zgf a)
- = (CSPRepExtChoice zgf (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepIntChoice zgf a)
- = (CSPRepIntChoice zgf (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepParalNS cs zgf ns a)
- = (CSPRepParalNS cs zgf ns (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepParal cs zgf a)
- = (CSPRepParal cs zgf (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepInterlNS zgf ns a)
- = (CSPRepInterlNS zgf ns (rename_vars_CAction lst a))
-rename_vars_CAction lst (CSPRepInterl zgf a)
- = (CSPRepInterl zgf (rename_vars_CAction lst a))
+rename_vars_CAction (CSPCommAction c a)
+ = (CSPCommAction (rename_vars_Comm c) (rename_vars_CAction a))
+rename_vars_CAction (CSPGuard zp a)
+ = (CSPGuard (rename_ZPred zp) (rename_vars_CAction a))
+rename_vars_CAction (CSPSeq a1 a2)
+ = (CSPSeq (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPExtChoice a1 a2)
+ = (CSPExtChoice (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPIntChoice a1 a2)
+ = (CSPIntChoice (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPNSParal ns1 cs ns2 a1 a2)
+ = (CSPNSParal ns1 cs ns2 (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPParal cs a1 a2)
+ = (CSPParal cs (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPNSInter ns1 ns2 a1 a2)
+ = (CSPNSInter ns1 ns2 (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPInterleave a1 a2)
+ = (CSPInterleave (rename_vars_CAction a1) (rename_vars_CAction a2))
+rename_vars_CAction (CSPHide a cs)
+ = (CSPHide (rename_vars_CAction a) cs)
+rename_vars_CAction (CSPParAction zn zexprls)
+ = (CSPParAction zn (map rename_ZExpr zexprls))
+rename_vars_CAction (CSPRenAction zn crpl)
+ = (CSPRenAction zn (rename_vars_CReplace crpl))
+rename_vars_CAction (CSPRecursion zn a)
+ = (CSPRecursion zn (rename_vars_CAction a))
+rename_vars_CAction (CSPUnParAction zgf a zn)
+ = (CSPUnParAction zgf (rename_vars_CAction a) zn)
+rename_vars_CAction (CSPRepSeq zgf a)
+ = (CSPRepSeq zgf (rename_vars_CAction a))
+rename_vars_CAction (CSPRepExtChoice zgf a)
+ = (CSPRepExtChoice zgf (rename_vars_CAction a))
+rename_vars_CAction (CSPRepIntChoice zgf a)
+ = (CSPRepIntChoice zgf (rename_vars_CAction a))
+rename_vars_CAction (CSPRepParalNS cs zgf ns a)
+ = (CSPRepParalNS cs zgf ns (rename_vars_CAction a))
+rename_vars_CAction (CSPRepParal cs zgf a)
+ = (CSPRepParal cs zgf (rename_vars_CAction a))
+rename_vars_CAction (CSPRepInterlNS zgf ns a)
+ = (CSPRepInterlNS zgf ns (rename_vars_CAction a))
+rename_vars_CAction (CSPRepInterl zgf a)
+ = (CSPRepInterl zgf (rename_vars_CAction a))
 \end{code}
 
 \begin{code}
-rename_vars_Comm lst (ChanComm zn cpls)
- = (ChanComm zn (map (rename_vars_CParameter lst) cpls))
-rename_vars_Comm lst (ChanGenComm zn zexprls cpls)
- = (ChanGenComm zn (map (rename_ZExpr lst) zexprls) (map (rename_vars_CParameter lst) cpls))
+rename_vars_Comm (ChanComm zn cpls)
+ = (ChanComm zn (map rename_vars_CParameter  cpls))
+rename_vars_Comm (ChanGenComm zn zexprls cpls)
+ = (ChanGenComm zn (map rename_ZExpr zexprls) (map rename_vars_CParameter cpls))
 \end{code}
 
 \begin{code}
-rename_vars_CParameter lst (ChanInp zn)
+rename_vars_CParameter (ChanInp zn)
  = (ChanInp zn)
-rename_vars_CParameter lst (ChanInpPred zn zp)
- = (ChanInpPred zn (rename_ZPred lst zp))
-rename_vars_CParameter lst (ChanOutExp ze)
- = (ChanOutExp (rename_ZExpr lst ze))
-rename_vars_CParameter lst (ChanDotExp ze)
- = (ChanDotExp (rename_ZExpr lst ze))
+rename_vars_CParameter (ChanInpPred zn zp)
+ = (ChanInpPred zn (rename_ZPred zp))
+rename_vars_CParameter (ChanOutExp ze)
+ = (ChanOutExp (rename_ZExpr ze))
+rename_vars_CParameter (ChanDotExp ze)
+ = (ChanDotExp (rename_ZExpr ze))
 \end{code}
 
 \begin{code}
-rename_vars_CCommand lst (CAssign zvarls1 zexprls)
- = (CAssign zvarls1 (map (rename_ZExpr lst) zexprls))
-rename_vars_CCommand lst (CIf ga)
- = (CIf (rename_vars_CGActions lst ga))
-rename_vars_CCommand lst (CVarDecl zgf a)
- = (CVarDecl zgf (rename_vars_CAction lst a))
-rename_vars_CCommand lst (CAssumpt znls zp1 zp2)
- = (CAssumpt znls (rename_ZPred lst zp1) zp2)
-rename_vars_CCommand lst (CAssumpt1 znls zp)
+rename_vars_CCommand (CAssign zvarls1 zexprls)
+ = (CAssign zvarls1 (map rename_ZExpr zexprls))
+rename_vars_CCommand (CIf ga)
+ = (CIf (rename_vars_CGActions ga))
+rename_vars_CCommand (CVarDecl zgf a)
+ = (CVarDecl zgf (rename_vars_CAction a))
+rename_vars_CCommand (CAssumpt znls zp1 zp2)
+ = (CAssumpt znls (rename_ZPred zp1) zp2)
+rename_vars_CCommand (CAssumpt1 znls zp)
  = (CAssumpt1 znls zp)
-rename_vars_CCommand lst (CPrefix zp1 zp2)
- = (CPrefix (rename_ZPred lst zp1) zp2)
-rename_vars_CCommand lst (CPrefix1 zp)
+rename_vars_CCommand (CPrefix zp1 zp2)
+ = (CPrefix (rename_ZPred zp1) zp2)
+rename_vars_CCommand (CPrefix1 zp)
  = (CPrefix1 zp)
-rename_vars_CCommand lst (CommandBrace zp)
+rename_vars_CCommand (CommandBrace zp)
  = (CommandBrace zp)
-rename_vars_CCommand lst (CommandBracket zp)
+rename_vars_CCommand (CommandBracket zp)
  = (CommandBracket zp)
-rename_vars_CCommand lst (CValDecl zgf a)
- = (CValDecl zgf (rename_vars_CAction lst a))
-rename_vars_CCommand lst (CResDecl zgf a)
- = (CResDecl zgf (rename_vars_CAction lst a))
-rename_vars_CCommand lst (CVResDecl zgf a)
- = (CVResDecl zgf (rename_vars_CAction lst a))
+rename_vars_CCommand (CValDecl zgf a)
+ = (CValDecl zgf (rename_vars_CAction a))
+rename_vars_CCommand (CResDecl zgf a)
+ = (CResDecl zgf (rename_vars_CAction a))
+rename_vars_CCommand (CVResDecl zgf a)
+ = (CVResDecl zgf (rename_vars_CAction a))
 \end{code}
 
 \begin{code}
-rename_vars_CGActions lst (CircGAction zp a)
- = (CircGAction (rename_ZPred lst zp) (rename_vars_CAction lst a))
-rename_vars_CGActions lst (CircThenElse cga1 cga2)
- = (CircThenElse (rename_vars_CGActions lst cga1) (rename_vars_CGActions lst cga2))
-rename_vars_CGActions lst (CircElse pa)
+rename_vars_CGActions (CircGAction zp a)
+ = (CircGAction (rename_ZPred zp) (rename_vars_CAction a))
+rename_vars_CGActions (CircThenElse cga1 cga2)
+ = (CircThenElse (rename_vars_CGActions cga1) (rename_vars_CGActions cga2))
+rename_vars_CGActions (CircElse pa)
  = (CircElse pa)
 \end{code}
 
 \begin{code}
-rename_vars_CReplace lst (CRename zvarls1 zvarls)
+rename_vars_CReplace (CRename zvarls1 zvarls)
  = (CRename zvarls1 zvarls)
-rename_vars_CReplace lst (CRenameAssign zvarls1 zvarls)
+rename_vars_CReplace (CRenameAssign zvarls1 zvarls)
  = (CRenameAssign zvarls1 zvarls)
 \end{code}
 
 \subsubsection{rename vars}
-%% You have to put here the remainder for Processes, so you can create on line 78 of MappingFunStatelessCircus the definition of a renamed function for the Proc_var names of the variables before starting the mapping process.
+%% You have to put here the remainder for Processes, so you can create on line 78
+% of MappingFunStatelessCircus the definition of a renamed function for the
+% Proc_var names of the variables before starting the mapping process.
 \begin{code}
 rename_vars_ZPara1 :: [(ZName, ZVar, ZExpr)] -> ZPara -> ZPara
 rename_vars_ZPara1 lst (Process zp)
   = (Process (rename_vars_ProcDecl1 lst zp))
-rename_vars_ZPara1 lst x 
-  = x 
+rename_vars_ZPara1 lst (ZSchemaDef n zs)
+  = (ZSchemaDef n (rename_vars_ZSExpr1 lst zs))
+rename_vars_ZPara1 lst x
+  = x
+rename_vars_ZSExpr1 :: [(ZName, ZVar, ZExpr)] -> ZSExpr -> ZSExpr
+rename_vars_ZSExpr1 lst (ZSchema s)
+  = ZSchema (map (rename_ZGenFilt1 lst) s)
 \end{code}
 
 \begin{code}
@@ -714,7 +741,7 @@ rename_vars_CProc1 lst (CSimpIndexProc zn zxp)
 rename_vars_CProc1 lst (CircusProc zn)
   = (CircusProc zn)
 rename_vars_CProc1 lst (ProcMain zp ppl ca)
-  = (ProcMain zp (map (rename_vars_PPar1 lst) ppl) (rename_vars_CAction1 lst ca))
+  = (ProcMain (rename_vars_ZPara1 lst zp) (map (rename_vars_PPar1 lst) ppl) (rename_vars_CAction1 lst ca))
 rename_vars_CProc1 lst (ProcStalessMain ppl ca)
   = (ProcStalessMain ppl (rename_vars_CAction1 lst ca))
 \end{code}
@@ -723,19 +750,19 @@ rename_vars_CProc1 lst (ProcStalessMain ppl ca)
 \subsubsection{Circus Actions}
 \begin{code}
 rename_vars_PPar1 :: [(ZName, ZVar, ZExpr)] -> PPar -> PPar
-rename_vars_PPar1 lst (ProcZPara zp) 
+rename_vars_PPar1 lst (ProcZPara zp)
   = (ProcZPara zp)
-rename_vars_PPar1 lst (CParAction zn pa) 
+rename_vars_PPar1 lst (CParAction zn pa)
   = (CParAction zn (rename_vars_ParAction1 lst pa))
-rename_vars_PPar1 lst (CNameSet zn ns) 
+rename_vars_PPar1 lst (CNameSet zn ns)
   = (CNameSet zn ns)
 \end{code}
 
 \begin{code}
 rename_vars_ParAction1 :: [(ZName, ZVar, ZExpr)] -> ParAction -> ParAction
-rename_vars_ParAction1 lst (CircusAction ca) 
+rename_vars_ParAction1 lst (CircusAction ca)
   = (CircusAction (rename_vars_CAction1 lst ca))
-rename_vars_ParAction1 lst (ParamActionDecl zgf pa) 
+rename_vars_ParAction1 lst (ParamActionDecl zgf pa)
   = (ParamActionDecl zgf (rename_vars_ParAction1 lst pa))
 \end{code}
 
@@ -825,7 +852,7 @@ rename_vars_CParameter1 lst (ChanDotExp ze)
 \begin{code}
 rename_vars_CCommand1 :: [(ZName, ZVar, ZExpr)] -> CCommand -> CCommand
 rename_vars_CCommand1 lst (CAssign zvarls1 zexprls)
- = (CAssign zvarls1 (map (rename_vars_ZExpr1 lst) zexprls))
+ = (CAssign (map (rename_vars_ZVar1 lst) zvarls1) (map (rename_vars_ZExpr1 lst) zexprls))
 rename_vars_CCommand1 lst (CIf ga)
  = (CIf (rename_vars_CGActions1 lst ga))
 rename_vars_CCommand1 lst (CVarDecl zgf a)
@@ -873,8 +900,16 @@ bindingsVar1 lst []
  = []
 bindingsVar1 lst [((va,x),b)]
  = [(((join_name (get_proc_name va lst) va),x),(rename_vars_ZExpr1 lst b))]
-bindingsVar1 lst (((va,x),b):xs) 
+bindingsVar1 lst (((va,x),b):xs)
  = [(((join_name (get_proc_name va lst) va),x),(rename_vars_ZExpr1 lst b))]++(bindingsVar1 lst xs)
+\end{code}
+\begin{code}
+get_bindings_var []
+ = []
+get_bindings_var [((va,x),b)]
+ = [va]
+get_bindings_var (((va,x),b):xs)
+ = va:(get_bindings_var xs)
 \end{code}
 \begin{code}
 inListVar1 :: ZName -> [(ZName, ZVar, ZExpr)] -> Bool
@@ -902,10 +937,23 @@ get_proc_name x ((a,(va,x1),b):vst)
   _ -> get_proc_name x vst
 \end{code}
 \begin{code}
+rename_ZGenFilt1 lst (Include s) = (Include s)
+rename_ZGenFilt1 lst (Choose (va,x) e) = (Choose ((join_name (join_name "st_var" (get_proc_name va lst)) va),x) (rename_vars_ZExpr1 lst e))
+rename_ZGenFilt1 lst (Check p) = (Check (rename_vars_ZPred1 lst p))
+rename_ZGenFilt1 lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 lst e1) (rename_vars_ZExpr1 lst e2))
+\end{code}
+\begin{code}
+rename_vars_ZVar1 :: [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
+rename_vars_ZVar1 lst (va,x)
+ = case (inListVar1 va lst) of
+  True -> ((join_name (join_name "st_var" (get_proc_name va lst)) va),x)
+  _ -> (va,x)
+\end{code}
+\begin{code}
 rename_vars_ZExpr1 :: [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
 rename_vars_ZExpr1 lst (ZVar (va,x))
  = case (inListVar1 va lst) of
-  True -> (ZVar ((join_name (get_proc_name va lst) va),x))
+  True -> (ZVar ((join_name (join_name "st_var" (get_proc_name va lst)) va),x))
   _ -> (ZVar (va,x))
 rename_vars_ZExpr1 lst (ZInt zi)
  = (ZInt zi)
@@ -937,12 +985,12 @@ rename_vars_ZExpr1 lst (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
  = (ZPowerSet{baseset=(rename_vars_ZExpr1 lst xpr), is_non_empty=b1, is_finite=b2})
 rename_vars_ZExpr1 lst (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
  = (ZFuncSet{ domset=(rename_vars_ZExpr1 lst expr1), ranset=(rename_vars_ZExpr1 lst expr2), is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
-rename_vars_ZExpr1 lst (ZSetComp pname1 (Just xpr)) 
- = (ZSetComp pname1 (Just (rename_vars_ZExpr1 lst xpr)))
-rename_vars_ZExpr1 lst (ZSetComp pname1 Nothing) 
- = (ZSetComp pname1 Nothing)
+rename_vars_ZExpr1 lst (ZSetComp pname1 (Just xpr))
+ = (ZSetComp (map (rename_ZGenFilt1 lst) pname1) (Just (rename_vars_ZExpr1 lst xpr)))
+rename_vars_ZExpr1 lst (ZSetComp pname1 Nothing)
+ = (ZSetComp (map (rename_ZGenFilt1 lst) pname1) Nothing)
 rename_vars_ZExpr1 lst (ZLambda pname1 xpr)
- = (ZLambda pname1 (rename_vars_ZExpr1 lst xpr))
+ = (ZLambda (map (rename_ZGenFilt1 lst) pname1) (rename_vars_ZExpr1 lst xpr))
 rename_vars_ZExpr1 lst (ZESchema zxp)
  = (ZESchema zxp)
 rename_vars_ZExpr1 lst (ZGivenSet gs)
@@ -960,7 +1008,7 @@ rename_vars_ZExpr1 lst (ZFunc2 f2)
 rename_vars_ZExpr1 lst (ZStrange st)
  = (ZStrange st)
 rename_vars_ZExpr1 lst (ZMu pname1 (Just xpr))
- = (ZMu pname1 (Just (rename_vars_ZExpr1 lst xpr)))
+ = (ZMu (map (rename_ZGenFilt1 lst) pname1) (Just (rename_vars_ZExpr1 lst xpr)))
 rename_vars_ZExpr1 lst (ZELet pname1 xpr1)
  = (ZELet (bindingsVar1 lst pname1) (rename_vars_ZExpr1 lst xpr1))
 rename_vars_ZExpr1 lst (ZIf_Then_Else zp xpr1 xpr2)
@@ -1011,11 +1059,11 @@ rename_vars_ZPred1 lst (ZPSchema sp)
 -- extract the delta variables in here'
 get_delta_names [(ZFreeTypeDef ("NAME",[]) xs)]
   = get_delta_names_aux xs
-get_delta_names ((ZFreeTypeDef ("NAME",[]) xs):xss) 
+get_delta_names ((ZFreeTypeDef ("NAME",[]) xs):xss)
   = (get_delta_names_aux xs)++(get_delta_names xss)
-get_delta_names (_:xs) 
+get_delta_names (_:xs)
   = (get_delta_names xs)
-get_delta_names [] 
+get_delta_names []
   = []
 \end{code}
 
@@ -1026,6 +1074,69 @@ get_delta_names_aux ((ZBranch0 (a,[])):xs)
   = [a]++(get_delta_names_aux xs)
 \end{code}
 
+get State variables from names
+\begin{code}
+get_ZVar_st ((('s':'t':'_':'v':'a':'r':'_':xs),x))
+ = [('s':'t':'_':'v':'a':'r':'_':xs)]
+get_ZVar_st x
+ = []
+\end{code}
+
+
+\begin{code}
+get_vars_ZExpr :: ZExpr -> [ZName]
+get_vars_ZExpr (ZVar (('s':'t':'_':'v':'a':'r':'_':xs),x))
+ = [('s':'t':'_':'v':'a':'r':'_':xs)]
+get_vars_ZExpr (ZFree1 va xpr)
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZTuple xpr)
+ = concat (map get_vars_ZExpr xpr)
+get_vars_ZExpr (ZBinding xs)
+ = (get_bindings_var xs)
+get_vars_ZExpr (ZSetDisplay xpr)
+ = concat (map get_vars_ZExpr xpr)
+get_vars_ZExpr (ZSeqDisplay xpr)
+ = concat (map get_vars_ZExpr xpr)
+get_vars_ZExpr (ZGenerator zrl xpr)
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZCross xpr)
+ = concat (map get_vars_ZExpr xpr)
+get_vars_ZExpr (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
+ = (get_vars_ZExpr expr1)++(get_vars_ZExpr expr2)
+get_vars_ZExpr (ZSetComp pname1 (Just xpr))
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZLambda pname1 xpr)
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZCall xpr1 xpr2)
+ = (get_vars_ZExpr xpr1) ++(get_vars_ZExpr xpr2)
+get_vars_ZExpr (ZMu pname1 (Just xpr))
+ = (get_vars_ZExpr xpr)
+get_vars_ZExpr (ZELet pname1 xpr1)
+ = (get_bindings_var pname1)++(get_vars_ZExpr xpr1)
+get_vars_ZExpr (ZIf_Then_Else zp xpr1 xpr2)
+ = (get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2)
+get_vars_ZExpr _ = []
+\end{code}
+\begin{code}
+get_vars_ZPred (ZAnd p1 p2)
+ = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
+get_vars_ZPred (ZOr p1 p2)
+ = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
+get_vars_ZPred (ZImplies p1 p2)
+ = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
+get_vars_ZPred (ZIff p1 p2)
+ = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
+get_vars_ZPred (ZNot p)
+ = ((get_vars_ZPred p))
+get_vars_ZPred (ZEqual xpr1 xpr2)
+ = ( (get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2))
+get_vars_ZPred (ZMember xpr1 xpr2)
+ = ((get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2))
+get_vars_ZPred _
+ = []
+\end{code}
 Construction of the Universe set in CSP
 \begin{code}
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
@@ -1034,37 +1145,37 @@ def_U_prefix x = (map toTitle (take 3 x))
 -- def_U_NAME x = ("U_"++Data.Text.unpack(Data.Text.toUpper(Data.Text.take 3 (pack x))))
 -- def_U_prefix x = (Data.Text.unpack(Data.Text.toTitle(Data.Text.take 3 (Data.Text.pack x))))
 
-mk_universe [] 
+mk_universe []
   = ""
-mk_universe [(a,b,c,d)] 
+mk_universe [(a,b,c,d)]
   = c++"."++d
 mk_universe ((a,b,c,d):xs)
   = c++"."++d++" | "++(mk_universe xs)
 
-mk_subtype [] 
+mk_subtype []
   = ""
-mk_subtype [(a,b,c,d)] 
+mk_subtype [(a,b,c,d)]
   = "subtype "++b++" = "++c++"."++d++"\n"
 mk_subtype ((a,b,c,d):xs)
   = "subtype "++b++" = "++c++"."++d++"\n"++(mk_subtype xs)
 
-mk_value [] 
+mk_value []
   = ""
-mk_value [(a,b,c,d)] 
+mk_value [(a,b,c,d)]
   = "value("++c++".v) = v\n"
 mk_value ((a,b,c,d):xs)
   = "value("++c++".v) = v\n"++(mk_value xs)
 
-mk_type [] 
+mk_type []
   = ""
-mk_type [(a,b,c,d)] 
+mk_type [(a,b,c,d)]
   = a++" then "++b
 mk_type ((a,b,c,d):xs)
   = a++" then "++b++"\n\t else if x == "++(mk_type xs)
 
-mk_tag [] 
+mk_tag []
   = ""
-mk_tag [(a,b,c,d)] 
+mk_tag [(a,b,c,d)]
   = a++" then "++c
 mk_tag ((a,b,c,d):xs)
   = a++" then "++c++"\n\t else if x == "++(mk_tag xs)
@@ -1073,17 +1184,17 @@ mk_tag ((a,b,c,d):xs)
 -- extract the delta variables and types in here'
 def_universe [(ZAbbreviation ("\\delta",[]) (ZSetDisplay xs))]
   = def_universe_aux xs
-def_universe ((ZAbbreviation ("\\delta",[]) (ZSetDisplay xs)):xss) 
+def_universe ((ZAbbreviation ("\\delta",[]) (ZSetDisplay xs)):xss)
   = (def_universe_aux xs)++(def_universe xss)
-def_universe (_:xs) 
+def_universe (_:xs)
   = (def_universe xs)
-def_universe [] 
+def_universe []
   = []
 \end{code}
 
 \begin{code}
 def_universe_aux []
-  = [] 
+  = []
 def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "Nat", "NatValue")]
 def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])] = [(b,(def_U_NAME c), (def_U_prefix c), c)]
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "Nat", "NatValue"):(def_universe_aux xs))
@@ -1097,7 +1208,67 @@ filter_types_universe ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe xs))
 
 
 \begin{code}
-remdups :: [a] => [a]
 remdups [] = []
-remdups (x:xs) = (if member(x,xs) then remdups xs else x : remdups xs)
+remdups (x:xs) = (if (member x xs) then remdups xs else x : remdups xs)
+\end{code}
+
+
+\begin{code}
+ -- Artur - 15/12/2016
+ -- What we find below this line was taken from the Data.List module
+ -- It is hard to import such package with Haskabelle, so I had
+ -- to put it directly into my code.
+
+delete_from_list x []  = []
+delete_from_list x [v]
+   = (case x == v of
+       True -> []
+       False -> [v])
+delete_from_list x (v : va)
+   = (case x == v of
+       True -> delete_from_list x va
+       False -> (v : (delete_from_list x va)))
+
+setminus [] _  = []
+setminus (v : va) [] = (v : va)
+setminus (v : va) (b : vb)
+     = (delete_from_list b (v : va)) ++ (setminus (v : va) vb)
+
+
+-- From Data.List
+
+member x [] = False
+member x (b:y) = if x==b then True else member x y
+
+intersect [] y = []
+intersect (a:x) y = if member a y then a : (intersect x y) else intersect x y
+
+union [] y = y
+union (a:x) y = if (member a y) then (union x y) else a : (union x y);
+-- | 'delete' @x@ removes the first occurrence of @x@ from its list argument.
+-- For example,
+--
+-- > delete 'a' "banana" == "bnana"
+--
+-- It is a special case of 'deleteBy', which allows the programmer to
+-- supply their own equality test.
+
+delete                  :: (Eq a) => a -> [a] -> [a]
+delete                  =  deleteBy (==)
+
+-- | The 'deleteBy' function behaves like 'delete', but takes a
+-- user-supplied equality predicate.
+deleteBy                :: (a -> a -> Bool) -> a -> [a] -> [a]
+deleteBy _  _ []        = []
+deleteBy eq x (y:ys)    = if x `eq` y then ys else y : deleteBy eq x ys
+
+
+-- Not exported:
+-- Note that we keep the call to `eq` with arguments in the
+-- same order as in the reference implementation
+-- 'xs' is the list of things we've seen so far,
+-- 'y' is the potential new element
+elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
+elem_by _  _ []         =  False
+elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
 \end{code}

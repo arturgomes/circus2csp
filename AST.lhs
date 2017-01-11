@@ -662,7 +662,6 @@ data CAction
  = CActionSchemaExpr ZSExpr               -- \lschexpract S \rschexpract
  | CActionCommand CCommand
  | CActionName ZName
-
  | CSPSkip | CSPStop | CSPChaos
  | CSPCommAction Comm CAction             -- Comm \then Action
  | CSPGuard ZPred CAction                 -- Pred \circguard Action

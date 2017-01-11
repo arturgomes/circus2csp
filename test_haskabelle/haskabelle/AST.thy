@@ -14,9 +14,23 @@ type_synonym GivenSet = ZVar
  
 type_synonym ZName = string
  
-datatype ZPred = ZFalse "ZPred list"
+datatype ZGenFilt = Choose ZVar ZExpr
+                  | Check ZPred
+                  | Evaluate ZVar ZExpr ZExpr
+and      ZExpr = ZVar ZVar
+               | ZInt ZInt
+               | ZSetComp "ZGenFilt list" "ZExpr option"
+               | ZBinding "(ZVar * ZExpr) list"
+               | ZSetDisplay "ZExpr list"
+               | ZSeqDisplay "ZExpr list"
+               | ZTuple "ZExpr list"
+               | ZCross "ZExpr list"
+               | ZCall ZExpr ZExpr
+and      ZPred = ZFalse "ZPred list"
                | ZTrue "ZPred list"
                | ZAnd ZPred ZPred
+               | ZPSchema ZSExpr
+and      ZSExpr = ZSchema "ZGenFilt list"
  
 primrec reason :: "ZPred \<Rightarrow> ZPred list"
 where
@@ -30,16 +44,9 @@ where
 | "update_reason x (ZFalse _) = (ZFalse x)"
 
  
-datatype ZGenFilt = Choose ZVar ZExpr
-                  | Check ZPred
-                  | Evaluate ZVar ZExpr ZExpr
-and      ZExpr = ZVar ZVar
-               | ZInt ZInt
-               | ZSetComp "ZGenFilt list" "ZExpr option"
-               | ZBinding "(ZVar * ZExpr) list"
-               | ZSetDisplay "ZExpr list"
-               | ZSeqDisplay "ZExpr list"
-               | ZCall ZExpr ZExpr
+datatype ZSName = ZSPlain string
+                | ZSDelta string
+                | ZSXi string
  
 datatype CSExp = CSExpr ZName
                | CSEmpty
@@ -113,6 +120,7 @@ and      CGActions = CircGAction ZPred CAction
                    | CircElse ParAction
  
 datatype ZPara = Process ProcDecl
+               | ZSchemaDef ZSName ZSExpr
 and      ProcDecl = CProcess ZName ProcessDef
                   | CParamProcess ZName "ZName list" ProcessDef
                   | CGenProcess ZName "ZName list" ProcessDef
