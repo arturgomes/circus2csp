@@ -714,7 +714,7 @@ unary_op uo =
 unary_op_list =
     [OpUnary{uop=ZDom,    lstr=("\\dom",[]),     prec=Expr3,  optype=Prefix},
      OpUnary{uop=ZRan,    lstr=("\\ran",[]),     prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZSizeof, lstr=("\\#",[]),       prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZSizeof, lstr=("\\\35",[]),     prec=Expr3,  optype=Prefix},
      OpUnary{uop=ZBigCup, lstr=("\\bigcup",[]),  prec=Expr3,  optype=Prefix},
      OpUnary{uop=ZBigCap, lstr=("\\bigcap",[]),  prec=Expr3,  optype=Prefix},
      OpUnary{uop=ZId,     lstr=("\\id",[]),      prec=Expr2a, optype=Prefix},

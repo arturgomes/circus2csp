@@ -18,7 +18,7 @@
 
 \newcounter{examplecounter}
 \newenvironment{lawn}[1][]{%
-    \refstepco unter{bexamplecounter}%
+    \refstepcounter{examplecounter}%
   \textbf{Law \arabic{examplecounter} (#1)}%
   \quad
 }{%
@@ -39,19 +39,18 @@
 \begin{document}
 \maketitle
 
-% \input{AST.lhs}
-% \input{Animate.lhs}
-% \input{CRL.lhs}
-%\input{Formatter.lhs}
-%\input{FormatterToCSP.lhs}
-%\input{Lexer.lhs}
+\input{AST.lhs}
+\input{Animate.lhs}
+\input{CRL.lhs}
+\input{Formatter.lhs}
+\input{FormatterToCSP.lhs}
+\input{Lexer.lhs}
 \input{MappingFunCircusCSP.lhs}
 \input{MappingFunStatelessCircus.lhs}
-% \input{DefSets.lhs}
-%\input{Parse.lhs}
-% \input{circus_ref_laws.lhs}
-% \input{new.lhs}
-% \input{teste.lhs}
+\input{DefSets.lhs}
+\input{Parse.lhs}
+\input{circus_ref_laws.lhs}
+\input{teste.lhs}
 
 
 \end{document}

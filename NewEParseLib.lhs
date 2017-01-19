@@ -38,6 +38,7 @@ This is a trivial program that prints the first 20 factorials.
 -- with the original library.
 --
 -- TODO: give examples of usage.
+{-# LANGUAGE CPP #-}
 module EParseLib
    (Token(..), mkToken,
     ParseResult(..), parse_error, mkParseError,
@@ -167,6 +168,40 @@ takeUntil1 p (x:xs)
       | p x       =  [x]
       | otherwise =  x : takeUntil1 p xs
 
+-- check for FAM proposal changes
+#if (__GLASGOW_HASKELL__ >= 710)
+
+instance Functor (EParser toks) where
+  -- map         :: (a -> b) -> (EParser a -> EParser b)
+  fmap f (P p)   = P (\inp -> Parsed [(f v, out) | (v,out) <- p inp]) -- ??
+
+instance Applicative (EParser tok) where
+  pure v = P (\toks -> ParseResult{parses=[(v,[],toks)],
+             seencut=False,
+             besterror=no_error})
+  (<*>) = ap
+
+instance Monad (EParser tok) where
+  return = pure
+  fail msg = P (\toks -> ParseResult{parses=[],
+             seencut=False,
+             besterror=parse_error toks msg})
+  (P p) >>= q = P (\toks
+       -> let pout = p toks in
+          let q2 (t,es,ts) = epapply_with_errors (q t) es ts in
+          let qout = takeUntil1 seencut (map q2 (parses pout)) in
+          ParseResult{parses   = concatMap parses qout,
+          seencut  = seencut pout
+               || any seencut qout,
+          besterror= choose_error (besterror pout
+               : map besterror qout)
+          })
+
+
+#endif
+
+
+#if (__GLASGOW_HASKELL__ < 710)
 
 --instance Functor (EParser toks) where
 --   -- map         :: (a -> b) -> (EParser a -> EParser b)
@@ -202,6 +237,7 @@ instance MonadPlus (EParser tok) where
 		    seencut   = seencut pout || seencut qout,
 		    besterror = choose_error [besterror pout, besterror qout]}
 
+#endif
 
 -- Other primitive parser combinators ---------------------------------
 (+++) :: EParser tok ast -> EParser tok ast -> EParser tok ast

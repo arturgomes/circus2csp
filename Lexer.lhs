@@ -304,8 +304,8 @@ zlexz c ls ('\\':'{':s)
   = Token L_OPENSET (line ls) c : zlexz (c+2) ls s
 zlexz c ls ('\\':'}':s)
   = Token L_CLOSESET (line ls) c : zlexz (c+2) ls s
-zlexz c ls ('\\':'#':s)
-  = Token (L_WORD "\\#") (line ls) c : zlexz (c+2) ls s
+zlexz c ls ('\\':'\35':s)
+  = Token (L_WORD "\\\35") (line ls) c : zlexz (c+2) ls s
 zlexz c ls ('\\':s)
   -- A few commands can have a "_1" after them, which changes their meaning.
   -- For these commands, we call tok_1, to discard the "_1".
