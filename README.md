@@ -34,14 +34,19 @@
 
 Once in the Circus Parser UI, type "help" and see the commands.
 
-One example can be loaded and translated as follows:
+1. One example can be loaded and translated as follows:
 
 > CircusParser> load exs/ex12.tex
-You'll have the file loaded. Type "show" to print the loaded spec.
+
+2. You'll have the file loaded. Type "show" to print the loaded spec.
+
 > CircusParser> omega
-Call the Omega functions to translate staterich Circus into stateless Circus
+
+3. Call the Omega functions to translate staterich Circus into stateless Circus
+
 > CircusParser> tocsp
-Translate the loaded spec into CSP
+
+4. Translate the loaded spec into CSP
 
 
 ***
