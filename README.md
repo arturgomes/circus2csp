@@ -6,6 +6,7 @@
 > Glasgow Haskell Compiler, Version 7.8.3, stage 2 booted by GHC version 7.6.2
 
 > Isabelle/HOL 2016-1
+***
 
 ####Main files used from Jaza to the Circus Translator to CSP
 
@@ -26,6 +27,22 @@
 * TextUI.lhs
 	+ This file is used for the interface of Jaza, before the Circus Parser.
 
+***
+#### Compiling:
+> make circus
+> ./circus
+
+Once in the Circus Parser UI, type "help" and see the commands.
+
+One example can be loaded and translated as follows:
+
+> CircusParser> load exs/ex12.tex
+You'll have the file loaded. Type "show" to print the loaded spec.
+> CircusParser> omega
+Call the Omega functions to translate staterich Circus into stateless Circus
+> CircusParser> tocsp
+Translate the loaded spec into CSP
+
 
 ***
 #### Isabelle/HOL
@@ -41,6 +58,9 @@
   + TestingMappingFunStatelessCircus.thy
 
 ***
+#### Remarks:
+No Circus Refinement Laws is being used yet. I still need to design
+a mechanism in order to apply the laws to the loaded files.
 
 Artur: you need to explain in here what the various bits are and how to make them work.
 
