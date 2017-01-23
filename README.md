@@ -1,5 +1,11 @@
 # This is a Circus to CSPm translator
 
+***
+#### Version used:
+
+> Glasgow Haskell Compiler, Version 7.8.3, stage 2 booted by GHC version 7.6.2
+
+> Isabelle/HOL 2016-1
 
 ####Main files used from Jaza to the Circus Translator to CSP
 
@@ -20,6 +26,21 @@
 * TextUI.lhs
 	+ This file is used for the interface of Jaza, before the Circus Parser.
 
+
+***
+#### Isabelle/HOL
+
+* The version used is Isabelle2016-1
+* The files translated with haskabelle can be found in:
+> ./test_haskabelle/haskabelle/
+> AST.thy
+> MinimalExample.thy
+> Prelude.thy
+> MappingFunStatelessCircus.thy
+> OmegaDefs.thy
+> TestingMappingFunStatelessCircus.thy
+
+------------------------------------------------------------------------------------------------------------------------
 
 ***
 
