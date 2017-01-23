@@ -9,7 +9,7 @@
 
 ####Main files used from Jaza to the Circus Translator to CSP
 
-*  Animate.lhs
+* Animate.lhs
 	+ Here you find the animator functions and also where we include the Omega mappings and Circus to CSP mappings.
 * AST.lhs
 	+ Both Z and Circus AST are found here.
@@ -32,16 +32,13 @@
 
 * The version used is Isabelle2016-1
 * The files translated with haskabelle can be found in:
-> ./test_haskabelle/haskabelle/
-
-* AST.thy
-* MinimalExample.thy
-* Prelude.thy
-* MappingFunStatelessCircus.thy
-* OmegaDefs.thy
-* TestingMappingFunStatelessCircus.thy
-
-------------------------------------------------------------------------------------------------------------------------
+  + ./test_haskabelle/haskabelle/
+  + AST.thy
+  + MinimalExample.thy
+  + Prelude.thy
+  + MappingFunStatelessCircus.thy
+  + OmegaDefs.thy
+  + TestingMappingFunStatelessCircus.thy
 
 ***
 
