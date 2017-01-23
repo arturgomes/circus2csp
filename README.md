@@ -29,8 +29,7 @@
 
 ***
 #### Compiling:
-> make circus
-> ./circus
+> make circus && ./circus
 
 Once in the Circus Parser UI, type "help" and see the commands.
 
