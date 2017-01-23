@@ -33,11 +33,17 @@
 * The version used is Isabelle2016-1
 * The files translated with haskabelle can be found in:
 > ./test_haskabelle/haskabelle/
+
 > AST.thy
+
 > MinimalExample.thy
+
 > Prelude.thy
+
 > MappingFunStatelessCircus.thy
+
 > OmegaDefs.thy
+
 > TestingMappingFunStatelessCircus.thy
 
 ------------------------------------------------------------------------------------------------------------------------
