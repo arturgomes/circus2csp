@@ -1,7 +1,7 @@
 # This is a Circus to CSPm translator
 
 ***
-#### Version used:
+#### Required compiler and theorem prover version:
 
 > Glasgow Haskell Compiler, Version 7.8.3, stage 2 booted by GHC version 7.6.2
 
