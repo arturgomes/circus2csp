@@ -1,6 +1,6 @@
-\section{Introduction}
+\section{Jaza interface}
+This file is used for the interface of Jaza, before the Circus Parser.
 
-This is a trivial program that prints the first 20 factorials.
 
 \begin{code}
 module Main

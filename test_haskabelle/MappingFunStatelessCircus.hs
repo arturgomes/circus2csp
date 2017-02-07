@@ -13,44 +13,47 @@ where
 import AST
 import OmegaDefs
 
+omega_CommCAction :: (CAction -> CAction) -> (CAction -> CAction) -> Comm -> CAction -> CAction
+omega_CommCAction f s (ChanComm c []) a = (CSPCommAction (ChanComm c []) (f a))
+omega_CommCAction f s (ChanComm c ((ChanDotExp e):xs)) a 
+  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (s a))) 
+    where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
+omega_CommCAction f s (ChanComm c ((ChanOutExp e):xs)) a = f (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+omega_CommCAction f s (ChanComm c [ChanInpPred x p]) a 
+  = case not (member x (getWrtV(a))) of 
+      True -> make_get_com lsx (rename_vars_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) (f a))) 
+      _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a) 
+      where lsx = concat (map get_ZVar_st (free_var_ZPred p))
+
+omega_CCommandCAction :: (CAction -> CAction) -> (CAction -> CAction) -> Comm -> CAction -> CAction
+omega_CCommandCAction f s (CAssign varls valls) = make_get_com (map fst varls) (rename_vars_CAction (make_set_com f varls valls CSPSkip))
+omega_CCommandCAction f s (CIf (CircGAction g a))
+  = make_get_com lsx (rename_vars_CAction  (CActionCommand (CIf (CircGAction g (s a))))) 
+  where lsx = (map fst (remdups  (free_var_ZPred g)))
+omega_CCommandCAction f s (CIf (CircThenElse gl glx)) 
+  = make_get_com lsx (rename_vars_CAction (CActionCommand (CIf (mk_guard_pair s guard_pair))))
+  where
+   guard_pair = get_guard_pair (CircThenElse gl glx)
+   lsx = map fst (remdups (concat (map free_var_ZPred (map fst guard_pair))))
+
+omega_CCommandCAction f s (CommandBrace g) = f (CActionCommand (CPrefix g (ZTrue {reason = []})))
+omega_CCommandCAction f s (CommandBracket g) = f (CActionCommand (CPrefix1 g))
 
 omega_CAction :: CAction -> CAction
 omega_CAction CSPSkip = CSPSkip
 omega_CAction CSPStop = CSPStop
 omega_CAction CSPChaos = CSPChaos
 
-omega_CAction (CSPCommAction (ChanComm c []) a)
-  = (CSPCommAction (ChanComm c []) (omega_CAction a))
-
-omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
-  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
-  where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
-
-omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
-  = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
-
-omega_CAction (CSPGuard g a)
-  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
+omega_CAction (CSPCommAction c a) = omega_CommCAction omega_CAction omega_prime_CAction c a
+omega_CAction (CActionCommand x) = omega_CCommandCAction omega_CAction omega_prime_CAction x
+omega_CAction (CSPGuard g a) 
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a))) 
   where lxs = concat (map get_ZVar_st (free_var_ZPred g))
-
-omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  = case not (member x (getWrtV(a))) of
-    True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
-             (ChanComm c [ChanInpPred x p])
-                 (omega_prime_CAction a)))
-    _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  where lsx = concat (map get_ZVar_st (free_var_ZPred p))
-
-omega_CAction (CSPSeq ca cb)
-  = (CSPSeq (omega_CAction ca) (omega_CAction cb))
-
-omega_CAction (CSPIntChoice ca cb)
-  = (CSPIntChoice (omega_CAction ca) (omega_CAction cb))
-
-omega_CAction (CSPExtChoice ca cb)
-  = make_get_com lsx (rename_vars_CAction (CSPExtChoice (omega_prime_CAction ca) (omega_prime_CAction cb)))
-   where
-    lsx = (map fst (remdups (free_var_CAction (CSPExtChoice ca cb))))
+omega_CAction (CSPSeq ca cb) = (CSPSeq (omega_CAction ca) (omega_CAction cb))
+omega_CAction (CSPIntChoice ca cb) = (CSPIntChoice (omega_CAction ca) (omega_CAction cb))
+omega_CAction (CSPExtChoice ca cb) 
+  = make_get_com lsx (rename_vars_CAction (CSPExtChoice (omega_prime_CAction ca) (omega_prime_CAction cb))) 
+  where lsx = (map fst (remdups (free_var_CAction (CSPExtChoice ca cb))))
 
 omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
   = make_get_com lsx (rename_vars_CAction (CSPHide
@@ -75,33 +78,10 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
    where
     lsx = (map fst (remdups  (free_var_CAction a1))) `union` (map fst (remdups  (free_var_CAction a2)))
 
-omega_CAction (CActionCommand (CAssign varls valls))
-  = make_get_com (map fst varls) (rename_vars_CAction (make_set_com omega_CAction varls valls CSPSkip))
-
-omega_CAction (CActionCommand (CIf (CircGAction g a)))
-  = make_get_com lsx (rename_vars_CAction  (CActionCommand
-             (CIf (CircGAction g (omega_prime_CAction a)))))
-  where
-   lsx = (map fst (remdups  (free_var_ZPred g)))
-
-omega_CAction (CActionCommand (CIf (CircThenElse gl glx)))
-  = make_get_com lsx (rename_vars_CAction (CActionCommand (CIf (mk_guard_pair omega_prime_CAction guard_pair))))
-  where
-   guard_pair = get_guard_pair (CircThenElse gl glx)
-   lsx = map fst (remdups $ concat $ map free_var_ZPred (map fst guard_pair))
 
 omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
-
 omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
-
-omega_CAction (CActionCommand (CommandBrace g))
-  = omega_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
-
-omega_CAction (CActionCommand (CommandBracket g))
-  = omega_CAction (CActionCommand (CPrefix1 g))
-
-omega_CAction (CSPRenAction a (CRenameAssign left right))
-  = (CSPRenAction a (CRename right left))
+omega_CAction (CSPRenAction a (CRenameAssign left right)) = (CSPRenAction a (CRename right left))
 
 omega_CAction (CSPRepSeq [Choose (x,[]) v] act)
   = (CSPRepSeq [Choose (x,[]) v] (omega_CAction act))
@@ -158,14 +138,11 @@ omega_CAction x = x
 -- Omega Prime
 omega_prime_CAction :: CAction -> CAction
 
-omega_prime_CAction (CSPCommAction (ChanComm c []) a)
-  = (CSPCommAction (ChanComm c []) (omega_prime_CAction a))
+omega_prime_CAction (CSPCommAction (ChanComm c []) a) = (CSPCommAction (ChanComm c []) (omega_prime_CAction a))
 
-omega_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
-  = (CSPCommAction (ChanComm c [ChanDotExp (rename_ZExpr e)]) (omega_prime_CAction a))
+omega_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a) = (CSPCommAction (ChanComm c [ChanDotExp (rename_ZExpr e)]) (omega_prime_CAction a))
 
-omega_prime_CAction (CSPSeq ca cb)
-  = (CSPSeq (omega_prime_CAction ca) (omega_CAction cb))
+omega_prime_CAction (CSPSeq ca cb) = (CSPSeq (omega_prime_CAction ca) (omega_CAction cb))
 
 omega_prime_CAction x = omega_CAction x
 

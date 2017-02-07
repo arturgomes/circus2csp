@@ -1,6 +1,5 @@
-\section{Introduction}
-
-This is a trivial program that prints the first 20 factorials.
+\section{Circus Parser}
+Circus Parser on top of JAZA
 
 \begin{code}
 module Parse

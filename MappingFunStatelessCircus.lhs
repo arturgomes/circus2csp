@@ -1,8 +1,8 @@
 %!TEX root = MAIN.tex
 
 \section{Mapping Functions - Stateless Circus}
+Mapping Omega Functions from Circus to Circus
 
-File: MappingFunStatelessCircus.lhs
 \ignore{
 \begin{code}
 module MappingFunStatelessCircus
@@ -311,6 +311,21 @@ omega_CAction (CSPGuard g a)
   where lxs = concat (map get_ZVar_st (free_var_ZPred g))
 \end{code}
 
+
+I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforward:
+
+\begin{circus}
+\Omega_A (c?x \then A) \circdef
+\\\t2 c?x \then \Omega'_{A} (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+omega_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
+  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (omega_CAction a))
+\end{code}
+
+
 \begin{circus}
 \Omega_A (c?x : P(x,v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
 \\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
@@ -324,7 +339,7 @@ x \in wrtV(A)
 
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+omega_CAction (CSPCommAction (ChanComm c [ChanInpPred (x:xs) p]) a)
   = case not (elem x (getWrtV(a))) of
     True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
              (ChanComm c [ChanInpPred x p])
@@ -332,6 +347,7 @@ omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
     _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   where lsx = concat (map get_ZVar_st (free_var_ZPred p))
 \end{code}
+
 
 
 \begin{circus}

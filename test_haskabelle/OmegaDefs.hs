@@ -311,6 +311,7 @@ rep_CSPRepInterlNS a ns y (x:xs)
  -- It is hard to import such package with Haskabelle, so I had
  -- to put it directly into my code.
 
+delete_from_list :: t -> [t] -> [t]
 delete_from_list x []  = []
 delete_from_list x [v]
    = (case x == v of
@@ -321,6 +322,7 @@ delete_from_list x (v : va)
        True -> delete_from_list x va
        False -> (v : (delete_from_list x va)))
 
+setminus :: [t] -> [t] -> [t]
 setminus [] _  = []
 setminus (v : va) [] = (v : va)
 setminus (v : va) (b : vb)
@@ -328,13 +330,15 @@ setminus (v : va) (b : vb)
 
 
 -- From Data.List
-
+member :: t -> [t] -> Bool
 member x [] = False
 member x (b:y) = if x==b then True else member x y
 
+intersect :: [t] -> [t] -> [t]
 intersect [] y = []
 intersect (a:x) y = if member a y then a : (intersect x y) else intersect x y
 
+union :: [t] -> [t] -> [t]
 union [] y = y
 union (a:x) y = if (member a y) then (union x y) else a : (union x y);
 

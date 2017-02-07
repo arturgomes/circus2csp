@@ -1,6 +1,7 @@
-% \section{Introduction}
+\section{Animate functions}
 
-% This is a trivial program that prints the first 20 factorials.
+Here you find the animator functions and also where we include the
+Omega mappings and Circus to CSP mappings.
 
 \begin{code}
 module Animate

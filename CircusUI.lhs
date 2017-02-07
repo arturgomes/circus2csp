@@ -1,6 +1,6 @@
-\section{Introduction}
+\section{Circus Parser UI}
 
-This is a trivial program that prints the first 20 factorials.
+Circus Parser Interface build on based on Jaza UI (TextUI.lhs)
 
 \begin{code}
 module Main

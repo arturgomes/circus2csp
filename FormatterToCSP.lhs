@@ -1,6 +1,5 @@
-\section{Introduction}
+\section{Ignore this file}
 
-This is a trivial program that prints the first 20 factorials.
 
 \begin{code}
 module FormatterToCSP

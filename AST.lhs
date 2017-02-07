@@ -1,4 +1,5 @@
 \section{Abstract Syntax Trees}
+Both Z and Circus AST are found here.
 \begin{code}
 module AST where
 \end{code}
