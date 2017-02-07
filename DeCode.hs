@@ -14,21 +14,23 @@ To use
 -}
 main = do 
   lhs <- hGetContents stdin
-  let hs = unlines $ stripNonCode $ lines lhs
+  let hs = unlines $ stripNonCode $ ([open]++(lines lhs)++[close])
   hPutStrLn stdout hs
 
 stripNonCode [] = []
 stripNonCode (ln:lns)
-  | trim ln == "\\begin{code}"  =  spacer : copyCode lns
-  | otherwise                   =  stripNonCode lns
+  | trim ln == "\\begin{code}"  =  close : copyCode lns
+  | otherwise                   =  ln : stripNonCode lns
 
 copyCode [] = []
 copyCode (ln:lns)
-  | trim ln == "\\end{code}"  =  stripNonCode lns
+  | trim ln == "\\end{code}"  =  open : stripNonCode lns
   | otherwise                 =  ln : copyCode lns
 
 trim = reverse . ltrim . reverse . ltrim
 ltrim = dropWhile isSpace
 
 spacer = "\n--\n"
+open = "{-\n"
 
+close = "-}\n"
