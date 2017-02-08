@@ -1,0 +1,59 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{MappingFunStatelessCircus}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{theory}\isamarkupfalse%
+\ MappingFunStatelessCircus\isanewline
+\isakeyword{imports}\ AST\ OmegaDefs\ Prelude\isanewline
+\isakeyword{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+\ \isanewline
+\isacommand{fun}\isamarkupfalse%
+\ omega{\isacharunderscore}CAction\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\ \isakeyword{and}\ \isanewline
+\ \ \ \ omega{\isacharunderscore}prime{\isacharunderscore}CAction\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ CSPSkip\ {\isacharequal}\ CSPSkip{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ CSPStop\ {\isacharequal}\ CSPStop{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ CSPChaos\ {\isacharequal}\ CSPChaos{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ {\isacharparenleft}CSPSeq\ ca\ cb{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}CSPSeq\ {\isacharparenleft}omega{\isacharunderscore}CAction\ ca{\isacharparenright}\ {\isacharparenleft}omega{\isacharunderscore}CAction\ cb{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ {\isacharparenleft}CSPExtChoice\ ca\ cb{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}let\ lsx\ {\isacharequal}\ {\isacharparenleft}map\ fst\ {\isacharparenleft}remdups\ {\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharparenleft}CSPExtChoice\ ca\ cb{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ in\ make{\isacharunderscore}get{\isacharunderscore}com\ lsx\ {\isacharparenleft}rename{\isacharunderscore}vars{\isacharunderscore}CAction\ {\isacharparenleft}CSPExtChoice\ {\isacharparenleft}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ ca{\isacharparenright}\ {\isacharparenleft}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ cb{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}CAction\ x\ {\isacharequal}\ x{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ CSPSkip\ {\isacharequal}\ CSPSkip{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ CSPStop\ {\isacharequal}\ CSPStop{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ CSPChaos\ {\isacharequal}\ CSPChaos{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ {\isacharparenleft}CSPSeq\ ca\ cb{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}CSPSeq\ {\isacharparenleft}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ ca{\isacharparenright}\ {\isacharparenleft}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ cb{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}omega{\isacharunderscore}prime{\isacharunderscore}CAction\ x\ {\isacharequal}\ omega{\isacharunderscore}CAction\ x{\isachardoublequoteclose}\isanewline
+\isanewline
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "root"
+%%% End:

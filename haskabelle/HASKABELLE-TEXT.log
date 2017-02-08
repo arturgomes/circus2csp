@@ -1,0 +1,674 @@
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2016.3.8)  8 FEB 2017 13:29
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**HASKABELLE-TEXT.tex
+
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/HASKABELLE-TEXT.tex
+LaTeX2e <2015/01/01>
+Babel <3.9l> and hyphenation patterns for 5 languages loaded.
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2014/09/29 v1.4h Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/usr/share/texlive/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2010/09/12 v5.6 Page Geometry
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifpdf.sty
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is detected.
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifvtex.sty
+Package: ifvtex 2010/03/01 v1.5 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+)
+(/usr/share/texlive/texmf-dist/tex/generic/ifxetex/ifxetex.sty
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+)
+\Gm@cnth=\count87
+\Gm@cntv=\count88
+\c@Gm@tempcnt=\count89
+\Gm@bindingoffset=\dimen103
+\Gm@wd@mp=\dimen104
+\Gm@odd@mp=\dimen105
+\Gm@even@mp=\dimen106
+\Gm@layoutwidth=\dimen107
+\Gm@layoutheight=\dimen108
+\Gm@layouthoffset=\dimen109
+\Gm@layoutvoffset=\dimen110
+\Gm@dimlist=\toks15
+)
+(/usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package xcolor Info: Driver file: pdftex.def on input line 225.
+
+(/usr/share/texlive/texmf-dist/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count90
+)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1337.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1341.
+Package xcolor Info: Model `RGB' extended on input line 1353.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1355.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1356.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1357.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1358.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1359.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1360.
+)
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/circus.sty
+Package: circus 2010/06/17 v.1.2 Circus style file by the Community Z Tools
+
+`Circus style file by the Community Z Tools' v.1.2 <2010/06/17>
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/czt.sty
+Package: czt 2011/11/08 v.1.3 Standard Z style file by the Community Z Tools
+
+`Standard Z style file by the Community Z Tools' v.1.3 <2011/11/08>
+Package czt Info: 'mathit' option chosen on input line 72.
+Package czt Info: 'cntglobally' option chosen on input line 72.
+Package czt Info: 'color' option chosen on input line 73.
+Package czt Info: AMS fonts selected with default options on input line 86.
+Package czt Info: Rendering Z math mode with colours on input line 96.
+Package czt Info: Z colours defined as:
+(czt)               ZedBoxColor     = cmyk( 1, 1,0, 0) 
+(czt)               AnnotationColor = cmyk(0.98,0.13,0,0.43) 
+(czt)               ZedColor        = cmyk(0.50, 1,0, 0) 
+(czt)              on input line 118.
+\c@mv@czt=\count91
+Package czt Info: Creating `czt' math version on input line 152.
+\symstmry=\mathgroup4
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 159.
+LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `czt'
+(Font)                  OT1/cmr/m/n --> OT1/cmr/m/n on input line 163.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `czt'
+(Font)                  OT1/cmr/bx/n --> OT1/cmr/bx/n on input line 164.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `czt'
+(Font)                  OT1/cmss/m/n --> OT1/cmss/m/n on input line 165.
+\symitalics=\mathgroup5
+Package czt Info: Loading AMS font symbols for Z on input line 603.
+\symAMSa=\mathgroup6
+\symAMSb=\mathgroup7
+Package czt Info: Current math version set to `czt' on input line 606.
+Package czt Info: Setting math code for letters as Italics on input line 660.
+Package czt Info: Counting Z declarations? YES  on input line 683.
+\@zcountingwhat=\count92
+\c@cntZunboxed=\count93
+\c@cntZaxdef=\count94
+\c@cntZgendef=\count95
+\c@cntZschema=\count96
+\c@cntZgenschema=\count97
+\c@cntZtheorem=\count98
+\c@cntZproof=\count99
+\c@cntZdecl=\count100
+\c@cntZtotunboxed=\count101
+\c@cntZtotaxdef=\count102
+\c@cntZtotgendef=\count103
+\c@cntZtotschema=\count104
+\c@cntZtotgenschema=\count105
+\c@cntZtottheorem=\count106
+\c@cntZtotproof=\count107
+\c@cntZtotdecl=\count108
+\big@size=\dimen111
+\zedtab=\dimen112
+\zedindent=\dimen113
+\zedleftsep=\dimen114
+\zedbar=\dimen115
+\interzedlinepenalty=\count109
+\preboxpenalty=\count110
+\forcepagepenalty=\count111
+\zedskip=\skip43
+Package czt Info: Initialising Z registers with default values.
+(czt)                \zedtab=20.00003pt
+(czt)                \zedindent=25.00003pt=\leftmargini
+(czt)                \zedleftsep=10.00002pt
+(czt)                \zedbar=60.00009pt
+(czt)             
+(czt)                \interzedlinepenalty=10000
+(czt)                \preboxpenalty=0
+(czt)                \forcepagepenalty=-10000
+(czt)                \interdisplaylinepenalty=100
+(czt)             
+(czt)                \zedskip=6.0pt plus 3.99994pt minus 3.99994pt
+(czt)                \zt@p=false 
+(czt)                \CountDefstrue=true  on input line 984.
+Package czt Info: Setting up Standard Z skipping and breaking on input line 102
+0.
+Package czt Info: Setting up Standard Z LaTeX environments on input line 1308.
+Package czt Info: Setting up Standard Z basic symbols on input line 1423.
+Package czt Info: Setting up Standard Z Greek and other letters on input line 1
+487.
+Package czt Info: Setting up Standard Z bracket symbols on input line 1534.
+Package czt Info: Marking \mid, \semicolon, and \spot
+(czt)             as 
+(czt)             active in math mode on input line 1538.
+Package czt Info: Setting up Standard Z predicate logic symbols on input line 1
+581.
+Package czt Info: Setting up Standard Z keywords on input line 1645.
+Package czt Info:   Loading prelude          symbols on input line 1655.
+Package czt Info:   Loading set      toolkit symbols on input line 1687.
+Package czt Info:   Loading relation toolkit symbols on input line 1713.
+Package czt Info:   Loading function toolkit symbols on input line 1728.
+Package czt Info:   Loading number   toolkit symbols on input line 1744.
+Package czt Info:   Loading sequence toolkit symbols on input line 1772.
+Package czt Info:   Loading standard toolkit symbols completed on input line 17
+76.
+Package czt Info:   Loading Z state refinement toolkit symbols completed on inp
+ut line 1787.
+)
+Package circus Info: Rendering Circus math mode with colours on input line 81.
+Package circus Info: Circus colours defined as:
+(circus)               CSPBoxColor  = cmyk( 1, 0, 1,0) 
+(circus)               MetaColor   = cmyk( 0,0.61,0.87,0) 
+(circus)               CSPColor    = cmyk(0.50, 1, 0,0) on input line 98.
+Package circus Info: Loading AMS font symbols for Circus on input line 320.
+\@circuscountingwhat=\count112
+\c@cntCircusChannel=\count113
+\c@cntCircusChannelset=\count114
+\c@cntCircusProcess=\count115
+\c@cntCircusProcessRef=\count116
+\c@cntCircusNameset=\count117
+\c@cntCircusAction=\count118
+\c@cntCircusActionRef=\count119
+\c@cntCircusDeclShallow=\count120
+\c@cntCircusDeclDeep=\count121
+\c@cntCircusZunboxed=\count122
+\c@cntCircusZaxdef=\count123
+\c@cntCircusZgendef=\count124
+\c@cntCircusZschema=\count125
+\c@cntCircusZgenschema=\count126
+\c@cntCircustotChannel=\count127
+\c@cntCircustotChannelset=\count128
+\c@cntCircustotProcess=\count129
+\c@cntCircustotProcessRef=\count130
+\c@cntCircustotNameset=\count131
+\c@cntCircustotAction=\count132
+\c@cntCircustotActionRef=\count133
+\c@cntCircustotDeclShallow=\count134
+\c@cntCircustotDeclDeep=\count135
+\c@cntCircusZtotunboxed=\count136
+\c@cntCircusZtotaxdef=\count137
+\c@cntCircusZtotgendef=\count138
+\c@cntCircusZtotschema=\count139
+\c@cntCircusZtotgenschema=\count140
+Package circus Info: Initialising Circus registers with default values.
+(circus)                \TypesetCircusToolsCmds=false  on input line 467.
+Package circus Info: Setting up Circus LaTeX environments on input line 734.
+Package circus Info: Loading Circus keywords on input line 785.
+Package circus Info: Loading Circus brackets on input line 817.
+Package circus Info: Loading Circus special symbols on input line 830.
+Package circus Info: Loading Circus CSP symbols on input line 852.
+Package circus Info: Loading Circus boxing symbols on input line 869.
+Package circus Info: Loading Circus circus\unhbox \voidb@x \kern 0.06em\vbox {\
+hrule width0.5em}prelude symbols on input line 879.
+Package circus Info: Loading Circus circus\unhbox \voidb@x \kern 0.06em\vbox {\
+hrule width0.5em}mc\unhbox \voidb@x \kern 0.06em\vbox {\hrule width0.5em}toolki
+t symbols on input line 889.
+\circnotewidth=\skip44
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/listings.sty
+\lst@mode=\count141
+\lst@gtempboxa=\box26
+\lst@token=\toks16
+\lst@length=\count142
+\lst@currlwidth=\dimen116
+\lst@column=\count143
+\lst@pos=\count144
+\lst@lostspace=\dimen117
+\lst@width=\dimen118
+\lst@newlines=\count145
+\lst@lineno=\count146
+\lst@maxwidth=\dimen119
+
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
+File: lstmisc.sty 2015/06/04 1.6 (Carsten Heinz)
+\c@lstnumber=\count147
+\lst@skipnumbers=\count148
+\lst@framebox=\box27
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/listings.cfg
+File: listings.cfg 2015/06/04 1.6 listings configuration
+))
+Package: listings 2015/06/04 1.6 (Carsten Heinz)
+
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/lstlhs.sty
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/lsthaskell.sty))
+\c@examplecounter=\count149
+
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/HASKABELLE-TEXT.aux)
+\openout1 = `HASKABELLE-TEXT.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 39.
+LaTeX Font Info:    ... okay on input line 39.
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: a4paper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(36.135pt, 525.23788pt, 36.135pt)
+* v-part:(T,H,B)=(36.135pt, 772.77686pt, 36.135pt)
+* \paperwidth=597.50787pt
+* \paperheight=845.04684pt
+* \textwidth=525.23788pt
+* \textheight=772.77686pt
+* \oddsidemargin=-36.135pt
+* \evensidemargin=-36.135pt
+* \topmargin=-73.135pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+(/usr/share/texlive/texmf-dist/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count150
+\scratchdimen=\dimen120
+\scratchbox=\box28
+\nofMPsegments=\count151
+\nofMParguments=\count152
+\everyMPshowfont=\toks17
+\MPscratchCnt=\count153
+\MPscratchDim=\dimen121
+\MPnumerator=\count154
+\makeMPintoPDFobject=\count155
+\everyMPtoPDFconversion=\toks18
+)
+\c@lstlisting=\count156
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 40.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 40.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 40.
+LaTeX Font Info:    Try loading font information for U+stmry on input line 40.
+ (/usr/share/texlive/texmf-dist/tex/latex/stmaryrd/Ustmry.fd)
+LaTeX Font Info:    Try loading font information for U+msa on input line 40.
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 40.
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/HASKABELLE-TEXT.toc
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 2.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 2.
+)
+\tf@toc=\write3
+\openout3 = `HASKABELLE-TEXT.toc'.
+
+
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/AST.lhs [1
+
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+[2] [3] [4] [5] [6] [7] [8]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 516.
+
+
+(/usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
+)
+LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 516.
+ [9]
+Overfull \hbox (75.7803pt too wide) in paragraph at lines 619--620
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][]
+ []
+
+[10]
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 672--673
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (87.12027pt too wide) in paragraph at lines 684--685
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (53.10037pt too wide) in paragraph at lines 686--687
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][] 
+ []
+
+[11] [12] [13] [14] [15] [16] [17])
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/MappingFunStatelessCircus.lhs
+Overfull \hbox (126.81015pt too wide) in paragraph at lines 288--289
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (7.74051pt too wide) in paragraph at lines 310--311
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][] 
+ []
+
+[18]
+Overfull \hbox (81.45029pt too wide) in paragraph at lines 381--382
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][] 
+ []
+
+[19]
+Overfull \hbox (2.07053pt too wide) in paragraph at lines 438--439
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <17.28> on input line 442.
+
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 460--461
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[20] [21] [22] [23]
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 790--791
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (64.44034pt too wide) in paragraph at lines 804--805
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[24]
+Overfull \hbox (296.90964pt too wide) in paragraph at lines 843--844
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (41.7604pt too wide) in paragraph at lines 847--849
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (138.15012pt too wide) in paragraph at lines 849--850
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[25] [26] [27]
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 1122--1123
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][] 
+ []
+
+
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 1123--1124
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (98.46024pt too wide) in paragraph at lines 1124--1125
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (7.74051pt too wide) in paragraph at lines 1125--1126
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (75.7803pt too wide) in paragraph at lines 1126--1127
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (41.7604pt too wide) in paragraph at lines 1127--1128
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][] 
+ []
+
+[28]
+Overfull \hbox (4090.1282pt too wide) in paragraph at lines 1144--1145
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+)
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/DefSets.lhs [29]
+Overfull \hbox (285.56967pt too wide) in paragraph at lines 66--67
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[30] [31] [32] [33] [34]
+Overfull \hbox (353.60947pt too wide) in paragraph at lines 472--473
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (467.00912pt too wide) in paragraph at lines 473--474
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][] 
+ []
+
+[35] [36] [37] [38]
+Overfull \hbox (75.7803pt too wide) in paragraph at lines 744--745
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[39]
+Overfull \hbox (36.09042pt too wide) in paragraph at lines 833--834
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][] 
+ []
+
+[40]
+Overfull \hbox (30.42044pt too wide) in paragraph at lines 904--905
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (262.88974pt too wide) in paragraph at lines 941--942
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (98.46024pt too wide) in paragraph at lines 943--944
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[41]
+Overfull \hbox (410.3093pt too wide) in paragraph at lines 986--987
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (580.40878pt too wide) in paragraph at lines 987--988
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][] 
+ []
+
+[42] [43]
+Overfull \hbox (364.94943pt too wide) in paragraph at lines 1106--1107
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (7.74051pt too wide) in paragraph at lines 1146--1148
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[44]
+Overfull \hbox (172.17001pt too wide) in paragraph at lines 1198--1199
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][] 
+ []
+
+
+Overfull \hbox (189.17996pt too wide) in paragraph at lines 1199--1200
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (325.25955pt too wide) in paragraph at lines 1200--1201
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (342.2695pt too wide) in paragraph at lines 1201--1202
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
+][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+[45]) [46]
+(/home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/circus-parser/jaza
+/haskabelle/HASKABELLE-TEXT.aux) ) 
+Here is how much of TeX's memory you used:
+ 4967 strings out of 494935
+ 67283 string characters out of 6179320
+ 210581 words of memory out of 5000000
+ 8177 multiletter control sequences out of 15000+600000
+ 17446 words of font info for 66 fonts, out of 8000000 for 9000
+ 38 hyphenation exceptions out of 8191
+ 28i,35n,40p,895b,1606s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.
+pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
+sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texli
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
+cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmt
+i7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti8.pfb>
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/
+share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/share/t
+exlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/te
+xlive/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
+Output written on /home/artur/Dropbox/Academico/PosGrad/Doutorado/phd/studies/c
+ircus-parser/jaza/haskabelle/HASKABELLE-TEXT.pdf (46 pages, 373386 bytes).
+PDF statistics:
+ 238 PDF objects out of 1000 (max. 8388607)
+ 167 compressed objects within 2 object streams
+ 0 named destinations out of 1000 (max. 500000)
+ 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+

@@ -16,7 +16,7 @@ import Data.List
 import Data.Text hiding (map,concat)
 import Data.Char hiding (toUpper, toTitle)
 import MappingFunStatelessCircus
-import DefSets
+import OmegaDefs
 
 
 showexpr = zexpr_string (pinfo_extz 80)

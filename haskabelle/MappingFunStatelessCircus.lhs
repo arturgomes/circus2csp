@@ -16,134 +16,134 @@ module MappingFunStatelessCircus
 where
 import AST
 import OmegaDefs
-import Data.List hiding (union, intersect)
-import FormatterToCSP
-import CRL
+-- import Data.List hiding (union, intersect)
+-- import FormatterToCSP
+-- import CRL
 \end{code}
 
-\begin{code}
-omega_Circus :: [ZPara] -> [ZPara]
-omega_Circus spec
-  = [ZGivenSetDecl ("UNIVERSE",[]),
-      ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
-      ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])), 
-      ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
-      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
-      CircChannel [CChan "terminate"],
-      CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
-    ++ (omega_Circus_aux spec1 spec1)
-    where 
-      spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec)) spec) -- renaming variables for highlighting which is state var from which process
-\end{code}
+% \begin{code}
+% omega_Circus :: [ZPara] -> [ZPara]
+% omega_Circus spec
+%   = [ZGivenSetDecl ("UNIVERSE",[]),
+%       ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
+%       ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])), 
+%       ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
+%       CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
+%       CircChannel [CChan "terminate"],
+%       CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
+%     ++ (omega_Circus_aux spec1 spec1)
+%     where 
+%       spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec)) spec) -- renaming variables for highlighting which is state var from which process
+% \end{code}
 
-\subsection{Omega functions}
-\begin{code}
-omega_Circus_aux :: [ZPara] -> [ZPara] -> [ZPara]
+% \subsection{Omega functions}
+% \begin{code}
+% omega_Circus_aux :: [ZPara] -> [ZPara] -> [ZPara]
 
-omega_Circus_aux spec [(Process cp)]
-  = [(Process (omega_ProcDecl spec cp))]
-  -- where
-  --   ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
-omega_Circus_aux spec [x] = [x]
-omega_Circus_aux spec ((Process cp):xs)
-  = [(Process (omega_ProcDecl spec cp))]++(omega_Circus_aux spec xs)
-  -- where
-  -- ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
-omega_Circus_aux spec (x:xs)
-  = [x]++(omega_Circus_aux spec xs)
-\end{code}
+% omega_Circus_aux spec [(Process cp)]
+%   = [(Process (omega_ProcDecl spec cp))]
+%   -- where
+%   --   ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
+% omega_Circus_aux spec [x] = [x]
+% omega_Circus_aux spec ((Process cp):xs)
+%   = [(Process (omega_ProcDecl spec cp))]++(omega_Circus_aux spec xs)
+%   -- where
+%   -- ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
+% omega_Circus_aux spec (x:xs)
+%   = [x]++(omega_Circus_aux spec xs)
+% \end{code}
 
 
 
-\subsection{Mapping Circus Processes Declaration}
+% \subsection{Mapping Circus Processes Declaration}
 
-\begin{code}
-omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
-omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
-  = (CGenProcess zn (x:xs) (omega_ProcessDef spec pd))
-    -- where
-      -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
-omega_ProcDecl spec (CProcess zn pd)
-  = (CProcess zn (omega_ProcessDef spec pd))
-    -- where
-      -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
-\end{code}
+% \begin{code}
+% omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
+% omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
+%   = (CGenProcess zn (x:xs) (omega_ProcessDef spec pd))
+%     -- where
+%       -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
+% omega_ProcDecl spec (CProcess zn pd)
+%   = (CProcess zn (omega_ProcessDef spec pd))
+%     -- where
+%       -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
+% \end{code}
 
-\subsection{Mapping Circus Processes Definition}
-\begin{code}
-omega_ProcessDef :: [ZPara] -> ProcessDef -> ProcessDef
-omega_ProcessDef spec (ProcDefSpot xl pd)
-  = (ProcDefSpot xl (omega_ProcessDef spec pd))
-omega_ProcessDef spec (ProcDefIndex xl pd)
-  = (ProcDefIndex xl (omega_ProcessDef spec pd))
-omega_ProcessDef spec (ProcDef cp)
-  = (ProcDef (omega_CProc spec cp))
-\end{code}
+% \subsection{Mapping Circus Processes Definition}
+% \begin{code}
+% omega_ProcessDef :: [ZPara] -> ProcessDef -> ProcessDef
+% omega_ProcessDef spec (ProcDefSpot xl pd)
+%   = (ProcDefSpot xl (omega_ProcessDef spec pd))
+% omega_ProcessDef spec (ProcDefIndex xl pd)
+%   = (ProcDefIndex xl (omega_ProcessDef spec pd))
+% omega_ProcessDef spec (ProcDef cp)
+%   = (ProcDef (omega_CProc spec cp))
+% \end{code}
 
-\subsection{Mapping Circus Processes}
-Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
-\begin{code}
-omega_CProc :: [ZPara] -> CProc -> CProc
-omega_CProc spec (CExtChoice a b)
-  = (CExtChoice (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CHide a cs)
-  = (CHide (omega_CProc spec a) cs)
-omega_CProc spec (CIntChoice a b)
-  = (CIntChoice (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CInterleave a b)
-  = (CInterleave (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CircusProc zn)
-  = (CircusProc zn)
-omega_CProc spec (CParParal cs a b)
-  = (CParParal cs (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CRepExtChProc [(Choose x s)] a)
-  = (CRepExtChProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepIntChProc [(Choose x s)] a)
-  = (CRepIntChProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepInterlProc [(Choose x s)] a)
-  = (CRepInterlProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepParalProc cse [(Choose x s)] a)
-  = (CRepParalProc cse [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepSeqProc [(Choose x s)] a)
-  = (CRepSeqProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CSeq a b)
-  = (CSeq (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (ProcStalessMain xls ca)
-  = (ProcStalessMain (concat (map omega_PPar xls)) (mk_main_action_bind nstate (omega_CAction ca)))
-    where 
-      nstate = (def_mem_st_Circus_aux spec)
-omega_CProc spec (CGenProc zn (x:xs))
-  = (CGenProc zn (x:xs))
-omega_CProc spec (CParamProc zn (x:xs))
-  = (CParamProc zn (x:xs))
-omega_CProc spec (CSimpIndexProc zn (x:xs))
-  = (CSimpIndexProc zn (x:xs))
-omega_CProc spec (ProcMain zp (x:xs) ca)
-  = (ProcStalessMain 
-    [make_memory_proc] 
-    (get_main_action 
-      (concat (map omega_PPar (x:xs)))
-      (mk_main_action_bind nstate (omega_CAction ca))))
-    where 
-      nstate = (def_mem_st_Circus_aux spec)
-omega_CProc spec x
-  = x
-\end{code}
+% \subsection{Mapping Circus Processes}
+% Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
+% \begin{code}
+% omega_CProc :: [ZPara] -> CProc -> CProc
+% omega_CProc spec (CExtChoice a b)
+%   = (CExtChoice (omega_CProc spec a) (omega_CProc spec b))
+% omega_CProc spec (CHide a cs)
+%   = (CHide (omega_CProc spec a) cs)
+% omega_CProc spec (CIntChoice a b)
+%   = (CIntChoice (omega_CProc spec a) (omega_CProc spec b))
+% omega_CProc spec (CInterleave a b)
+%   = (CInterleave (omega_CProc spec a) (omega_CProc spec b))
+% omega_CProc spec (CircusProc zn)
+%   = (CircusProc zn)
+% omega_CProc spec (CParParal cs a b)
+%   = (CParParal cs (omega_CProc spec a) (omega_CProc spec b))
+% omega_CProc spec (CRepExtChProc [(Choose x s)] a)
+%   = (CRepExtChProc [(Choose x s)] (omega_CProc spec a))
+% omega_CProc spec (CRepIntChProc [(Choose x s)] a)
+%   = (CRepIntChProc [(Choose x s)] (omega_CProc spec a))
+% omega_CProc spec (CRepInterlProc [(Choose x s)] a)
+%   = (CRepInterlProc [(Choose x s)] (omega_CProc spec a))
+% omega_CProc spec (CRepParalProc cse [(Choose x s)] a)
+%   = (CRepParalProc cse [(Choose x s)] (omega_CProc spec a))
+% omega_CProc spec (CRepSeqProc [(Choose x s)] a)
+%   = (CRepSeqProc [(Choose x s)] (omega_CProc spec a))
+% omega_CProc spec (CSeq a b)
+%   = (CSeq (omega_CProc spec a) (omega_CProc spec b))
+% omega_CProc spec (ProcStalessMain xls ca)
+%   = (ProcStalessMain (concat (map omega_PPar xls)) (mk_main_action_bind nstate (omega_CAction ca)))
+%     where 
+%       nstate = (def_mem_st_Circus_aux spec)
+% omega_CProc spec (CGenProc zn (x:xs))
+%   = (CGenProc zn (x:xs))
+% omega_CProc spec (CParamProc zn (x:xs))
+%   = (CParamProc zn (x:xs))
+% omega_CProc spec (CSimpIndexProc zn (x:xs))
+%   = (CSimpIndexProc zn (x:xs))
+% omega_CProc spec (ProcMain zp (x:xs) ca)
+%   = (ProcStalessMain 
+%     [make_memory_proc] 
+%     (get_main_action 
+%       (concat (map omega_PPar (x:xs)))
+%       (mk_main_action_bind nstate (omega_CAction ca))))
+%     where 
+%       nstate = (def_mem_st_Circus_aux spec)
+% omega_CProc spec x
+%   = x
+% \end{code}
 
-\subsection{Mapping Parameterised Circus Actions}
-\begin{code}
-omega_PPar :: PPar -> [PPar]
-omega_PPar (ProcZPara zp) = [(ProcZPara zp)]
-omega_PPar (CParAction n pa) = [(CParAction n (omega_ParAction pa))]
-omega_PPar (CNameSet n ns) = [(CNameSet n ns)]
-\end{code}
-\begin{code}
-omega_ParAction :: ParAction -> ParAction
-omega_ParAction (CircusAction ca)
-  = (CircusAction (omega_CAction ca))
-omega_ParAction (ParamActionDecl xl pa)
-  = (ParamActionDecl xl (omega_ParAction pa))
-\end{code}
+% \subsection{Mapping Parameterised Circus Actions}
+% \begin{code}
+% omega_PPar :: PPar -> [PPar]
+% omega_PPar (ProcZPara zp) = [(ProcZPara zp)]
+% omega_PPar (CParAction n pa) = [(CParAction n (omega_ParAction pa))]
+% omega_PPar (CNameSet n ns) = [(CNameSet n ns)]
+% \end{code}
+% \begin{code}
+% omega_ParAction :: ParAction -> ParAction
+% omega_ParAction (CircusAction ca)
+%   = (CircusAction (omega_CAction ca))
+% omega_ParAction (ParamActionDecl xl pa)
+%   = (ParamActionDecl xl (omega_ParAction pa))
+% \end{code}
 }
 \subsection{Stateless Circus - Actions}
 
@@ -568,8 +568,8 @@ omega_prime_CAction CSPChaos = CSPChaos
 
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPCommAction (ChanComm c []) a)
-  = (CSPCommAction (ChanComm c []) (omega_prime_CAction a))
+-- omega_prime_CAction (CSPCommAction (ChanComm c []) a)
+--   = (CSPCommAction (ChanComm c []) (omega_prime_CAction a))
 \end{code}
 \begin{circus}
 \Omega'_A (c.e \then A) \circdef c(vv_0,...,vv_n,vl_0,...,vl_m) \then \Omega'_A (A)
@@ -577,8 +577,8 @@ omega_prime_CAction (CSPCommAction (ChanComm c []) a)
 
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a) 
-  = (CSPCommAction (ChanComm c [ChanDotExp (rename_ZExpr e)]) (omega_prime_CAction a))
+-- omega_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a) 
+--   = (CSPCommAction (ChanComm c [ChanDotExp (rename_ZExpr e)]) (omega_prime_CAction a))
 
 \end{code}
 

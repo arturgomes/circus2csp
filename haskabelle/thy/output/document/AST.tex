@@ -1,0 +1,160 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{AST}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{theory}\isamarkupfalse%
+\ AST\isanewline
+\isakeyword{imports}\ Prelude\isanewline
+\isakeyword{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ GivenValue\ {\isacharequal}\ string\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZInt\ {\isacharequal}\ int\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZDecor\ {\isacharequal}\ string\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZVar\ {\isacharequal}\ {\isachardoublequoteopen}string\ {\isacharasterisk}\ {\isacharparenleft}ZDecor\ list{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ GivenSet\ {\isacharequal}\ ZVar\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZName\ {\isacharequal}\ string\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ ZGenFilt\ {\isacharequal}\ Choose\ ZVar\ ZExpr\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ Check\ ZPred\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ Evaluate\ ZVar\ ZExpr\ ZExpr\isanewline
+\isakeyword{and}\ \ \ \ \ \ ZExpr\ {\isacharequal}\ ZVar\ ZVar\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZInt\ ZInt\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZTuple\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZBinding\ {\isachardoublequoteopen}{\isacharparenleft}ZVar\ {\isacharasterisk}\ ZExpr{\isacharparenright}\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZSetDisplay\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZSeqDisplay\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZCross\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZSetComp\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\ {\isachardoublequoteopen}ZExpr\ option{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZCall\ ZExpr\ ZExpr\isanewline
+\isakeyword{and}\ \ \ \ \ \ ZPred\ {\isacharequal}\ ZFalse\ {\isachardoublequoteopen}ZPred\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZTrue\ {\isachardoublequoteopen}ZPred\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZAnd\ ZPred\ ZPred\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZPSchema\ ZSExpr\isanewline
+\isakeyword{and}\ \ \ \ \ \ ZSExpr\ {\isacharequal}\ ZSchema\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{primrec}\isamarkupfalse%
+\ reason\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZPred\ {\isasymRightarrow}\ ZPred\ list{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}reason\ {\isacharparenleft}ZTrue\ x{\isacharparenright}\ {\isacharequal}\ x{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}reason\ {\isacharparenleft}ZFalse\ x{\isacharparenright}\ {\isacharequal}\ x{\isachardoublequoteclose}\isanewline
+\isanewline
+\ \isanewline
+\isacommand{primrec}\isamarkupfalse%
+\ update{\isacharunderscore}reason\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZPred\ list\ {\isasymRightarrow}\ ZPred\ {\isasymRightarrow}\ ZPred{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}update{\isacharunderscore}reason\ x\ {\isacharparenleft}ZTrue\ {\isacharunderscore}{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZTrue\ x{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}update{\isacharunderscore}reason\ x\ {\isacharparenleft}ZFalse\ {\isacharunderscore}{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZFalse\ x{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZFSet\ {\isacharequal}\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ ZSName\ {\isacharequal}\ ZSPlain\ string\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZSDelta\ string\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ZSXi\ string\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ CSExp\ {\isacharequal}\ CSExpr\ ZName\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSEmpty\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CChanSet\ {\isachardoublequoteopen}ZName\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanSetUnion\ CSExp\ CSExp\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanSetInter\ CSExp\ CSExp\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanSetDiff\ CSExp\ CSExp\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ NSExp\ {\isacharequal}\ NSExpEmpty\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSExprMult\ {\isachardoublequoteopen}ZName\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSExprSngl\ ZName\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSExprParam\ ZName\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSUnion\ NSExp\ NSExp\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSIntersect\ NSExp\ NSExp\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSHide\ NSExp\ NSExp\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ NSBigUnion\ ZExpr\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ CParameter\ {\isacharequal}\ ChanInp\ ZName\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanInpPred\ ZName\ ZPred\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanOutExp\ ZExpr\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanDotExp\ ZExpr\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ Comm\ {\isacharequal}\ ChanComm\ ZName\ {\isachardoublequoteopen}CParameter\ list{\isachardoublequoteclose}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanGenComm\ ZName\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\ {\isachardoublequoteopen}CParameter\ list{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ CAction\ {\isacharequal}\ CSPSkip\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPStop\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPChaos\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPCommAction\ Comm\ CAction\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPSeq\ CAction\ CAction\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPExtChoice\ CAction\ CAction\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ ParAction\ {\isacharequal}\ CircusAction\ CAction\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ParamActionDecl\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\ ParAction\isanewline
+\ \isanewline
+\isacommand{datatype}\isamarkupfalse%
+\ ZPara\ {\isacharequal}\ ZSchemaDef\ ZSName\ ZSExpr\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ Process\ ProcDecl\isanewline
+\isakeyword{and}\ \ \ \ \ \ ProcDecl\ {\isacharequal}\ CProcess\ ZName\ ProcessDef\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CParamProcess\ ZName\ {\isachardoublequoteopen}ZName\ list{\isachardoublequoteclose}\ ProcessDef\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CGenProcess\ ZName\ {\isachardoublequoteopen}ZName\ list{\isachardoublequoteclose}\ ProcessDef\isanewline
+\isakeyword{and}\ \ \ \ \ \ ProcessDef\ {\isacharequal}\ ProcDefSpot\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\ ProcessDef\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ProcDef\ CProc\isanewline
+\isakeyword{and}\ \ \ \ \ \ CProc\ {\isacharequal}\ ProcMain\ ZPara\ {\isachardoublequoteopen}PPar\ list{\isachardoublequoteclose}\ CAction\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ProcStalessMain\ {\isachardoublequoteopen}PPar\ list{\isachardoublequoteclose}\ CAction\isanewline
+\isakeyword{and}\ \ \ \ \ \ PPar\ {\isacharequal}\ ProcZPara\ ZPara\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CParAction\ ZName\ ParAction\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CNameSet\ ZName\ NSExp\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ ZSpec\ {\isacharequal}\ {\isachardoublequoteopen}ZPara\ list{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ CProgram\ {\isacharequal}\ {\isachardoublequoteopen}ZPara\ list{\isachardoublequoteclose}\isanewline
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "root"
+%%% End:

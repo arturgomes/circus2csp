@@ -1,0 +1,5 @@
+\contentsline {subsection}{\numberline {0.1}Equality}{1}{subsection.0.1}
+\contentsline {subsection}{\numberline {0.2}Fundamental prelude ingredients}{3}{subsection.0.2}
+\contentsline {subsection}{\numberline {0.3}Options}{3}{subsection.0.3}
+\contentsline {subsection}{\numberline {0.4}Lists}{3}{subsection.0.4}
+\contentsline {subsection}{\numberline {0.5}Counterparts for fundamental Haskell classes}{4}{subsection.0.5}

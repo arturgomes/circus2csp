@@ -1,0 +1,389 @@
+%
+\begin{isabellebody}%
+\setisabellecontext{Prelude}%
+%
+\isadelimtheory
+\isanewline
+\isanewline
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{theory}\isamarkupfalse%
+\ Prelude\isanewline
+\isakeyword{imports}\ Main\isanewline
+\isakeyword{begin}%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\begin{isamarkuptext}%
+You can place here what you want.  However, in practice it
+  is recommended to restrict additions here only to ingredients
+  of the Haskell Prelude;  further Haskell library modules
+  should be obtained in source and just imported, probably
+  with prior modifications.%
+\end{isamarkuptext}\isamarkuptrue%
+%
+\isamarkupsubsection{Equality%
+}
+\isamarkuptrue%
+\isacommand{class}\isamarkupfalse%
+\ eq\ {\isacharequal}\isanewline
+\ \ \isakeyword{fixes}\ eq\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{fixes}\ not{\isacharunderscore}eq\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\ \ \isakeyword{assumes}\ not{\isacharunderscore}eq\ {\isacharbrackleft}simp{\isacharbrackright}{\isacharcolon}\ {\isachardoublequoteopen}not{\isacharunderscore}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isasymnot}\ eq\ x\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ bool\ {\isacharcolon}{\isacharcolon}\ eq\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ p\ q\ {\isasymlongleftrightarrow}\ {\isacharparenleft}p\ {\isasymlongleftrightarrow}\ q{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ p\ q\ {\isasymlongleftrightarrow}\ {\isasymnot}\ {\isacharparenleft}p\ {\isasymlongleftrightarrow}\ q{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}bool{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}bool{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ unit\ {\isacharcolon}{\isacharcolon}\ eq\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ {\isacharparenleft}u{\isacharcolon}{\isacharcolon}unit{\isacharparenright}\ v\ {\isasymlongleftrightarrow}\ True{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ {\isacharparenleft}u{\isacharcolon}{\isacharcolon}unit{\isacharparenright}\ v\ {\isasymlongleftrightarrow}\ False{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}unit{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}unit{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ prod\ {\isacharcolon}{\isacharcolon}\ {\isacharparenleft}eq{\isacharcomma}\ eq{\isacharparenright}\ eq\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ {\isacharasterisk}\ {\isacharunderscore}{\isacharparenright}\ {\isacharequal}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ {\isacharasterisk}\ {\isacharunderscore}{\isacharparenright}\ {\isasymnoteq}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}prod{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}prod{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ list\ {\isacharcolon}{\isacharcolon}\ {\isacharparenleft}eq{\isacharparenright}\ eq\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ list{\isacharparenright}\ {\isacharequal}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ list{\isacharparenright}\ {\isasymnoteq}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}list{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}list{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ option\ {\isacharcolon}{\isacharcolon}\ {\isacharparenleft}eq{\isacharparenright}\ eq\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ option{\isacharparenright}\ {\isacharequal}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ x\ y\ {\isasymlongleftrightarrow}\ {\isacharparenleft}x\ {\isacharcolon}{\isacharcolon}\ {\isacharunderscore}\ option{\isacharparenright}\ {\isasymnoteq}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}option{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}option{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ int\ {\isacharcolon}{\isacharcolon}\ eq\isanewline
+\isakeyword{begin}\ \isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}eq\ x\ y\ {\isasymlongleftrightarrow}\ x\ {\isacharequal}\ {\isacharparenleft}y{\isacharcolon}{\isacharcolon}int{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}not{\isacharunderscore}eq\ x\ y\ {\isasymlongleftrightarrow}\ x\ {\isasymnoteq}\ {\isacharparenleft}y{\isacharcolon}{\isacharcolon}int{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{proof}\isamarkupfalse%
+\isanewline
+\isacommand{qed}\isamarkupfalse%
+\ {\isacharparenleft}simp{\isacharunderscore}all\ add{\isacharcolon}\ eq{\isacharunderscore}int{\isacharunderscore}def\ not{\isacharunderscore}eq{\isacharunderscore}int{\isacharunderscore}def{\isacharparenright}%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+%
+\isamarkupsubsection{Fundamental prelude ingredients%
+}
+\isamarkuptrue%
+\isacommand{axiomatization}\isamarkupfalse%
+\ error\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}string\ {\isasymRightarrow}\ {\isacharprime}a{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+\ {\isacharparenleft}input{\isacharparenright}\ rapp\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b{\isacharparenright}\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b{\isachardoublequoteclose}\ {\isacharparenleft}\isakeyword{infixr}\ {\isachardoublequoteopen}{\isachardollar}{\isachardoublequoteclose}\ {\isadigit{6}}{\isadigit{0}}{\isacharparenright}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}f\ {\isachardollar}\ x\ {\isasymequiv}\ f\ x{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+\ {\isacharparenleft}input{\isacharparenright}\ const\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b\ {\isasymRightarrow}\ {\isacharprime}b{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}const\ x\ y\ {\isasymequiv}\ y{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ curry\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}{\isacharprime}a\ {\isasymtimes}\ {\isacharprime}b\ {\isasymRightarrow}\ {\isacharprime}c{\isacharparenright}\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b\ {\isasymRightarrow}\ {\isacharprime}c{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}curry\ f\ x\ y\ {\isacharequal}\ f\ {\isacharparenleft}x{\isacharcomma}\ y{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsubsection{Options%
+}
+\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ the{\isacharunderscore}default\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}a\ option\ {\isasymRightarrow}\ {\isacharprime}a{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}the{\isacharunderscore}default\ x\ y\ {\isacharequal}\ {\isacharparenleft}case\ y\ of\ Some\ z\ {\isasymRightarrow}\ z\ {\isacharbar}\ None\ {\isasymRightarrow}\ x{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{abbreviation}\isamarkupfalse%
+\ {\isacharparenleft}input{\isacharparenright}\ maybe\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}b\ {\isasymRightarrow}\ {\isacharparenleft}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}b{\isacharparenright}\ {\isasymRightarrow}\ {\isacharprime}a\ option\ {\isasymRightarrow}\ {\isacharprime}b{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}maybe\ x\ f\ y\ {\isasymequiv}\ the{\isacharunderscore}default\ x\ {\isacharparenleft}map{\isacharunderscore}option\ f\ y{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsubsection{Lists%
+}
+\isamarkuptrue%
+\isacommand{abbreviation}\isamarkupfalse%
+\ {\isacharparenleft}input{\isacharparenright}\ null\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ list\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}null\ xs\ {\isasymequiv}\ xs\ {\isacharequal}\ {\isacharbrackleft}{\isacharbrackright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ nth\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ list\ {\isasymRightarrow}\ int\ {\isasymRightarrow}\ {\isacharprime}a{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}nth\ xs\ k\ {\isacharequal}\ {\isacharparenleft}if\ k\ {\isacharless}\ {\isadigit{0}}\ then\ error\ {\isacharprime}{\isacharprime}negative\ index{\isacharprime}{\isacharprime}\ else\ List{\isachardot}nth\ xs\ {\isacharparenleft}nat\ k{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ length\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ list\ {\isasymRightarrow}\ int{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}length\ xs\ {\isacharequal}\ int\ {\isacharparenleft}List{\isachardot}length\ xs{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ replicate\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}int\ {\isasymRightarrow}\ {\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}a\ list{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}replicate\ k\ {\isacharequal}\ List{\isachardot}replicate\ {\isacharparenleft}nat\ k{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{primrec}\isamarkupfalse%
+\ separate\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ {\isacharprime}a\ list\ {\isasymRightarrow}\ {\isacharprime}a\ list{\isachardoublequoteclose}\ \isakeyword{where}\isanewline
+\ \ \ \ {\isachardoublequoteopen}separate\ x\ {\isacharbrackleft}{\isacharbrackright}\ {\isacharequal}\ {\isacharbrackleft}{\isacharbrackright}{\isachardoublequoteclose}\isanewline
+\ \ {\isacharbar}\ {\isachardoublequoteopen}separate\ x\ {\isacharparenleft}y\ {\isacharhash}\ ys{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ ys\ {\isacharequal}\ {\isacharbrackleft}{\isacharbrackright}\ then\ {\isacharbrackleft}y{\isacharbrackright}\ else\ y\ {\isacharhash}\ x\ {\isacharhash}\ separate\ x\ ys{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsubsection{Counterparts for fundamental Haskell classes%
+}
+\isamarkuptrue%
+\isacommand{class}\isamarkupfalse%
+\ ord\ {\isacharequal}\ eq\ {\isacharplus}\ linorder\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+\ int\ {\isacharcolon}{\isacharcolon}\ ord%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{{\isachardot}{\isachardot}}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{class}\isamarkupfalse%
+\ print\ {\isacharequal}\isanewline
+\ \ \isakeyword{fixes}\ print\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharprime}a\ {\isasymRightarrow}\ string{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instantiation}\isamarkupfalse%
+\ list\ {\isacharcolon}{\isacharcolon}\ {\isacharparenleft}print{\isacharparenright}\ print\isanewline
+\isakeyword{begin}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\isanewline
+\ \ {\isachardoublequoteopen}print\ xs\ {\isacharequal}\ {\isacharprime}{\isacharprime}{\isacharbrackleft}{\isacharprime}{\isacharprime}\ {\isacharat}\ concat\ {\isacharparenleft}separate\ {\isacharprime}{\isacharprime}{\isacharcomma}\ {\isacharprime}{\isacharprime}\ {\isacharparenleft}map\ print\ xs{\isacharparenright}{\isacharparenright}\ {\isacharat}\ {\isacharprime}{\isacharprime}{\isacharbrackright}{\isacharprime}{\isacharprime}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{{\isachardot}{\isachardot}}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+\isanewline
+\isacommand{end}\isamarkupfalse%
+\isanewline
+\isanewline
+\isacommand{class}\isamarkupfalse%
+\ num\ {\isacharequal}\ comm{\isacharunderscore}ring{\isacharunderscore}{\isadigit{1}}\ {\isacharplus}\ abs\ {\isacharplus}\ sgn\ {\isacharplus}\ eq\ {\isacharplus}\ print\isanewline
+\isanewline
+\isacommand{instance}\isamarkupfalse%
+\ int\ {\isacharcolon}{\isacharcolon}\ num%
+\isadelimproof
+\ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{{\isachardot}{\isachardot}}\isamarkupfalse%
+%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+%
+\endisadelimproof
+\isanewline
+%
+\isadelimtheory
+\isanewline
+%
+\endisadelimtheory
+%
+\isatagtheory
+\isacommand{end}\isamarkupfalse%
+%
+\endisatagtheory
+{\isafoldtheory}%
+%
+\isadelimtheory
+%
+\endisadelimtheory
+%
+\end{isabellebody}%
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "root"
+%%% End:

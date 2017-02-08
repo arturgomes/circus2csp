@@ -415,9 +415,9 @@ zbasic_decl
 	 tok L_COLON;
 	 optnls;
 	 e <- zexpression;
-	 return [Choose (make_zvar w d) e | (w,d) <- ws]} +++
-    do  {sr <- zschema_ref;
-	 return [Include sr]}
+	 return [Choose (make_zvar w d) e | (w,d) <- ws]} 
+	 -- +++ do  {sr <- zschema_ref;
+	 -- return [Include sr]}
 
 -- This differs slightly from the Breuer/Bowen grammar.
 -- To avoid reparsing parenthesized expressions, we define

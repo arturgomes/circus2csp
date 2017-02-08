@@ -6,7 +6,7 @@
 module CRL
 where
 import AST
-import DefSets
+import OmegaDefs
 import Data.List hiding (union, intersect)
 import Data.Maybe
 
