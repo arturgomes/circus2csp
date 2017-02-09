@@ -4,7 +4,7 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 \ignore{
 \begin{code}
 module OmegaDefs where
--- import Data.Char
+import Data.Char
 -- import Data.Text hiding (map,concat,all,take)
 import AST
 \end{code}

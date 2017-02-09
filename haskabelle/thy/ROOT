@@ -1,12 +1,12 @@
-session "thy" = "HOL" +
-  options [document = pdf, document_output = "output"]
+session "Omega Functions in Isabelle" = "HOL" +
+  options [document = pdf, document_output = "OMEGA-FUN-IN-ISABELLE"]
   theories [document = false]
     (* Foo *)
     (* Bar *)
   theories
- 	Prelude
+ 	(*Prelude*)
  	AST
- 	OmegaDefs  
+ 	OmegaDefs
  	MappingFunStatelessCircus (* Baz *)
   document_files
     "root.tex"
