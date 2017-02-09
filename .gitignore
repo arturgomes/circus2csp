@@ -1,1 +1,9 @@
 .stack-work
+*.o
+*.hi
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+
