@@ -28,7 +28,7 @@ where
 | "fvs f (e # es) = (f e @ (fvs f es))"
 
  
-fun free_var_ZExpr :: "ZExpr \<Rightarrow> ZVar list"
+function (sequential) free_var_ZExpr :: "ZExpr \<Rightarrow> ZVar list"
 where
   "free_var_ZExpr (ZVar v) = [v]"
 | "free_var_ZExpr (ZInt c) = Nil"
@@ -36,7 +36,7 @@ where
 | "free_var_ZExpr (ZSeqDisplay exls) = fvs free_var_ZExpr exls"
 | "free_var_ZExpr (ZCall ex ex2) = free_var_ZExpr ex2"
 | "free_var_ZExpr _ = Nil"
-
+by pat_completeness auto
  
 fun make_get_com :: "ZName list \<Rightarrow> CAction \<Rightarrow> CAction"
 where
@@ -47,10 +47,9 @@ where
  
 fun make_set_com :: "(CAction \<Rightarrow> CAction) \<Rightarrow> ZVar list \<Rightarrow> ZExpr list \<Rightarrow> CAction \<Rightarrow> CAction"
 where
-  "make_set_com f Nil Nil c = (f c)"
-| "make_set_com f [(x, _)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (f c))"
+  "make_set_com f [(x, _)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (f c))"
 | "make_set_com f ((x, _) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (make_set_com f xs ys c))"
-
+| "make_set_com f _ _ c = (f c)"
  
 fun getWrtV
 where
@@ -117,14 +116,14 @@ where
 fun elem_by :: "'a \<Rightarrow> 'a list \<Rightarrow> bool"
 where
   "elem_by _ Nil = False"
-| "elem_by y (x # xs) = (eq y x | elem_by y xs)"
+| "elem_by y (x # xs) = (y = x | elem_by y xs)"
 
  
 fun isPrefixOf
 where
   "isPrefixOf Nil _ = True"
 | "isPrefixOf _ Nil = False"
-| "isPrefixOf (x # xs) (y # ys) = (eq x y & isPrefixOf xs ys)"
+| "isPrefixOf (x # xs) (y # ys) = (x = y & isPrefixOf xs ys)"
 
  
 fun get_ZVar_st
@@ -141,7 +140,7 @@ where
 | "free_var_CAction CSPChaos = Nil"
 | "free_var_CAction (CSPSeq ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
 | "free_var_CAction (CSPExtChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-
+| "free_var_CAction (CSPCommAction v va) = Nil"
  
 fun is_ZVar_st
 where
@@ -176,6 +175,7 @@ where
 | "rename_vars_CAction CSPChaos = CSPChaos"
 | "rename_vars_CAction (CSPSeq a1 a2) = (CSPSeq (rename_vars_CAction a1) (rename_vars_CAction a2))"
 | "rename_vars_CAction (CSPExtChoice a1 a2) = (CSPExtChoice (rename_vars_CAction a1) (rename_vars_CAction a2))"
+| "rename_vars_CAction x = x"
 
  
 fun remdups

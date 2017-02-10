@@ -1,12 +1,10 @@
-session "Omega Functions in Isabelle" = "HOL" +
-  options [document = pdf, document_output = "OMEGA-FUN-IN-ISABELLE"]
+session "Chapter3" = "HOL" +
+  options [document = pdf, document_output = "output", show_question_marks = false]
   theories [document = false]
-    (* Foo *)
-    (* Bar *)
+    Prelude
   theories
- 	(*Prelude*)
- 	AST
- 	OmegaDefs
- 	MappingFunStatelessCircus (* Baz *)
+    AST
+    OmegaDefs
+    MappingFunStatelessCircus
   document_files
     "root.tex"

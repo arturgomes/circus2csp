@@ -66,9 +66,18 @@ datatype NSExp = NSExpEmpty
                | NSHide NSExp NSExp
                | NSBigUnion ZExpr
  
+datatype CParameter = ChanInp ZName
+                    | ChanInpPred ZName ZPred
+                    | ChanOutExp ZExpr
+                    | ChanDotExp ZExpr
+ 
+datatype Comm = ChanComm ZName "CParameter list"
+              | ChanGenComm ZName "ZExpr list" "CParameter list"
+ 
 datatype CAction = CSPSkip
                  | CSPStop
                  | CSPChaos
+                 | CSPCommAction Comm CAction
                  | CSPSeq CAction CAction
                  | CSPExtChoice CAction CAction
  
@@ -91,18 +100,5 @@ and      PPar = ProcZPara ZPara
 type_synonym ZSpec = "ZPara list"
  
 type_synonym CProgram = "ZPara list"
- 
-datatype CParameter = ChanInp ZName
-                    | ChanInpPred ZName ZPred
-                    | ChanOutExp ZExpr
-                    | ChanDotExp ZExpr
- 
-datatype Comm = ChanComm ZName "CParameter list"
-              | ChanGenComm ZName "ZExpr list" "CParameter list"
- 
-datatype ZTerm = ZExpr ZExpr
-               | ZPred ZPred
-               | ZSExpr ZSExpr
-               | ZNull
 
 end

@@ -2,22 +2,24 @@
 \begin{isabellebody}%
 \setisabellecontext{MappingFunStatelessCircus}%
 %
+\isamarkupsection{Omega Function Definitions%
+}
+\isamarkuptrue%
+%
 \isadelimtheory
 %
 \endisadelimtheory
 %
 \isatagtheory
 \isacommand{theory}\isamarkupfalse%
-\ MappingFunStatelessCircus\isanewline
-\isakeyword{imports}\ AST\ OmegaDefs\ Prelude\isanewline
-\isakeyword{begin}%
+\ MappingFunStatelessCircus\ \isakeyword{imports}\ AST\ OmegaDefs\ Prelude\ \isakeyword{begin}%
 \endisatagtheory
 {\isafoldtheory}%
 %
 \isadelimtheory
-\isanewline
 %
 \endisadelimtheory
+\isanewline
 \ \isanewline
 \isacommand{fun}\isamarkupfalse%
 \ omega{\isacharunderscore}CAction\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\ \isakeyword{and}\ \isanewline
@@ -51,7 +53,6 @@
 \isadelimtheory
 %
 \endisadelimtheory
-%
 \end{isabellebody}%
 %%% Local Variables:
 %%% mode: latex

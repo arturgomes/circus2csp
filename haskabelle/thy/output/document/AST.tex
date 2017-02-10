@@ -2,29 +2,35 @@
 \begin{isabellebody}%
 \setisabellecontext{AST}%
 %
+\isamarkupsection{Circus and Z Abstract Syntax Tree%
+}
+\isamarkuptrue%
+%
 \isadelimtheory
 %
 \endisadelimtheory
 %
 \isatagtheory
 \isacommand{theory}\isamarkupfalse%
-\ AST\isanewline
-\isakeyword{imports}\ Prelude\isanewline
-\isakeyword{begin}%
+\ AST\ \isakeyword{imports}\ Prelude\ \isakeyword{begin}%
 \endisatagtheory
 {\isafoldtheory}%
 %
 \isadelimtheory
-\isanewline
 %
 \endisadelimtheory
-\ \isanewline
+%
+\isamarkupsubsection{Z Given Sets%
+}
+\isamarkuptrue%
 \isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
 \ GivenValue\ {\isacharequal}\ string\isanewline
 \ \isanewline
 \isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
-\ ZInt\ {\isacharequal}\ int\isanewline
-\ \isanewline
+\ ZInt\ {\isacharequal}\ int%
+\isamarkupsubsection{Z Names and Decorations%
+}
+\isamarkuptrue%
 \isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
 \ ZDecor\ {\isacharequal}\ string\isanewline
 \ \isanewline
@@ -35,8 +41,10 @@
 \ GivenSet\ {\isacharequal}\ ZVar\isanewline
 \ \isanewline
 \isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
-\ ZName\ {\isacharequal}\ string\isanewline
-\ \isanewline
+\ ZName\ {\isacharequal}\ string%
+\isamarkupsubsection{Z Expressions and Predicates%
+}
+\isamarkuptrue%
 \isacommand{datatype}\isamarkupfalse%
 \ ZGenFilt\ {\isacharequal}\ Choose\ ZVar\ ZExpr\isanewline
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ Check\ ZPred\isanewline
@@ -104,8 +112,10 @@
 \ \isanewline
 \isacommand{datatype}\isamarkupfalse%
 \ Comm\ {\isacharequal}\ ChanComm\ ZName\ {\isachardoublequoteopen}CParameter\ list{\isachardoublequoteclose}\isanewline
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanGenComm\ ZName\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\ {\isachardoublequoteopen}CParameter\ list{\isachardoublequoteclose}\isanewline
-\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ChanGenComm\ ZName\ {\isachardoublequoteopen}ZExpr\ list{\isachardoublequoteclose}\ {\isachardoublequoteopen}CParameter\ list{\isachardoublequoteclose}%
+\isamarkupsubsection{Circus Actions%
+}
+\isamarkuptrue%
 \isacommand{datatype}\isamarkupfalse%
 \ CAction\ {\isacharequal}\ CSPSkip\isanewline
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ CSPStop\isanewline
@@ -116,8 +126,10 @@
 \ \isanewline
 \isacommand{datatype}\isamarkupfalse%
 \ ParAction\ {\isacharequal}\ CircusAction\ CAction\isanewline
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ParamActionDecl\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\ ParAction\isanewline
-\ \isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ ParamActionDecl\ {\isachardoublequoteopen}ZGenFilt\ list{\isachardoublequoteclose}\ ParAction%
+\isamarkupsubsection{Z and Circus Paragraphs%
+}
+\isamarkuptrue%
 \isacommand{datatype}\isamarkupfalse%
 \ ZPara\ {\isacharequal}\ ZSchemaDef\ ZSName\ ZSExpr\isanewline
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ Process\ ProcDecl\isanewline
@@ -152,7 +164,6 @@
 \isadelimtheory
 %
 \endisadelimtheory
-%
 \end{isabellebody}%
 %%% Local Variables:
 %%% mode: latex

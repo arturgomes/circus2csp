@@ -2,108 +2,35 @@
 \begin{isabellebody}%
 \setisabellecontext{OmegaDefs}%
 %
+\isamarkupsection{Auxiliary Definitions for Omega functions%
+}
+\isamarkuptrue%
+%
 \isadelimtheory
 %
 \endisadelimtheory
 %
 \isatagtheory
 \isacommand{theory}\isamarkupfalse%
-\ OmegaDefs\isanewline
-\isakeyword{imports}\ AST\ Prelude\isanewline
-\isakeyword{begin}%
+\ OmegaDefs\ \isakeyword{imports}\ AST\ Prelude\ \isakeyword{begin}%
 \endisatagtheory
 {\isafoldtheory}%
 %
 \isadelimtheory
-\isanewline
 %
 \endisadelimtheory
-\ \isanewline
+%
+\begin{isamarkuptext}%
+Concatenation of two names - Used for the CSP renaming of Process+StateVariables%
+\end{isamarkuptext}%
+\isamarkuptrue%
 \isacommand{fun}\isamarkupfalse%
 \ join{\isacharunderscore}name\isanewline
 \isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}join{\isacharunderscore}name\ n\ v\ {\isacharequal}\ {\isacharparenleft}n\ {\isacharat}\ {\isacharparenleft}{\isacharprime}{\isacharprime}{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ v{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Choose\ v\ e{\isacharparenright}\ {\isacharequal}\ {\isacharbrackleft}v{\isacharbrackright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Check\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Evaluate\ v\ e{\isadigit{1}}\ e{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZPred\ {\isasymRightarrow}\ ZVar\ list{\isachardoublequoteclose}\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZFalse\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZTrue\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZAnd\ a\ b{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}ZPred\ a\ {\isacharat}\ free{\isacharunderscore}var{\isacharunderscore}ZPred\ b{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ x\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ fvs\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}fvs\ f\ Nil\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}fvs\ f\ {\isacharparenleft}e\ {\isacharhash}\ es{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}f\ e\ {\isacharat}\ {\isacharparenleft}fvs\ f\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{function}\isamarkupfalse%
-\ {\isacharparenleft}sequential{\isacharparenright}\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZExpr\ {\isasymRightarrow}\ ZVar\ list{\isachardoublequoteclose}\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZVar\ v{\isacharparenright}\ {\isacharequal}\ {\isacharbrackleft}v{\isacharbrackright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZInt\ c{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZSetDisplay\ exls{\isacharparenright}\ {\isacharequal}\ fvs\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ exls{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZSeqDisplay\ exls{\isacharparenright}\ {\isacharequal}\ fvs\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ exls{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZCall\ ex\ ex{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ ex{\isadigit{2}}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharunderscore}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-%
-\isadelimproof
-%
-\endisadelimproof
-%
-\isatagproof
-\isacommand{by}\isamarkupfalse%
-\ pat{\isacharunderscore}completeness\ auto%
-\endisatagproof
-{\isafoldproof}%
-%
-\isadelimproof
-\isanewline
-%
-\endisadelimproof
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZName\ list\ {\isasymRightarrow}\ CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharbrackleft}x{\isacharbrackright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mget{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanInp\ {\isacharparenleft}{\isacharprime}{\isacharprime}v{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ x{\isacharparenright}{\isacharbrackright}{\isacharparenright}\ c{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharparenleft}x\ {\isacharhash}\ xs{\isacharparenright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mget{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanInp\ {\isacharparenleft}{\isacharprime}{\isacharprime}v{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ x{\isacharparenright}{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}make{\isacharunderscore}get{\isacharunderscore}com\ xs\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ x\ c\ {\isacharequal}\ c{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ make{\isacharunderscore}set{\isacharunderscore}com\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}CAction\ {\isasymRightarrow}\ CAction{\isacharparenright}\ {\isasymRightarrow}\ ZVar\ list\ {\isasymRightarrow}\ ZExpr\ list\ {\isasymRightarrow}\ CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharbrackleft}{\isacharparenleft}x{\isacharcomma}\ {\isacharunderscore}{\isacharparenright}{\isacharbrackright}\ {\isacharbrackleft}y{\isacharbrackright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mset{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanOutExp\ y{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}f\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharparenleft}{\isacharparenleft}x{\isacharcomma}\ {\isacharunderscore}{\isacharparenright}\ {\isacharhash}\ xs{\isacharparenright}\ {\isacharparenleft}y\ {\isacharhash}\ ys{\isacharparenright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mset{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanOutExp\ y{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}make{\isacharunderscore}set{\isacharunderscore}com\ f\ xs\ ys\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharunderscore}\ {\isacharunderscore}\ c\ {\isacharequal}\ {\isacharparenleft}f\ c{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ getWrtV\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}getWrtV\ xs\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ rename{\isacharunderscore}ZPred\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZFalse\ a{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZFalse\ a{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZTrue\ a{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZTrue\ a{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZAnd\ p{\isadigit{1}}\ p{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZAnd\ {\isacharparenleft}rename{\isacharunderscore}ZPred\ p{\isadigit{1}}{\isacharparenright}\ {\isacharparenleft}rename{\isacharunderscore}ZPred\ p{\isadigit{2}}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZPSchema\ sp{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZPSchema\ sp{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
+\ \ {\isachardoublequoteopen}join{\isacharunderscore}name\ n\ v\ {\isacharequal}\ {\isacharparenleft}n\ {\isacharat}\ {\isacharparenleft}{\isacharprime}{\isacharprime}{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ v{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsubsection{Manipulating Lists%
+}
+\isamarkuptrue%
 \isacommand{fun}\isamarkupfalse%
 \ inListVar\isanewline
 \isakeyword{where}\isanewline
@@ -141,7 +68,6 @@
 \isakeyword{where}\isanewline
 \ \ {\isachardoublequoteopen}member\ x\ Nil\ {\isacharequal}\ False{\isachardoublequoteclose}\isanewline
 {\isacharbar}\ {\isachardoublequoteopen}member\ x\ {\isacharparenleft}b\ {\isacharhash}\ y{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ x\ {\isacharequal}\ b\ then\ True\ else\ member\ x\ y{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\isanewline
 \ \isanewline
 \isacommand{fun}\isamarkupfalse%
 \ intersect\isanewline
@@ -150,7 +76,6 @@
 {\isacharbar}\ {\isachardoublequoteopen}intersect\ {\isacharparenleft}a\ {\isacharhash}\ x{\isacharparenright}\ y\ {\isacharequal}\ {\isacharparenleft}if\ member\ a\ y\ then\ a\ {\isacharhash}\ {\isacharparenleft}intersect\ x\ y{\isacharparenright}\isanewline
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else\ intersect\ x\ y{\isacharparenright}{\isachardoublequoteclose}\isanewline
 \isanewline
-\ \isanewline
 \isacommand{fun}\isamarkupfalse%
 \ union\isanewline
 \isakeyword{where}\isanewline
@@ -172,15 +97,69 @@
 \ \ {\isachardoublequoteopen}isPrefixOf\ Nil\ {\isacharunderscore}\ {\isacharequal}\ True{\isachardoublequoteclose}\isanewline
 {\isacharbar}\ {\isachardoublequoteopen}isPrefixOf\ {\isacharunderscore}\ Nil\ {\isacharequal}\ False{\isachardoublequoteclose}\isanewline
 {\isacharbar}\ {\isachardoublequoteopen}isPrefixOf\ {\isacharparenleft}x\ {\isacharhash}\ xs{\isacharparenright}\ {\isacharparenleft}y\ {\isacharhash}\ ys{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}x\ {\isacharequal}\ y\ {\isacharampersand}\ isPrefixOf\ xs\ ys{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\ \isanewline
+\isacommand{fun}\isamarkupfalse%
+\ remdups\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}remdups\ Nil\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}remdups\ {\isacharparenleft}x\ {\isacharhash}\ xs{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ {\isacharparenleft}member\ x\ xs{\isacharparenright}\ then\ remdups\ xs\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else\ x\ {\isacharhash}\ remdups\ xs{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{fun}\isamarkupfalse%
+\ subset\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}subset\ xs\ ys\ {\isacharequal}\ list{\isacharunderscore}all\ {\isacharparenleft}{\isacharpercent}\ arg{\isadigit{0}}\ {\isachardot}\ member\ arg{\isadigit{0}}\ ys{\isacharparenright}\ xs{\isachardoublequoteclose}%
+\isamarkupsubsection{Free Variables functions%
+}
+\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Choose\ v\ e{\isacharparenright}\ {\isacharequal}\ {\isacharbrackleft}v{\isacharbrackright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Check\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZGenFilt\ {\isacharparenleft}Evaluate\ v\ e{\isadigit{1}}\ e{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
 \isanewline
 \ \isanewline
 \isacommand{fun}\isamarkupfalse%
-\ get{\isacharunderscore}ZVar{\isacharunderscore}st\isanewline
+\ free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZPred\ {\isasymRightarrow}\ ZVar\ list{\isachardoublequoteclose}\isanewline
 \isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}get{\isacharunderscore}ZVar{\isacharunderscore}st\ {\isacharparenleft}a{\isacharcomma}\ x{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}case\ {\isacharparenleft}isPrefixOf\ {\isacharprime}{\isacharprime}st{\isacharunderscore}var{\isacharunderscore}{\isacharprime}{\isacharprime}\ a{\isacharparenright}\ of\isanewline
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ True\ {\isasymRightarrow}\ {\isacharbrackleft}a{\isacharbrackright}\isanewline
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ False\ {\isasymRightarrow}\ Nil{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZFalse\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZTrue\ p{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ {\isacharparenleft}ZAnd\ a\ b{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}ZPred\ a\ {\isacharat}\ free{\isacharunderscore}var{\isacharunderscore}ZPred\ b{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZPred\ x\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
 \isanewline
+\ \isanewline
+\isacommand{fun}\isamarkupfalse%
+\ fvs\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}fvs\ f\ Nil\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}fvs\ f\ {\isacharparenleft}e\ {\isacharhash}\ es{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}f\ e\ {\isacharat}\ {\isacharparenleft}fvs\ f\ es{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\ \isanewline
+\isacommand{function}\isamarkupfalse%
+\ {\isacharparenleft}sequential{\isacharparenright}\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZExpr\ {\isasymRightarrow}\ ZVar\ list{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZVar\ v{\isacharparenright}\ {\isacharequal}\ {\isacharbrackleft}v{\isacharbrackright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZInt\ c{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZSetDisplay\ exls{\isacharparenright}\ {\isacharequal}\ fvs\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ exls{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZSeqDisplay\ exls{\isacharparenright}\ {\isacharequal}\ fvs\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ exls{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharparenleft}ZCall\ ex\ ex{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ free{\isacharunderscore}var{\isacharunderscore}ZExpr\ ex{\isadigit{2}}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}ZExpr\ {\isacharunderscore}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+%
+\isadelimproof
+\ \ %
+\endisadelimproof
+%
+\isatagproof
+\isacommand{by}\isamarkupfalse%
+\ pat{\isacharunderscore}completeness\ auto%
+\endisatagproof
+{\isafoldproof}%
+%
+\isadelimproof
+\isanewline
+%
+\endisadelimproof
 \ \isanewline
 \isacommand{fun}\isamarkupfalse%
 \ free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}CAction\ {\isasymRightarrow}\ ZVar\ list{\isachardoublequoteclose}\isanewline
@@ -190,14 +169,59 @@
 {\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}CAction\ CSPChaos\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
 {\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharparenleft}CSPSeq\ ca\ cb{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}{\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}CAction\ ca{\isacharparenright}\ {\isacharat}\ {\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}CAction\ cb{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
 {\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharparenleft}CSPExtChoice\ ca\ cb{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}{\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}CAction\ ca{\isacharparenright}\ {\isacharat}\ {\isacharparenleft}free{\isacharunderscore}var{\isacharunderscore}CAction\ cb{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharparenleft}CSPCommAction\ v\ va{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}free{\isacharunderscore}var{\isacharunderscore}CAction\ {\isacharparenleft}CSPCommAction\ v\ va{\isacharparenright}\ {\isacharequal}\ Nil{\isachardoublequoteclose}%
+\isamarkupsubsection{Production of Get and Set%
+}
+\isamarkuptrue%
+%
+\begin{isamarkuptext}%
+We have to create signals with gets and sets carrying the values of the state variables
+before an action can occur when we translate from state-rich Circus processes into stateless ones.%
+\end{isamarkuptext}%
+\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}ZName\ list\ {\isasymRightarrow}\ CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharbrackleft}x{\isacharbrackright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mget{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanInp\ {\isacharparenleft}{\isacharprime}{\isacharprime}v{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ x{\isacharparenright}{\isacharbrackright}{\isacharparenright}\ c{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ {\isacharparenleft}x\ {\isacharhash}\ xs{\isacharparenright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mget{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanInp\ {\isacharparenleft}{\isacharprime}{\isacharprime}v{\isacharunderscore}{\isacharprime}{\isacharprime}\ {\isacharat}\ x{\isacharparenright}{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}make{\isacharunderscore}get{\isacharunderscore}com\ xs\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}get{\isacharunderscore}com\ x\ c\ {\isacharequal}\ c{\isachardoublequoteclose}\isanewline
+\isanewline
 \ \isanewline
+\isacommand{fun}\isamarkupfalse%
+\ make{\isacharunderscore}set{\isacharunderscore}com\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}{\isacharparenleft}CAction\ {\isasymRightarrow}\ CAction{\isacharparenright}\ {\isasymRightarrow}\ ZVar\ list\ {\isasymRightarrow}\ ZExpr\ list\ {\isasymRightarrow}\ CAction\ {\isasymRightarrow}\ CAction{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharbrackleft}{\isacharparenleft}x{\isacharcomma}\ {\isacharunderscore}{\isacharparenright}{\isacharbrackright}\ {\isacharbrackleft}y{\isacharbrackright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mset{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanOutExp\ y{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}f\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharparenleft}{\isacharparenleft}x{\isacharcomma}\ {\isacharunderscore}{\isacharparenright}\ {\isacharhash}\ xs{\isacharparenright}\ {\isacharparenleft}y\ {\isacharhash}\ ys{\isacharparenright}\ c\ {\isacharequal}\ {\isacharparenleft}CSPCommAction\ {\isacharparenleft}ChanComm\ {\isacharprime}{\isacharprime}mset{\isacharprime}{\isacharprime}\ {\isacharbrackleft}ChanDotExp\ {\isacharparenleft}ZVar\ {\isacharparenleft}x{\isacharcomma}\ Nil{\isacharparenright}{\isacharparenright}{\isacharcomma}\ ChanOutExp\ y{\isacharbrackright}{\isacharparenright}\ {\isacharparenleft}make{\isacharunderscore}set{\isacharunderscore}com\ f\ xs\ ys\ c{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}make{\isacharunderscore}set{\isacharunderscore}com\ f\ {\isacharunderscore}\ {\isacharunderscore}\ c\ {\isacharequal}\ {\isacharparenleft}f\ c{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsubsection{Production of WrtV%
+}
+\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ getWrtV\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}getWrtV\ xs\ {\isacharequal}\ Nil{\isachardoublequoteclose}%
+\isamarkupsubsection{Renaming Variables%
+}
+\isamarkuptrue%
+\isacommand{fun}\isamarkupfalse%
+\ get{\isacharunderscore}ZVar{\isacharunderscore}st\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}get{\isacharunderscore}ZVar{\isacharunderscore}st\ {\isacharparenleft}a{\isacharcomma}\ x{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}case\ {\isacharparenleft}isPrefixOf\ {\isacharprime}{\isacharprime}st{\isacharunderscore}var{\isacharunderscore}{\isacharprime}{\isacharprime}\ a{\isacharparenright}\ of\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ True\ {\isasymRightarrow}\ {\isacharbrackleft}a{\isacharbrackright}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\isacharbar}\ False\ {\isasymRightarrow}\ Nil{\isacharparenright}{\isachardoublequoteclose}\isanewline
 \isacommand{fun}\isamarkupfalse%
 \ is{\isacharunderscore}ZVar{\isacharunderscore}st\isanewline
 \isakeyword{where}\isanewline
 \ \ {\isachardoublequoteopen}is{\isacharunderscore}ZVar{\isacharunderscore}st\ a\ {\isacharequal}\ isPrefixOf\ {\isacharprime}{\isacharprime}st{\isacharunderscore}var{\isacharunderscore}{\isacharprime}{\isacharprime}\ a{\isachardoublequoteclose}\isanewline
 \isanewline
-\ \isanewline
+\isacommand{fun}\isamarkupfalse%
+\ rename{\isacharunderscore}ZPred\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZFalse\ a{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZFalse\ a{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZTrue\ a{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZTrue\ a{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZAnd\ p{\isadigit{1}}\ p{\isadigit{2}}{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZAnd\ {\isacharparenleft}rename{\isacharunderscore}ZPred\ p{\isadigit{1}}{\isacharparenright}\ {\isacharparenleft}rename{\isacharunderscore}ZPred\ p{\isadigit{2}}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}ZPred\ {\isacharparenleft}ZPSchema\ sp{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}ZPSchema\ sp{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
 \isacommand{fun}\isamarkupfalse%
 \ rename{\isacharunderscore}ZExpr\isanewline
 \isakeyword{where}\isanewline
@@ -232,24 +256,11 @@
 {\isacharbar}\ {\isachardoublequoteopen}rename{\isacharunderscore}vars{\isacharunderscore}CAction\ x\ {\isacharequal}\ x{\isachardoublequoteclose}\isanewline
 \isanewline
 \ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ remdups\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}remdups\ Nil\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-{\isacharbar}\ {\isachardoublequoteopen}remdups\ {\isacharparenleft}x\ {\isacharhash}\ xs{\isacharparenright}\ {\isacharequal}\ {\isacharparenleft}if\ {\isacharparenleft}member\ x\ xs{\isacharparenright}\ then\ remdups\ xs\isanewline
-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else\ x\ {\isacharhash}\ remdups\ xs{\isacharparenright}{\isachardoublequoteclose}\isanewline
-\isanewline
 \ \isanewline
 \isacommand{fun}\isamarkupfalse%
 \ getFV\isanewline
 \isakeyword{where}\isanewline
 \ \ {\isachardoublequoteopen}getFV\ xs\ {\isacharequal}\ Nil{\isachardoublequoteclose}\isanewline
-\isanewline
-\ \isanewline
-\isacommand{fun}\isamarkupfalse%
-\ subset\isanewline
-\isakeyword{where}\isanewline
-\ \ {\isachardoublequoteopen}subset\ xs\ ys\ {\isacharequal}\ list{\isacharunderscore}all\ {\isacharparenleft}{\isacharpercent}\ arg{\isadigit{0}}\ {\isachardot}\ member\ arg{\isadigit{0}}\ ys{\isacharparenright}\ xs{\isachardoublequoteclose}\isanewline
 \isanewline
 %
 \isadelimtheory
@@ -266,7 +277,6 @@
 \isadelimtheory
 %
 \endisadelimtheory
-%
 \end{isabellebody}%
 %%% Local Variables:
 %%% mode: latex

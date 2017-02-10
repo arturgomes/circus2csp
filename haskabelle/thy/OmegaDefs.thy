@@ -1,69 +1,13 @@
-theory OmegaDefs
-imports AST Prelude
-begin
- 
+section "Auxiliary Definitions for Omega functions"
+
+theory OmegaDefs imports AST Prelude begin
+
+text{*Concatenation of two names - Used for the CSP renaming of Process+StateVariables*}
 fun join_name
 where
   "join_name n v = (n @ (''_'' @ v))"
+subsection "Manipulating Lists"
 
- 
-fun free_var_ZGenFilt
-where
-  "free_var_ZGenFilt (Choose v e) = [v]"
-| "free_var_ZGenFilt (Check p) = Nil"
-| "free_var_ZGenFilt (Evaluate v e1 e2) = Nil"
-
- 
-fun free_var_ZPred :: "ZPred \<Rightarrow> ZVar list"
-where
-  "free_var_ZPred (ZFalse p) = Nil"
-| "free_var_ZPred (ZTrue p) = Nil"
-| "free_var_ZPred (ZAnd a b) = (free_var_ZPred a @ free_var_ZPred b)"
-| "free_var_ZPred x = Nil"
-
- 
-fun fvs
-where
-  "fvs f Nil = Nil"
-| "fvs f (e # es) = (f e @ (fvs f es))"
-
- 
-function (sequential) free_var_ZExpr :: "ZExpr \<Rightarrow> ZVar list"
-where
-  "free_var_ZExpr (ZVar v) = [v]"
-| "free_var_ZExpr (ZInt c) = Nil"
-| "free_var_ZExpr (ZSetDisplay exls) = fvs free_var_ZExpr exls"
-| "free_var_ZExpr (ZSeqDisplay exls) = fvs free_var_ZExpr exls"
-| "free_var_ZExpr (ZCall ex ex2) = free_var_ZExpr ex2"
-| "free_var_ZExpr _ = Nil"
-by pat_completeness auto
- 
-fun make_get_com :: "ZName list \<Rightarrow> CAction \<Rightarrow> CAction"
-where
-  "make_get_com [x] c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) c)"
-| "make_get_com (x # xs) c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) (make_get_com xs c))"
-| "make_get_com x c = c"
-
- 
-fun make_set_com :: "(CAction \<Rightarrow> CAction) \<Rightarrow> ZVar list \<Rightarrow> ZExpr list \<Rightarrow> CAction \<Rightarrow> CAction"
-where
-  "make_set_com f [(x, _)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (f c))"
-| "make_set_com f ((x, _) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (make_set_com f xs ys c))"
-| "make_set_com f _ _ c = (f c)"
- 
-fun getWrtV
-where
-  "getWrtV xs = Nil"
-
- 
-fun rename_ZPred
-where
-  "rename_ZPred (ZFalse a) = (ZFalse a)"
-| "rename_ZPred (ZTrue a) = (ZTrue a)"
-| "rename_ZPred (ZAnd p1 p2) = (ZAnd (rename_ZPred p1) (rename_ZPred p2))"
-| "rename_ZPred (ZPSchema sp) = (ZPSchema sp)"
-
- 
 fun inListVar
 where
   "inListVar x Nil = False"
@@ -97,7 +41,6 @@ fun member
 where
   "member x Nil = False"
 | "member x (b # y) = (if x = b then True else member x y)"
-
  
 fun intersect
 where
@@ -105,7 +48,6 @@ where
 | "intersect (a # x) y = (if member a y then a # (intersect x y)
                           else intersect x y)"
 
- 
 fun union
 where
   "union Nil y = y"
@@ -124,14 +66,49 @@ where
   "isPrefixOf Nil _ = True"
 | "isPrefixOf _ Nil = False"
 | "isPrefixOf (x # xs) (y # ys) = (x = y & isPrefixOf xs ys)"
+ 
+fun remdups
+where
+  "remdups Nil = Nil"
+| "remdups (x # xs) = (if (member x xs) then remdups xs
+                       else x # remdups xs)"
+
+fun subset
+where
+  "subset xs ys = list_all (% arg0 . member arg0 ys) xs"
+
+
+subsection"Free Variables functions" 
+fun free_var_ZGenFilt
+where
+  "free_var_ZGenFilt (Choose v e) = [v]"
+| "free_var_ZGenFilt (Check p) = Nil"
+| "free_var_ZGenFilt (Evaluate v e1 e2) = Nil"
 
  
-fun get_ZVar_st
+fun free_var_ZPred :: "ZPred \<Rightarrow> ZVar list"
 where
-  "get_ZVar_st (a, x) = (case (isPrefixOf ''st_var_'' a) of
-                            True \<Rightarrow> [a]
-                          | False \<Rightarrow> Nil)"
+  "free_var_ZPred (ZFalse p) = Nil"
+| "free_var_ZPred (ZTrue p) = Nil"
+| "free_var_ZPred (ZAnd a b) = (free_var_ZPred a @ free_var_ZPred b)"
+| "free_var_ZPred x = Nil"
 
+ 
+fun fvs
+where
+  "fvs f Nil = Nil"
+| "fvs f (e # es) = (f e @ (fvs f es))"
+
+ 
+function (sequential) free_var_ZExpr :: "ZExpr \<Rightarrow> ZVar list"
+where
+  "free_var_ZExpr (ZVar v) = [v]"
+| "free_var_ZExpr (ZInt c) = Nil"
+| "free_var_ZExpr (ZSetDisplay exls) = fvs free_var_ZExpr exls"
+| "free_var_ZExpr (ZSeqDisplay exls) = fvs free_var_ZExpr exls"
+| "free_var_ZExpr (ZCall ex ex2) = free_var_ZExpr ex2"
+| "free_var_ZExpr _ = Nil"
+  by pat_completeness auto
  
 fun free_var_CAction :: "CAction \<Rightarrow> ZVar list"
 where
@@ -140,13 +117,50 @@ where
 | "free_var_CAction CSPChaos = Nil"
 | "free_var_CAction (CSPSeq ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
 | "free_var_CAction (CSPExtChoice ca cb) = ((free_var_CAction ca) @ (free_var_CAction cb))"
-| "free_var_CAction (CSPCommAction v va) = Nil"
+| "free_var_CAction (CSPCommAction v va) = Nil"    
+
+subsection"Production of Get and Set" 
+
+text{*We have to create signals with gets and sets carrying the values of the state variables
+before an action can occur when we translate from state-rich Circus processes into stateless ones.*}
+fun make_get_com :: "ZName list \<Rightarrow> CAction \<Rightarrow> CAction"
+where
+  "make_get_com [x] c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) c)"
+| "make_get_com (x # xs) c = (CSPCommAction (ChanComm ''mget'' [ChanDotExp (ZVar (x, Nil)), ChanInp (''v_'' @ x)]) (make_get_com xs c))"
+| "make_get_com x c = c"
+
  
+fun make_set_com :: "(CAction \<Rightarrow> CAction) \<Rightarrow> ZVar list \<Rightarrow> ZExpr list \<Rightarrow> CAction \<Rightarrow> CAction"
+where
+  "make_set_com f [(x, _)] [y] c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (f c))"
+| "make_set_com f ((x, _) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (make_set_com f xs ys c))"
+| "make_set_com f _ _ c = (f c)"
+
+subsection"Production of WrtV" 
+  
+fun getWrtV
+where
+  "getWrtV xs = Nil"
+
+subsection"Renaming Variables" 
+ 
+ 
+fun get_ZVar_st
+where
+  "get_ZVar_st (a, x) = (case (isPrefixOf ''st_var_'' a) of
+                            True \<Rightarrow> [a]
+                          | False \<Rightarrow> Nil)"
 fun is_ZVar_st
 where
   "is_ZVar_st a = isPrefixOf ''st_var_'' a"
 
- 
+fun rename_ZPred
+where
+  "rename_ZPred (ZFalse a) = (ZFalse a)"
+| "rename_ZPred (ZTrue a) = (ZTrue a)"
+| "rename_ZPred (ZAnd p1 p2) = (ZAnd (rename_ZPred p1) (rename_ZPred p2))"
+| "rename_ZPred (ZPSchema sp) = (ZPSchema sp)"
+
 fun rename_ZExpr
 where
   "rename_ZExpr (ZVar (va, x)) = (case (is_ZVar_st va) of
@@ -178,21 +192,10 @@ where
 | "rename_vars_CAction x = x"
 
  
-fun remdups
-where
-  "remdups Nil = Nil"
-| "remdups (x # xs) = (if (member x xs) then remdups xs
-                       else x # remdups xs)"
-
  
 fun getFV
 where
   "getFV xs = Nil"
-
- 
-fun subset
-where
-  "subset xs ys = list_all (% arg0 . member arg0 ys) xs"
 
 
 end

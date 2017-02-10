@@ -1,10 +1,13 @@
-theory AST
-imports Prelude
-begin
- 
+section "Circus and Z Abstract Syntax Tree"
+
+theory AST imports Prelude begin
+
+subsection "Z Given Sets"
+
 type_synonym GivenValue = string
  
 type_synonym ZInt = int
+subsection "Z Names and Decorations"
  
 type_synonym ZDecor = string
  
@@ -13,7 +16,9 @@ type_synonym ZVar = "string * (ZDecor list)"
 type_synonym GivenSet = ZVar
  
 type_synonym ZName = string
- 
+
+subsection "Z Expressions and Predicates"
+
 datatype ZGenFilt = Choose ZVar ZExpr
                   | Check ZPred
                   | Evaluate ZVar ZExpr ZExpr
@@ -73,6 +78,8 @@ datatype CParameter = ChanInp ZName
  
 datatype Comm = ChanComm ZName "CParameter list"
               | ChanGenComm ZName "ZExpr list" "CParameter list"
+
+subsection "Circus Actions"
  
 datatype CAction = CSPSkip
                  | CSPStop
@@ -83,6 +90,8 @@ datatype CAction = CSPSkip
  
 datatype ParAction = CircusAction CAction
                    | ParamActionDecl "ZGenFilt list" ParAction
+
+subsection "Z and Circus Paragraphs"
  
 datatype ZPara = ZSchemaDef ZSName ZSExpr
                | Process ProcDecl

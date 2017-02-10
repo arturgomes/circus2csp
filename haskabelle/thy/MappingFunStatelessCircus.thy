@@ -1,6 +1,5 @@
-theory MappingFunStatelessCircus
-imports AST OmegaDefs Prelude
-begin
+section "Omega Function Definitions"
+theory MappingFunStatelessCircus imports AST OmegaDefs Prelude begin
  
 fun omega_CAction :: "CAction \<Rightarrow> CAction" and 
     omega_prime_CAction :: "CAction \<Rightarrow> CAction"
