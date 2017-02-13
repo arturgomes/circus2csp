@@ -5,6 +5,7 @@
 *.log
 *.out
 *.fls
+*.txt
 *.fdb_latexmk
 test_haskabelle
 *~
