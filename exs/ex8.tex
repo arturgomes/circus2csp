@@ -8,6 +8,11 @@
 \usepackage{circus}
 
 \begin{document}
+\begin{schema}{test}
+a, b : \nat
+\where
+a = 10 \land b = 20
+\end{schema}
 \begin{circus}
 \circchannel store, add, out : NAT\\
 \circchannel result, reset\\
@@ -22,3 +27,4 @@
 
 %  (CSPRecursion "X" (CSPUnfAction "F" (CActionName "X")))
 %  (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1))))
+Check (ZAnd a b)

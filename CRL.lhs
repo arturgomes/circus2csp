@@ -184,8 +184,8 @@ crl_joinBlocks _ = Nothing
 crl_seqSkipUnit_a :: CAction -> Maybe CAction
 crl_seqSkipUnit_a (CSPSeq CSPSkip a) = Just a
 crl_seqSkipUnit_a _ = Nothing
-crl_seqSkipUnit_b :: CAction -> Maybe CAction
-crl_seqSkipUnit_b a = Just (CSPSeq a CSPSkip)
+-- crl_seqSkipUnit_b :: CAction -> Maybe CAction
+-- crl_seqSkipUnit_b a = Just (CSPSeq a CSPSkip)
 \end{code}
 
 \begin{lawn}[Recursion unfold]\sl
@@ -203,6 +203,7 @@ crl_recUnfold (CSPRecursion x1 (CSPUnfAction f (CActionName x2)))
   = case (x1 == x2) of
       True         -> Just (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1))))
       otherwise    -> Nothing
+crl_recUnfold _ = Nothing 
 \end{code}
 
 \begin{lawn}[Parallelism composition/External choice---expansion$^*$]\sl
@@ -409,16 +410,17 @@ crl_parExtChoiceExchange _ = Nothing
 \label{law:parallelismExternalChoiceDistribution}
 \end{lawn}
 \begin{code}
-crl_parallelismExternalChoiceDistribution :: CAction -> CAction
+crl_parallelismExternalChoiceDistribution :: CAction -> Maybe CAction
 crl_parallelismExternalChoiceDistribution
     (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
   = case p1 && p2 of
-      True  -> (CSPNSParal ns1
+      True  -> Just (CSPNSParal ns1
                   (CChanSet cs) ns2 (CSPRepExtChoice i ai) a)
-      False -> (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
+      False -> Nothing
     where
       p1 = (subset (initials a) cs)
       p2 = isJust (deterministic a)
+crl_parallelismExternalChoiceDistribution _ = Nothing
 \end{code}
 % Law 18 (External choice unit)
 \begin{lawn}[External choice unit]\sl
@@ -429,8 +431,10 @@ crl_parallelismExternalChoiceDistribution
 \end{lawn}
 
 \begin{code}
-crl_extChoiceStopUnit :: CAction -> CAction
-crl_extChoiceStopUnit (CSPExtChoice CSPStop a) = a
+crl_extChoiceStopUnit :: CAction -> Maybe CAction
+crl_extChoiceStopUnit (CSPExtChoice CSPStop a) = Just a
+crl_extChoiceStopUnit _ = Nothing
+
 \end{code}
 % Law 19 (External choice/Sequence---distribution)
 \begin{lawn}[External choice/Sequence---distribution]\
@@ -442,11 +446,12 @@ crl_extChoiceStopUnit (CSPExtChoice CSPStop a) = a
   \label{law:extChoiceSeqDist}
 \end{lawn}
 \begin{code}
-crl_extChoiceSeqDist :: CAction -> CAction
+crl_extChoiceSeqDist :: CAction -> Maybe CAction
 crl_extChoiceSeqDist (CSPSeq (CSPRepExtChoice i
                         (CSPGuard gi (CSPCommAction ci ai))) b)
-  = (CSPRepExtChoice i (CSPSeq
+  = Just (CSPRepExtChoice i (CSPSeq
           (CSPGuard gi (CSPCommAction ci ai)) b))
+crl_extChoiceSeqDist _ = Nothing
 \end{code}
 % Law 20 (Hiding/External choice---distribution$^*$)
 \begin{lawn}[Hiding/External choice---distribution$^*$]\sl
@@ -461,16 +466,17 @@ crl_extChoiceSeqDist (CSPSeq (CSPRepExtChoice i
   \label{law:hidingExternalChoiceDistribution}
 \end{lawn}
 \begin{code}
-crl_hidingExternalChoiceDistribution :: CAction -> CAction
+crl_hidingExternalChoiceDistribution :: CAction -> Maybe CAction
 crl_hidingExternalChoiceDistribution
     (CSPHide (CSPExtChoice a1 a2) (CChanSet cs))
   = case p1 of
-      True  -> (CSPExtChoice
+      True  -> Just (CSPExtChoice
                   (CSPHide a1 (CChanSet cs))
                   (CSPHide a2 (CChanSet cs)))
-      False -> (CSPHide (CSPExtChoice a1 a2) (CChanSet cs))
+      False -> Nothing
     where
       p1 = null ((initials a1 `union` initials a2) `intersect` cs)
+crl_hidingExternalChoiceDistribution _ = Nothing
 \end{code}
 % Law 21 (Hiding/External choice---distribution$^*$)
 \begin{lawn}[Parallelism composition Deadlocked 1$^*$]\sl
@@ -491,24 +497,24 @@ crl_hidingExternalChoiceDistribution
   \label{law:parallelismDeadlocked1}
 \end{lawn}
 \begin{code}
-crl_parallelismDeadlocked1 :: CAction -> CAction
+crl_parallelismDeadlocked1 :: CAction -> Maybe CAction
 crl_parallelismDeadlocked1
     (CSPNSParal ns1 (CChanSet cs) ns2
           (CSPCommAction (ChanComm c1 x) a1)
           (CSPCommAction (ChanComm c2 y) a2))
   = case p1 && p2 of
-    True -> (CSPNSParal ns1 (CChanSet cs) ns2
+    True -> Just (CSPNSParal ns1 (CChanSet cs) ns2
               CSPStop
               (CSPCommAction (ChanComm c2 y) a2))
-    False -> (CSPNSParal ns1 (CChanSet cs) ns2
-              (CSPCommAction (ChanComm c1 x) a1)
-              (CSPCommAction (ChanComm c2 y) a2))
+    False -> Nothing
     where
       p1 = (c1 == c2)
       p2 = (subset [c1,c2] cs)
 crl_parallelismDeadlocked1 (CSPNSParal ns1 (CChanSet cs) ns2
                               CSPStop (CSPCommAction c2 a2))
-  = CSPStop
+  = Just CSPStop
+crl_parallelismDeadlocked1 _ = Nothing
+
 \end{code}
 % Law 22 (Sequence zero)
 \begin{lawn}[Sequence zero]\sl
@@ -518,9 +524,10 @@ crl_parallelismDeadlocked1 (CSPNSParal ns1 (CChanSet cs) ns2
   \label{law:seqStopZero}
 \end{lawn}
 \begin{code}
-crl_seqStopZero :: CAction -> CAction
+crl_seqStopZero :: CAction -> Maybe CAction
 crl_seqStopZero (CSPSeq CSPStop a)
-  = CSPStop
+  = Just CSPStop
+crl_seqStopZero _ = Nothing
 \end{code}
 % Law 23 (Communication/Parallelism composition---distribution)
 \begin{lawn}[Communication/Parallelism composition---distribution]\sl
@@ -537,22 +544,19 @@ crl_seqStopZero (CSPSeq CSPStop a)
   \label{law:communicationParallelismDistribution}
 \end{lawn}
 \begin{code}
-crl_communicationParallelismDistribution :: CAction -> CAction
+crl_communicationParallelismDistribution :: CAction -> Maybe CAction
 crl_communicationParallelismDistribution
     (CSPNSParal ns1 cs ns2
         (CSPCommAction (ChanComm c [ChanOutExp e]) (CActionName a1))
         (CSPCommAction (ChanComm c1 [ChanInp x1])
           (CSPParAction a2 [ZVar (x,[])])))
   = case (c == c1 && x == x1) of
-      True  ->  (CSPCommAction (ChanComm c [ChanDotExp e])
+      True  ->  Just (CSPCommAction (ChanComm c [ChanDotExp e])
                     (CSPNSParal ns1 cs ns2
                           (CActionName a1)
                           (CSPParAction a2 [e])))
-      False -> (CSPNSParal ns1 cs ns2
-                    (CSPCommAction (ChanComm c [ChanOutExp e])
-                      (CActionName a1))
-                    (CSPCommAction (ChanComm c1 [ChanInp x1])
-                      (CSPParAction a2 [ZVar (x,[])])))
+      False -> Nothing
+crl_communicationParallelismDistribution _ = Nothing
 \end{code}
 % Law 24 (Channel extension 3$^*$)
 \begin{lawn}[Channel extension 3$^*$]\sl
@@ -1177,7 +1181,23 @@ crl_assignmentSkip
 crl_assignmentSkip _ = Nothing
 \end{code}
 
+For testing purposes
+\begin{lawn}[Guard combination]\sl
+  \begin{law}
+    \begin{zed}
+      g_1 \guard (g_2 \guard A) = (g_1 \land g_2) \guard A%
+    \end{zed}
+  \end{law}
+  \label{law:guardComb}
+\end{lawn}
 
+\begin{code}
+crl_guardComb :: CAction -> Maybe CAction
+crl_guardComb (CSPGuard g1 (CSPGuard g2 c))
+  = Just (CSPGuard (ZAnd g1 g2) c)
+crl_guardComb _ = Nothing
+
+\end{code}
 \subsection{Auxiliary functions from Oliveira's PhD thesis}
 Function for $usedC(A)$
 \begin{code}
@@ -1374,7 +1394,8 @@ First I'm listing all the refinement laws currently available. Then I'm putting 
 reflawsCAction 
         = [crl_assignmentRemoval,
           crl_assignmentSkip,
-          crl_chanExt1,
+          crl_guardComb,
+          -- crl_chanExt1,
           crl_communicationParallelismDistribution,
           crl_extChoiceSeqDist,
           crl_extChoiceStopUnit,
@@ -1384,7 +1405,7 @@ reflawsCAction
           crl_guardSeqAssoc,
           crl_hidingChaos,
           crl_hidingCombination,
-          crl_hidingExpansion2,
+          -- crl_hidingExpansion2,
           crl_hidingExternalChoiceDistribution,
           crl_hidingIdentity,
           crl_hidingParallelismDistribution,
@@ -1398,10 +1419,10 @@ reflawsCAction
           crl_joinBlocks,
           crl_parallelismDeadlocked1,
           crl_parallelismDeadlocked3,
-          crl_parallelismExternalChoiceDistribution,
-          crl_parallelismExternalChoiceExpansion,
-          crl_parallelismIntroduction1a,
-          crl_parallelismIntroduction1b,
+          -- crl_parallelismExternalChoiceDistribution,
+          -- crl_parallelismExternalChoiceExpansion,
+          -- crl_parallelismIntroduction1a,
+          -- crl_parallelismIntroduction1b,
           crl_parallelismUnit1,
           crl_parallelismZero,
           crl_parallInterlEquiv,
@@ -1414,58 +1435,273 @@ reflawsCAction
           crl_recUnfold,
           crl_seqChaosZero,
           crl_seqSkipUnit_a,
-          crl_seqSkipUnit_b,
+          -- crl_seqSkipUnit_b,
           crl_seqStopZero,
           crl_sequenceInternalChoiceDistribution,
           crl_trueGuard,
           crl_var_exp_par,
           crl_var_exp_par2,
           crl_var_exp_rec,
-          crl_variableBlockIntroduction,
-          crl_variableBlockSequenceExtension,
-          crl_variableSubstitution2]
-reflawsCProc = [crl_promVarState, crl_promVarState2]
+          -- crl_variableBlockIntroduction,
+          crl_variableBlockSequenceExtension
+          -- ,
+          -- crl_variableSubstitution2
+          ]
+-- reflawsCProc = [crl_promVarState, crl_promVarState2]
 \end{code}
 
 Then I'm starting to implement the mechanism itself. Basically, it will try to apply the refinement laws one by one until a result $Maybe CAction$ is returned.
 
 \begin{code}
-applyRefLawCAction :: (CAction -> Maybe CAction) -> CAction -> Maybe CAction
-applyRefLawCAction rl act@(CActionSchemaExpr x) = undefined
-applyRefLawCAction rl act@(CActionCommand cmd) = undefined
-applyRefLawCAction rl act@(CActionName nm) = undefined
-applyRefLawCAction rl act@(CSPSkip) = undefined
-applyRefLawCAction rl act@(CSPStop) = undefined
-applyRefLawCAction rl act@(CSPChaos) = undefined
-applyRefLawCAction rl act@(CSPCommAction (ChanComm com xs) _) = undefined
-applyRefLawCAction rl act@(CSPGuard p _) = undefined
-applyRefLawCAction rl act@(CSPSeq _ _) = undefined
-applyRefLawCAction rl act@(CSPExtChoice _ _) = undefined
-applyRefLawCAction rl act@(CSPIntChoice _ _) = undefined
-applyRefLawCAction rl act@(CSPNSParal ns1 cs ns2 _ _) = undefined
-applyRefLawCAction rl act@(CSPParal cs _ _) = undefined
-applyRefLawCAction rl act@(CSPNSInter ns1 ns2 _ _) = undefined
-applyRefLawCAction rl act@(CSPInterleave _ _) = undefined
-applyRefLawCAction rl act@(CSPHide c _) = undefined
-applyRefLawCAction rl act@(CSPParAction nm xp) = undefined
-applyRefLawCAction rl act@(CSPRenAction nm cr) = undefined
-applyRefLawCAction rl act@(CSPRecursion nm _) = undefined
-applyRefLawCAction rl act@(CSPUnParAction lst c nm) = undefined
-applyRefLawCAction rl act@(CSPRepSeq lst _) = undefined
-applyRefLawCAction rl act@(CSPRepExtChoice lst _) = undefined
-applyRefLawCAction rl act@(CSPRepIntChoice ls _) = undefined
-applyRefLawCAction rl act@(CSPRepParalNS cs lst ns _) = undefined
-applyRefLawCAction rl act@(CSPRepParal cs lst _) = undefined
-applyRefLawCAction rl act@(CSPRepInterlNS lst ns _) = undefined
-applyRefLawCAction rl act@(CSPRepInterl lst _) = undefined
-\end{code}
+type CFun = CAction -> Maybe CAction 
 
-\begin{code}
-applys r [] = Nothing
-applys r (e:es) = 
-    case (r e) of
-      Just e' -> Just (e':es)
-      Nothing -> case (applys r es) of
-                    Nothing -> Nothing
-                    Just e' -> Just (e:es')
+applyCAction :: CFun -> CFun
+applyCAction r e@(CActionCommand (CAssign zvs zexprs))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CIf gacts))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing  ->  Nothing
+applyCAction r e@(CActionCommand (CVarDecl gf ca))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [ca]  of
+          Just [ca'] ->  Just (CActionCommand (CVarDecl gf ca'))
+          Nothing  ->  Nothing
+applyCAction r e@(CActionCommand (CAssumpt zn zp zp2))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CAssumpt1 zn zp))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CPrefix zp zp2))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CPrefix1 zp))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CommandBrace zp))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CommandBracket zp))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing ->  Nothing
+applyCAction r e@(CActionCommand (CValDecl gf ca))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [ca]  of
+          Just [ca'] ->  Just (CActionCommand (CValDecl gf ca'))
+          Nothing  ->  Nothing
+applyCAction r e@(CActionCommand (CResDecl gf ca))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [ca]  of
+          Just [ca'] ->  Just (CActionCommand (CResDecl gf ca'))
+          Nothing  ->  Nothing
+applyCAction r e@(CActionCommand (CVResDecl gf ca))
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [ca]  of
+          Just [ca'] ->  Just (CActionCommand (CVResDecl gf ca'))
+          Nothing  ->  Nothing
+applyCAction r e@(CSPNSParal ns1 cs ns2 a1 a2)
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPNSParal ns1 cs ns2 a1' a2')
+          Nothing  ->  Nothing
+applyCAction r e@(CSPCommAction (ChanComm com xs) c)
+ = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPCommAction (ChanComm com xs) c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPGuard p c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPGuard p c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPSeq a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPSeq a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPExtChoice a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPExtChoice a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPIntChoice a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPIntChoice a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPParal cs a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPParal cs a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPNSInter ns1 ns2 a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPNSInter ns1 ns2 a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPInterleave a1 a2) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [a1,a2]  of
+          Just [a1',a2'] ->  Just (CSPInterleave a1' a2')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPHide c cs) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPHide c' cs)
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPUnfAction nm c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPUnfAction nm c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRecursion nm c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRecursion nm c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPUnParAction lst c nm) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPUnParAction lst c' nm)
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepSeq lst c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepSeq lst c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepExtChoice lst c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepExtChoice lst c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepIntChoice lst c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepIntChoice lst c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepParalNS cs lst ns c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepParalNS cs lst ns c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepParal cs lst c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepParal cs lst c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepInterlNS lst ns c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepInterlNS lst ns c')
+          Nothing  ->  Nothing
+
+applyCAction r e@(CSPRepInterl lst c) = case r e of
+     r'@(Just _) -> r'
+     Nothing 
+      -> case applyCActions r [c]  of
+          Just [c'] ->  Just (CSPRepInterl lst c')
+          Nothing  ->  Nothing
+
+applyCAction _ _ = Nothing
+
+cmapply r (Just e) = applyCAction r e
+cmapply r Nothing = Nothing
+cmapply2 r (Just e) = 
+    case rsx of 
+      Just e' -> cmapply2 r (Just e')
+      Nothing -> Just e
+    where rsx = applyCAction r e
+
+lstapp [r] e = 
+  case (applyCAction r e) of
+    Just e' -> e'
+    Nothing -> e
+lstapp (r:rs) e = 
+    case rsx of 
+      Just e' -> e'
+      Nothing -> lstapp rs e
+    where rsx = applyCAction r e
+
+applyCActions :: CFun -> [CAction] -> Maybe [CAction]
+applyCActions r [] = Nothing
+applyCActions r (e:es)
+ = case applyCAction r e of
+    Just e' -> Just (e':es)
+    Nothing
+     -> case applyCActions r es of
+          Nothing -> Nothing
+          Just es' -> Just (e:es')
+
+
+cexample = (CSPNSParal NSExpEmpty CSEmpty NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("size",[]),ZInt 0]) (ZVar (">",[]))) (CSPNSParal NSExpEmpty CSEmpty NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("te",[]),ZInt 0]) (ZVar (">",[]))) (CActionName "a2")) (CActionName "a1"))) (CActionName "a1"))
+
+--  applyCAction crl_guardParDist cexample
+--  cmapply2 crl_guardParDist it
+--  cmapply2 crl_guardComb it
+-- = 
+-- Just (CSPGuard 
+--        (ZAnd (ZMember (ZTuple [ZVar ("size",[]),ZInt 0]) (ZVar (">",[]))) 
+--              (ZMember (ZTuple [ZVar ("te",[]),ZInt 0]) (ZVar (">",[])))) 
+--        (CSPNSParal NSExpEmpty CSEmpty NSExpEmpty 
+--            (CSPNSParal NSExpEmpty CSEmpty NSExpEmpty 
+--                (CActionName "a2") (CActionName "a1")) 
+--            (CActionName "a1")))
+
+
+
 \end{code}
