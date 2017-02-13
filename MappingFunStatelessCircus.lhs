@@ -166,8 +166,8 @@ omega_CAction CSPChaos = CSPChaos
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c []) a)
---   = (CSPCommAction (ChanComm c []) (omega_CAction a))
+omega_CAction (CSPCommAction (ChanComm c []) a)
+  = (CSPCommAction (ChanComm c []) (omega_CAction a))
 \end{code}
 
 \begin{circus}
@@ -183,9 +183,9 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
---   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
---   where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
+omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
+  where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
 \end{code}
 
 \begin{circus}
@@ -193,8 +193,8 @@ is written in Haskell as:
 \\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
 \end{circus}
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
---   = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
+  = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
 \end{code}
 
 \begin{circus}
@@ -205,9 +205,9 @@ is written in Haskell as:
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPGuard g a)
---   = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
---   where lxs = concat (map get_ZVar_st (free_var_ZPred g))
+omega_CAction (CSPGuard g a)
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
+  where lxs = concat (map get_ZVar_st (free_var_ZPred g))
 \end{code}
 
 
@@ -220,8 +220,8 @@ I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforwar
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
---   = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (omega_CAction a))
+omega_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
+  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (omega_CAction a))
 \end{code}
 
 
@@ -238,13 +238,13 @@ x \in wrtV(A)
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
---   = case not (elem x (getWrtV(a))) of
---     True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
---              (ChanComm c [ChanInpPred x p])
---                  (omega_prime_CAction a)))
---     _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
---   where lsx = concat (map get_ZVar_st (free_var_ZPred p))
+omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+  = case not (elem x (getWrtV(a))) of
+    True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
+             (ChanComm c [ChanInpPred x p])
+                 (omega_prime_CAction a)))
+    _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+  where lsx = concat (map get_ZVar_st (free_var_ZPred p))
 \end{code}
 
 
@@ -263,8 +263,8 @@ omega_CAction (CSPSeq ca cb)
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPIntChoice ca cb)
---   = (CSPIntChoice (omega_CAction ca) (omega_CAction cb))
+omega_CAction (CSPIntChoice ca cb)
+  = (CSPIntChoice (omega_CAction ca) (omega_CAction cb))
 \end{code}
 
 % TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
@@ -342,13 +342,13 @@ omega_CAction (CSPExtChoice ca cb)
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
---   = case x == x1 of
---     True -> omega_CAction (rep_CSPRepSeq act xs)
---     _  -> (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)]
---           (CSPParAction act [ZVar (x1,[])]))
--- omega_CAction (CSPRepSeq [Choose (x,[]) v] act)
---   = (CSPRepSeq [Choose (x,[]) v] (omega_CAction act))
+omega_CAction (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+  = case x == x1 of
+    True -> omega_CAction (rep_CSPRepSeq act xs)
+    _  -> (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepSeq [Choose (x,[]) v] act)
+  = (CSPRepSeq [Choose (x,[]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -356,13 +356,13 @@ is written in Haskell as:
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
---   = case x == x1 of
---     True -> omega_CAction (rep_CSPRepExtChoice act xs)
---     _  -> (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)]
---           (CSPParAction act [ZVar (x1,[])]))
--- omega_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
---   = (CSPRepExtChoice [Choose (x,[]) v] (omega_CAction act))
+omega_CAction (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+  = case x == x1 of
+    True -> omega_CAction (rep_CSPRepExtChoice act xs)
+    _  -> (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
+  = (CSPRepExtChoice [Choose (x,[]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -370,14 +370,14 @@ is written in Haskell as:
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
---           (CSPParAction act [ZVar (x1,[])]))
---   = case x == x1 of
---     True -> omega_CAction(rep_CSPRepIntChoice act xs)
---     _  -> (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
---           (CSPParAction act [ZVar (x1,[])]))
--- omega_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
---   = (CSPRepIntChoice [Choose (x,[]) v] (omega_CAction act))
+omega_CAction (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[])]))
+  = case x == x1 of
+    True -> omega_CAction(rep_CSPRepIntChoice act xs)
+    _  -> (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
+  = (CSPRepIntChoice [Choose (x,[]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -395,28 +395,25 @@ is written in Haskell as:
 \end{circus}
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (CSPParAction a [ZVar (x2,[])]))
---   = case (x == x1) && (x == x2) of
---     True -> omega_CAction (rep_CSPRepParalNS a cs ns x lsx)
---     _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (CSPParAction a [ZVar (x2,[])]))
--- omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])]) act)
---   = (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (omega_CAction act))
+omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          (CSPParAction a [ZVar (x2,[])]))
+  = case (x == x1) && (x == x2) of
+    True -> omega_CAction (rep_CSPRepParalNS a cs ns x lsx)
+    _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          (CSPParAction a [ZVar (x2,[])]))
+omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) act)
+  = (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) (omega_CAction act))
 \end{code}
-% \begin{circus}
-% \Omega_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Omega_A (P)
-% \end{circus}
-% is written in Haskell as:
-% \begin{code}
-% omega_CAction lst (CActionCommand (CValDecl xs a))
-%   = (CActionCommand (CValDecl xs (omega_CAction lst a)))
-% \end{code}
+\begin{circus}
+\Omega_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Omega_A (P)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+omega_CAction (CActionCommand (CValDecl xs a))
+  = (CActionCommand (CValDecl xs (omega_CAction a)))
+\end{code}
 \begin{circus}
 \Omega_A \left (\begin{array}{l}x_0,\ldots,x_n:=e_0\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right ),\ldots,e_n\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right )\end{array}\right ) \circdef
 \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
@@ -427,8 +424,8 @@ is written in Haskell as:
 \end{circus}
 
 \begin{code}
--- omega_CAction (CActionCommand (CAssign varls valls))
---   = make_get_com (map fst varls) (rename_vars_CAction (make_set_com omega_CAction varls valls CSPSkip))
+omega_CAction (CActionCommand (CAssign varls valls))
+  = make_get_com (map fst varls) (rename_vars_CAction (make_set_com omega_CAction varls valls CSPSkip))
 \end{code}
 \begin{circus}
 \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
@@ -437,13 +434,24 @@ is written in Haskell as:
    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
 \end{circus}
 \begin{code}
--- omega_CAction (CActionCommand (CIf (CircGAction g a)))
---   = make_get_com lsx (rename_vars_CAction  (CActionCommand
---              (CIf (CircGAction g (omega_prime_CAction a)))))
---   where
---    lsx = (map fst (remdups (free_var_ZPred g)))
+omega_CAction (CActionCommand (CIf (CircGAction g a)))
+  = make_get_com lsx (rename_vars_CAction  (CActionCommand
+             (CIf (CircGAction g (omega_prime_CAction a)))))
+  where
+   lsx = (map fst (remdups (free_var_ZPred g)))
 
 \end{code}
+
+\begin{circus}
+\Omega_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
+\end{code}
+
 \begin{circus}
 \Omega_A
    \left (\begin{array}{l}
@@ -461,21 +469,11 @@ is written in Haskell as:
 \end{circus}
 
 \begin{code}
--- omega_CAction (CActionCommand (CIf (CircThenElse gl glx)))
---   = make_get_com lsx (rename_vars_CAction (CActionCommand (CIf (mk_guard_pair omega_CAction guard_pair))))
---   where
---    guard_pair = get_guard_pair (CircThenElse gl glx)
---    map fst (remdups (concat (map free_var_ZPred (map fst guard_pair))))
-\end{code}
-
-\begin{circus}
-\Omega_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
-\end{circus}
-
-is written in Haskell as:
-
-\begin{code}
--- omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
+omega_CAction (CActionCommand (CIf (CircThenElse gl glx)))
+  = make_get_com lsx (rename_vars_CAction (CActionCommand (CIf (mk_guard_pair omega_CAction guard_pair))))
+  where
+   guard_pair = get_guard_pair (CircThenElse gl glx)
+   lsx = map fst (remdups (concat (map free_var_ZPred (map fst guard_pair))))
 \end{code}
 
 \begin{circus}
@@ -485,7 +483,7 @@ is written in Haskell as:
 is written in Haskell as:
 
 \begin{code}
--- omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
+omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
 \end{code}
 
 \begin{circus}
@@ -505,20 +503,20 @@ is written in Haskell as:
 is written in Haskell as:
 
 \begin{code}
--- omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (CSPParAction a [ZVar (x2,[])]))
---   = case (x == x1) && (x == x2) of
---     True -> omega_CAction (rep_CSPRepInterlNS a ns x lsx)
---     _  ->  (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (CSPParAction a [ZVar (x2,[])]))
--- omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           act)
---   = (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
---           (NSExprParam ns [ZVar (x1,[])])
---           (omega_CAction act))
+omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          (CSPParAction a [ZVar (x2,[])]))
+  = case (x == x1) && (x == x2) of
+    True -> omega_CAction (rep_CSPRepInterlNS a ns x lsx)
+    _  ->  (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          (CSPParAction a [ZVar (x2,[])]))
+omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          act)
+  = (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[])])
+          (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -526,8 +524,8 @@ is written in Haskell as:
 \end{circus}
 
 \begin{code}
--- omega_CAction (CActionCommand (CommandBrace g))
---   = omega_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
+omega_CAction (CActionCommand (CommandBrace g))
+  = omega_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
 \end{code}
 
 \begin{circus}
@@ -535,8 +533,8 @@ is written in Haskell as:
 \end{circus}
 
 \begin{code}
--- omega_CAction (CActionCommand (CommandBracket g))
---   = omega_CAction (CActionCommand (CPrefix1 g))
+omega_CAction (CActionCommand (CommandBracket g))
+  = omega_CAction (CActionCommand (CPrefix1 g))
 \end{code}
 
 \begin{circus}
@@ -545,8 +543,8 @@ is written in Haskell as:
 \end{circus}
 
 \begin{code}
--- omega_CAction (CSPRenAction a (CRenameAssign left right))
---   = (CSPRenAction a (CRename right left))
+omega_CAction (CSPRenAction a (CRenameAssign left right))
+  = (CSPRenAction a (CRename right left))
 omega_CAction x = x
 \end{code}
 

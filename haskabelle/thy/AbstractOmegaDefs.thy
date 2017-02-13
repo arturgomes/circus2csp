@@ -209,6 +209,15 @@ where
 | "abs_make_set_com f ((x, _) # xs) (y # ys) c = (CSPCommAction (ChanComm ''mset'' [ChanDotExp (ZVar (x, Nil)), ChanOutExp y]) (abs_make_set_com f xs ys c))"
 | "abs_make_set_com f _ _ c = (f c)"
   
+
+lemma thm_make_get_com: "abs_make_set_com f as bs c = make_set_com f as bs c" 
+  apply (induction as arbitrary: c f)
+   apply (induction bs arbitrary: c f)
+    apply simp
+   apply (induct bs)
+    apply simp
+    apply auto[1]
+    sledgehammer
   
 subsection"Production of WrtV" 
   

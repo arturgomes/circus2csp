@@ -5,7 +5,8 @@
 *.log
 *.out
 *.fls
-*.txt
+*.toc
+*.synctex.gz
 *.fdb_latexmk
 test_haskabelle
 *~

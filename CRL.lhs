@@ -197,12 +197,12 @@ crl_seqSkipUnit_b a = Just (CSPSeq a CSPSkip)
  \label{law:recUnfold}
 \end{lawn}
 \begin{code}
---crl_recUnfold :: CAction -> Maybe CAction
+crl_recUnfold :: CAction -> Maybe CAction
 
---crl_recUnfold (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])]))
---   = case (x1 == x2) of
---       True         -> Just (CSPParAction f (CSPRecursion x1 (CSPParAction f [ZVar (x2,[])])))
---       otherwise    -> Nothing
+crl_recUnfold (CSPRecursion x1 (CSPUnfAction f (CActionName x2)))
+  = case (x1 == x2) of
+      True         -> Just (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1))))
+      otherwise    -> Nothing
 \end{code}
 
 \begin{lawn}[Parallelism composition/External choice---expansion$^*$]\sl
@@ -910,31 +910,38 @@ crl_internalChoiceParallelismDistribution (CSPNSParal ns1 cs ns2 (CSPIntChoice a
       (CSPNSParal ns1 cs ns2 a2 a3))
 crl_internalChoiceParallelismDistribution _ = Nothing
 \end{code}
-\begin{code}
---Law 43 (Sequence/Internal choice—distribution)
-crl43 :: CAction -> Maybe CAction
-crl43 (CSPSeq a1 (CSPIntChoice a2 a3))
-  = Just (CSPIntChoice (CSPSeq a1 a2) (CSPSeq a1 a3))
-crl43 _ = Nothing
-\end{code}
-% Law 44 (Sequence/Internal choice---distribution$^*$)
 \begin{lawn}[Sequence/Internal choice---distribution$^*$]\sl
     \begin{circus}
-      A1 \circseq\ (A2 \intchoice A3)
-      \\ = \\
-      (A1 \Semi\ A2) \intchoice (A1 \circseq\ A3)%
+        A_1 \Semi\ (A_2 \intchoice A_3) = (A_1 \Semi\ A_2) \intchoice (A_1 \Semi\ A_3)%
     \end{circus}%
   \label{law:sequenceInternalChoiceDistribution}
 \end{lawn}
+\begin{code}
+--Law 43 (Sequence/Internal choice—distribution)
+crl_sequenceInternalChoiceDistribution :: CAction -> Maybe CAction
+crl_sequenceInternalChoiceDistribution (CSPSeq a1 (CSPIntChoice a2 a3))
+  = Just (CSPIntChoice (CSPSeq a1 a2) (CSPSeq a1 a3))
+crl_sequenceInternalChoiceDistribution _ = Nothing
+\end{code}
+% Law 44 (Sequence/Internal choice---distribution$^*$)
+\begin{lawn}[Hiding/Parallelism composition---distribution$^*$]\sl
+    \begin{zed}
+      (A_1 \lpar ns_1 | cs_1 | ns_2 \rpar A_2) \hide cs_2 = (A_1 \hide cs_2) \lpar ns_1 | cs_1 | ns_2 \rpar (A_2 \hide cs_2)
+    \end{zed}
+    \begin{prov}
+        $cs_1 \cap cs_2 = \emptyset$
+    \end{prov}
+  \label{law:hidingParallelismDistribution}
+\end{lawn}
 TODO: implement proviso
 \begin{code}
-crl_sequenceInternalChoiceDistribution :: CAction -> Maybe CAction
-crl_sequenceInternalChoiceDistribution
+crl_hidingParallelismDistribution :: CAction -> Maybe CAction
+crl_hidingParallelismDistribution
     (CSPHide (CSPNSParal ns1 cs1 ns2 a1 a2) cs2)
   = Just (CSPNSParal ns1 cs1 ns2
       (CSPHide a1 cs2)
       (CSPHide a2 cs2))
-crl_sequenceInternalChoiceDistribution _ = Nothing 
+crl_hidingParallelismDistribution _ = Nothing 
 \end{code}
 % Law 45 (Hiding combination)
 \begin{lawn}[Hiding combination]\sl
@@ -1298,4 +1305,167 @@ isDeterministic a
       Just x               -> "undefined"
       Nothing              -> "Non-deterministic"
     where x = (deterministic a)
+\end{code}
+
+\subsection{Mechanism for applying the refinement laws}
+
+First I'm listing all the refinement laws currently available. Then I'm putting it as the variable "reflaws".
+\begin{code}
+-- Description of each function:
+
+-- For Circus Actions:
+-- crl_assignmentRemoval :: CAction -> Maybe CAction
+-- crl_assignmentSkip :: CAction -> Maybe CAction
+-- crl_chanExt1 :: CAction -> ZName -> Maybe CAction
+-- crl_communicationParallelismDistribution :: CAction -> CAction
+-- crl_extChoiceSeqDist :: CAction -> CAction
+-- crl_extChoiceStopUnit :: CAction -> CAction
+-- crl_externalChoiceSequenceDistribution2 :: CAction -> Maybe CAction
+-- crl_falseGuard :: CAction -> Maybe CAction
+-- crl_guardParDist :: CAction -> Maybe CAction
+-- crl_guardSeqAssoc :: CAction -> Maybe CAction
+-- crl_hidingChaos :: CAction -> Maybe CAction
+-- crl_hidingCombination :: CAction -> Maybe CAction
+-- crl_hidingExpansion2 :: CAction -> ZName -> Maybe CAction
+-- crl_hidingExternalChoiceDistribution :: CAction -> CAction
+-- crl_hidingIdentity :: CAction -> Maybe CAction
+-- crl_hidingParallelismDistribution :: CAction -> Maybe CAction
+-- crl_hidingSequenceDistribution :: CAction -> Maybe CAction
+-- crl_innocuousAssignment :: CAction -> Maybe CAction
+-- crl_inputPrefixHidIdentity :: CAction -> Maybe CAction
+-- crl_inputPrefixParallelismDistribution2 :: CAction -> Maybe CAction
+-- crl_inputPrefixSequenceDistribution :: CAction -> Maybe CAction
+-- crl_internalChoiceHidingDistribution :: CAction -> Maybe CAction
+-- crl_internalChoiceParallelismDistribution :: CAction -> Maybe CAction
+-- crl_joinBlocks :: CAction -> Maybe CAction
+-- crl_parallelismDeadlocked1 :: CAction -> CAction
+-- crl_parallelismDeadlocked3 :: CAction -> Maybe CAction
+-- crl_parallelismExternalChoiceDistribution :: CAction -> CAction
+-- crl_parallelismExternalChoiceExpansion :: CAction -> Comm -> CAction -> Maybe CAction
+-- crl_parallelismIntroduction1a :: CAction -> NSExp -> [ZName] -> NSExp -> Maybe CAction
+-- crl_parallelismIntroduction1b :: CAction -> NSExp -> [ZName] -> NSExp -> Maybe CAction
+-- crl_parallelismUnit1 :: CAction -> Maybe CAction
+-- crl_parallelismZero :: CAction -> Maybe CAction
+-- crl_parallInterlEquiv :: CAction -> Maybe CAction
+-- crl_parallInterlEquiv_backwards :: CAction -> Maybe CAction
+-- crl_parExtChoiceExchange :: CAction -> Maybe CAction
+-- crl_parSeqStep :: CAction -> Maybe CAction
+-- crl_prefixHiding :: CAction -> Maybe CAction
+-- crl_prefixParDist :: CAction -> Maybe CAction
+-- crl_prefixSkip :: CAction -> Maybe CAction
+-- crl_recUnfold :: CAction -> Maybe CAction
+-- crl_seqChaosZero :: CAction -> Maybe CAction
+-- crl_seqSkipUnit_a :: CAction -> Maybe CAction
+-- crl_seqSkipUnit_b :: CAction -> Maybe CAction
+-- crl_seqStopZero :: CAction -> CAction
+-- crl_sequenceInternalChoiceDistribution :: CAction -> Maybe CAction
+-- crl_trueGuard :: CAction -> Maybe CAction
+-- crl_var_exp_par :: CAction -> Maybe CAction
+-- crl_var_exp_par2 :: CAction -> Maybe CAction
+-- crl_var_exp_rec :: CAction -> Maybe CAction
+-- crl_variableBlockIntroduction :: CAction -> ZVar -> ZExpr -> Maybe CAction
+-- crl_variableBlockSequenceExtension :: CAction -> Maybe CAction
+-- crl_variableSubstitution2 :: CAction -> ZName -> Maybe CAction
+
+-- For Circus Processes:
+-- crl_promVarState :: CProc -> Maybe CProc
+-- crl_promVarState2 :: CProc -> ZSName -> Maybe CProc
+
+reflawsCAction 
+        = [crl_assignmentRemoval,
+          crl_assignmentSkip,
+          crl_chanExt1,
+          crl_communicationParallelismDistribution,
+          crl_extChoiceSeqDist,
+          crl_extChoiceStopUnit,
+          crl_externalChoiceSequenceDistribution2,
+          crl_falseGuard,
+          crl_guardParDist,
+          crl_guardSeqAssoc,
+          crl_hidingChaos,
+          crl_hidingCombination,
+          crl_hidingExpansion2,
+          crl_hidingExternalChoiceDistribution,
+          crl_hidingIdentity,
+          crl_hidingParallelismDistribution,
+          crl_hidingSequenceDistribution,
+          crl_innocuousAssignment,
+          crl_inputPrefixHidIdentity,
+          crl_inputPrefixParallelismDistribution2,
+          crl_inputPrefixSequenceDistribution,
+          crl_internalChoiceHidingDistribution,
+          crl_internalChoiceParallelismDistribution,
+          crl_joinBlocks,
+          crl_parallelismDeadlocked1,
+          crl_parallelismDeadlocked3,
+          crl_parallelismExternalChoiceDistribution,
+          crl_parallelismExternalChoiceExpansion,
+          crl_parallelismIntroduction1a,
+          crl_parallelismIntroduction1b,
+          crl_parallelismUnit1,
+          crl_parallelismZero,
+          crl_parallInterlEquiv,
+          crl_parallInterlEquiv_backwards,
+          crl_parExtChoiceExchange,
+          crl_parSeqStep,
+          crl_prefixHiding,
+          crl_prefixParDist,
+          crl_prefixSkip,
+          crl_recUnfold,
+          crl_seqChaosZero,
+          crl_seqSkipUnit_a,
+          crl_seqSkipUnit_b,
+          crl_seqStopZero,
+          crl_sequenceInternalChoiceDistribution,
+          crl_trueGuard,
+          crl_var_exp_par,
+          crl_var_exp_par2,
+          crl_var_exp_rec,
+          crl_variableBlockIntroduction,
+          crl_variableBlockSequenceExtension,
+          crl_variableSubstitution2]
+reflawsCProc = [crl_promVarState, crl_promVarState2]
+\end{code}
+
+Then I'm starting to implement the mechanism itself. Basically, it will try to apply the refinement laws one by one until a result $Maybe CAction$ is returned.
+
+\begin{code}
+applyRefLawCAction :: (CAction -> Maybe CAction) -> CAction -> Maybe CAction
+applyRefLawCAction rl act@(CActionSchemaExpr x) = undefined
+applyRefLawCAction rl act@(CActionCommand cmd) = undefined
+applyRefLawCAction rl act@(CActionName nm) = undefined
+applyRefLawCAction rl act@(CSPSkip) = undefined
+applyRefLawCAction rl act@(CSPStop) = undefined
+applyRefLawCAction rl act@(CSPChaos) = undefined
+applyRefLawCAction rl act@(CSPCommAction (ChanComm com xs) _) = undefined
+applyRefLawCAction rl act@(CSPGuard p _) = undefined
+applyRefLawCAction rl act@(CSPSeq _ _) = undefined
+applyRefLawCAction rl act@(CSPExtChoice _ _) = undefined
+applyRefLawCAction rl act@(CSPIntChoice _ _) = undefined
+applyRefLawCAction rl act@(CSPNSParal ns1 cs ns2 _ _) = undefined
+applyRefLawCAction rl act@(CSPParal cs _ _) = undefined
+applyRefLawCAction rl act@(CSPNSInter ns1 ns2 _ _) = undefined
+applyRefLawCAction rl act@(CSPInterleave _ _) = undefined
+applyRefLawCAction rl act@(CSPHide c _) = undefined
+applyRefLawCAction rl act@(CSPParAction nm xp) = undefined
+applyRefLawCAction rl act@(CSPRenAction nm cr) = undefined
+applyRefLawCAction rl act@(CSPRecursion nm _) = undefined
+applyRefLawCAction rl act@(CSPUnParAction lst c nm) = undefined
+applyRefLawCAction rl act@(CSPRepSeq lst _) = undefined
+applyRefLawCAction rl act@(CSPRepExtChoice lst _) = undefined
+applyRefLawCAction rl act@(CSPRepIntChoice ls _) = undefined
+applyRefLawCAction rl act@(CSPRepParalNS cs lst ns _) = undefined
+applyRefLawCAction rl act@(CSPRepParal cs lst _) = undefined
+applyRefLawCAction rl act@(CSPRepInterlNS lst ns _) = undefined
+applyRefLawCAction rl act@(CSPRepInterl lst _) = undefined
+\end{code}
+
+\begin{code}
+applys r [] = Nothing
+applys r (e:es) = 
+    case (r e) of
+      Just e' -> Just (e':es)
+      Nothing -> case (applys r es) of
+                    Nothing -> Nothing
+                    Just e' -> Just (e:es')
 \end{code}
