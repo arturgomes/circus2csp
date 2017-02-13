@@ -677,6 +677,7 @@ data CAction
  | CSPParAction ZName [ZExpr]             -- Action(Exp^{+})
  | CSPRenAction ZName CReplace            -- Action[x/y,z/n]
  | CSPRecursion ZName CAction             -- \circmu N \circspot Action
+ | CSPUnfAction ZName CAction             -- N (Action)
  | CSPUnParAction [ZGenFilt] CAction ZName     -- (Decl \circspot Action) (ZName)
  | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
  | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action

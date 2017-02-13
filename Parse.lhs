@@ -1731,12 +1731,19 @@ circus_action_rep
 circus_action_u :: EParser ZToken CAction
 circus_action_u
 	=
+	-- \circmu X \circspot F(x) = F(\circmu X \circspot F(x))
+	do {nm <- zword; optnls; tok L_OPENPAREN;
+			optnls;
+			ca <- circus_action;
+			optnls;
+			tok L_CLOSEPAREN;
+			return (CSPUnfAction nm ca)}
 	-- On-the-fly parameterised action/command call
 	-- TODO: put par_action instead of just a name
 	-- 		SHOULD BE:  CSPParAction ParAction [ZExpr]
 	-- 		NOW IT IS:	CSPParAction ZName [ZExpr]
 	-- | ParAction(Exp^{+})
-	do {pa <- zword;
+	+++ do {pa <- zword;
 			optnls;
 			tok L_OPENPAREN;
 			optnls;
@@ -1792,6 +1799,9 @@ circus_action_u
 			optnls;
 			cac <- circus_action;
 			return (CSPRecursion cc cac)}
+	-- Here an action can carry another action as parenthesis
+	-- This is used for recursion unfold 
+
 	-- (Action)
 	+++ do {tok L_OPENPAREN;
 			optnls;
