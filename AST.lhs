@@ -714,7 +714,7 @@ data CCommand
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
   | CAssumpt [ZName] ZPred ZPred          -- N^{+} \prefixcolon [Pred,Pred]
-  | CAssumpt1 [ZName] ZPred               -- N^{+} \prefixcolon [Pred,Pred]
+  | CAssumpt1 [ZName] ZPred               -- N^{+} \prefixcolon [Pred]
   | CPrefix ZPred ZPred                   -- \prefixcolon [Pred,Pred]
   | CPrefix1 ZPred                        -- \prefixcolon [Pred]
   | CommandBrace ZPred                    -- \{Pred\}

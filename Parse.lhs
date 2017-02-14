@@ -1906,12 +1906,12 @@ circus_command
 	+++ circus_command_val
 	+++ circus_command_var
 	+++ circus_command_assign
-	+++	circus_command_prefix
+	+++ circus_command_assumption1
+	+++ circus_command_assumption
 	+++	circus_command_prefix1
+	+++	circus_command_prefix
 	+++	circus_command_bracket
 	+++	circus_command_brace
-	+++ circus_command_assumption
-	+++ circus_command_assumption1
 	+++ circus_command_if
 
 circus_command_vres :: EParser ZToken CCommand
@@ -1957,6 +1957,7 @@ circus_command_var
 			optnls;
 	  		prc <- circus_action;
 			return (CValDecl (concat decls) prc)}
+			
 circus_command_bracket :: EParser ZToken CCommand
 circus_command_bracket
 	= do {tok L_OPENBRACKET;
@@ -1971,6 +1972,18 @@ circus_command_brace
 	  		tok L_CLOSEBRACE ;
 			return (CommandBrace decls)}
 
+circus_command_assumption1 :: EParser ZToken CCommand
+circus_command_assumption1
+	= do {ws <- zword `sepby1` comma;
+	  		optnls;
+			tok L_COLON;
+	  		optnls;
+	  		tok L_OPENBRACKET;
+	  		optnls;
+			pred1 <- zpredicate;
+	  		optnls;
+	  		tok L_CLOSEBRACKET;
+			return (CAssumpt1 ws pred1)}
 circus_command_assumption :: EParser ZToken CCommand
 circus_command_assumption
 	= do {ws <- zword `sepby1` comma;
@@ -1988,18 +2001,6 @@ circus_command_assumption
 	  		tok L_CLOSEBRACKET;
 			return (CAssumpt ws pred1 pred2)}
 
-circus_command_assumption1 :: EParser ZToken CCommand
-circus_command_assumption1
-	= do {ws <- zword `sepby1` comma;
-	  		optnls;
-			tok L_COLON;
-	  		optnls;
-	  		tok L_OPENBRACKET;
-	  		optnls;
-			pred1 <- zpredicate;
-	  		optnls;
-	  		tok L_CLOSEBRACKET;
-			return (CAssumpt1 ws pred1)}
 circus_command_prefix :: EParser ZToken CCommand
 circus_command_prefix
 	= do {tok L_COLON;

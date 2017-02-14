@@ -20,11 +20,9 @@ a = 10 \land b = 20
 \begin{circus}
 \circprocess UnfoldAction \circdef\\
 	\circbegin \circstate RegSt \defs [ value : NAT]\\
-\circspot F(\circmu X \circspot F(X))\\
+\circspot (y \prefixcolon [(y' = x)])
 	\circend\\
 \end{circus}
 \end{document}
 
-%  (CSPRecursion "X" (CSPUnfAction "F" (CActionName "X")))
-%  (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1))))
-Check (ZAnd a b)
+
