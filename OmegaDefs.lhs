@@ -825,8 +825,26 @@ rename_vars_ParAction (ParamActionDecl zglst pa)
   = (ParamActionDecl zglst (rename_vars_ParAction pa))
 \end{code}
 
+\subsection{$[ZName]$ to $[ZExpr]$ - mainly converting to $ZVar (x,[])$}
+\begin{code}
+zname_to_zexpr [] = []
+zname_to_zexpr [a] = [ZVar (a,[])]
+zname_to_zexpr (a:as) = [ZVar (a,[])]++(zname_to_zexpr as)
+\end{code}
+\subsection{$[ZVar]$ to $[ZExpr]$}
+\begin{code}
+zvar_to_zexpr [] = []
+zvar_to_zexpr [(a,[])] = [ZVar (a,[])]
+zvar_to_zexpr ((a,[]):as) = [ZVar (a,[])]++(zvar_to_zexpr as)
+\end{code}
+\subsection{$[ZGenFilt]$ to $[ZExpr]$}
+\begin{code}
 
-
+zgenfilt_to_zexpr [] = []
+zgenfilt_to_zexpr [(Choose (a,[]) t)] = [ZVar (a,[])]
+zgenfilt_to_zexpr ((Choose (a,[]) t):as) = [ZVar (a,[])]++(zgenfilt_to_zexpr as)
+zgenfilt_to_zexpr (_:as) = []++(zgenfilt_to_zexpr as)
+\end{code}
 \subsubsection{rename vars}
 %% You have to put here the remainder for Processes, so you can create on line 78
 % of MappingFunStatelessCircus the definition of a renamed function for the

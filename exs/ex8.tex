@@ -20,9 +20,30 @@ a = 10 \land b = 20
 \begin{circus}
 \circprocess UnfoldAction \circdef\\
 	\circbegin \circstate RegSt \defs [ value : NAT]\\
-\circspot (y \prefixcolon [(y' = x)])
+	A1 \circdef \lcircguard (\{c1,c2\} \cup \{c1,c2\}) \cap \{c1,c2\} = \emptyset \rcircguard \circguard A2
+\circspot \Skip
 	\circend\\
 \end{circus}
 \end{document}
 
+
+% \{a,b\} \subseteq A2
+% =  (ZMember (ZTuple [ZSetDisplay [ZVar ("a",[]),ZVar ("b",[])],ZVar ("A2",[])]) (ZVar ("\\subseteq",[])))
+
+% \{d,d'\} \cap FV(A2) = \emptyset
+% = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay [ZVar ("d",[]),ZVar ("d",["'"])],(ZCall (ZVar ("\\cup",[])) (ZTuple [(free_var_CAction a1),(free_var_CAction a2)]))])) (ZVar ("\\emptyset",[])))
+
+% x \notin y
+% = (ZNot (ZMember (ZVar ("x",[])) (ZSetDisplay [ZVar ("a",[]),ZVar ("b",[])])))
+% = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay (free_var_CAction a))))
+
+% X == Y
+% = (ZEqual (ZVar (x1,[])) (ZVar (x2,[])))
+
+% \{a,b\} \in (\{FV a\} \cap \{FV b\})
+% = (ZMember (ZSetDisplay [ZVar ("a",[]),ZVar ("b",[])]) (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay (free_var_CAction a1),ZSetDisplay (free_var_CAction a2)])))
+% = (ZNot (ZMember (ZVar (c,[])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay (free_var_CAction a1),ZSetDisplay (free_var_CAction a2)])))
+
+% \{d,d'\} \cap \{d,d'\} = \emptyset 
+% (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay cs1,ZSetDisplay cs2)) (ZVar ("\\emptyset",[])))
 
