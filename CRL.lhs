@@ -1616,7 +1616,7 @@ data Refinement t = None
                   | Done{orig :: Maybe t, 
                           refined :: Maybe t, 
                           proviso :: [ZPred]
-                    } deriving (Eq, Show)
+                    } deriving (Eq,Show)
 \end{code}
 Then I'm starting to implement the mechanism itself. Basically, it will try to apply the refinement laws one by one until a result $Refinement CAction$ is returned.
 \begin{code}
@@ -1853,104 +1853,13 @@ isRefined a b
       None -> a
 
 
-get_refined (Done{orig=_,refined=Just b,proviso=_}) = b
-get_proviso (Done{orig=_,refined=_,proviso=c}) = c
-get_proviso None = []
-
-
-
 cexample = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2"))
 cexample2 = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2"))) (CActionName "a2"))
 cexample3 = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("size",[]),ZInt 0]) (ZVar (">",[]))) (CSPNSParal NSExpEmpty (CChanSet ["c3","c4"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("te",[]),ZInt 0]) (ZVar (">",[]))) (CActionName "a1")) (CActionName "a2"))) (CActionName "a3"))
 
 \end{code}
 
-\subsection{First idea of the refinement tool}
-\begin{code}
--- First attempt to show refinement steps
-lstcmapply [r] e = 
-  case (applyCAction r e) of
-    ei@(Done{orig=a, refined=e', proviso=z}) -> ei
-    None -> None
-
-lstcmapply (r:rs) e = 
-    case rsx of 
-      ei@(Done{orig=a, refined=Just e', proviso=z}) -> lstcmapply rs e'
-      None -> lstcmapply rs e
-    where rsx = applyCAction r e
-
--- prep_lstcmapply f (Done{orig=Just e,refined=Just g,proviso=_}) = lstcmapply f e
--- prep_lstcmapply f (Done{orig=_,refined=Nothing,proviso=_}) = None
--- prep_lstcmapply f None = None
-
--- How to test the example:
---  lstcmapply reflawsCAction cexample
---  prep_lstcmapply reflawsCAction it
-
-\end{code}
-% \subsection{Second idea of the refinement tool}
-% This was suggested by Andrew and so far it is going into an infinite loop. Will debug later
-% \begin{code}
-% lstapply :: [RFun CAction] -> CAction -> Refinement CAction
-% lstapply rfs a = lstapply' rfs rfs a -- put into format
-
-% lstapply':: [RFun CAction] -> [RFun CAction] -> CAction -> Refinement CAction
-% lstapply' rfs [] a = None
-% lstapply' rfs (rf:rfs') a = 
-%   case applyCAction rf a of
-%      -- until no refinement is applied, keep iterating over the list
-%     None -> lstapply' rfs rfs' a
-%     -- if a refinement is perfomed, then go to the next function with a flag True for changed
-%     Done{orig=Just a,refined=Just a',proviso=pvs} -> lstapply'' rfs rfs True a' pvs
-
-% lstapply'':: [RFun CAction] -> [RFun CAction] -> Bool -> CAction -> [ZPred] -> Refinement CAction
-% lstapply'' rfs [] chgd a pvs
-%   -- if at the end of the iteration (list is empty)
-%   -- call lstapply'' again with a flag False for changed
-%   | chgd = lstapply'' rfs rfs False a pvs 
-%   -- It will then end the cycle.
-%   | not chgd = Done{orig=Just a,refined=Just a,proviso=pvs} 
-% -- Otherwise, keep iterating over the list.
-% lstapply'' rfs (rf:rfs') chgd a pvs
-%   = case applyCAction rf a of
-%       None -> lstapply'' rfs rfs' chgd a pvs
-%       Done{orig=Just b,refined=Just a',proviso=pvs'} -> lstapply'' rfs rfs' True a' (pvs++pvs')
-
-% \end{code}
-
-% \subsection{Third idea of the refinement tool}
-% \begin{code}
-% refine :: [RFun CAction] -> CAction -> [Refinement CAction]
-% refine rfs a = crefine rfs rfs a [] []-- put into format
-
-% crefine :: [RFun CAction] -> [RFun CAction] -> CAction -> [ZPred] -> [Refinement CAction]-> [Refinement CAction]
-
-% crefine lst [] e pvs refs = refs
- 
-% crefine lst [l] e pvs refs
-%  = case applyCAction l e of
-%     ei@(Done{orig=Just x, refined= Just e', proviso=p}) -> crefine' (l:lst) [] e' (pvs++p) refs++[ei]  
-%     None -> refs 
-
-% crefine lst (l:ls) e pvs refs
-%  = case applyCAction l e of
-%     ei@(Done{orig=Just x, refined= Just e', proviso=p}) -> crefine' (l:lst) ls e' (pvs++p) refs++[ei]  
-%     None -> crefine (l:lst) ls e pvs refs
-
-% crefine' :: [RFun CAction] -> [RFun CAction] -> CAction -> [ZPred] -> [Refinement CAction]-> [Refinement CAction]
-% crefine' [] lst e pvs refs = crefine [] lst e pvs refs
-
-% crefine' [l] lst e pvs refs 
-%  = case applyCAction l e of
-%     ei@(Done{orig=Just x, refined= Just e', proviso=p}) -> crefine [l] lst e' (pvs++p) refs++[ei]  
-%     None -> crefine' [] lst e pvs refs
-
-% crefine' (l:ls) lst e pvs refs 
-%  = case applyCAction l e of
-%     ei@(Done{orig=Just x, refined= Just e', proviso=p}) -> (crefine (l:ls) lst e' (pvs++p) refs++[ei]) 
-%     None -> crefine' ls lst e pvs refs
-
-% \end{code}
+\subsection{The automated refinement tool}
 
 \begin{code}
 crefine lst [r] e steps = 
@@ -1968,4 +1877,59 @@ crefine lst (r:rs) e steps =
     where rsx = applyCAction r e
 
 refine f g = crefine f f g []
+\end{code}
+\begin{code}
+getRef ::  [Refinement CAction] -> Maybe CAction
+getRef [] = Nothing
+getRef [e@(Done{orig=x, refined=y, proviso=z})] = y
+getRef [None] = Nothing
+getRef xs = Just $ get_refined (last xs)
+\end{code}
+
+\subsection{Testing the tool}
+\begin{code}
+runStepRefinement x = refine reflawsCAction x
+runRefinement x = getRef $ refine reflawsCAction x
+\end{code}
+
+\subsection{Printing the Refinement Steps}
+First we get the bits from the $Refinement$ record
+\begin{code}
+get_orig :: Refinement CAction -> CAction
+get_orig (Done{orig=Just a,refined=_,proviso=_}) = a
+get_refined :: Refinement CAction -> CAction
+get_refined (Done{orig=_,refined=Just b,proviso=_}) = b
+get_proviso :: Refinement CAction -> [ZPred]
+get_proviso None = []
+get_proviso (Done{orig=_,refined=_,proviso=c}) = c
+\end{code}
+Then we define some printing functions, so the refinement can look better on screen.
+\begin{code}
+print_proviso [] = "none"
+print_proviso [c] = show c
+print_proviso (c:cs) = (show c) ++ "] and also [" ++ (print_proviso cs)
+
+print_ref_head c = "LHS\n=\n"
+                 ++ (show (get_orig c)) ++"\n\n=   provided["
+                 ++ (print_proviso (get_proviso c)) ++"]\n\n"
+                 ++ (show (get_refined c)) ++"\n\n"
+print_ref_steps c = "=   provided[" 
+                 ++ (print_proviso (get_proviso c)) ++"]\n\n"
+                 ++ (show (get_refined c)) ++ "\n\n"
+\end{code}
+Finally, we define a $print\_ref$ function which prints out on screen the refinement. We can take that to a file with $print\_file\_ref$.
+\begin{code}
+print_ref [] = "No refinement was performed\n"
+print_ref [None] = "No refinement was performed\n"
+print_ref [x] = print_ref_head x
+print_ref (x:xs) = print_ref_head x ++ (print_ref' xs)
+print_ref' [] = "=\nRHS"
+print_ref' [x] = print_ref_steps x
+print_ref' (x:xs) = print_ref_steps x ++ (print_ref' xs)
+print_file_ref fname example = writeFile fname $ print_ref $runStepRefinement example
+
+-- Usage:
+-- you can type 
+-- $ print_file_ref "ref_steps.txt" cexample2
+-- And it will write the refinement of cexample2 into the ref_steps.txt file.
 \end{code}
