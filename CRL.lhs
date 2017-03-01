@@ -7,6 +7,7 @@ module CRL
 where
 import AST
 import OmegaDefs
+import Subs
 import Data.List hiding (union, intersect)
 import Data.Maybe
 

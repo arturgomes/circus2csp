@@ -10,6 +10,7 @@ module MappingFunCircusCSP
 )
 where
 import AST
+import Subs
 import CRL
 import FormatterToCSP
 import Data.List

@@ -686,7 +686,7 @@ data CAction
  | CSPRepParal CSExp [ZGenFilt] CAction   -- \lpar CSExp \rpar Decl \circspot ction
  | CSPRepInterlNS [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
  | CSPRepInterl [ZGenFilt] CAction        -- \Interleave Decl \circspot  Action
- deriving (Eq,Ord,Show)
+  deriving (Eq,Ord,Show)
 \end{code}
 
 \subsubsection{Circus Communication}

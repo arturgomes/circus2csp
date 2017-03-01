@@ -14,6 +14,7 @@ module MappingFunStatelessCircus
   omega_ProcessDef
 )
 where
+import Subs
 import AST
 import OmegaDefs
 import Data.List hiding (union, intersect)
@@ -279,7 +280,7 @@ is written in Haskell as:
 omega_CAction (CSPExtChoice ca cb)
   = make_get_com lsx (rename_vars_CAction (CSPExtChoice (omega_prime_CAction ca) (omega_prime_CAction cb)))
    where
-    lsx = (map fst (remdups (free_var_CAction (CSPExtChoice ca cb))))
+    lsx = concat $ map get_ZVar_st $ free_var_CAction (CSPExtChoice ca cb)
 \end{code}
 
 \begin{circus}
@@ -425,7 +426,7 @@ omega_CAction (CActionCommand (CValDecl xs a))
 
 \begin{code}
 omega_CAction (CActionCommand (CAssign varls valls))
-  = make_get_com (map fst varls) (rename_vars_CAction (make_set_com omega_CAction varls valls CSPSkip))
+  = make_get_com (concat (map get_ZVar_st varls)) (rename_vars_CAction (make_set_com omega_CAction varls valls CSPSkip))
 \end{code}
 \begin{circus}
 \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
@@ -438,7 +439,7 @@ omega_CAction (CActionCommand (CIf (CircGAction g a)))
   = make_get_com lsx (rename_vars_CAction  (CActionCommand
              (CIf (CircGAction g (omega_prime_CAction a)))))
   where
-   lsx = (map fst (remdups (free_var_ZPred g)))
+   lsx = concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
 
 \end{code}
 
@@ -473,7 +474,7 @@ omega_CAction (CActionCommand (CIf (CircThenElse gl glx)))
   = make_get_com lsx (rename_vars_CAction (CActionCommand (CIf (mk_guard_pair omega_CAction guard_pair))))
   where
    guard_pair = get_guard_pair (CircThenElse gl glx)
-   lsx = map fst (remdups (concat (map free_var_ZPred (map fst guard_pair))))
+   lsx = concat (map get_ZVar_st  (remdups (concat (map free_var_ZPred (map fst guard_pair)))))
 \end{code}
 
 \begin{circus}
@@ -548,16 +549,12 @@ omega_CAction (CSPRenAction a (CRenameAssign left right))
 omega_CAction x = x
 \end{code}
 
-
-NOTE: Besides the transformation rules for $[g]$ and ${g}$, the remaining transformation rules from page 91 of the D24.1 document, were not yet implemented.
+% NOTE: Besides the transformation rules for $[g]$ and ${g}$, the remaining transformation rules from page 91 of the D24.1 document, were not yet implemented.
 \subsection{Definitions of $\Omega'_{A}$}
 
 
 \begin{code}
 omega_prime_CAction :: CAction -> CAction
-omega_prime_CAction CSPSkip = CSPSkip
-omega_prime_CAction CSPStop = CSPStop
-omega_prime_CAction CSPChaos = CSPChaos
 \end{code}
 
 \begin{circus}

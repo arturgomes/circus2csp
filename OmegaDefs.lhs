@@ -6,129 +6,14 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 module OmegaDefs where
 import Data.Char
 -- import Data.Text hiding (map,concat,all,take)
+import Subs
 import AST
 \end{code}
 }
 \begin{code}
 join_name n v = n ++ "_" ++ v
 \end{code}
-\begin{code}
-free_var_ZGenFilt (Include s) = []
-free_var_ZGenFilt (Choose v e) = [v]
-free_var_ZGenFilt (Check p) = []
-free_var_ZGenFilt (Evaluate v e1 e2) = []
-\end{code}
 
-\begin{code}
-free_var_ZPred :: ZPred -> [ZVar]
-free_var_ZPred (ZFalse{reason=p}) = []
-free_var_ZPred (ZTrue{reason=p}) = []
-free_var_ZPred (ZAnd a b) = free_var_ZPred a ++ free_var_ZPred b
--- free_var_ZPred (ZOr a b) = free_var_ZPred a ++ free_var_ZPred b
--- free_var_ZPred (ZImplies a b) = free_var_ZPred a ++ free_var_ZPred b
--- free_var_ZPred (ZIff a b) = free_var_ZPred a ++ free_var_ZPred b
--- free_var_ZPred (ZNot a) = free_var_ZPred a
--- free_var_ZPred (ZExists [Choose v e] a) = (setminus (free_var_ZPred a) [v])
--- free_var_ZPred (ZExists ls a) = error "Don't know what free vars of ZExists are right now. Check back later"
--- free_var_ZPred (ZExists_1 [Choose v e] a) = (setminus (free_var_ZPred a) [v])
--- free_var_ZPred (ZExists_1 ls a) = error "Don't know what free vars of ZExists_1 are right now. Check back later"
--- free_var_ZPred (ZForall [Choose v e] a) = (setminus (free_var_ZPred a) [v])
--- free_var_ZPred (ZForall ls a) = error "Don't know what free vars of ZForall are right now. Check back later"
--- free_var_ZPred (ZPLet ls a ) = error "Don't know what free vars of ZPLet are right now. Check back later"
--- free_var_ZPred (ZEqual expa expb) = free_var_ZExpr expa ++ free_var_ZExpr expb
--- free_var_ZPred (ZMember expa expb) = free_var_ZExpr expa
--- free_var_ZPred (ZPre zsexpr) = error "Don't know what free vars of ZPre are right now. Check back later"
--- free_var_ZPred (ZPSchema zsexpr) = error "Don't know what free vars of ZPSchema are right now. Check back later"
-free_var_ZPred x = []
-\end{code}
-
-\begin{code}
-fvs f [] = []
-fvs f (e:es)
- = f(e) ++ (fvs f (es))
-\end{code}
-
-
-\begin{code}
-free_var_ZExpr :: ZExpr -> [ZVar]
-free_var_ZExpr(ZVar v) = [v]
-free_var_ZExpr(ZInt c ) = []
--- free_var_ZExpr(ZGiven a)
---     = error "Don't know what free vars of ZGiven are right now. Check back later"
--- free_var_ZExpr(ZFree0 a)
-
--- free_var_ZExpr(ZFree1 v ex)
---     = error "Don't know what free vars of ZFree1 are right now. Check back later"
--- free_var_ZExpr(ZTuple exls )
---  = fvs free_var_ZExpr exls
--- free_var_ZExpr(ZBinding a)
---     = error "Don't know what free vars of ZBinding are right now. Check back later"
-free_var_ZExpr(ZSetDisplay exls )
- = fvs free_var_ZExpr exls
-free_var_ZExpr(ZSeqDisplay exls )
- = fvs free_var_ZExpr exls
--- free_var_ZExpr(ZFSet fs )
---     = error "Don't know what free vars of ZFSet are right now. Check back later"
--- free_var_ZExpr(ZIntSet zi1 zi2)
---     = error "Don't know what free vars of ZIntSet are right now. Check back later"
--- free_var_ZExpr(ZGenerator rl ex)
---     = error "Don't know what free vars of ZGenerator are right now. Check back later"
--- free_var_ZExpr(ZCross exls )
---  = fvs free_var_ZExpr exls
--- free_var_ZExpr(ZFreeType zv zbls)
---     = error "Don't know what free vars of ZFreeType are right now. Check back later"
--- free_var_ZExpr(ZPowerSet{baseset=b, is_non_empty=e, is_finite=fs})
---     = error "Don't know what free vars of ZPowerSet are right now. Check back later"
--- free_var_ZExpr(ZFuncSet{domset=d, ranset=r, is_function=f, is_total=t, is_onto=o, is_one2one=oo, is_sequence=s, is_non_empty=ne, is_finite=ff})
---     = error "Don't know what free vars of ZFree0 are right now. Check back later"
--- free_var_ZExpr(ZSetComp gfls ma)
---     = error "Don't know what free vars of ZSetComp are right now. Check back later"
--- free_var_ZExpr(ZLambda [Choose v e] a)
---  = (setminus (free_var_ZExpr a) [v])
--- free_var_ZExpr(ZLambda _ a)
---  = []
--- free_var_ZExpr(ZESchema a)
---     = error "Don't know what free vars of ZESchema are right now. Check back later"
--- free_var_ZExpr(ZGivenSet a)
---     = error "Don't know what free vars of ZGivenSet are right now. Check back later"
--- free_var_ZExpr(ZUniverse)
---     = error "Don't know what free vars of ZUniverse are right now. Check back later"
-free_var_ZExpr(ZCall ex ex2) = free_var_ZExpr ex2 -- is this right??
--- free_var_ZExpr(ZReln rl )
---     = error "Don't know what free vars of ZReln are right now. Check back later"
--- free_var_ZExpr(ZFunc1 a)
---     = error "Don't know what free vars of ZFunc1 are right now. Check back later"
--- free_var_ZExpr(ZFunc2 a)
---     = error "Don't know what free vars of ZFunc2 are right now. Check back later"
--- free_var_ZExpr(ZStrange zs )
---     = error "Don't know what free vars of ZStrange are right now. Check back later"
--- free_var_ZExpr(ZMu zgls mex)
---     = error "Don't know what free vars of ZMu are right now. Check back later"
--- free_var_ZExpr(ZELet ves pr)
---     =  (setminus (free_var_ZExpr(pr)) (map fst ves)) ++ fvs free_var_ZExpr (map snd ves)
--- free_var_ZExpr(ZIf_Then_Else zp ex ex1)
---     = error "Don't know what free vars of ZIf_Then_Else are right now. Check back later"
--- -- free_var_ZExpr(ZIf_Then_Else zp ex ex1)
---  -- = free_var_ZPred zp ++ free_var_ZExpr ex ++ free_var_ZExpr ex1
--- free_var_ZExpr(ZSelect ex zv)
---     = free_var_ZExpr ex ++ [zv]
--- free_var_ZExpr(ZTheta zsx)
---     = error "Don't know what free vars of ZTheta are right now. Check back later"
-free_var_ZExpr _ = []
-
-\end{code}
-
-
-\begin{code}
-get_chan_var :: [CParameter] -> [ZVar]
-get_chan_var [] = []
-get_chan_var [ChanDotExp (ZVar (x,_))] = [(x,[])]
-get_chan_var [ChanOutExp (ZVar (x,_))] = [(x,[])]
-get_chan_var [_] = []
-get_chan_var ((ChanDotExp (ZVar (x,_))):xs) = [(x,[])]++(get_chan_var xs)
-get_chan_var ((ChanOutExp (ZVar (x,_))):xs) = [(x,[])]++(get_chan_var xs)
-get_chan_var (_:xs) = (get_chan_var xs)
-\end{code}
 
 The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list of tuples $(ZPred, CAction)$
 \begin{code}
@@ -378,74 +263,6 @@ get_ZVar_st x
 is_ZVar_st a = isPrefixOf "st_var_" a
 \end{code}
 
-\begin{code}
-free_var_CAction :: CAction -> [ZVar]
-free_var_CAction (CActionSchemaExpr x) = []
-free_var_CAction (CActionCommand c) = (free_var_comnd c)
-free_var_CAction (CActionName nm) = []
-free_var_CAction (CSPSkip) = []
-free_var_CAction (CSPStop) = []
-free_var_CAction (CSPChaos) = []
-free_var_CAction (CSPCommAction (ChanComm com xs) c) = (get_chan_var xs)++(free_var_CAction c)
-free_var_CAction (CSPGuard p c) = (free_var_ZPred p)++(free_var_CAction c)
-free_var_CAction (CSPSeq ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPExtChoice ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPIntChoice ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPParal cs ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSInter ns1 ns2 ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPInterleave ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPHide c cs) = (free_var_CAction c)
-free_var_CAction (CSPParAction nm xp) = []
-free_var_CAction (CSPRenAction nm cr) = []
-free_var_CAction (CSPRecursion nm c) = (free_var_CAction c)
-free_var_CAction (CSPUnParAction lst c nm) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepSeq lst c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepExtChoice lst c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepIntChoice lst c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepParalNS cs lst ns c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepParal cs lst c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepInterlNS lst ns c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-free_var_CAction (CSPRepInterl lst c) =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt lst))
-\end{code}
-
-\begin{code}
-free_var_comnd (CAssign v e)
- = v
-free_var_comnd (CIf ga)
- = free_var_if ga
-free_var_comnd (CVarDecl z c)
- =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
-free_var_comnd (CAssumpt n p1 p2)
- = []
-free_var_comnd (CAssumpt1 n p)
- = []
-free_var_comnd (CPrefix p1 p2)
- = []
-free_var_comnd (CPrefix1 p)
- = []
-free_var_comnd (CommandBrace z)
- = (free_var_ZPred z)
-free_var_comnd (CommandBracket z)
- = (free_var_ZPred z)
-free_var_comnd (CValDecl z c)
- =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
-free_var_comnd (CResDecl z c)
- =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
-free_var_comnd (CVResDecl z c)
- =  (setminus (free_var_CAction c) (fvs free_var_ZGenFilt z))
-\end{code}
-
-\begin{code}
-free_var_if (CircGAction p a)
- = (free_var_ZPred p)++(free_var_CAction a)
-free_var_if (CircThenElse ga gb)
- = (free_var_if ga)++(free_var_if gb)
-free_var_if (CircElse (CircusAction a))
- = (free_var_CAction a)
-free_var_if (CircElse (ParamActionDecl x (CircusAction a)))
- =  (setminus (free_var_CAction a) (fvs free_var_ZGenFilt x))
-\end{code}
 
 
 \begin{code}
