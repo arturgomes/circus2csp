@@ -489,113 +489,124 @@ subset xs ys = all (`elem` ys) xs
 
 \subsection{Expanding the main action}
 \begin{code}
-get_main_action :: [PPar] -> CAction -> CAction
-get_main_action lst (CActionSchemaExpr x)
- = (CActionSchemaExpr x)
-get_main_action lst (CActionCommand c)
- = (CActionCommand (get_main_action_comnd lst c))
-get_main_action lst (CActionName nm)
- = get_action nm lst
-get_main_action lst (CSPSkip)
- = (CSPSkip)
-get_main_action lst (CSPStop)
- = (CSPStop)
-get_main_action lst (CSPChaos)
- = (CSPChaos)
-get_main_action lst (CSPCommAction com c)
- = (CSPCommAction com (get_main_action lst c))
-get_main_action lst (CSPGuard p c)
- = (CSPGuard p (get_main_action lst c))
-get_main_action lst (CSPSeq ca cb)
- = (CSPSeq (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPExtChoice ca cb)
- = (CSPExtChoice (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPIntChoice ca cb)
- = (CSPIntChoice (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPNSParal ns1 cs ns2 ca cb)
- = (CSPNSParal ns1 cs ns2 (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPParal cs ca cb)
- = (CSPParal cs (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPNSInter ns1 ns2 ca cb)
- = (CSPNSInter ns1 ns2 (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPInterleave ca cb)
- = (CSPInterleave (get_main_action lst ca) (get_main_action lst cb))
-get_main_action lst (CSPHide c cs)
- = (CSPHide (get_main_action lst c) cs)
-get_main_action lst (CSPParAction nm xp)
- = (CSPParAction nm xp)
-get_main_action lst (CSPRenAction nm cr)
- = (CSPRenAction nm cr)
-get_main_action lst (CSPRecursion n (CSPSeq c (CActionName n1)))
- = case n == n1 of
-   True -> (CSPRecursion n (CSPSeq (get_main_action lst c) (CActionName n)))
-   False -> (CSPRecursion n (CSPSeq (get_main_action lst c) (CActionName n1)))
-get_main_action lst (CSPUnParAction lsta c nm)
- = (CSPUnParAction lsta (get_main_action lst c) nm)
-get_main_action lst (CSPRepSeq lsta c)
- = (CSPRepSeq lsta (get_main_action lst c))
-get_main_action lst (CSPRepExtChoice lsta c)
- = (CSPRepExtChoice lsta (get_main_action lst c))
-get_main_action lst (CSPRepIntChoice lsta c)
- = (CSPRepIntChoice lsta (get_main_action lst c))
-get_main_action lst (CSPRepParalNS cs lsta ns c)
- = (CSPRepParalNS cs lsta ns (get_main_action lst c))
-get_main_action lst (CSPRepParal cs lsta c)
- = (CSPRepParal cs lsta (get_main_action lst c))
-get_main_action lst (CSPRepInterlNS lsta ns c)
- = (CSPRepInterlNS lsta ns (get_main_action lst c))
-get_main_action lst (CSPRepInterl lsta c)
- = (CSPRepInterl lsta (get_main_action lst c))
+expand_action_names_PPar :: [PPar] -> PPar -> PPar
+expand_action_names_PPar lst (ProcZPara zp)
+  = (ProcZPara zp)
+expand_action_names_PPar lst (CParAction zn pa)
+  = (CParAction zn (expand_action_names_ParAction lst pa))
+expand_action_names_PPar lst (CNameSet zn ns)
+  = (CNameSet zn ns)
 \end{code}
 \begin{code}
-get_main_action_comnd lst (CAssign v e)
+expand_action_names_ParAction :: [PPar] -> ParAction -> ParAction
+expand_action_names_ParAction lst (CircusAction ca) = (CircusAction (expand_action_names_CAction lst ca))-- Action
+expand_action_names_ParAction lst (ParamActionDecl ls pa) = (ParamActionDecl ls (expand_action_names_ParAction lst pa))    -- Decl \circspot ParAction
+\end{code}
+\begin{code}
+expand_action_names_CAction :: [PPar] -> CAction -> CAction
+expand_action_names_CAction lst (CActionSchemaExpr x)
+ = (CActionSchemaExpr x)
+expand_action_names_CAction lst (CActionCommand c)
+ = (CActionCommand (expand_action_names_CAction_comnd lst c))
+expand_action_names_CAction lst (CActionName nm)
+ = get_action nm lst
+expand_action_names_CAction lst (CSPSkip)
+ = (CSPSkip)
+expand_action_names_CAction lst (CSPStop)
+ = (CSPStop)
+expand_action_names_CAction lst (CSPChaos)
+ = (CSPChaos)
+expand_action_names_CAction lst (CSPCommAction com c)
+ = (CSPCommAction com (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPGuard p c)
+ = (CSPGuard p (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPSeq ca cb)
+ = (CSPSeq (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPExtChoice ca cb)
+ = (CSPExtChoice (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPIntChoice ca cb)
+ = (CSPIntChoice (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPNSParal ns1 cs ns2 ca cb)
+ = (CSPNSParal ns1 cs ns2 (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPParal cs ca cb)
+ = (CSPParal cs (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPNSInter ns1 ns2 ca cb)
+ = (CSPNSInter ns1 ns2 (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPInterleave ca cb)
+ = (CSPInterleave (expand_action_names_CAction lst ca) (expand_action_names_CAction lst cb))
+expand_action_names_CAction lst (CSPHide c cs)
+ = (CSPHide (expand_action_names_CAction lst c) cs)
+expand_action_names_CAction lst (CSPParAction nm xp)
+ = (CSPParAction nm xp)
+expand_action_names_CAction lst (CSPRenAction nm cr)
+ = (CSPRenAction nm cr)
+expand_action_names_CAction lst (CSPRecursion n (CSPSeq c (CActionName n1)))
+ = case n == n1 of
+   True -> (CSPRecursion n (CSPSeq (expand_action_names_CAction lst c) (CActionName n)))
+   False -> (CSPRecursion n (CSPSeq (expand_action_names_CAction lst c) (CActionName n1)))
+expand_action_names_CAction lst (CSPUnParAction lsta c nm)
+ = (CSPUnParAction lsta (expand_action_names_CAction lst c) nm)
+expand_action_names_CAction lst (CSPRepSeq lsta c)
+ = (CSPRepSeq lsta (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepExtChoice lsta c)
+ = (CSPRepExtChoice lsta (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepIntChoice lsta c)
+ = (CSPRepIntChoice lsta (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepParalNS cs lsta ns c)
+ = (CSPRepParalNS cs lsta ns (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepParal cs lsta c)
+ = (CSPRepParal cs lsta (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepInterlNS lsta ns c)
+ = (CSPRepInterlNS lsta ns (expand_action_names_CAction lst c))
+expand_action_names_CAction lst (CSPRepInterl lsta c)
+ = (CSPRepInterl lsta (expand_action_names_CAction lst c))
+\end{code}
+\begin{code}
+expand_action_names_CAction_comnd lst (CAssign v e)
  = (CAssign v e)
-get_main_action_comnd lst (CIf ga)
+expand_action_names_CAction_comnd lst (CIf ga)
  = (CIf (get_if lst ga))
-get_main_action_comnd lst (CVarDecl z a)
- = (CVarDecl z (get_main_action lst a))
-get_main_action_comnd lst (CAssumpt n p1 p2)
+expand_action_names_CAction_comnd lst (CVarDecl z a)
+ = (CVarDecl z (expand_action_names_CAction lst a))
+expand_action_names_CAction_comnd lst (CAssumpt n p1 p2)
  = (CAssumpt n p1 p2)
-get_main_action_comnd lst (CAssumpt1 n p)
+expand_action_names_CAction_comnd lst (CAssumpt1 n p)
  = (CAssumpt1 n p)
-get_main_action_comnd lst (CPrefix p1 p2)
+expand_action_names_CAction_comnd lst (CPrefix p1 p2)
  = (CPrefix p1 p2)
-get_main_action_comnd lst (CPrefix1 p)
+expand_action_names_CAction_comnd lst (CPrefix1 p)
  = (CPrefix1 p)
-get_main_action_comnd lst (CommandBrace p)
+expand_action_names_CAction_comnd lst (CommandBrace p)
  = (CommandBrace p)
-get_main_action_comnd lst (CommandBracket p)
+expand_action_names_CAction_comnd lst (CommandBracket p)
  = (CommandBracket p)
-get_main_action_comnd lst (CValDecl z a)
- = (CValDecl z (get_main_action lst a))
-get_main_action_comnd lst (CResDecl z a)
- = (CResDecl z (get_main_action lst a))
-get_main_action_comnd lst (CVResDecl z a)
- = (CVResDecl z (get_main_action lst a))
+expand_action_names_CAction_comnd lst (CValDecl z a)
+ = (CValDecl z (expand_action_names_CAction lst a))
+expand_action_names_CAction_comnd lst (CResDecl z a)
+ = (CResDecl z (expand_action_names_CAction lst a))
+expand_action_names_CAction_comnd lst (CVResDecl z a)
+ = (CVResDecl z (expand_action_names_CAction lst a))
 \end{code}
 
 \begin{code}
 get_if lst (CircGAction p a)
- = (CircGAction p (get_main_action lst a))
+ = (CircGAction p (expand_action_names_CAction lst a))
 get_if lst (CircThenElse ga gb)
  = (CircThenElse (get_if lst ga) (get_if lst gb))
 get_if lst (CircElse (CircusAction a))
- = (CircElse (CircusAction (get_main_action lst a)))
+ = (CircElse (CircusAction (expand_action_names_CAction lst a)))
 get_if lst (CircElse (ParamActionDecl x (CircusAction a)))
- = (CircElse (ParamActionDecl x (CircusAction (get_main_action lst a))))
+ = (CircElse (ParamActionDecl x (CircusAction (expand_action_names_CAction lst a))))
 \end{code}
 
 \begin{code}
 get_action _ [] = error "Action list is empty"
 get_action name [(CParAction n (CircusAction a))]
- = case name == n of
-   True -> a
-   False -> error "Action not found"
-
+  | name == n = a
+  | otherwise = error "Action not found"
 get_action name ((CParAction n (CircusAction a)):xs)
- = case name == n of
-   True -> a
-   False -> get_action name xs
+  | (name == n) = a
+  | otherwise = get_action name xs
 \end{code}
 
 \begin{code}
@@ -670,10 +681,12 @@ zgenfilt_to_zexpr (_:as) = []++(zgenfilt_to_zexpr as)
 rename_vars_ZPara1 :: [(ZName, ZVar, ZExpr)] -> ZPara -> ZPara
 rename_vars_ZPara1 lst (Process zp)
   = (Process (rename_vars_ProcDecl1 lst zp))
-rename_vars_ZPara1 lst (ZSchemaDef n zs)
-  = (ZSchemaDef n (rename_vars_ZSExpr1 lst zs))
-rename_vars_ZPara1 lst x
-  = x
+-- rename_vars_ZPara1 lst (ZSchemaDef n zs)
+--   = (ZSchemaDef n (rename_vars_ZSExpr1 lst zs))
+rename_vars_ZPara1 lst x = x
+\end{code}
+
+\begin{code}
 rename_vars_ZSExpr1 :: [(ZName, ZVar, ZExpr)] -> ZSExpr -> ZSExpr
 rename_vars_ZSExpr1 lst (ZSchema s)
   = ZSchema (map (rename_ZGenFilt1 lst) s)
@@ -1228,54 +1241,85 @@ get_pre_Circ_proc []
 \end{code}
 \subsection{Creating the Memory process}
 \begin{code}
-def_mem_st_Circus_aux :: [ZPara] -> [(ZName, ZVar, ZExpr)]
-def_mem_st_Circus_aux []
+def_mem_st_Circus_aux :: [ZPara] -> [ZPara] -> [(ZName, ZVar, ZExpr)]
+def_mem_st_Circus_aux spec []
   = []
-def_mem_st_Circus_aux [x]
-  = def_mem_st_CircParagraphs x
-def_mem_st_Circus_aux (x:xs)
-  = (def_mem_st_CircParagraphs x)++(def_mem_st_Circus_aux xs)
+def_mem_st_Circus_aux spec [x]
+  = def_mem_st_CircParagraphs spec x
+def_mem_st_Circus_aux spec (x:xs)
+  = (def_mem_st_CircParagraphs spec x)++(def_mem_st_Circus_aux spec xs)
 \end{code}
 \begin{code}
-def_mem_st_CircParagraphs :: ZPara -> [(ZName, ZVar, ZExpr)]
-def_mem_st_CircParagraphs (Process cp)
-  = (def_mem_st_ProcDecl cp)
-def_mem_st_CircParagraphs x
+rename_z_schema_state spec (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] [])) proclst ma)))
+  = case newspec of
+      [] -> (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] [])) proclst ma)))
+      [xs] -> (CProcess p (ProcDef (ProcMain xs proclst ma)))
+    where
+      newspec = retrieve_z_schema_state nn spec
+rename_z_schema_state spec x
+  = x
+
+
+retrieve_z_schema_state n [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
+  | n == nn = [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
+  | otherwise = []
+retrieve_z_schema_state n [_] = []
+retrieve_z_schema_state n ((ZSchemaDef (ZSPlain nn) (ZSchema lstx)):xs)
+  | n == nn = [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
+  | otherwise = retrieve_z_schema_state n xs
+retrieve_z_schema_state n (_:xs) = retrieve_z_schema_state n xs
+\end{code}
+\begin{code}
+def_mem_st_CircParagraphs :: [ZPara] -> ZPara -> [(ZName, ZVar, ZExpr)]
+def_mem_st_CircParagraphs spec (Process cp)
+  = (def_mem_st_ProcDecl spec ncp)
+    where 
+      ncp = rename_z_schema_state spec cp
+def_mem_st_CircParagraphs spec x
   = []
 \end{code}
 
 \begin{code}
-def_mem_st_ProcDecl :: ProcDecl -> [(ZName, ZVar, ZExpr)]
-def_mem_st_ProcDecl (CGenProcess zn (x:xs) pd)
-  = (def_mem_st_ProcessDef zn pd)
-def_mem_st_ProcDecl (CProcess zn pd)
-  = (def_mem_st_ProcessDef zn pd)
+def_mem_st_ProcDecl :: [ZPara] -> ProcDecl -> [(ZName, ZVar, ZExpr)]
+def_mem_st_ProcDecl spec (CGenProcess zn (x:xs) pd)
+  = (def_mem_st_ProcessDef spec zn pd)
+def_mem_st_ProcDecl spec (CProcess zn pd)
+  = (def_mem_st_ProcessDef spec zn pd)
 \end{code}
 
 \begin{code}
-def_mem_st_ProcessDef :: ZName -> ProcessDef -> [(ZName, ZVar, ZExpr)]
-def_mem_st_ProcessDef name (ProcDefSpot xl pd)
-  = (def_mem_st_ProcessDef name pd)
-def_mem_st_ProcessDef name (ProcDefIndex xl pd)
-  = (def_mem_st_ProcessDef name pd)
-def_mem_st_ProcessDef name (ProcDef cp)
-  = (def_mem_st_CProc name cp)
+def_mem_st_ProcessDef :: [ZPara] -> ZName -> ProcessDef -> [(ZName, ZVar, ZExpr)]
+def_mem_st_ProcessDef spec name (ProcDefSpot xl pd)
+  = (def_mem_st_ProcessDef spec name pd)
+def_mem_st_ProcessDef spec name (ProcDefIndex xl pd)
+  = (def_mem_st_ProcessDef spec name pd)
+def_mem_st_ProcessDef spec name (ProcDef cp)
+  = (def_mem_st_CProc spec name cp)
 \end{code}
 
 \begin{code}
-def_mem_st_CProc :: ZName -> CProc -> [(ZName, ZVar, ZExpr)]
-def_mem_st_CProc name (ProcMain zp (x:xs) ca)
-  = (get_state_var name zp) -- ++(get_local_var ca)
-def_mem_st_CProc  name x
+def_mem_st_CProc :: [ZPara] -> ZName -> CProc -> [(ZName, ZVar, ZExpr)]
+def_mem_st_CProc spec name (ProcMain zp (x:xs) ca)
+  = (get_state_var spec name zp) -- ++(get_local_var ca)
+def_mem_st_CProc spec name x
   = []
 \end{code}
-\begin{code}
-get_state_var :: ZName -> ZPara -> [(ZName, ZVar, ZExpr)]
-get_state_var name (ZSchemaDef n (ZSchema (x:xs)))
+
+
+\begin{code}  
+get_state_var :: [ZPara] -> ZName -> ZPara -> [(ZName, ZVar, ZExpr)]
+get_state_var spec name (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] []))
+  = case statev of
+      [e'] -> (get_state_var spec name e')
+      [] -> []
+    where
+      statev = retrieve_z_schema_state n spec
+
+get_state_var spec name (ZSchemaDef n (ZSchema (x:xs)))
   = (get_state_var_aux name x)
     ++
-    (get_state_var name (ZSchemaDef n (ZSchema xs)))
-get_state_var _ _ = []
+    (get_state_var spec name (ZSchemaDef n (ZSchema xs)))
+get_state_var _ _ _ = []
 
 \end{code}
 \begin{code}
@@ -1287,7 +1331,8 @@ Here I'm making the bindings for the main action.
 \begin{code}
 mk_main_action_bind :: [(ZName, ZVar, ZExpr)] -> CAction -> CAction
 mk_main_action_bind lst ca
-  = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst) ] Nothing)] ca))
+  | null lst = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])) ] Nothing)] ca))
+  | otherwise = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst) ] Nothing)] ca))
 \end{code}
 \begin{code}
 mk_inv :: [(ZName, ZVar, ZExpr)] -> ZPred

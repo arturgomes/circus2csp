@@ -10,6 +10,7 @@ import OmegaDefs
 import Subs
 import Data.List hiding (union, intersect)
 import Data.Maybe
+import Data.Time
 
 \end{code}
 }
@@ -21,10 +22,10 @@ import Data.Maybe
         \\ = \\
         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
     \end{circus}%
-    \begin{prov}
+    \begin{itemize}
         \item: From D24.1 -- $\{d,d'\} \cap FV(A2) = \emptyset$
         \item: From Oliveira's Thesis: $x \notin FV(A_2) \cup ns_1 \cup ns_2$
-    \end{prov}
+    \end{itemize}
   \label{law:var-exp-par}
 \end{lawn}
 \begin{code}
@@ -1324,10 +1325,10 @@ crl_assignmentSkip _ = None
 For testing purposes
 \begin{lawn}[Guard combination]\sl
     \begin{zed}
-      g_1 \guard (g_2 \guard A) = (g_1 \land g_2) \guard A%
+      g_1 \circguard (g_2 \circguard A) = (g_1 \land g_2) \circguard A%
     \end{zed}
-  \end{law}
   \label{law:guardComb}
+\end{lawn}
 
 \begin{code}
 crl_guardComb :: CAction -> Refinement CAction

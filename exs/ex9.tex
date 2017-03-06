@@ -8,28 +8,22 @@
 \usepackage{circus}
 
 \begin{document}
-
-\begin{circus}%
-  \circprocess\ ~SysClock ~\circdef~\circbegin
-\end{circus}
 \begin{schema}{SysClockS}
  time : \nat
 \end{schema}
-\begin{circusaction}
+\begin{circus}%
+\circchannel getCurrentTime : \nat\\
+\circchannel tick\\
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClockS\\
   ResetClock ~\circdef~
   \\\t2  Clock\\
-\end{circusaction}
-\begin{circusaction}
   Clock ~\circdef~
-  \\\t2  \circmu~X \circspot  (tick \then \Skip \interleave getCurrentTime!time \then \Skip)\circseq X
-\end{circusaction}
-\begin{circusaction}
+  \\\t2  \circmu~X \circspot  (((tick \then \Skip) \interleave (getCurrentTime!time \then \Skip))\circseq X)
   Wait~\circdef~ \circvar n : \nat \circspot
    \circif n> 0 \circthen (tick \then Wait (n-1))
    \circelse n~=~0 \circthen \Skip
    \circfi\\
-\end{circusaction}
-\begin{circus}
   \circspot ResetClock
   \circend
 \end{circus}

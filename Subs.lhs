@@ -129,9 +129,8 @@ zvars_from_zexpr (ZVar x) = [x]
 zvars_from_zexpr _ = []
 
 varset_to_zvars  :: VarSet -> [ZVar]
-varset_to_zvars (VarSet []) = []
 varset_to_zvars (VarSet (x:xs)) = zvars_from_zexpr x ++ (varset_to_zvars (VarSet xs))
-varset_to_zvars _ = []
+varset_to_zvars empty_varset = []
 
 empty_varset = VarSet emptyset
 
@@ -311,15 +310,23 @@ sub_pred subs p = error ("substitute should not see: " ++ show p)
 
 \end{code}
 \subsubsection{Substitution for Circus Actions}
+\begin{code}
+sub_ParAction :: SubstitutionInfo -> ParAction -> ParAction
+sub_ParAction subs (CircusAction vCAction) = (CircusAction (sub_CAction subs vCAction))
+sub_ParAction subs (ParamActionDecl vZGenFilt_lst vParAction) 
+  = (ParamActionDecl vZGenFilt_lst2 vParAction2)
+  where
+    (vZGenFilt_lst2,vParAction2) = sub_genfilt sub_ParAction subs vZGenFilt_lst vParAction
 
+\end{code}
 \begin{code}
 
 sub_CAction :: SubstitutionInfo -> CAction -> CAction
 sub_CAction subs (CActionSchemaExpr x) = (CActionSchemaExpr x)
-sub_CAction subs (CActionCommand c) = (CActionCommand (sub_CAction subs c))
+sub_CAction subs (CActionCommand c) = (CActionCommand (sub_CCommand subs c))
 sub_CAction subs (CActionName nm) = (CActionName nm)
-sub_CAction subs (CSPCommAction (ChanComm com xs) (sub_CAction subs c)) = (CSPCommAction (ChanComm com xs) c)
-sub_CAction subs (CSPGuard p c) = (CSPGuard p (sub_CAction subs c))
+sub_CAction subs (CSPCommAction cc c) = (CSPCommAction (sub_Comm subs cc) (sub_CAction subs c))
+sub_CAction subs (CSPGuard p c) = (CSPGuard (sub_pred subs p) (sub_CAction subs c))
 sub_CAction subs (CSPSeq ca cb) = (CSPSeq (sub_CAction subs ca) (sub_CAction subs cb))
 sub_CAction subs (CSPExtChoice ca cb) = (CSPExtChoice (sub_CAction subs ca) (sub_CAction subs cb))
 sub_CAction subs (CSPIntChoice ca cb) = (CSPIntChoice (sub_CAction subs ca) (sub_CAction subs cb))
@@ -351,15 +358,15 @@ sub_CAction subs x = x
 -- This is not yet compiled, as I'm still working on it.
 
 sub_Comm :: SubstitutionInfo -> Comm -> Comm
-sub_Comm subs (ChanComm vZName vCParameter_lst) = (ChanComm vZName vCParameter_lst)
-sub_Comm subs (ChanGenComm vZName vZExpr_lst vCParameter_lst) = (ChanGenComm vZName vZExpr_lst vCParameter_lst)
+sub_Comm subs (ChanComm vZName vCParameter_lst) = (ChanComm vZName (map (sub_CParameter subs) vCParameter_lst))
+sub_Comm subs (ChanGenComm vZName vZExpr_lst vCParameter_lst) = (ChanGenComm vZName (map (sub_expr subs) vZExpr_lst) (map (sub_CParameter subs) vCParameter_lst))
 \end{code}
 \begin{code}
 sub_CParameter :: SubstitutionInfo -> CParameter -> CParameter
 sub_CParameter subs (ChanInp vZName) = (ChanInp vZName)
-sub_CParameter subs (ChanInpPred vZName vZPred) = (ChanInpPred vZName vZPred)
-sub_CParameter subs (ChanOutExp vZExpr) = (ChanOutExp vZExpr)
-sub_CParameter subs (ChanDotExp vZExpr) = (ChanDotExp vZExpr)
+sub_CParameter subs (ChanInpPred vZName vZPred) = (ChanInpPred vZName (sub_pred subs vZPred))
+sub_CParameter subs (ChanOutExp vZExpr) = (ChanOutExp (sub_expr subs vZExpr))
+sub_CParameter subs (ChanDotExp vZExpr) = (ChanDotExp (sub_expr subs vZExpr))
 \end{code}
 
 \subsubsection{Substitution for Circus Commands}
@@ -368,18 +375,18 @@ sub_CParameter subs (ChanDotExp vZExpr) = (ChanDotExp vZExpr)
 -- sub_expr subs (ZSetComp gfs (Just e)) = ZSetComp gfs2 (Just e2)
 -- (gfs2,e2) = sub_genfilt sub_expr subs gfs e
 sub_CCommand :: SubstitutionInfo -> CCommand -> CCommand
-sub_CCommand subs (CAssign vZVar_lst vZExpr_lst) = (CAssign vZVar_lst vZExpr_lst)
-sub_CCommand subs (CIf vCGActions) = (CIf vCGActions)
+sub_CCommand subs (CAssign vZVar_lst vZExpr_lst) = (CAssign vZVar_lst (map (sub_expr subs) vZExpr_lst))
+sub_CCommand subs (CIf vCGActions) = (CIf (sub_CGActions subs vCGActions))
 sub_CCommand subs (CVarDecl vZGenFilt_lst vCAction) 
   = (CVarDecl vZGenFilt_lst2 vCAction2)
   where
     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_CAction subs vZGenFilt_lst vCAction
-sub_CCommand subs (CAssumpt vZName_lst v1ZPred v2ZPred) = (CAssumpt vZName_lst v1ZPred v2ZPred)
-sub_CCommand subs (CAssumpt1 vZName_lst vZPred) = (CAssumpt1 vZName_lst vZPred)
-sub_CCommand subs (CPrefix v1ZPred v2ZPred) = (CPrefix v1ZPred v2ZPred)
-sub_CCommand subs (CPrefix1 vZPred) = (CPrefix1 vZPred)
-sub_CCommand subs (CommandBrace vZPred) = (CommandBrace vZPred)
-sub_CCommand subs (CommandBracket vZPred) = (CommandBracket vZPred)
+sub_CCommand subs (CAssumpt vZName_lst v1ZPred v2ZPred) = (CAssumpt vZName_lst (sub_pred subs v1ZPred) (sub_pred subs v2ZPred))
+sub_CCommand subs (CAssumpt1 vZName_lst vZPred) = (CAssumpt1 vZName_lst (sub_pred subs vZPred))
+sub_CCommand subs (CPrefix v1ZPred v2ZPred) = (CPrefix (sub_pred subs v1ZPred) (sub_pred subs v2ZPred))
+sub_CCommand subs (CPrefix1 vZPred) = (CPrefix1 (sub_pred subs vZPred))
+sub_CCommand subs (CommandBrace vZPred) = (CommandBrace (sub_pred subs vZPred))
+sub_CCommand subs (CommandBracket vZPred) = (CommandBracket (sub_pred subs vZPred))
 sub_CCommand subs (CValDecl vZGenFilt_lst vCAction) 
   = (CValDecl vZGenFilt_lst2 vCAction2)
   where
@@ -395,8 +402,8 @@ sub_CCommand subs (CVResDecl vZGenFilt_lst vCAction)
 \end{code}
 \begin{code}
 sub_CGActions :: SubstitutionInfo -> CGActions  -> CGActions
-sub_CGActions subs (CircGAction vZPred vCAction) = (CircGAction vZPred vCAction)
-sub_CGActions subs (CircThenElse v1CGActions v2CGActions) = (CircThenElse v1CGActions v2CGActions)
+sub_CGActions subs (CircGAction vZPred vCAction) = (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction))
+sub_CGActions subs (CircThenElse v1CGActions v2CGActions) = (CircThenElse (sub_CGActions subs v1CGActions) (sub_CGActions subs v2CGActions))
 sub_CGActions subs (CircElse vParAction) = (CircElse vParAction)
 \end{code}
 \begin{code}

@@ -47,6 +47,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
   = "\n--------------------------------"++
     "\n-- The universe of values"++
     "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
+    "\n NatValueMax = 2\nNatValue = {0..NatValueMax}"++
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
     "\n"++(mk_value funivlst)++
@@ -55,7 +56,14 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
     "\n\t else {}\n"  ++
     "\ntag(x) ="++
     "\n\t if x == "++(mk_tag univlst)++
-    "\n\t else Nat\n\n\n"  
+    "\n\t else Nat\n\n\n"++
+    "--------------------------------\n-- MEMORY\n--------------------------------\n"++
+    "Memory(b) =\n"++
+    "   ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))\n"++
+    "   [] ([] n:dom(b) @ mset.n?x:type(n) -> Memory(over(b,n,x)))\n"++
+    "   [] terminate -> SKIP\n\n"++
+    "Memorise(P, b) = \n"++ 
+    "    ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \\ MEM_I\n"  
   where
     univlst = (def_universe spec)
     funivlst = nub (filter_types_universe univlst)
@@ -64,6 +72,7 @@ mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
     "\n-- All possible bidings"++
     "\nNAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})"++ 
     "\nBINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}\n"
+
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
   = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list spec zbs) 
 mapping_CircParagraphs spec (Process cp)
@@ -324,7 +333,8 @@ mapping_CProc spec (CRepSeqProc [(Choose (x,[]) s)] a)
     ++ " @ "
     ++ (mapping_CProc spec a)
 mapping_CProc spec (ProcStalessMain pps ca)
-  = "\n\tlet " ++ (mapping_PPar_list spec pps)
+  | pps == [] = "\n\t" ++ (mapping_CAction spec ca)
+  | otherwise = "\n\tlet " ++ (mapping_PPar_list spec pps)
     ++ "within " ++ (mapping_CAction spec ca)
 -- (mapping_CProc spec CGenProc zn (x:xs))
 --   = undefined
@@ -821,7 +831,7 @@ get_channel_name :: [ZPara] -> Comm -> ZName
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
   = "mget."++x++"?"++v1++":(type("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mset."++x++".tag("++x++")"++(get_channel_name_cont spec xs)
+  = "mset."++x++".type("++x++")"++(get_channel_name_cont spec xs)
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -830,11 +840,11 @@ get_channel_name spec (ChanGenComm _ _ _)
 \begin{code}
 get_channel_name_cont spec [] = ""
 get_channel_name_cont spec [(ChanOutExp (ZVar v))] 
-  = "."++(mapping_ZExpr (get_delta_names spec) (ZVar v))++""
+  = ".value("++(mapping_ZExpr (get_delta_names spec) (ZVar v))++")"
 get_channel_name_cont spec [(ChanOutExp v)] 
   = "."++(mapping_ZExpr (get_delta_names spec) v)++""
 get_channel_name_cont spec [(ChanDotExp (ZVar v))] 
-  = "."++(mapping_ZExpr (get_delta_names spec) (ZVar v))++""
+  = ".value("++(mapping_ZExpr (get_delta_names spec) (ZVar v))++")"
 get_channel_name_cont spec [(ChanDotExp v)] 
   = ".("++(mapping_ZExpr (get_delta_names spec) v)++")"
   -- = "."++(showexpr v)
@@ -978,7 +988,7 @@ mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZVar (a,_)) 
   = case (inListVar a lst) of
-      True -> "value(v"++a++")"
+      True -> "value(v_"++a++")"
       _ -> a
 mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 

@@ -26,15 +26,15 @@ import CRL
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec
   = [ZGivenSetDecl ("UNIVERSE",[]),
-      ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1)),
+      ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1 spec1)),
       ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])), 
-      ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1))),
+      ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1 spec1))),
       CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
       CircChannel [CChan "terminate"],
-      CircChanSet "MEMi" (CChanSet ["mset","mget","terminate"])]
+      CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"])]
     ++ (omega_Circus_aux spec1 spec1)
     where 
-      spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec)) spec) -- renaming variables for highlighting which is state var from which process
+      spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec spec)) spec) -- renaming variables for highlighting which state var is from which process
 \end{code}
 
 \subsection{Omega functions}
@@ -112,21 +112,23 @@ omega_CProc spec (CSeq a b)
 omega_CProc spec (ProcStalessMain xls ca)
   = (ProcStalessMain (concat (map omega_PPar xls)) (mk_main_action_bind nstate (omega_CAction ca)))
     where 
-      nstate = (def_mem_st_Circus_aux spec)
+      nstate = (def_mem_st_Circus_aux spec spec)
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))
 omega_CProc spec (CParamProc zn (x:xs))
   = (CParamProc zn (x:xs))
 omega_CProc spec (CSimpIndexProc zn (x:xs))
   = (CSimpIndexProc zn (x:xs))
-omega_CProc spec (ProcMain zp (x:xs) ca)
+omega_CProc spec (ProcMain zp xls ca)
   = (ProcStalessMain 
-    [make_memory_proc] 
-    (get_main_action 
-      (concat (map omega_PPar (x:xs)))
-      (mk_main_action_bind nstate (omega_CAction ca))))
+    [] 
+    main_action)
     where 
-      nstate = (def_mem_st_Circus_aux spec)
+      nstate = (def_mem_st_Circus_aux spec spec)
+      expAct = map (expand_action_names_PPar xls) xls
+      -- main_action = (get_main_action (concat (map omega_PPar (x:xs))) (mk_main_action_bind nstate (omega_CAction ca)))
+      main_action = mk_main_action_bind nstate $ omega_CAction $ (expand_action_names_CAction expAct ca)
+      -- ref_main_action = 
 omega_CProc spec x
   = x
 \end{code}
@@ -184,6 +186,9 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 
 is written in Haskell as:
 \begin{code}
+omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (omega_prime_CAction a)))
+  where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
 omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
   where lxs = concat (map get_ZVar_st (free_var_ZExpr e))
@@ -194,6 +199,8 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
 \\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
 \end{circus}
 \begin{code}
+omega_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
+  = omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
 omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
   = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
 \end{code}
@@ -546,6 +553,36 @@ omega_CAction (CActionCommand (CommandBracket g))
 \begin{code}
 omega_CAction (CSPRenAction a (CRenameAssign left right))
   = (CSPRenAction a (CRename right left))
+\end{code}
+
+In order to pattern match any other \Circus\ construct not mentioned here, we propagate the $omega\_CAction$ function to the remainder of the constructs.
+
+\begin{code}
+omega_CAction (CActionSchemaExpr vZSExpr) = (CActionSchemaExpr vZSExpr)
+omega_CAction (CActionCommand vCCommand) = (CActionCommand vCCommand)
+omega_CAction (CActionName vZName) = (CActionName vZName)
+omega_CAction (CSPCommAction vComm vCAction) = (CSPCommAction vComm (omega_CAction vCAction))
+omega_CAction (CSPGuard vZPred vCAction) = (CSPGuard vZPred (omega_CAction vCAction))
+omega_CAction (CSPSeq v1CAction v2CAction) = (CSPSeq (omega_CAction (omega_CAction v1CAction)) (omega_CAction v2CAction))
+omega_CAction (CSPExtChoice v1CAction v2CAction) = (CSPExtChoice (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPIntChoice v1CAction v2CAction) = (CSPIntChoice (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPNSParal v1NSExp vCSExp v2NSExp v1CAction v2CAction) = (CSPNSParal v1NSExp vCSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPParal vCSExp v1CAction v2CAction) = (CSPParal vCSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction) = (CSPNSInter v1NSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPInterleave v1CAction v2CAction) = (CSPInterleave (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPHide vCAction vCSExp) = (CSPHide (omega_CAction vCAction) vCSExp)
+omega_CAction (CSPParAction vZName vZExpr_lst) = (CSPParAction vZName vZExpr_lst)
+omega_CAction (CSPRenAction vZName vCReplace) = (CSPRenAction vZName vCReplace)
+omega_CAction (CSPRecursion vZName vCAction) = (CSPRecursion vZName (omega_CAction vCAction))
+omega_CAction (CSPUnfAction vZName vCAction) = (CSPUnfAction vZName (omega_CAction vCAction))
+omega_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName) = (CSPUnParAction vZGenFilt_lst (omega_CAction vCAction) vZName)
+omega_CAction (CSPRepSeq vZGenFilt_lst vCAction) = (CSPRepSeq vZGenFilt_lst (omega_CAction vCAction))
+omega_CAction (CSPRepExtChoice vZGenFilt_lst vCAction) = (CSPRepExtChoice vZGenFilt_lst (omega_CAction vCAction))
+omega_CAction (CSPRepIntChoice vZGenFilt_lst vCAction) = (CSPRepIntChoice vZGenFilt_lst (omega_CAction vCAction))
+omega_CAction (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp vCAction) = (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp (omega_CAction vCAction))
+omega_CAction (CSPRepParal vCSExp vZGenFilt_lst vCAction) = (CSPRepParal vCSExp vZGenFilt_lst (omega_CAction vCAction))
+omega_CAction (CSPRepInterlNS vZGenFilt_lst vNSExp vCAction) = (CSPRepInterlNS vZGenFilt_lst vNSExp (omega_CAction vCAction))
+omega_CAction (CSPRepInterl vZGenFilt_lst vCAction) = (CSPRepInterl vZGenFilt_lst (omega_CAction vCAction))
 omega_CAction x = x
 \end{code}
 

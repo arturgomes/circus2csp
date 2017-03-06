@@ -53,17 +53,19 @@ NatValue = {0..maxbuff}
 
 --------------------------------
 -- The universe of values
-datatype UNIVERSE = Boolean.Bool | Nat.NatValue | Val.Value | Cel.CellId
+datatype UNIVERSE = 
+    -- Boolean.Bool | 
+    Nat.NatValue | Val.Value | Cel.CellId
 
 --------------------------------
 -- Conversions
-subtype U_BOOL = Boolean.Bool
+-- subtype U_BOOL = Boolean.Bool
 subtype U_NAT = Nat.NatValue
 subtype U_VALUE = Val.Value
 subtype U_CELL = Cel.CellId
 
 value(Nat.v) = v
-value(Boolean.v) = v
+-- value(Boolean.v) = v
 value(Val.v) = v
 value(Cel.v) = v
 
