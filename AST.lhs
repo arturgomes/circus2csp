@@ -713,21 +713,21 @@ data CCommand
   = CAssign [ZVar] [ZExpr]                -- N^{+} := Exp^{+}
   | CIf CGActions                         -- \circif GActions \cirfi
   | CVarDecl [ZGenFilt] CAction           -- \circvar Decl \circspot Action
+  | CValDecl [ZGenFilt] CAction           -- \circval Decl \circspot Action
+  | CResDecl [ZGenFilt] CAction           -- \circres Decl \circspot Action
+  | CVResDecl [ZGenFilt] CAction          -- \circvres Decl \circspot Action
   | CAssumpt [ZName] ZPred ZPred          -- N^{+} \prefixcolon [Pred,Pred]
   | CAssumpt1 [ZName] ZPred               -- N^{+} \prefixcolon [Pred]
   | CPrefix ZPred ZPred                   -- \prefixcolon [Pred,Pred]
   | CPrefix1 ZPred                        -- \prefixcolon [Pred]
   | CommandBrace ZPred                    -- \{Pred\}
   | CommandBracket ZPred                  -- [Pred]
-  | CValDecl [ZGenFilt] CAction           -- \circval Decl \circspot Action
-  | CResDecl [ZGenFilt] CAction           -- \circres Decl \circspot Action
-  | CVResDecl [ZGenFilt] CAction          -- \circvres Decl \circspot Action
   deriving (Eq,Ord,Show)
 
 data CGActions
  = CircGAction ZPred CAction                 -- Pred \circthen Action
  | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
- | CircElse ParAction    -- \circelse CAction
+ -- | CircElse ParAction    -- \circelse CAction
  deriving (Eq,Ord,Show)
 
 data CReplace

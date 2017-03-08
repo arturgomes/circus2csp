@@ -4,29 +4,41 @@
   \circchannel tick
 \end{circus}
 
-
-\begin{circus}%
-  \circprocess\ ~SysClock ~\circdef~\circbegin
-  \circstate SysClockSt \defs SysClocS
-\end{circus}
 \begin{schema}{SysClockS}
  time : \nat
 \end{schema}
-\begin{circusaction}
+
+\begin{circus}%
+  \circprocess\ ~SysClock1 ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClockS
   ResetClock ~\circdef~
   \\\t2  (time := 0) \circseq Clock\\
-\end{circusaction}
-\begin{circusaction}
   Clock ~\circdef~
-  \\\t2  \circmu~X \circspot  (tick \then (time := time+1) \interleave getCurrentTime!time \then \Skip)\circseq X
-\end{circusaction}
-\begin{circusaction}
+  \\\t2  \circmu~X \circspot  (((tick \then (time := time+1)) \interleave (getCurrentTime!time \then \Skip))\circseq X)
   Wait~\circdef~ \circvar n : \nat \circspot
    \circif n> 0 \circthen (tick \then Wait (n-1))
    \circelse n~=~0 \circthen \Skip
    \circfi\\
-\end{circusaction}
-\begin{circus}
+  \circspot ResetClock
+  \circend
+\end{circus}
+\begin{circus}%
+  \circprocess\ ~SysClock2 ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClockS
+  ResetClock ~\circdef~
+  \\\t2  (time := 0) \circseq Clock\\
+  Clock ~\circdef~ 
+  \circmu~X \circspot 
+    ((
+      (\lcircguard time > 2 \rcircguard \circguard ((time := 0) \circseq X))
+        \extchoice 
+          ((tick \then (time := time+1)) 
+            \interleave (getCurrentTime!time \then \Skip)))
+          \circseq X)
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
   \circspot ResetClock
   \circend
 \end{circus}

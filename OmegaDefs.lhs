@@ -46,12 +46,11 @@ make_get_com x c = c
 make_set_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
 make_set_com f [(x,_)] [y] c
   = (CSPCommAction (ChanComm "mset"
-    [ChanDotExp (ZVar (x,[])),ChanOutExp y]) (f c))
+    [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (f c))
 make_set_com f ((x,_):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
-     [ChanDotExp (ZVar (x,[])),ChanOutExp y]) (make_set_com f xs ys c))
+     [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
-
 The function $mk\_guard\_pair$ transforms a list of tuples $(ZPred, CAction)$ and produces $CircThenElse$ pieces according to the size of the list.
 \begin{code}
 mk_guard_pair :: (CAction -> CAction) -> [(ZPred, CAction)] -> CGActions
@@ -254,13 +253,13 @@ isPrefixOf (x : xs) (y : ys) = (x == y && isPrefixOf xs ys)
 
 get State variables from names
 \begin{code}
-get_ZVar_st ((('s':'t':'_':'v':'a':'r':'_':xs),x))
- = [('s':'t':'_':'v':'a':'r':'_':xs)]
+get_ZVar_st ((('s':'v':'_':xs),x))
+ = [('s':'v':'_':xs)]
 get_ZVar_st x
  = []
 \end{code}
 \begin{code}
-is_ZVar_st a = isPrefixOf "st_var_" a
+is_ZVar_st a = isPrefixOf "sv" a
 \end{code}
 
 
@@ -464,8 +463,7 @@ rename_vars_CGActions (CircGAction zp a)
  = (CircGAction (rename_ZPred zp) (rename_vars_CAction a))
 rename_vars_CGActions (CircThenElse cga1 cga2)
  = (CircThenElse (rename_vars_CGActions cga1) (rename_vars_CGActions cga2))
-rename_vars_CGActions (CircElse pa)
- = (CircElse pa)
+-- rename_vars_CGActions (CircElse pa) = (CircElse pa)
 \end{code}
 
 
@@ -544,6 +542,8 @@ expand_action_names_CAction lst (CSPRecursion n (CSPSeq c (CActionName n1)))
  = case n == n1 of
    True -> (CSPRecursion n (CSPSeq (expand_action_names_CAction lst c) (CActionName n)))
    False -> (CSPRecursion n (CSPSeq (expand_action_names_CAction lst c) (CActionName n1)))
+expand_action_names_CAction lst (CSPRecursion n c)
+ = (CSPRecursion n (expand_action_names_CAction lst c))
 expand_action_names_CAction lst (CSPUnParAction lsta c nm)
  = (CSPUnParAction lsta (expand_action_names_CAction lst c) nm)
 expand_action_names_CAction lst (CSPRepSeq lsta c)
@@ -593,10 +593,10 @@ get_if lst (CircGAction p a)
  = (CircGAction p (expand_action_names_CAction lst a))
 get_if lst (CircThenElse ga gb)
  = (CircThenElse (get_if lst ga) (get_if lst gb))
-get_if lst (CircElse (CircusAction a))
- = (CircElse (CircusAction (expand_action_names_CAction lst a)))
-get_if lst (CircElse (ParamActionDecl x (CircusAction a)))
- = (CircElse (ParamActionDecl x (CircusAction (expand_action_names_CAction lst a))))
+-- get_if lst (CircElse (CircusAction a))
+--  = (CircElse (CircusAction (expand_action_names_CAction lst a)))
+-- get_if lst (CircElse (ParamActionDecl x (CircusAction a)))
+--  = (CircElse (ParamActionDecl x (CircusAction (expand_action_names_CAction lst a))))
 \end{code}
 
 \begin{code}
@@ -607,6 +607,8 @@ get_action name [(CParAction n (CircusAction a))]
 get_action name ((CParAction n (CircusAction a)):xs)
   | (name == n) = a
   | otherwise = get_action name xs
+get_action name (_:xs)
+  = get_action name xs
 \end{code}
 
 \begin{code}
@@ -633,7 +635,7 @@ filter_state_comp ((_, v, _):xs) = [v]++(filter_state_comp xs)
 \end{code}
 
 \begin{code}
-is_st_var ('s':'t':'_':'v':'a':'r':'_':xs) = True
+is_st_var ('s':'v':'_':xs) = True
 is_st_var _ = False
 \end{code}
 
@@ -857,8 +859,9 @@ rename_vars_CParameter1 lst (ChanDotExp ze)
 
 \begin{code}
 rename_vars_CCommand1 :: [(ZName, ZVar, ZExpr)] -> CCommand -> CCommand
-rename_vars_CCommand1 lst (CAssign zvarls1 zexprls)
- = (CAssign (map (rename_vars_ZVar1 lst) zvarls1) (map (rename_vars_ZExpr1 lst) zexprls))
+rename_vars_CCommand1 lst (CAssign zv ze)
+ = (CAssign (map (rename_vars_ZVar1 lst) zv) 
+            (map (rename_vars_ZExpr1 lst) ze))
 rename_vars_CCommand1 lst (CIf ga)
  = (CIf (rename_vars_CGActions1 lst ga))
 rename_vars_CCommand1 lst (CVarDecl zgf a)
@@ -889,8 +892,8 @@ rename_vars_CGActions1 lst (CircGAction zp a)
  = (CircGAction (rename_vars_ZPred1 lst zp) (rename_vars_CAction1 lst a))
 rename_vars_CGActions1 lst (CircThenElse cga1 cga2)
  = (CircThenElse (rename_vars_CGActions1 lst cga1) (rename_vars_CGActions1 lst cga2))
-rename_vars_CGActions1 lst (CircElse pa)
- = (CircElse pa)
+-- rename_vars_CGActions1 lst (CircElse pa)
+-- = (CircElse pa)
 \end{code}
 
 \begin{code}
@@ -944,7 +947,7 @@ get_proc_name x ((a,(va,x1),b):vst)
 \end{code}
 \begin{code}
 rename_ZGenFilt1 lst (Include s) = (Include s)
-rename_ZGenFilt1 lst (Choose (va,x) e) = (Choose ((join_name (join_name "st_var" (get_proc_name va lst)) va),x) (rename_vars_ZExpr1 lst e))
+rename_ZGenFilt1 lst (Choose (va,x) e) = (Choose ((join_name (join_name "sv" (get_proc_name va lst)) va),x) (rename_vars_ZExpr1 lst e))
 rename_ZGenFilt1 lst (Check p) = (Check (rename_vars_ZPred1 lst p))
 rename_ZGenFilt1 lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 lst e1) (rename_vars_ZExpr1 lst e2))
 \end{code}
@@ -952,14 +955,18 @@ rename_ZGenFilt1 lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 lst e1
 rename_vars_ZVar1 :: [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
 rename_vars_ZVar1 lst (va,x)
  = case (inListVar1 va lst) of
-  True -> ((join_name (join_name "st_var" (get_proc_name va lst)) va),x)
+  True -> ((join_name (join_name "sv" (get_proc_name va lst)) va),x)
   _ -> (va,x)
 \end{code}
 \begin{code}
 rename_vars_ZExpr1 :: [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
 rename_vars_ZExpr1 lst (ZVar (va,x))
  = case (inListVar1 va lst) of
-  True -> (ZVar ((join_name (join_name "st_var" (get_proc_name va lst)) va),x))
+  True -> (ZVar 
+            ((join_name 
+              (join_name "sv" 
+                        (get_proc_name va lst)) 
+              va),x))
   _ -> (ZVar (va,x))
 rename_vars_ZExpr1 lst (ZInt zi)
  = (ZInt zi)
@@ -1201,6 +1208,7 @@ def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])
 \end{code}
 
 \begin{code}
+filter_types_universe [] = []
 filter_types_universe [(a,b,c,d)] = [(b,b,c,d)]
 filter_types_universe ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe xs))
 \end{code}
@@ -1213,9 +1221,9 @@ Pieces from MappingFunStatelessCircus file
 
 def_delta_mapping :: [(ZName, ZVar, ZExpr)] -> [ZExpr]
 def_delta_mapping [(n,(v,[]),t)] 
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "st_var" n) v),[]),t])]
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "sv" n) v),[]),t])]
 def_delta_mapping ((n,(v,[]),t):xs) 
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "st_var" n) v),[]),t])] 
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "sv" n) v),[]),t])] 
     ++ (def_delta_mapping xs)
 def_delta_mapping [] = []
 \end{code}
@@ -1223,9 +1231,9 @@ def_delta_mapping [] = []
 \begin{code}
 def_delta_name :: [(ZName, ZVar, ZExpr)] -> [ZBranch]
 def_delta_name [(n,(v,[]),t)] 
-  = [ZBranch0 ((join_name (join_name "st_var" n) v),[])]
+  = [ZBranch0 ((join_name (join_name "sv" n) v),[])]
 def_delta_name ((n,(v,[]),t):xs) 
-  = [ZBranch0 ((join_name (join_name "st_var" n) v),[])] 
+  = [ZBranch0 ((join_name (join_name "sv" n) v),[])] 
     ++ (def_delta_name xs)
 def_delta_name [] = []
 

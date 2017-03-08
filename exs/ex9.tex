@@ -8,6 +8,7 @@
 \usepackage{circus}
 
 \begin{document}
+
 \begin{schema}{SysClockS}
  time : \nat
 \end{schema}
@@ -16,10 +17,16 @@
 \circchannel tick\\
   \circprocess\ ~SysClock ~\circdef~\circbegin
   \circstate SysClockSt \defs SysClockS\\
-  ResetClock ~\circdef~
-  \\\t2  Clock\\
+  ResetClock ~\circdef~ (time := 0) \circseq Clock\\
   Clock ~\circdef~
-  \\\t2  \circmu~X \circspot  (((tick \then \Skip) \interleave (getCurrentTime!time \then \Skip))\circseq X)
+  \\\t2  \circmu~X \circspot 
+    (
+      (
+        (tick \then (time := time+1)) 
+        \interleave 
+        (getCurrentTime!time \then \Skip)
+        )
+      \circseq X)
   Wait~\circdef~ \circvar n : \nat \circspot
    \circif n> 0 \circthen (tick \then Wait (n-1))
    \circelse n~=~0 \circthen \Skip

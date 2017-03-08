@@ -2064,11 +2064,13 @@ circus_command_if
 -- 				| Pred \circthen Action \circelse CGActions
 circus_guarded_commands :: EParser ZToken CGActions
 circus_guarded_commands
-	= do {tok L_CIRCELSE;
-			optnls;
-	  		cgc <- par_action;
-	  		return (CircElse cgc)}
-	  +++ do {gcs <- circus_guarded_command;
+	= 
+    --  do {tok L_CIRCELSE;
+	  --      optnls;
+	  -- 		  cgc <- par_action;
+	  -- 		  return (CircElse cgc)}
+	  -- +++ 
+    do {gcs <- circus_guarded_command;
 			optnls;
 			tok L_CIRCELSE;
 			optnls;

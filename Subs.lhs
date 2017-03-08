@@ -404,7 +404,7 @@ sub_CCommand subs (CVResDecl vZGenFilt_lst vCAction)
 sub_CGActions :: SubstitutionInfo -> CGActions  -> CGActions
 sub_CGActions subs (CircGAction vZPred vCAction) = (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction))
 sub_CGActions subs (CircThenElse v1CGActions v2CGActions) = (CircThenElse (sub_CGActions subs v1CGActions) (sub_CGActions subs v2CGActions))
-sub_CGActions subs (CircElse vParAction) = (CircElse vParAction)
+-- sub_CGActions subs (CircElse vParAction) = (CircElse vParAction)
 \end{code}
 \begin{code}
 sub_CReplace :: SubstitutionInfo -> CReplace -> CReplace
@@ -725,10 +725,10 @@ free_var_if (CircGAction p a)
  = (free_var_ZPred p)++(free_var_CAction a)
 free_var_if (CircThenElse ga gb)
  = (free_var_if ga)++(free_var_if gb)
-free_var_if (CircElse (CircusAction a))
- = (free_var_CAction a)
-free_var_if (CircElse (ParamActionDecl x (CircusAction a)))
- =  free_var_ZGenFilt x free_var_CAction a
+-- free_var_if (CircElse (CircusAction a))
+--  = (free_var_CAction a)
+-- free_var_if (CircElse (ParamActionDecl x (CircusAction a)))
+--  =  free_var_ZGenFilt x free_var_CAction a
 \end{code}
 \subsection{Fresh Variables generator }
 \begin{code}

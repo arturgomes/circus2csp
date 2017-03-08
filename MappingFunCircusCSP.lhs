@@ -105,15 +105,19 @@ Definition of Free Types
 \begin{code}
 -- ZFreeTypeDef ("MYTYPE",[]) [ZBranch0 ("A",[]),ZBranch1 ("B",[]) (ZCross [ZVar ("\\nat",[]),ZVar ("\\nat",[])])]
 mapping_ZBranch_list :: [ZPara] -> [ZBranch] -> String
+mapping_ZBranch_list spec [] = ""
 mapping_ZBranch_list spec [x]
   = (mapping_ZBranch spec x)
 mapping_ZBranch_list spec (x:xs)
   = (mapping_ZBranch spec x) ++ " | " ++ (mapping_ZBranch_list spec xs)
+\end{code}
+\begin{code}
 mapping_ZBranch spec (ZBranch0 (a,b))
   = a
 mapping_ZBranch spec (ZBranch1 (a,xb) (ZCross b))
   = a ++ "." ++ (mapping_ZBranch_cross spec b)
-
+\end{code}
+\begin{code}
 mapping_ZBranch_cross :: [ZPara] -> [ZExpr] -> String
 mapping_ZBranch_cross spec [ZVar (a,b)]
   = a
@@ -691,7 +695,7 @@ mapping_CCommand spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVa
     ++"\n\t\twithin"
     ++"\n\t\t|~| b:BINDINGS @ Memorise("++(mapping_CAction spec ca)++", restrict(b))\n"
 mapping_CCommand spec (CValDecl (x:xs) ca)
-   = undefined
+   = ""
 -- mapping_CCommand spec (CVResDecl (x:xs) ca)
 --   = undefined
 mapping_CCommand spec x
@@ -831,7 +835,7 @@ get_channel_name :: [ZPara] -> Comm -> ZName
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
   = "mget."++x++"?"++v1++":(type("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mset."++x++".type("++x++")"++(get_channel_name_cont spec xs)
+  = "mset."++x++".((tag("++x++"))"++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -839,25 +843,16 @@ get_channel_name spec (ChanGenComm _ _ _)
 \end{code}
 \begin{code}
 get_channel_name_cont spec [] = ""
-get_channel_name_cont spec [(ChanOutExp (ZVar v))] 
-  = ".value("++(mapping_ZExpr (get_delta_names spec) (ZVar v))++")"
 get_channel_name_cont spec [(ChanOutExp v)] 
-  = "."++(mapping_ZExpr (get_delta_names spec) v)++""
-get_channel_name_cont spec [(ChanDotExp (ZVar v))] 
-  = ".value("++(mapping_ZExpr (get_delta_names spec) (ZVar v))++")"
+  = get_channel_name_cont spec [(ChanDotExp v)]
 get_channel_name_cont spec [(ChanDotExp v)] 
-  = ".("++(mapping_ZExpr (get_delta_names spec) v)++")"
-  -- = "."++(showexpr v)
+  = "."++(mapping_ZExpr (get_delta_names spec) v)
 get_channel_name_cont spec [(ChanInp v)] 
   = "?"++v
 get_channel_name_cont spec [(ChanInpPred v x)] 
   = "?"++v++":"++(mapping_predicate (get_delta_names spec) x)
-get_channel_name_cont spec ((ChanOutExp (ZVar v)) : xs) 
-  = "."++(mapping_ZExpr (get_delta_names spec) (ZVar v))++""++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanOutExp v) : xs) 
-  = "."++(mapping_ZExpr (get_delta_names spec) v)++(get_channel_name_cont spec xs)
-get_channel_name_cont spec ((ChanDotExp (ZVar v)) : xs) 
-  = "."++(mapping_ZExpr (get_delta_names spec) (ZVar v))++""++(get_channel_name_cont spec xs)
+  = get_channel_name_cont spec ((ChanDotExp v) : xs) 
 get_channel_name_cont spec ((ChanDotExp v) : xs) 
   = "."++(mapping_ZExpr (get_delta_names spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs) 
@@ -891,7 +886,7 @@ get_chan_list _ = []
 \begin{code}
 mapping_ZTuple [ZVar ("\\nat",_)] = "NatValue"
 mapping_ZTuple [ZVar ("\\nat_1",_)] = "NatValue"
-mapping_ZTuple [ZVar (v,_)] = v
+mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
 mapping_ZTuple ((ZVar (v,_)):xs) = (v) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
@@ -917,17 +912,22 @@ mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
 \end{code}
 
 \subsection{Mapping Function for Expressions}
+% ChanOutExp (ZCall (ZVar ("+",[])) (ZTuple [ZVar ("v_st_var_SysClock_time",[]),ZInt 1]))
 \begin{code}
 mapping_ZExpr :: [ZName] ->  ZExpr -> String
--- (mapping_ZExpr lst {x1 : a1; . . . ; xn : an | b • E(x1, ..., xn)}) = b
--- {mapping_CAction(E(x1, ..., xn))|mapping_CAction(xi) mapping_CAction(ai),mapping_CAction spec (b)}
+
+mapping_ZExpr lst (ZVar ("\\emptyset",[])) = "{}"
+mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
+-- mapping_ZExpr lst (ZVar (a,_)) = a
+mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
+mapping_ZExpr lst (ZVar (a,_)) 
+  = case (inListVar a lst) of
+      False -> "value(v_"++a++")"
+      _ -> "value("++a++")"
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"
-mapping_ZExpr lst (ZCall (ZVar ("*",[])) (ZTuple [ZInt m,ZInt n])) = show ((fromIntegral m)*(fromIntegral n))
 mapping_ZExpr lst (ZCall (ZVar ("*",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("+",[])) (ZTuple [ZInt m,ZInt n])) = show ((fromIntegral m)+(fromIntegral n))
 mapping_ZExpr lst (ZCall (ZVar ("+",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("-",[])) (ZTuple [ZInt m,ZInt n])) = show ((fromIntegral m)-(fromIntegral n))
 mapping_ZExpr lst (ZCall (ZVar ("-",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\035",[])) a) = "\035(" ++ mapping_ZExpr lst (a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\\035",[])) a) = "card("++(mapping_ZExpr lst a)++")"
@@ -937,10 +937,8 @@ mapping_ZExpr lst (ZCall (ZVar ("\\cap",[])) (ZTuple [a,b])) = "inter("++(mappin
 mapping_ZExpr lst (ZCall (ZVar ("\\cat",[])) (ZTuple [a,b])) = mapping_ZExpr lst (a)++"^"++mapping_ZExpr lst (b)
 mapping_ZExpr lst (ZCall (ZVar ("\\cup",[])) (ZTuple [a,b])) = "union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\dcat",[])) s) = "concat("++mapping_ZExpr lst (s)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\div",[])) (ZTuple [ZInt m,ZInt n])) = show ((fromIntegral m)/(fromIntegral n))
 mapping_ZExpr lst (ZCall (ZVar ("\\div",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " / " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\dom",[])) a) = "dom("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\mod",[])) (ZTuple [ZInt m,ZInt n])) = show ((fromIntegral m) `mod` (fromIntegral n))
 mapping_ZExpr lst (ZCall (ZVar ("\\mod",[])) (ZTuple [m,n])) = mapping_ZExpr lst (n) ++ " % " ++ mapping_ZExpr lst (m)
 mapping_ZExpr lst (ZCall (ZVar ("\\negate",[])) n) = "- " ++ mapping_ZExpr lst (n)
 mapping_ZExpr lst (ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar (b,[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (n,[]),ZVar (x,[])])]])) = "over("++b++","++n++","++x++")"
@@ -951,8 +949,8 @@ mapping_ZExpr lst (ZCall (ZVar ("\\setminus",[])) (ZTuple [a,b])) = "diff("++(ma
 mapping_ZExpr lst (ZCall (ZVar ("head",[])) s) = "head("++mapping_ZExpr lst (s)++")"
 mapping_ZExpr lst (ZCall (ZVar ("tail",[])) s) = "tail("++mapping_ZExpr lst (s)++")"
 mapping_ZExpr lst (ZCall (ZVar (b,[])) (ZVar (n,[]))) = "apply("++b++","++n++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\upto",[])) (ZTuple [ZInt m,ZInt n])) = "{"++show(fromIntegral m)++".."++show(fromIntegral n)++"}"
-mapping_ZExpr lst (ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])) = "{"++(show a)++".."++(show b)++"}"
+mapping_ZExpr lst (ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])) 
+  = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZELet _ _) = ""
 mapping_ZExpr lst (ZESchema _) = ""
@@ -967,7 +965,6 @@ mapping_ZExpr lst (ZGenerator _ _) = ""
 mapping_ZExpr lst (ZGiven _) = ""
 mapping_ZExpr lst (ZGivenSet _) = ""
 mapping_ZExpr lst (ZIf_Then_Else _ _ _) = ""
-mapping_ZExpr lst (ZInt n) = show n
 mapping_ZExpr lst (ZIntSet _ _) = ""
 mapping_ZExpr lst (ZLambda _ _) = ""
 mapping_ZExpr lst (ZMu _ _) = ""
@@ -983,13 +980,6 @@ mapping_ZExpr lst (ZStrange _) = ""
 mapping_ZExpr lst (ZTheta _) = ""
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZUniverse) = ""
-mapping_ZExpr lst (ZVar ("\\emptyset",[])) = "{}"
-mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
--- mapping_ZExpr lst (ZVar (a,_)) = a
-mapping_ZExpr lst (ZVar (a,_)) 
-  = case (inListVar a lst) of
-      True -> "value(v_"++a++")"
-      _ -> a
 mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 
 \end{code}
