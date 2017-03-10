@@ -1884,7 +1884,7 @@ applyCActionsIf r (CircGAction zp ca)
 applyCActionsIf r (CircThenElse ga gb)
  = ((CircThenElse ga' gb'),prova++provb)
   where (ga',prova) = (applyCActionsIf r ga)
-        (gb',provb) = (applyCActionsIf r ga)
+        (gb',provb) = (applyCActionsIf r gb)
 
 
 ---

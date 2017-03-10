@@ -402,8 +402,10 @@ sub_CCommand subs (CVResDecl vZGenFilt_lst vCAction)
 \end{code}
 \begin{code}
 sub_CGActions :: SubstitutionInfo -> CGActions  -> CGActions
-sub_CGActions subs (CircGAction vZPred vCAction) = (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction))
-sub_CGActions subs (CircThenElse v1CGActions v2CGActions) = (CircThenElse (sub_CGActions subs v1CGActions) (sub_CGActions subs v2CGActions))
+sub_CGActions subs (CircGAction vZPred vCAction) 
+  = (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction))
+sub_CGActions subs (CircThenElse (CircGAction vZPred vCAction) v2CGActions) 
+  = (CircThenElse (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction)) (sub_CGActions subs v2CGActions))
 -- sub_CGActions subs (CircElse vParAction) = (CircElse vParAction)
 \end{code}
 \begin{code}
@@ -723,8 +725,8 @@ free_var_comnd (CVResDecl lst c)
 \begin{code}
 free_var_if (CircGAction p a)
  = (free_var_ZPred p)++(free_var_CAction a)
-free_var_if (CircThenElse ga gb)
- = (free_var_if ga)++(free_var_if gb)
+free_var_if (CircThenElse (CircGAction p a) gb)
+ = (free_var_ZPred p)++(free_var_CAction a)++(free_var_if gb)
 -- free_var_if (CircElse (CircusAction a))
 --  = (free_var_CAction a)
 -- free_var_if (CircElse (ParamActionDecl x (CircusAction a)))

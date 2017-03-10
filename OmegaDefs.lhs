@@ -50,8 +50,8 @@ The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list o
 get_guard_pair :: CGActions -> [(ZPred, CAction)]
 get_guard_pair (CircGAction g2 a2)
   = [(g2,a2)]
-get_guard_pair (CircThenElse gly glx)
-  = (get_guard_pair gly)++(get_guard_pair glx)
+get_guard_pair (CircThenElse (CircGAction g2 a2) glx)
+  = ((g2,a2):(get_guard_pair glx))
 \end{code}
 The function $rename\_guard\_pair$ will rename the guards to $v_$ prefix of free variables.
 
@@ -477,8 +477,8 @@ rename_vars_CCommand (CVResDecl zgf a)
 \begin{code}
 rename_vars_CGActions (CircGAction zp a)
  = (CircGAction (rename_ZPred zp) (rename_vars_CAction a))
-rename_vars_CGActions (CircThenElse cga1 cga2)
- = (CircThenElse (rename_vars_CGActions cga1) (rename_vars_CGActions cga2))
+rename_vars_CGActions (CircThenElse (CircGAction zp a) cga2)
+ = (CircThenElse (CircGAction (rename_ZPred zp) (rename_vars_CAction a)) (rename_vars_CGActions cga2))
 -- rename_vars_CGActions (CircElse pa) = (CircElse pa)
 \end{code}
 
@@ -607,8 +607,8 @@ expand_action_names_CAction_comnd lst (CVResDecl z a)
 \begin{code}
 get_if lst (CircGAction p a)
  = (CircGAction p (expand_action_names_CAction lst a))
-get_if lst (CircThenElse ga gb)
- = (CircThenElse (get_if lst ga) (get_if lst gb))
+get_if lst (CircThenElse (CircGAction p a) gb)
+ = (CircThenElse (CircGAction p (expand_action_names_CAction lst a)) (get_if lst gb))
 -- get_if lst (CircElse (CircusAction a))
 --  = (CircElse (CircusAction (expand_action_names_CAction lst a)))
 -- get_if lst (CircElse (ParamActionDecl x (CircusAction a)))
@@ -906,8 +906,8 @@ rename_vars_CCommand1 lst (CVResDecl zgf a)
 rename_vars_CGActions1 :: [(ZName, ZVar, ZExpr)] -> CGActions -> CGActions
 rename_vars_CGActions1 lst (CircGAction zp a)
  = (CircGAction (rename_vars_ZPred1 lst zp) (rename_vars_CAction1 lst a))
-rename_vars_CGActions1 lst (CircThenElse cga1 cga2)
- = (CircThenElse (rename_vars_CGActions1 lst cga1) (rename_vars_CGActions1 lst cga2))
+rename_vars_CGActions1 lst (CircThenElse (CircGAction zp a) cga2)
+ = (CircThenElse (CircGAction (rename_vars_ZPred1 lst zp) (rename_vars_CAction1 lst a)) (rename_vars_CGActions1 lst cga2))
 -- rename_vars_CGActions1 lst (CircElse pa)
 -- = (CircElse pa)
 \end{code}

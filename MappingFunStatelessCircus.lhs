@@ -110,9 +110,16 @@ omega_CProc spec (CRepSeqProc [(Choose x s)] a)
 omega_CProc spec (CSeq a b)
   = (CSeq (omega_CProc spec a) (omega_CProc spec b))
 omega_CProc spec (ProcStalessMain xls ca)
-  = (ProcStalessMain (concat (map omega_PPar xls)) (mk_main_action_bind nstate (omega_CAction ca)))
+  = (ProcStalessMain 
+    [] 
+    main_action)
     where 
-      nstate = (def_mem_st_Circus_aux spec spec)
+      expAct = map (expand_action_names_PPar xls) xls
+      nomegaAC = (expand_action_names_CAction expAct ca)
+      omegaAC = omega_CAction nomegaAC
+      refAC = isRefined' omegaAC (runRefinement omegaAC)
+      -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
+      main_action = refAC
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))
 omega_CProc spec (CParamProc zn (x:xs))
@@ -437,20 +444,20 @@ omega_CAction (CActionCommand (CValDecl xs a))
 omega_CAction (CActionCommand (CAssign varls valls))
   = make_get_com (remdups $ concat (map get_ZVar_st varls))  (make_set_com omega_CAction varls (map rename_ZExpr valls) CSPSkip)
 \end{code}
-% \begin{circus}
-% \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
-%    \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-%    \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
-%    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
-% \end{circus}
-% \begin{code}
-% omega_CAction (CActionCommand (CIf (CircGAction g a)))
-%   = make_get_com lsx (rename_vars_CAction (CActionCommand
-%              (CIf (CircGAction g (omega_prime_CAction a)))))
-%   where
-%    lsx = remdups $ concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
+\begin{circus}
+\Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
+   \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+   \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+   \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
+\end{circus}
+\begin{code}
+omega_CAction (CActionCommand (CIf (CircGAction g a)))
+  = make_get_com lsx (rename_vars_CAction (CActionCommand
+             (CIf (CircGAction g (omega_prime_CAction a)))))
+  where
+   lsx = remdups $ concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
 
-% \end{code}
+\end{code}
 
 \begin{circus}
 \Omega_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
@@ -480,11 +487,10 @@ omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
 
 \begin{code}
 omega_CAction (CActionCommand (CIf gax))
-  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction (rename_guard_pair lsx gpair))))
+  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction gpair)))
   where
    gpair = get_guard_pair gax
    lsx = concat (map get_ZVar_st (remdups (concat (map free_var_ZPred (map fst gpair)))))
-
 \end{code}
 
 \begin{circus}
@@ -562,7 +568,7 @@ In order to pattern match any other \Circus\ construct not mentioned here, we pr
 
 \begin{code}
 omega_CAction (CActionSchemaExpr vZSExpr) = (CActionSchemaExpr vZSExpr)
-omega_CAction (CActionCommand vCCommand) = (CActionCommand vCCommand)
+-- omega_CAction (CActionCommand vCCommand) = (CActionCommand vCCommand)
 omega_CAction (CActionName vZName) = (CActionName vZName)
 omega_CAction (CSPCommAction vComm vCAction) = (CSPCommAction vComm (omega_CAction vCAction))
 -- omega_CAction (CSPGuard vZPred vCAction) = (CSPGuard vZPred (omega_CAction vCAction))

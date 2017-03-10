@@ -47,7 +47,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
   = "\n--------------------------------"++
     "\n-- The universe of values"++
     "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
-    "\n NatValueMax = 2\nNatValue = {0..NatValueMax}"++
+    "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
     "\n"++(mk_value funivlst)++

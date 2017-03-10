@@ -5,7 +5,7 @@ include "function_aux.csp"
 --------------------------------
 -- The universe of values
  datatype UNIVERSE = Nat.NatValue
- NatValueMax = 2
+ NatValueMax = 4
 NatValue = {0..NatValueMax}
 
 --------------------------------
@@ -45,15 +45,18 @@ channel terminate
 MEM_I = {| mset,mget,terminate |}
 
 MakeTick = 
-	( let restrict(bs) = dres(bs,{sv_SysClock2_time})
-		within
-		|~| b:BINDINGS @ Memorise(tick -> SKIP, restrict(b))
-)
+	tick -> SKIP
 
 SysClock2 = 
 	( let restrict(bs) = dres(bs,{sv_SysClock2_time})
 		within
-		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; ( let X = ( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> (value(v_sv_SysClock2_time) > 2 & mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP [] value(v_sv_SysClock2_time) > 2 & mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP) ; X ) within X ) ), restrict(b))
+		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; ( let X = ( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> (value(v_sv_SysClock2_time) <= 3 & SKIP [] value(v_sv_SysClock2_time) <= 2 & ( tick -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).(1 + value(v_sv_SysClock2_time))) -> SKIP ||| getCurrentTime.value(v_sv_SysClock2_time) -> SKIP ) [] value(v_sv_SysClock2_time) > 2 & mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP) ; X ) within X ) ), restrict(b))
 )
 channel tick
 channel getCurrentTime : NatValue
+
+Clock = 
+  (SysClock2 \ {|mget,mset,terminate,getCurrentTime|}) 
+  -- [| {|tick|} |] MakeTick 
+
+assert Clock [FD= MakeTick

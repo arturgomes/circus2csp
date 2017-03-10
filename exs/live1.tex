@@ -15,8 +15,9 @@
   \\\t2  (time := 0) \circseq Clock\\
   Clock ~\circdef~ 
   \circmu~X \circspot 
-    ((\circif time > 2 \circthen ((time := 0) \circseq \Skip) 
-        \circelse time \leq 2 \circthen ((tick \then (time := time+1)) \interleave (getCurrentTime!time \then \Skip))
+    ((\circif time \leq 4 \circthen \Skip
+        \circelse time \leq 2 \circthen (tick \then (time := time+1) \interleave (getCurrentTime!time \then \Skip))
+        \circelse time > 2 \circthen ((time := 0) \circseq \Skip) 
         \circfi) \circseq X)
   Wait~\circdef~ \circvar n : \nat \circspot
    \circif n> 0 \circthen (tick \then Wait (n-1))
