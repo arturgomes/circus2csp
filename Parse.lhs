@@ -1305,15 +1305,23 @@ circus_process_rep_proc
 circus_proc_stateless_main :: EParser ZToken CProc
 circus_proc_stateless_main
 	= do {tok L_CIRCUSBEGIN;
-			optnls;
-			pp3 <- proc_par `sepby` many1 zsep;
-			optnls;
-			tok L_CIRCSPOT;
-			main2 <- circus_action;
-			optnls;
-			tok L_CIRCUSEND;
-			return (ProcStalessMain (concat pp3) main2)
-			}
+      optnls;
+      pp3 <- proc_par `sepby` many1 zsep;
+      optnls;
+      tok L_CIRCSPOT;
+      main2 <- circus_action;
+      optnls;
+      tok L_CIRCUSEND;
+      return (ProcStalessMain (concat pp3) main2)
+      }+++
+    do {tok L_CIRCUSBEGIN; 
+      optnls;
+      tok L_CIRCSPOT;
+      main2 <- circus_action;
+      optnls;
+      tok L_CIRCUSEND;
+      return (ProcStalessMain [] main2)
+      }
 
 -- \circbegin PPar*
 	-- \circstate SchemaExp PPar*

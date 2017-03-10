@@ -401,7 +401,7 @@ NOTE: $CActionSchemaExpr$, $CSPNSInter$, $CSPParAction$ is not yet implemented.
 \begin{code}
 mapping_CAction :: [ZPara] -> CAction -> ZName
 mapping_CAction spec (CActionCommand cc)
-  = mapping_CCommand spec cc
+  = "("++mapping_CCommand spec cc++")"
 mapping_CAction spec (CActionName zn)
   = zn
 --mapping_CAction spec (CActionSchemaExpr zse)
@@ -690,6 +690,7 @@ mapping_CCommand spec (CIf cga)
 --   = undefined
 -- mapping_CCommand spec (CResDecl (x:xs) ca)
 --   = undefined
+-- TODO 09/03/17 - restrict(bs) is getting all the state var from all processes but it needs to take into account only the current proc being used.
 mapping_CCommand spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
  = " let restrict(bs) = dres(bs,{"++(mapping_ZExpr_def (get_delta_names spec))++"})"
     ++"\n\t\twithin"
@@ -922,7 +923,7 @@ mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
 mapping_ZExpr lst (ZVar (a,_)) 
   = case (inListVar a lst) of
-      False -> "value(v_"++a++")"
+      True -> "value(v_"++a++")"
       _ -> "value("++a++")"
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"

@@ -154,7 +154,7 @@ main =
 	      "\\{x_2:8; x_1:7 | x_2=x_1 @ (x_2, x_1, 8, x)\\}"
     test_subs "(\\LET x==y; y==x @ (x,y,z))" subsx
 	      "(\\LET x==y; y==7 @ (x,y,z))"
-    test_subs "(\\LET x  ==y; y==x @ (x  ,y,z))" subsxyz
+    test_subs "(\\LET x==y; y==x @ (x  ,y,z))" subsxyz
 	      "(\\LET x_1==8; y==7 @ (x_1,y,x))"
 
     putStrLn "Testing uniquify functions..."

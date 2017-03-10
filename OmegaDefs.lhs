@@ -8,6 +8,7 @@ import Data.Char
 -- import Data.Text hiding (map,concat,all,take)
 import Subs
 import AST
+import Errors
 \end{code}
 }
 \begin{code}
@@ -15,14 +16,6 @@ join_name n v = n ++ "_" ++ v
 \end{code}
 
 
-The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list of tuples $(ZPred, CAction)$
-\begin{code}
-get_guard_pair :: CGActions -> [(ZPred, CAction)]
-get_guard_pair (CircThenElse (CircGAction g2 a2) (CircGAction g3 a3))
-  = [(g2,a2),(g3,a3)]
-get_guard_pair (CircThenElse (CircGAction g1 a1) glx)
-  = [(g1,a1)]++(get_guard_pair glx)
-\end{code}
 
 
 Auxiliary function to propagate $get$ communication through the variables and local variables of an action.
@@ -51,13 +44,36 @@ make_set_com f ((x,_):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
      [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
+
+The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list of tuples $(ZPred, CAction)$
+\begin{code}
+get_guard_pair :: CGActions -> [(ZPred, CAction)]
+get_guard_pair (CircGAction g2 a2)
+  = [(g2,a2)]
+get_guard_pair (CircThenElse gly glx)
+  = (get_guard_pair gly)++(get_guard_pair glx)
+\end{code}
+The function $rename\_guard\_pair$ will rename the guards to $v_$ prefix of free variables.
+
+\begin{code}
+rename_guard_pair :: [ZName] -> [(ZPred, CAction)] -> [(ZPred, CAction)]
+rename_guard_pair sub [(a,b)] 
+  = [((substitute (mk_sub_list sub) (free_vars a) a),b)]
+rename_guard_pair sub ((a,b):xs) = [((substitute (mk_sub_list sub) (free_vars a) a),b)]++(rename_guard_pair sub xs)
+\end{code}
+
 The function $mk\_guard\_pair$ transforms a list of tuples $(ZPred, CAction)$ and produces $CircThenElse$ pieces according to the size of the list.
 \begin{code}
 mk_guard_pair :: (CAction -> CAction) -> [(ZPred, CAction)] -> CGActions
 mk_guard_pair f [(g,a)] = (CircGAction g (f a))
 mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair f ls))
 \end{code}
-
+The function $mk\_sub\_list$ will make a list of substitution variables to $v_$ prefix.
+\begin{code}
+mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
+mk_sub_list [x] = [((x,[]),(ZVar ("v_"++x,[])))]
+mk_sub_list (x:xs) = [((x,[]),(ZVar ("v_"++x,[])))]++(mk_sub_list xs)
+\end{code}
 \subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
 \begin{code}

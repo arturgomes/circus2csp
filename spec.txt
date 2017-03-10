@@ -16,12 +16,10 @@ value(Nat.v) = v
 
 type(x) =
 	 if x == sv_SysClock2_time then U_NAT
-	 else if x == sv_SysClock1_time then U_NAT
 	 else {}
 
 tag(x) =
 	 if x == sv_SysClock2_time then Nat
-	 else if x == sv_SysClock1_time then Nat
 	 else Nat
 
 
@@ -36,7 +34,7 @@ Memory(b) =
 Memorise(P, b) = 
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
 
-datatype NAME = sv_SysClock2_time | sv_SysClock1_time
+datatype NAME = sv_SysClock2_time
 --------------------------------
 -- All possible bidings
 NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
@@ -46,16 +44,16 @@ channel mget, mset : NAME.UNIVERSE
 channel terminate
 MEM_I = {| mset,mget,terminate |}
 
+MakeTick = 
+	( let restrict(bs) = dres(bs,{sv_SysClock2_time})
+		within
+		|~| b:BINDINGS @ Memorise(tick -> SKIP, restrict(b))
+)
+
 SysClock2 = 
-	 let restrict(bs) = dres(bs,{sv_SysClock2_time,sv_SysClock1_time})
+	( let restrict(bs) = dres(bs,{sv_SysClock2_time})
 		within
-		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; ( let X = ( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> ( ( value(v_v_sv_SysClock2_time) > 2 & ( mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; X ) ) [] ( tick -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).(1 + value(sv_SysClock2_time))) -> SKIP ||| getCurrentTime.value(v_v_sv_SysClock2_time) -> SKIP )) ; X ) within X ) ), restrict(b))
-
-
-SysClock1 = 
-	 let restrict(bs) = dres(bs,{sv_SysClock2_time,sv_SysClock1_time})
-		within
-		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; ( let X = ( ( tick -> mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).(1 + value(v_v_sv_SysClock2_time))) -> SKIP ||| mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> getCurrentTime.value(v_v_sv_SysClock2_time) -> SKIP ) ; X ) within X ) ), restrict(b))
-
+		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; ( let X = ( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> (value(v_sv_SysClock2_time) > 2 & mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP [] value(v_sv_SysClock2_time) > 2 & mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP) ; X ) within X ) ), restrict(b))
+)
 channel tick
 channel getCurrentTime : NatValue
