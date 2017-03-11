@@ -867,6 +867,16 @@ crl_prefixSkip e@(CSPCommAction c a)
     where
       ref = (CSPSeq (CSPCommAction c CSPSkip) a)
 crl_prefixSkip _ = None
+crl_prefixSkip_backwards :: CAction -> Refinement CAction
+crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
+  = Done{orig = Just e, refined = Just ref, proviso=[]}
+    where
+      ref = (CSPCommAction (ChanComm c [ChanDotExp x]) a)
+crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction c CSPSkip) a)
+  = Done{orig = Just e, refined = Just ref, proviso=[]}
+    where
+      ref = (CSPCommAction c a)
+crl_prefixSkip_backwards _ = None
 \end{code}
 \begin{lawn}[Prefix/Parallelism composition---distribution]\sl
     \begin{circus}
@@ -1606,6 +1616,7 @@ reflawsCAction
             crl_prefixHiding,
             crl_prefixParDist,
             -- crl_prefixSkip, -- This one is going into an infinite loop with crl_seqSkipUnit_a
+            crl_prefixSkip_backwards, -- this one fixes the probl above
             crl_recUnfold,
             crl_seqChaosZero,
             crl_seqSkipUnit_a,

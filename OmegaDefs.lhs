@@ -276,6 +276,7 @@ get_ZVar_st x
 \end{code}
 \begin{code}
 is_ZVar_st a = isPrefixOf "sv" a
+is_ZVar_v_st a = isPrefixOf "v_sv" a
 \end{code}
 
 
@@ -619,7 +620,7 @@ get_if lst (CircThenElse (CircGAction p a) gb)
 get_action _ [] = error "Action list is empty"
 get_action name [(CParAction n (CircusAction a))]
   | name == n = a
-  | otherwise = error "Action not found"
+  | otherwise = error ("Action "++(name)++" not found")
 get_action name ((CParAction n (CircusAction a)):xs)
   | (name == n) = a
   | otherwise = get_action name xs
@@ -1215,12 +1216,16 @@ def_universe []
 \end{code}
 
 \begin{code}
-def_universe_aux []
-  = []
+def_universe_aux :: [ZExpr] -> [(String, [Char], [Char], [Char])]
+def_universe_aux [] = []
 def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "Nat", "NatValue")]
-def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])] = [(b,(def_U_NAME c), (def_U_prefix c), c)]
+def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])]= [(b,(def_U_NAME c), (def_U_prefix c), c)]
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "Nat", "NatValue"):(def_universe_aux xs))
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
+def_universe_aux [(ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))]))]
+  = [(b,(def_U_NAME ("POWER_"++c)), (def_U_prefix ("POWER_"++c)), ("Set("++c++")"))]
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))])):xs)
+  = ((b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")")):(def_universe_aux xs))
 \end{code}
 
 \begin{code}
@@ -1273,23 +1278,33 @@ def_mem_st_Circus_aux spec [x]
 def_mem_st_Circus_aux spec (x:xs)
   = (def_mem_st_CircParagraphs spec x)++(def_mem_st_Circus_aux spec xs)
 \end{code}
+
 \begin{code}
-rename_z_schema_state spec (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] [])) proclst ma)))
-  = case newspec of
-      [] -> (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] [])) proclst ma)))
-      [xs] -> (CProcess p (ProcDef (ProcMain xs proclst ma)))
+rename_z_schema_state spec (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) schlst) proclst ma)))
+  = (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSchema xs)) proclst ma)))
     where
-      newspec = retrieve_z_schema_state nn spec
-rename_z_schema_state spec x
-  = x
+      xs = retrive_schemas spec schlst
+rename_z_schema_state spec x = x
+\end{code}
 
+\begin{code}
+retrive_schemas spec (ZSRef (ZSPlain nn) [] [])
+  = case res of
+      Just e' -> e'
+      Nothing -> error "Schema definition not found!"
+    where 
+      res = (retrieve_z_schema_state nn spec)
+retrive_schemas spec (ZS2 ZSAnd a b)
+  = (retrive_schemas spec a)++(retrive_schemas spec b)
+\end{code}
 
+\begin{code}
 retrieve_z_schema_state n [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
-  | n == nn = [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
-  | otherwise = []
-retrieve_z_schema_state n [_] = []
+  | n == nn = Just lstx
+  | otherwise = Nothing
+retrieve_z_schema_state n [_] = Nothing
 retrieve_z_schema_state n ((ZSchemaDef (ZSPlain nn) (ZSchema lstx)):xs)
-  | n == nn = [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
+  | n == nn = Just lstx
   | otherwise = retrieve_z_schema_state n xs
 retrieve_z_schema_state n (_:xs) = retrieve_z_schema_state n xs
 \end{code}
@@ -1323,26 +1338,24 @@ def_mem_st_ProcessDef spec name (ProcDef cp)
 
 \begin{code}
 def_mem_st_CProc :: [ZPara] -> ZName -> CProc -> [(ZName, ZVar, ZExpr)]
-def_mem_st_CProc spec name (ProcMain zp (x:xs) ca)
-  = (get_state_var spec name zp) -- ++(get_local_var ca)
+def_mem_st_CProc spec name (ProcMain (ZSchemaDef n xls) (x:xs) ca)
+  = (get_state_var spec name xls)
 def_mem_st_CProc spec name x
   = []
 \end{code}
 
 
 \begin{code}  
-get_state_var :: [ZPara] -> ZName -> ZPara -> [(ZName, ZVar, ZExpr)]
-get_state_var spec name (ZSchemaDef (ZSPlain n) (ZSRef (ZSPlain nn) [] []))
+get_state_var :: [ZPara] -> ZName -> ZSExpr -> [(ZName, ZVar, ZExpr)]
+get_state_var spec name (ZSRef (ZSPlain nn) [] [])
   = case statev of
-      [e'] -> (get_state_var spec name e')
-      [] -> []
+      Just s -> concat (map (get_state_var_aux name) s)
+      Nothing -> []
     where
-      statev = retrieve_z_schema_state n spec
+      statev = retrieve_z_schema_state nn spec
 
-get_state_var spec name (ZSchemaDef n (ZSchema (x:xs)))
-  = (get_state_var_aux name x)
-    ++
-    (get_state_var spec name (ZSchemaDef n (ZSchema xs)))
+get_state_var spec name (ZSchema s)
+  = concat (map (get_state_var_aux name) s)
 get_state_var _ _ _ = []
 
 \end{code}
@@ -1364,6 +1377,8 @@ mk_inv [(a,b,ZVar c)]
   = (ZMember (ZVar b) (ZVar c))
 mk_inv ((a,b,ZVar c):xs) 
   = (ZAnd (mk_inv xs) (ZMember (ZVar b) (ZVar c)) ) 
+mk_inv (_:xs) 
+  = mk_inv xs
 
 \end{code}
 

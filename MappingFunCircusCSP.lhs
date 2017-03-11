@@ -47,7 +47,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
   = "\n--------------------------------"++
     "\n-- The universe of values"++
     "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
-    "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
+    -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
     "\n"++(mk_value funivlst)++
@@ -67,11 +67,16 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
   where
     univlst = (def_universe spec)
     funivlst = nub (filter_types_universe univlst)
+-- ZAbbreviation ("TIME",[]) (ZSetComp [Choose ("h",[]) (ZVar ("\\nat",[])),Choose ("m",[]) (ZVar ("\\nat",[]))] (Just (ZTuple [ZVar ("h",[]),ZVar ("m",[])])))
+
 mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
   = "\n--------------------------------"++
     "\n-- All possible bidings"++
     "\nNAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})"++ 
     "\nBINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}\n"
+
+mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetComp xl (Just (ZTuple ztp))))
+  = "\n"++ n ++ " = (" ++ mapping_ZTuple ztp ++ ")"
 
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
   = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list spec zbs) 
@@ -342,8 +347,8 @@ mapping_CProc spec (ProcStalessMain pps ca)
     ++ "within " ++ (mapping_CAction spec ca)
 -- (mapping_CProc spec CGenProc zn (x:xs))
 --   = undefined
-mapping_CProc spec (CParamProc zn (x:xs))
-   = zn ++ "(" ++ (mapping_ZTuple (x:xs)) ++ ")"
+mapping_CProc spec (CParamProc zn xl)
+   = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
 -- (mapping_CProc spec CSimpIndexProc zn (x:xs))
 --   = undefined
 -- (mapping_CProc spec ProcMain zp (x:xs) ca)
@@ -734,9 +739,9 @@ mapping_CParameter spec (ChanInp zn)
 mapping_CParameter spec (ChanInpPred zn zp)
  = zn ++ (mapping_predicate (get_delta_names spec) zp)
 mapping_CParameter spec (ChanOutExp ze)
-  = mapping_ZExpr (get_delta_names spec) ze
+  = mapping_CParameter spec (ChanDotExp ze)
 mapping_CParameter spec (ChanDotExp ze)
-  = mapping_ZExpr (get_delta_names spec) ze
+  = "."++(mapping_ZExpr (get_delta_names spec) ze)
 \end{code}
 
 \subsection{Mapping Circus Namesets}
@@ -887,7 +892,8 @@ get_chan_list _ = []
 \begin{code}
 mapping_ZTuple [ZVar ("\\nat",_)] = "NatValue"
 mapping_ZTuple [ZVar ("\\nat_1",_)] = "NatValue"
-mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
+-- mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
+mapping_ZTuple [ZVar (v,_)] = v
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
 mapping_ZTuple ((ZVar (v,_)):xs) = (v) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
@@ -922,14 +928,14 @@ mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
 mapping_ZExpr lst (ZVar (a,_)) 
-  = case (inListVar a lst) of
-      True -> "value(v_"++a++")"
-      _ -> "value("++a++")"
+  | (inListVar a lst) = "value(v_"++a++")"
+  | (is_ZVar_v_st a) = "value("++a++")"
+  | otherwise = a
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"
-mapping_ZExpr lst (ZCall (ZVar ("*",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("+",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("-",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
+mapping_ZExpr lst (ZCall (ZVar ("*",[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
+mapping_ZExpr lst (ZCall (ZVar ("+",[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
+mapping_ZExpr lst (ZCall (ZVar ("-",[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\035",[])) a) = "\035(" ++ mapping_ZExpr lst (a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\\035",[])) a) = "card("++(mapping_ZExpr lst a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\bigcap",[])) (ZTuple [a,b])) = "Inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
@@ -938,9 +944,9 @@ mapping_ZExpr lst (ZCall (ZVar ("\\cap",[])) (ZTuple [a,b])) = "inter("++(mappin
 mapping_ZExpr lst (ZCall (ZVar ("\\cat",[])) (ZTuple [a,b])) = mapping_ZExpr lst (a)++"^"++mapping_ZExpr lst (b)
 mapping_ZExpr lst (ZCall (ZVar ("\\cup",[])) (ZTuple [a,b])) = "union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\dcat",[])) s) = "concat("++mapping_ZExpr lst (s)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\div",[])) (ZTuple [m,n])) = "("++mapping_ZExpr lst (n) ++ " / " ++ mapping_ZExpr lst (m)++")"
+mapping_ZExpr lst (ZCall (ZVar ("\\div",[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " / " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\dom",[])) a) = "dom("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\mod",[])) (ZTuple [m,n])) = mapping_ZExpr lst (n) ++ " % " ++ mapping_ZExpr lst (m)
+mapping_ZExpr lst (ZCall (ZVar ("\\mod",[])) (ZTuple [n,m])) = mapping_ZExpr lst (n) ++ " % " ++ mapping_ZExpr lst (m)
 mapping_ZExpr lst (ZCall (ZVar ("\\negate",[])) n) = "- " ++ mapping_ZExpr lst (n)
 mapping_ZExpr lst (ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar (b,[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (n,[]),ZVar (x,[])])]])) = "over("++b++","++n++","++x++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\power",[])) a) ="Set("++(mapping_ZExpr lst a)++")"

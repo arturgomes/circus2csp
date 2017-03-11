@@ -12,7 +12,8 @@ maxbuff == 3 \\
 maxring == maxbuff - 1 \\
 Value == 0 \upto 2 \\
 CellId == 1 \upto 10 \\
-Direction ::=  req | ack
+Direction ::=  req | ack\\
+NatValue == 0 \upto maxbuff\\
 \also \circchannel\ input, output : Value \\
 \circchannel\ write, read, rdi, wrti: CellId \cross Direction \cross Value \\
 \circchannel\ rrd, wrt: Direction \cross Value \\
@@ -22,7 +23,7 @@ Direction ::=  req | ack
 \circbegin
 \t1 \circstate\ CellState \defs [v:Value]
 \t1 InitCell \circdef (\Intchoice x : Value \circspot (v:= x)) \\
-\t1 Cell \circdef ((wrt.req?x \then (v:= x)) \circseq (wrt.ack.x \then \Skip))  \\
+\t1 Cell \circdef (wrt.req?x \then (v:= x) \circseq (wrt.ack.x \then \Skip))  \\
 \t1 \t1         \extchoice rrd.req?dumb \then rrd.ack!v \then \Skip \\
 \t1 \circspot InitCell \circseq (\circmu X \circspot Cell \circseq X)
 \\
@@ -38,20 +39,29 @@ Direction ::=  req | ack
 
 \t1 InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 1) \\
 \t1 Input \circdef  
-	(\lcircguard size < maxbuff \rcircguard 
-		\circguard input?x \then 
-			(\lcircguard size = 0 \rcircguard 
-				\circguard ((cache:=x) \circseq (size:=1))))\\
-\t2 \extchoice \lcircguard size > 0 \rcircguard \circguard write.top.req!x \then \\
-\t3 write.top.ack?dumb \then ((size:=size+1) \circseq\ (top:=(top~\mod~maxring)+1))
+	\lcircguard size < maxbuff \rcircguard 
+		\circguard (
+        input?x \then 
+        ((\lcircguard size = 0 \rcircguard
+                  \circguard ((cache:=x) \circseq (size:=1)))
+                \extchoice 
+                (\lcircguard size > 0 \rcircguard 
+                  \circguard 
+                    write.top.req!x \then
+                    write.top.ack?dumb \then 
+                    ((size:=size+1) \circseq\ 
+                    (top:=(top~\mod~maxring)+1)))))
     \\
- Output \circdef \\
- \t1 \lcircguard size > 0 \rcircguard \circguard output!cache \then\\
- \t2 (\lcircguard size > 1 \rcircguard \circguard 
- 	(\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then \Skip) \circseq \\
- 	((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))\\
- \t2 \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0) \\
-\t1 \circspot InitCtr \circseq\ \circmu X \circspot ((Input \extchoice Output)\circseq X)
+ Output \circdef
+\lcircguard size > 0 \rcircguard 
+\circguard 
+    output!cache \then
+    ((\lcircguard size > 1 \rcircguard \circguard 
+          (\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then \Skip) \circseq \\
+          ((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))\\
+      \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0)) \\
+
+ \circspot InitCtr \circseq\ \circmu X \circspot ((Input \extchoice Output)\circseq X)
 \\
 \circend
 \\

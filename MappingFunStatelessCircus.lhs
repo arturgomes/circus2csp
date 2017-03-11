@@ -487,7 +487,7 @@ omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
 
 \begin{code}
 omega_CAction (CActionCommand (CIf gax))
-  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction gpair)))
+  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction (rename_guard_pair lsx gpair))))
   where
    gpair = get_guard_pair gax
    lsx = concat (map get_ZVar_st (remdups (concat (map free_var_ZPred (map fst gpair)))))

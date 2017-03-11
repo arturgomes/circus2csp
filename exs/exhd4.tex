@@ -345,41 +345,6 @@ BUTTON ::= ON~|~OFF
 \end{schema}
 %</zedstate>
 
-\begin{schema}{HDStateInit}
-HDState~'\\
-\where
-airVolLimit'~=~0
-\\airVol'~=~0
-\\alarm'~=~DISABLED
-\\apTransdPress'~=~0
-\\bloodFlowInEBC'~=~0
-\\bypassValve'~=~CLOSED
-\\fflowDirect'~=~FORWARD
-\\hdActivity'~=~\{idle\}
-\\hdMachineState'~=~\{initPhase\}
-\\infSalineVol'~=~0
-\\lastNonZeroBF'~=~0
-\\time'~=~0
-\\netFluidRemovalRate'~=~0
-\\netFluidRemoval'~=~DISABLED
-\\rotDirectionBP'~=~FORWARD
-\\rotDirectionUFP'~=~FORWARD
-\\safeUpperLimit'~=~0
-\\timerIntervalR9'~=~0
-\\timerIntervalR10'~=~0
-\\timerIntervalR11'~=~0
-\\timerIntervalR12'~=~0
-\\timerIntervalR13'~=~0
-\\lowerPressureLimit'~=~0
-\\upperPressureLimit'~=~0
-\\volumeInEBC'~=~0
-\\vpTransdPress'~=~0
-\\hdMode'~=~RUN
-\\bloodLines'~=~FALSE
-\\minUFRateTreat'=OFF
-\end{schema}
-
-
 %<*hdchannels>
 % \begin{circus}
 % \circchannel bfSensor : Flow \cross Time
@@ -422,8 +387,8 @@ airVolLimit'~=~0
 
 \subsection{Software requirements Arterial bolus.}
 \begin{circusaction}
-StopBloodFlow~\circdef~ stopBloodFlow \then \Skip\\
-RaiseAlarm~\circdef~ \lschexpract [~\Delta~HDState | alarm'~=~ENABLED ~]\rschexpract \circseq (produceAlarmSound \then \Skip)
+StopBloodFlow~\circdef~ stopBloodFlow \then \Skip
+\also RaiseAlarm~\circdef~ (alarm :=~ENABLED) \circseq (produceAlarmSound \then \Skip)
 \also StopBP~\circdef~ stopBP \then \Skip
 \also StopFlowDialyzer~\circdef~ stopFlowDialyzer \then \Skip
 \also DisconnectDF~\circdef~ disconnectDF \then \Skip
