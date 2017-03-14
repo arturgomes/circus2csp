@@ -34,6 +34,7 @@ bound-vars' invariant.
   free_var_ZExpr,
   free_var_ZPred,
   free_var_CAction,
+  free_var_ZGenFilt,
   fvars_expr,
   fvars_genfilt,
   fvars_pred,
@@ -47,6 +48,8 @@ bound-vars' invariant.
   sub_genfilt,
   sub_genfilt2,
   sub_pred,
+  sub_CAction,
+
   subs_add,
   subs_avoid,
   subs_domain,
@@ -628,6 +631,8 @@ fvars_pred p = error ("freevars should not see: " ++ show p)
 \end{code}
 
 \begin{code}
+free_var_ZGenFilt :: [ZGenFilt] -> (t -> [ZVar]) -> t -> [ZVar]
+
 free_var_ZGenFilt lst f e = varset_to_zvars $ (fvars_genfilt lst (varset_from_zvars $ f e))
 \end{code}
 

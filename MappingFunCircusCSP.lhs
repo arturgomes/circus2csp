@@ -403,7 +403,7 @@ mapping_ParAction spec (ParamActionDecl xl pa)
 \end{code}
 }
 \subsection{Mapping Circus Actions}
-NOTE: $CActionSchemaExpr$, $CSPNSInter$, $CSPParAction$ is not yet implemented.
+NOTE: $CActionSchemaExpr$ is not yet implemented.
 
 \begin{code}
 mapping_CAction :: [ZPara] -> CAction -> ZName
@@ -411,6 +411,8 @@ mapping_CAction spec (CActionCommand cc)
   = "("++mapping_CCommand spec cc++")"
 mapping_CAction spec (CActionName zn)
   = zn
+mapping_CAction spec (CSPUnfAction x (CActionName v))
+  = x ++"("++v++")"
 --mapping_CAction spec (CActionSchemaExpr zse)
 --  = undefined
 \end{code}

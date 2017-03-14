@@ -73,7 +73,32 @@ The function $mk\_sub\_list$ will make a list of substitution variables to $v_$ 
 mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
 mk_sub_list [x] = [((x,[]),(ZVar ("v_"++x,[])))]
 mk_sub_list (x:xs) = [((x,[]),(ZVar ("v_"++x,[])))]++(mk_sub_list xs)
+
+mk_sub_listb :: [ZExpr] -> [ZExpr] -> [((ZName,[t0]),ZExpr)]
+mk_sub_listb [] _ = []
+mk_sub_listb _ [] = []
+mk_sub_listb [ZVar (x,[])] [ZVar (y,[])] = [((x,[]),(ZVar (y,[])))]
+mk_sub_listb ((ZVar (x,[])):xs) ((ZVar (y,[])):ys) = [((x,[]),(ZVar (y,[])))]
+
 \end{code}
+The following function will expand a definition like $var x \spot A(x)$, 
+and will rename $A$ with $x$.
+\begin{code}
+get_var_action name xp [CParAction nn (CircusAction (CActionCommand (CVarDecl ls a)))]
+  | name == nn = sub_CAction (newlst,varset_from_zvars $ (free_var_ZGenFilt ls free_var_CAction a)) a
+  | otherwise = (CSPParAction name xp)
+  where
+    newlst = mk_sub_listb (xp) (zgenfilt_to_zexpr ls)
+get_var_action name xp [CParAction nn (CircusAction x)] = x
+get_var_action name xp ((CParAction nn (CircusAction (CActionCommand (CVarDecl ls a)))):xs)
+  | name == nn = sub_CAction (newlst,varset_from_zvars $ (free_var_ZGenFilt ls free_var_CAction a)) a
+  |otherwise = get_var_action name xp xs
+  where
+    newlst = mk_sub_listb (xp) (zgenfilt_to_zexpr ls)
+get_var_action name xp (_:xs) 
+  = get_var_action name xp xs
+\end{code}
+
 \subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
 \begin{code}
@@ -545,7 +570,8 @@ isRecursive_CAction name (CSPInterleave ca cb)
 isRecursive_CAction name (CSPHide c cs)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPParAction nm xp)
- = False
+  | name == nm = True
+  | otherwise = False
 isRecursive_CAction name (CSPRenAction nm cr)
  = False
 isRecursive_CAction name (CSPRecursion n c)
@@ -649,6 +675,22 @@ renameRecursive_CAction name (CSPInterleave ca cb)
  = (CSPInterleave (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
 renameRecursive_CAction name (CSPHide c cs)
  = (CSPHide (renameRecursive_CAction name c) cs)
+\end{code}
+There is an issue in the translation rules for those actions that
+are recursively defined and special for those where parameters
+are used. For instance, we illustrate the $Wait$ function, that will
+recurse until a number of ticks is performed.
+
+\begin{circusaction}
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+\end{circusaction}
+This \Circus\ action is a clear example of the issue. I can't simply
+use $mu X \spot A ; X$ as I would in $CActionName$, as it uses parameters.
+This is difficult to translate and for now, I'll ignore it.
+\begin{code}
 renameRecursive_CAction name (CSPParAction nm xp)
  = (CSPParAction nm xp)
 renameRecursive_CAction name (CSPRenAction nm cr)
@@ -737,7 +779,8 @@ expand_action_names_CAction lst (CActionSchemaExpr x)
 expand_action_names_CAction lst (CActionCommand c)
  = (CActionCommand (expand_action_names_CAction_comnd lst c))
 expand_action_names_CAction lst (CActionName nm)
- = get_action nm lst
+  | (take 2 nm) == "mu" = (CActionName nm) 
+  | otherwise = expand_action_names_CAction lst $ get_action nm lst
 expand_action_names_CAction lst (CSPSkip)
  = (CSPSkip)
 expand_action_names_CAction lst (CSPStop)
@@ -765,7 +808,8 @@ expand_action_names_CAction lst (CSPInterleave ca cb)
 expand_action_names_CAction lst (CSPHide c cs)
  = (CSPHide (expand_action_names_CAction lst c) cs)
 expand_action_names_CAction lst (CSPParAction nm xp)
- = (CSPParAction nm xp)
+-- sub_CAction [((v,[]), ZInt 7)]
+ = get_var_action nm xp lst
 expand_action_names_CAction lst (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
 expand_action_names_CAction lst (CSPRecursion n (CSPSeq c (CActionName n1)))
@@ -790,6 +834,7 @@ expand_action_names_CAction lst (CSPRepInterlNS lsta ns c)
  = (CSPRepInterlNS lsta ns (expand_action_names_CAction lst c))
 expand_action_names_CAction lst (CSPRepInterl lsta c)
  = (CSPRepInterl lsta (expand_action_names_CAction lst c))
+expand_action_names_CAction lst x = x
 \end{code}
 \begin{code}
 expand_action_names_CAction_comnd lst (CAssign v e)
@@ -840,7 +885,6 @@ get_action name ((CParAction n (CircusAction a)):xs)
 get_action name (_:xs)
   = get_action name xs
 \end{code}
-
 \begin{code}
 get_chan_param :: [CParameter] -> [ZExpr]
 get_chan_param [] = []

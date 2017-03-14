@@ -114,13 +114,12 @@ omega_CProc spec (ProcStalessMain xls ca)
     [] 
     main_action)
     where 
-      recAct = map makeRecursive_PPar xls
-      expAct = map (expand_action_names_PPar recAct) recAct
+      expAct = map (expand_action_names_PPar xls) xls
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
-      main_action = expand_action_names_CAction expAct refAC
+      main_action = refAC
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))
 omega_CProc spec (CParamProc zn (x:xs))
@@ -139,7 +138,7 @@ omega_CProc spec (ProcMain zp xls ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
-      main_action = mk_main_action_bind nstate $ expand_action_names_CAction expAct refAC
+      main_action = mk_main_action_bind nstate $ refAC
 omega_CProc spec x
   = x
 \end{code}
