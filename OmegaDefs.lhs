@@ -243,7 +243,7 @@ union (a:x) y = if (member a y) then (union x y) else a : (union x y);
 -- supply their own equality test.
 
 delete                  :: (Eq a) => a -> [a] -> [a]
-delete                  =  deleteBy (==)
+delete                  = deleteBy (==)
 
 -- | The 'deleteBy' function behaves like 'delete', but takes a
 -- user-supplied equality predicate.
@@ -258,8 +258,8 @@ deleteBy eq x (y:ys)    = if x `eq` y then ys else y : deleteBy eq x ys
 -- 'xs' is the list of things we've seen so far,
 -- 'y' is the potential new element
 elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
-elem_by _  _ []         =  False
-elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
+elem_by _  _ []         = False
+elem_by eq y (x:xs)     = y `eq` x || elem_by eq y xs
 
 
 isPrefixOf [] _ = True
@@ -500,6 +500,219 @@ getFV xs = []
 
 \begin{code}
 subset xs ys = all (`elem` ys) xs
+\end{code}
+
+\subsection{Rewritting recursive \Circus\ Actions}
+We are translating any recursive call into $CSPRecursion$ so we
+can rewrite the main action without an infinite loop of rewritting
+rules.
+
+Firstly we define a function $isRecursive$ which looks for
+any recursive call of a given \Circus\ Action.
+\begin{code}
+isRecursive_CAction :: ZName -> CAction -> Bool
+isRecursive_CAction name (CActionSchemaExpr x)
+ = False
+isRecursive_CAction name (CActionCommand c)
+ = isRecursive_CAction_comnd name c
+isRecursive_CAction name (CActionName nm)
+  | name == nm = True
+  | otherwise = False
+isRecursive_CAction name (CSPSkip)
+ = False
+isRecursive_CAction name (CSPStop)
+ = False
+isRecursive_CAction name (CSPChaos)
+ = False
+isRecursive_CAction name (CSPCommAction com c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPGuard p c)
+ =isRecursive_CAction name c
+isRecursive_CAction name (CSPSeq ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPExtChoice ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPIntChoice ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPNSParal ns1 cs ns2 ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPParal cs ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPNSInter ns1 ns2 ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPInterleave ca cb)
+ = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
+isRecursive_CAction name (CSPHide c cs)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPParAction nm xp)
+ = False
+isRecursive_CAction name (CSPRenAction nm cr)
+ = False
+isRecursive_CAction name (CSPRecursion n c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRecursion n c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPUnParAction lsta c nm)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepSeq lsta c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepExtChoice lsta c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepIntChoice lsta c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepParalNS cs lsta ns c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepParal cs lsta c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepInterlNS lsta ns c)
+ = isRecursive_CAction name c
+isRecursive_CAction name (CSPRepInterl lsta c)
+ = isRecursive_CAction name c
+\end{code}
+\begin{code}
+isRecursive_CAction_comnd name (CAssign v e)
+ = False
+isRecursive_CAction_comnd name (CIf ga)
+ = (isRecursive_if name ga)
+isRecursive_CAction_comnd name (CVarDecl z a)
+ = isRecursive_CAction name a
+isRecursive_CAction_comnd name (CAssumpt n p1 p2)
+ = False
+isRecursive_CAction_comnd name (CAssumpt1 n p)
+ = False
+isRecursive_CAction_comnd name (CPrefix p1 p2)
+ = False
+isRecursive_CAction_comnd name (CPrefix1 p)
+ = False
+isRecursive_CAction_comnd name (CommandBrace p)
+ = False
+isRecursive_CAction_comnd name (CommandBracket p)
+ = False
+isRecursive_CAction_comnd name (CValDecl z a)
+ = isRecursive_CAction name a
+isRecursive_CAction_comnd name (CResDecl z a)
+ = isRecursive_CAction name a
+isRecursive_CAction_comnd name (CVResDecl z a)
+ = isRecursive_CAction name a
+\end{code}
+
+\begin{code}
+isRecursive_if name (CircGAction p a)
+ = isRecursive_CAction name a
+isRecursive_if name (CircThenElse ga gb)
+ = (isRecursive_if name ga) || (isRecursive_if name gb)
+\end{code}
+
+\subsubsection{Renaming the recursive call and translating it into $CSPRecursion$}
+We then rename the recursive call in order to make $\mu X \spot Action \seq X$.
+\begin{code}
+makeRecursive_PPar (CParAction zn pa)
+  = (CParAction zn (makeRecursive_ParAction zn pa))
+makeRecursive_PPar (ProcZPara a) 
+  = (ProcZPara a)
+makeRecursive_PPar (CNameSet n ns) 
+  = (CNameSet n ns)
+\end{code}
+\begin{code}
+makeRecursive_ParAction name (CircusAction ca) 
+  = (CircusAction (makeRecursive_CAction name ca))
+makeRecursive_ParAction name (ParamActionDecl ls pa) 
+  = (ParamActionDecl ls (makeRecursive_ParAction name pa))
+\end{code}
+\begin{code}
+makeRecursive_CAction name c =  CSPRecursion ("mu"++name) (renameRecursive_CAction name c)
+\end{code}
+\begin{code}
+renameRecursive_CAction :: ZName -> CAction -> CAction
+renameRecursive_CAction name (CActionCommand c)
+ = (CActionCommand (renameRecursive_CAction_comnd name c))
+renameRecursive_CAction name (CActionName nm)
+  | nm == name = (CActionName ("mu"++name))
+  | otherwise = (CActionName nm)
+renameRecursive_CAction name (CSPCommAction com c)
+ = (CSPCommAction com (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPGuard p c)
+ = (CSPGuard p (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPSeq ca cb)
+ = (CSPSeq (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPExtChoice ca cb)
+ = (CSPExtChoice (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPIntChoice ca cb)
+ = (CSPIntChoice (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPNSParal ns1 cs ns2 ca cb)
+ = (CSPNSParal ns1 cs ns2 (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPParal cs ca cb)
+ = (CSPParal cs (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPNSInter ns1 ns2 ca cb)
+ = (CSPNSInter ns1 ns2 (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPInterleave ca cb)
+ = (CSPInterleave (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
+renameRecursive_CAction name (CSPHide c cs)
+ = (CSPHide (renameRecursive_CAction name c) cs)
+renameRecursive_CAction name (CSPParAction nm xp)
+ = (CSPParAction nm xp)
+renameRecursive_CAction name (CSPRenAction nm cr)
+ = (CSPRenAction nm cr)
+renameRecursive_CAction name (CSPRecursion n (CSPSeq c (CActionName n1)))
+ = case n == n1 of
+   True -> (CSPRecursion n (CSPSeq (renameRecursive_CAction name c) (CActionName n)))
+   False -> (CSPRecursion n (CSPSeq (renameRecursive_CAction name c) (CActionName n1)))
+renameRecursive_CAction name (CSPRecursion n c)
+ = (CSPRecursion n (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPUnParAction namea c nm)
+ = (CSPUnParAction namea (renameRecursive_CAction name c) nm)
+renameRecursive_CAction name (CSPRepSeq namea c)
+ = (CSPRepSeq namea (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepExtChoice namea c)
+ = (CSPRepExtChoice namea (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepIntChoice namea c)
+ = (CSPRepIntChoice namea (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepParalNS cs namea ns c)
+ = (CSPRepParalNS cs namea ns (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepParal cs namea c)
+ = (CSPRepParal cs namea (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepInterlNS namea ns c)
+ = (CSPRepInterlNS namea ns (renameRecursive_CAction name c))
+renameRecursive_CAction name (CSPRepInterl namea c)
+ = (CSPRepInterl namea (renameRecursive_CAction name c))
+renameRecursive_CAction _ x = x
+\end{code}
+\begin{code}
+renameRecursive_CAction_comnd name (CAssign v e)
+ = (CAssign v e)
+renameRecursive_CAction_comnd name (CIf ga)
+ = (CIf (renameRecursive_if name ga))
+renameRecursive_CAction_comnd name (CVarDecl z a)
+ = (CVarDecl z (renameRecursive_CAction name a))
+renameRecursive_CAction_comnd name (CAssumpt n p1 p2)
+ = (CAssumpt n p1 p2)
+renameRecursive_CAction_comnd name (CAssumpt1 n p)
+ = (CAssumpt1 n p)
+renameRecursive_CAction_comnd name (CPrefix p1 p2)
+ = (CPrefix p1 p2)
+renameRecursive_CAction_comnd name (CPrefix1 p)
+ = (CPrefix1 p)
+renameRecursive_CAction_comnd name (CommandBrace p)
+ = (CommandBrace p)
+renameRecursive_CAction_comnd name (CommandBracket p)
+ = (CommandBracket p)
+renameRecursive_CAction_comnd name (CValDecl z a)
+ = (CValDecl z (renameRecursive_CAction name a))
+renameRecursive_CAction_comnd name (CResDecl z a)
+ = (CResDecl z (renameRecursive_CAction name a))
+renameRecursive_CAction_comnd name (CVResDecl z a)
+ = (CVResDecl z (renameRecursive_CAction name a))
+\end{code}
+
+\begin{code}
+renameRecursive_if name (CircGAction p a)
+ = (CircGAction p (renameRecursive_CAction name a))
+renameRecursive_if name (CircThenElse ga gb)
+ = (CircThenElse (renameRecursive_if name ga) (renameRecursive_if name gb))
+-- get_if name (CircElse (CircusAction a))
+--  = (CircElse (CircusAction (renameRecursive_CAction name a)))
+-- get_if name (CircElse (ParamActionDecl x (CircusAction a)))
+--  = (CircElse (ParamActionDecl x (CircusAction (renameRecursive_CAction name a))))
 \end{code}
 
 \subsection{Expanding the main action}
@@ -848,6 +1061,8 @@ rename_vars_CAction1 lst (CSPRepInterlNS zgf ns a)
  = (CSPRepInterlNS zgf ns (rename_vars_CAction1 lst a))
 rename_vars_CAction1 lst (CSPRepInterl zgf a)
  = (CSPRepInterl zgf (rename_vars_CAction1 lst a))
+rename_vars_CAction1 lst x
+ = x
 \end{code}
 
 \begin{code}

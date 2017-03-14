@@ -114,12 +114,13 @@ omega_CProc spec (ProcStalessMain xls ca)
     [] 
     main_action)
     where 
-      expAct = map (expand_action_names_PPar xls) xls
+      recAct = map makeRecursive_PPar xls
+      expAct = map (expand_action_names_PPar recAct) recAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
-      main_action = refAC
+      main_action = expand_action_names_CAction expAct refAC
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))
 omega_CProc spec (CParamProc zn (x:xs))
@@ -128,16 +129,17 @@ omega_CProc spec (CSimpIndexProc zn (x:xs))
   = (CSimpIndexProc zn (x:xs))
 omega_CProc spec (ProcMain zp xls ca)
   = (ProcStalessMain 
-    [] 
+    []
     main_action)
     where 
       nstate = (def_mem_st_Circus_aux spec spec)
-      expAct = map (expand_action_names_PPar xls) xls
+      recAct = map makeRecursive_PPar xls
+      expAct = map (expand_action_names_PPar recAct) recAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
-      main_action = mk_main_action_bind nstate $ refAC
+      main_action = mk_main_action_bind nstate $ expand_action_names_CAction expAct refAC
 omega_CProc spec x
   = x
 \end{code}
