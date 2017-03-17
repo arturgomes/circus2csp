@@ -198,8 +198,6 @@ get_channel_type (ZVar ("\\nat_1",b))
   = "NatValue"
 get_channel_type (ZVar (a,b))
   = a
-get_channel_type (ZCall (ZVar ("\\power",[])) (ZVar (x,[])))
-  = "Set("++x++")"
 get_channel_type (ZCross xs)
   = (get_channel_type_list xs)
 get_channel_type_list [x]

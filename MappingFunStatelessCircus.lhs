@@ -128,12 +128,11 @@ omega_CProc spec (CSimpIndexProc zn (x:xs))
   = (CSimpIndexProc zn (x:xs))
 omega_CProc spec (ProcMain zp xls ca)
   = (ProcStalessMain 
-    []
+    [] 
     main_action)
     where 
       nstate = (def_mem_st_Circus_aux spec spec)
-      recAct = map makeRecursive_PPar xls
-      expAct = map (expand_action_names_PPar recAct) recAct
+      expAct = map (expand_action_names_PPar xls) xls
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
