@@ -675,22 +675,6 @@ renameRecursive_CAction name (CSPInterleave ca cb)
  = (CSPInterleave (renameRecursive_CAction name ca) (renameRecursive_CAction name cb))
 renameRecursive_CAction name (CSPHide c cs)
  = (CSPHide (renameRecursive_CAction name c) cs)
-\end{code}
-There is an issue in the translation rules for those actions that
-are recursively defined and special for those where parameters
-are used. For instance, we illustrate the $Wait$ function, that will
-recurse until a number of ticks is performed.
-
-\begin{circusaction}
-  Wait~\circdef~ \circvar n : \nat \circspot
-   \circif n> 0 \circthen (tick \then Wait (n-1))
-   \circelse n~=~0 \circthen \Skip
-   \circfi\\
-\end{circusaction}
-This \Circus\ action is a clear example of the issue. I can't simply
-use $mu X \spot A ; X$ as I would in $CActionName$, as it uses parameters.
-This is difficult to translate and for now, I'll ignore it.
-\begin{code}
 renameRecursive_CAction name (CSPParAction nm xp)
  = (CSPParAction nm xp)
 renameRecursive_CAction name (CSPRenAction nm cr)
@@ -808,8 +792,7 @@ expand_action_names_CAction lst (CSPInterleave ca cb)
 expand_action_names_CAction lst (CSPHide c cs)
  = (CSPHide (expand_action_names_CAction lst c) cs)
 expand_action_names_CAction lst (CSPParAction nm xp)
--- sub_CAction [((v,[]), ZInt 7)]
- = get_var_action nm xp lst
+ = (CSPParAction nm xp)
 expand_action_names_CAction lst (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
 expand_action_names_CAction lst (CSPRecursion n (CSPSeq c (CActionName n1)))

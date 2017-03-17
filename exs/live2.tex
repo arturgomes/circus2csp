@@ -1,9 +1,44 @@
+
+\begin{circus}
+  \circchannel getCurrentTime~:~\nat\\
+  \circchannel tick
+\end{circus}
+
+\begin{schema}{SysClockS}
+ time : \nat
+\end{schema}
+\begin{zed}
+NatValue == 0 \upto 3
+\end{zed}
 \begin{circus}%
-[TYPE]\\
-\circchannel x1,x2 : TYPE\\
- \circprocess\ ~SimpleExample ~\circdef~\circbegin
-  A1 \circdef x1?y \then \Skip
-  A2 \circdef x2?x \then \Skip
-  \circspot  A1 \intchoice A2
+  \circprocess\ ~SysClock2 ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClockS
+  ResetClock ~\circdef~
+  \\\t2  (time := 0) \circseq Clock\\
+  Clock ~\circdef~ 
+  \circmu~X \circspot 
+    ((\circif time \leq 3 \circthen (tick \then (time := time+1) \interleave (getCurrentTime!time \then \Skip))
+        \circelse time > 2 \circthen ((time := 0) \circseq Wait1) 
+        \circfi) \circseq X)
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+  Wait1~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen \Skip
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+  \circspot ResetClock
   \circend
 \end{circus}
+\begin{circus}
+\circprocess\ ~MakeTick ~\circdef~\circbegin
+\circspot tick \then \Skip
+\circend
+\end{circus}
+
+Clock = 
+  (SysClock2 \ {|mget,mset,terminate,getCurrentTime|}) 
+  -- [| {|tick|} |] MakeTick 
+
+assert Clock [FD= MakeTick
