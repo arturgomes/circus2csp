@@ -143,6 +143,7 @@ omega_CProc spec x
 \end{code}
 
 \subsection{Mapping Parameterised Circus Actions}
+
 \begin{code}
 omega_PPar :: PPar -> [PPar]
 omega_PPar (ProcZPara zp) = [(ProcZPara zp)]

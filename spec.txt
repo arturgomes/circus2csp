@@ -2,23 +2,40 @@ include "sequence_aux.csp"
 include "function_aux.csp"
 
 
-NatValue = {0..3}
+maxbuff = 3
+maxring = (maxbuff - 1)
+Value = {0..2}
+CellId = {1..10}
+datatype Direction = req | ack
+NatValue = {0..maxbuff}
 --------------------------------
 -- The universe of values
- datatype UNIVERSE = Nat.NatValue
+ datatype UNIVERSE = VAL.Value | Nat.NatValue | CEL.CellId
 
 --------------------------------
 --Conversions
+subtype U_VAL = VAL.Value
 subtype U_NAT = Nat.NatValue
+subtype U_CEL = CEL.CellId
 
+value(VAL.v) = v
 value(Nat.v) = v
+value(CEL.v) = v
 
 type(x) =
-	 if x == sv_SysClock2_time then U_NAT
+	 if x == sv_Controller_cache then U_VAL
+	 else if x == sv_Controller_size then U_NAT
+	 else if x == sv_Controller_top then U_CEL
+	 else if x == sv_Controller_bot then U_CEL
+	 else if x == sv_RingCell_v then U_VAL
 	 else {}
 
 tag(x) =
-	 if x == sv_SysClock2_time then Nat
+	 if x == sv_Controller_cache then VAL
+	 else if x == sv_Controller_size then Nat
+	 else if x == sv_Controller_top then CEL
+	 else if x == sv_Controller_bot then CEL
+	 else if x == sv_RingCell_v then VAL
 	 else Nat
 
 
@@ -33,7 +50,7 @@ Memory(b) =
 Memorise(P, b) = 
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
 
-datatype NAME = sv_SysClock2_time
+datatype NAME = sv_Controller_cache | sv_Controller_size | sv_Controller_top | sv_Controller_bot | sv_RingCell_v
 --------------------------------
 -- All possible bidings
 NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
@@ -43,13 +60,26 @@ channel mget, mset : NAME.UNIVERSE
 channel terminate
 MEM_I = {| mset,mget,terminate |}
 
-MakeTick = 
-	tick -> SKIP
+DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
 
-SysClock2 = 
-	( let restrict(bs) = dres(bs,{sv_SysClock2_time})
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+	( let restrict(bs) = dres(bs,{sv_Controller_cache,sv_Controller_size,sv_Controller_top,sv_Controller_bot,sv_RingCell_v})
 		within
-		|~| b:BINDINGS @ Memorise(( let muResetClock = ( mget.sv_SysClock2_time?v_sv_SysClock2_time:(type(sv_SysClock2_time)) -> mset.sv_SysClock2_time.((tag(sv_SysClock2_time)).0) -> SKIP ; Clock ) within muResetClock ), restrict(b))
+		|~| b:BINDINGS @ Memorise(( mget.sv_Controller_cache?v_sv_Controller_cache:(type(sv_Controller_cache)) -> mget.sv_Controller_size?v_sv_Controller_size:(type(sv_Controller_size)) -> mget.sv_Controller_top?v_sv_Controller_top:(type(sv_Controller_top)) -> mget.sv_Controller_bot?v_sv_Controller_bot:(type(sv_Controller_bot)) -> mset.sv_Controller_cache.((tag(sv_Controller_cache)).0) -> mset.sv_Controller_size.((tag(sv_Controller_size)).0) -> mset.sv_Controller_top.((tag(sv_Controller_top)).1) -> mset.sv_Controller_bot.((tag(sv_Controller_bot)).1) -> SKIP ; ( let X = ( mget.sv_Controller_top?v_sv_Controller_top:(type(sv_Controller_top)) -> mget.sv_Controller_cache?v_sv_Controller_cache:(type(sv_Controller_cache)) -> mget.sv_Controller_bot?v_sv_Controller_bot:(type(sv_Controller_bot)) -> mget.sv_Controller_size?v_sv_Controller_size:(type(sv_Controller_size)) -> ( ( value(v_sv_Controller_size) < maxbuff & input?x -> ( ( value(v_sv_Controller_size) == 0 & mset.sv_Controller_cache.((tag(sv_Controller_cache)).x) -> mget.sv_Controller_size?v_sv_Controller_size:(type(sv_Controller_size)) -> mset.sv_Controller_size.((tag(sv_Controller_size)).1) -> SKIP ) [] ( value(v_sv_Controller_size) > 0 & write.value(v_sv_Controller_top).req.x -> write.value(v_sv_Controller_top).ack?dumb -> mset.sv_Controller_size.((tag(sv_Controller_size)).(value(v_sv_Controller_size) + 1)) -> mget.sv_Controller_top?v_sv_Controller_top:(type(sv_Controller_top)) -> mset.sv_Controller_top.((tag(sv_Controller_top)).(value(v_sv_Controller_top) % maxring + 1)) -> SKIP )) ) [] ( value(v_sv_Controller_size) > 0 & output.value(v_sv_Controller_cache) -> ( ( value(v_sv_Controller_size) > 1 & ( ( |~| dumb : Value @ read.value(v_sv_Controller_bot).req.dumb -> read.value(v_sv_Controller_bot).ack?x -> SKIP ) ; ( mget.sv_Controller_size?v_sv_Controller_size:(type(sv_Controller_size)) -> mset.sv_Controller_size.((tag(sv_Controller_size)).(value(v_sv_Controller_size) - 1)) -> SKIP ; mget.sv_Controller_bot?v_sv_Controller_bot:(type(sv_Controller_bot)) -> mset.sv_Controller_bot.((tag(sv_Controller_bot)).(value(v_sv_Controller_bot) % maxring + 1)) -> SKIP ) ) ) [] ( value(v_sv_Controller_size) == 1 & mset.sv_Controller_size.((tag(sv_Controller_size)).0) -> SKIP )) )) ; X ) within X ) ), restrict(b))
 )
-channel tick
-channel getCurrentTime : NatValue
+
+DRing = |||i : CellId @ IRCell(i)
+
+IRCell(i) = RingCell[[rrd <- rdi.i, wrt <- wrti.i]]
+
+RingCell = 
+	( let restrict(bs) = dres(bs,{sv_Controller_cache,sv_Controller_size,sv_Controller_top,sv_Controller_bot,sv_RingCell_v})
+		within
+		|~| b:BINDINGS @ Memorise(( ( |~| x : Value @ mget.sv_RingCell_v?v_sv_RingCell_v:(type(sv_RingCell_v)) -> mset.sv_RingCell_v.((tag(sv_RingCell_v)).x) -> SKIP ) ; ( let X = ( mget.sv_RingCell_v?v_sv_RingCell_v:(type(sv_RingCell_v)) -> ( wrt.req?x -> mset.sv_RingCell_v.((tag(sv_RingCell_v)).x) -> wrt.ack.x -> SKIP [] rrd.req?dumb -> rrd.ack.value(v_sv_RingCell_v) -> SKIP) ; X ) within X ) ), restrict(b))
+)
+CtrI = {| rdi,wrti |}
+channel rrd, wrt : Direction.Value
+channel write, read, rdi, wrti : CellId.Direction.Value
+channel input, output : Value

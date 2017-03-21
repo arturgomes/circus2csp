@@ -73,32 +73,7 @@ The function $mk\_sub\_list$ will make a list of substitution variables to $v_$ 
 mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
 mk_sub_list [x] = [((x,[]),(ZVar ("v_"++x,[])))]
 mk_sub_list (x:xs) = [((x,[]),(ZVar ("v_"++x,[])))]++(mk_sub_list xs)
-
-mk_sub_listb :: [ZExpr] -> [ZExpr] -> [((ZName,[t0]),ZExpr)]
-mk_sub_listb [] _ = []
-mk_sub_listb _ [] = []
-mk_sub_listb [ZVar (x,[])] [ZVar (y,[])] = [((x,[]),(ZVar (y,[])))]
-mk_sub_listb ((ZVar (x,[])):xs) ((ZVar (y,[])):ys) = [((x,[]),(ZVar (y,[])))]
-
 \end{code}
-The following function will expand a definition like $var x \spot A(x)$, 
-and will rename $A$ with $x$.
-\begin{code}
-get_var_action name xp [CParAction nn (CircusAction (CActionCommand (CVarDecl ls a)))]
-  | name == nn = sub_CAction (newlst,varset_from_zvars $ (free_var_ZGenFilt ls free_var_CAction a)) a
-  | otherwise = (CSPParAction name xp)
-  where
-    newlst = mk_sub_listb (xp) (zgenfilt_to_zexpr ls)
-get_var_action name xp [CParAction nn (CircusAction x)] = x
-get_var_action name xp ((CParAction nn (CircusAction (CActionCommand (CVarDecl ls a)))):xs)
-  | name == nn = sub_CAction (newlst,varset_from_zvars $ (free_var_ZGenFilt ls free_var_CAction a)) a
-  |otherwise = get_var_action name xp xs
-  where
-    newlst = mk_sub_listb (xp) (zgenfilt_to_zexpr ls)
-get_var_action name xp (_:xs) 
-  = get_var_action name xp xs
-\end{code}
-
 \subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
 \begin{code}
@@ -268,7 +243,7 @@ union (a:x) y = if (member a y) then (union x y) else a : (union x y);
 -- supply their own equality test.
 
 delete                  :: (Eq a) => a -> [a] -> [a]
-delete                  = deleteBy (==)
+delete                  =  deleteBy (==)
 
 -- | The 'deleteBy' function behaves like 'delete', but takes a
 -- user-supplied equality predicate.
@@ -283,8 +258,8 @@ deleteBy eq x (y:ys)    = if x `eq` y then ys else y : deleteBy eq x ys
 -- 'xs' is the list of things we've seen so far,
 -- 'y' is the potential new element
 elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
-elem_by _  _ []         = False
-elem_by eq y (x:xs)     = y `eq` x || elem_by eq y xs
+elem_by _  _ []         =  False
+elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
 
 
 isPrefixOf [] _ = True
@@ -515,18 +490,17 @@ remdups (x:xs) = (if (member x xs) then remdups xs else x : remdups xs)
 \end{code}
 
 \subsection{Bits for FreeVariables (FV(X))}
-\subsection{Free Variables -- $FV(A)$. }
-Need to know how to calculate for Actions.
-\begin{code}
-getFV xs = []
-\end{code}
+% \subsection{Free Variables -- $FV(A)$. }
+% Need to know how to calculate for Actions.
+% \begin{code}
+% getFV xs = []
+% \end{code}
 
 \subsection{Others -- No specific topic}
 
 \begin{code}
 subset xs ys = all (`elem` ys) xs
 \end{code}
-
 \subsection{Rewritting recursive \Circus\ Actions}
 We are translating any recursive call into $CSPRecursion$ so we
 can rewrite the main action without an infinite loop of rewritting
@@ -536,19 +510,12 @@ Firstly we define a function $isRecursive$ which looks for
 any recursive call of a given \Circus\ Action.
 \begin{code}
 isRecursive_CAction :: ZName -> CAction -> Bool
-isRecursive_CAction name (CActionSchemaExpr x)
- = False
+
 isRecursive_CAction name (CActionCommand c)
  = isRecursive_CAction_comnd name c
 isRecursive_CAction name (CActionName nm)
   | name == nm = True
   | otherwise = False
-isRecursive_CAction name (CSPSkip)
- = False
-isRecursive_CAction name (CSPStop)
- = False
-isRecursive_CAction name (CSPChaos)
- = False
 isRecursive_CAction name (CSPCommAction com c)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPGuard p c)
@@ -569,14 +536,9 @@ isRecursive_CAction name (CSPInterleave ca cb)
  = (isRecursive_CAction name ca) || (isRecursive_CAction name cb)
 isRecursive_CAction name (CSPHide c cs)
  = isRecursive_CAction name c
-isRecursive_CAction name (CSPParAction nm xp)
-  | name == nm = True
-  | otherwise = False
-isRecursive_CAction name (CSPRenAction nm cr)
- = False
 isRecursive_CAction name (CSPRecursion n c)
  = isRecursive_CAction name c
-isRecursive_CAction name (CSPRecursion n c)
+isRecursive_CAction name (CSPUnfAction n c)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPUnParAction lsta c nm)
  = isRecursive_CAction name c
@@ -594,6 +556,18 @@ isRecursive_CAction name (CSPRepInterlNS lsta ns c)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPRepInterl lsta c)
  = isRecursive_CAction name c
+isRecursive_CAction name (CActionSchemaExpr x)
+ = False
+isRecursive_CAction name (CSPSkip)
+ = False
+isRecursive_CAction name (CSPStop)
+ = False
+isRecursive_CAction name (CSPChaos)
+ = False
+isRecursive_CAction name (CSPParAction nm xp)
+ = False
+isRecursive_CAction name (CSPRenAction nm cr)
+ = False
 \end{code}
 \begin{code}
 isRecursive_CAction_comnd name (CAssign v e)
@@ -631,6 +605,20 @@ isRecursive_if name (CircThenElse ga gb)
 
 \subsubsection{Renaming the recursive call and translating it into $CSPRecursion$}
 We then rename the recursive call in order to make $\mu X \spot Action \seq X$.
+\begin{code}
+recursive_PPar (CParAction zn ca)
+  | isRecursive_CAction zn (get_CircusAction ca) 
+        = (CParAction zn (makeRecursive_ParAction zn ca))
+  | otherwise = (CParAction zn ca)
+recursive_PPar (ProcZPara a) 
+  = (ProcZPara a)
+recursive_PPar (CNameSet n ns) 
+  = (CNameSet n ns)
+
+get_CircusAction (CircusAction ca) = ca
+get_CircusAction (ParamActionDecl ls pa) = get_CircusAction pa
+\end{code}
+
 \begin{code}
 makeRecursive_PPar (CParAction zn pa)
   = (CParAction zn (makeRecursive_ParAction zn pa))
@@ -740,7 +728,6 @@ renameRecursive_if name (CircThenElse ga gb)
 -- get_if name (CircElse (ParamActionDecl x (CircusAction a)))
 --  = (CircElse (ParamActionDecl x (CircusAction (renameRecursive_CAction name a))))
 \end{code}
-
 \subsection{Expanding the main action}
 \begin{code}
 expand_action_names_PPar :: [PPar] -> PPar -> PPar
@@ -868,6 +855,7 @@ get_action name ((CParAction n (CircusAction a)):xs)
 get_action name (_:xs)
   = get_action name xs
 \end{code}
+
 \begin{code}
 get_chan_param :: [CParameter] -> [ZExpr]
 get_chan_param [] = []
@@ -1088,8 +1076,8 @@ rename_vars_CAction1 lst (CSPRepInterlNS zgf ns a)
  = (CSPRepInterlNS zgf ns (rename_vars_CAction1 lst a))
 rename_vars_CAction1 lst (CSPRepInterl zgf a)
  = (CSPRepInterl zgf (rename_vars_CAction1 lst a))
-rename_vars_CAction1 lst x
- = x
+rename_vars_CAction1 lst x = x
+
 \end{code}
 
 \begin{code}
@@ -1530,14 +1518,22 @@ rename_z_schema_state spec x = x
 \end{code}
 
 \begin{code}
+retrive_schemas spec (ZSchema lstx) = lstx
 retrive_schemas spec (ZSRef (ZSPlain nn) [] [])
   = case res of
       Just e' -> e'
       Nothing -> error "Schema definition not found!"
     where 
       res = (retrieve_z_schema_state nn spec)
+retrive_schemas spec (ZS1 x a)
+  = (retrive_schemas spec a)
 retrive_schemas spec (ZS2 ZSAnd a b)
   = (retrive_schemas spec a)++(retrive_schemas spec b)
+retrive_schemas spec (ZSHide a b) = retrive_schemas spec a
+retrive_schemas spec (ZSExists a b) = retrive_schemas spec b
+retrive_schemas spec (ZSExists_1 a b) = retrive_schemas spec b
+retrive_schemas spec (ZSForall a b) = retrive_schemas spec b
+retrive_schemas spec _ = error "Schema def not implemented yet"
 \end{code}
 
 \begin{code}

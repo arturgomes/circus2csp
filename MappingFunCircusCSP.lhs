@@ -168,6 +168,7 @@ display_chann_CChan [x]
 display_chann_CChan (x:xs)
   = x ++ ", " ++ (display_chann_CChan xs)
 \end{code}
+
 \begin{code}
 filter_channels_CChanDecl :: [CDecl] -> [(ZName, ZExpr)]
 filter_channels_CChanDecl [(CChanDecl a b)]
