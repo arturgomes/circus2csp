@@ -26,15 +26,17 @@ import CRL
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec
   = [ZGivenSetDecl ("UNIVERSE",[]),
-      ZFreeTypeDef ("NAME",[]) (def_delta_name (def_mem_st_Circus_aux spec1 spec1)),
+      ZFreeTypeDef ("NAME",[]) names,
       ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])), 
-      ZAbbreviation ("\\delta",[]) (ZSetDisplay (def_delta_mapping (def_mem_st_Circus_aux spec1 spec1))),
+      ZAbbreviation ("\\delta",[]) (ZSetDisplay deltamap),
       CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
       CircChannel [CChan "terminate"],
       CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"])]
     ++ (omega_Circus_aux spec1 spec1)
     where 
       spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec spec)) spec) -- renaming variables for highlighting which state var is from which process
+      names = (def_delta_name (def_mem_st_Circus_aux spec1 spec1))
+      deltamap = (def_delta_mapping (def_mem_st_Circus_aux spec1 spec1))
 \end{code}
 
 \subsection{Omega functions}
@@ -118,7 +120,6 @@ omega_CProc spec (ProcStalessMain xls ca)
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
-      -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
       main_action = refAC
 omega_CProc spec (CGenProc zn (x:xs))
   = (CGenProc zn (x:xs))

@@ -267,7 +267,7 @@ NatValue == 0 \upto 2
     setLimitDeltaMinMaxAP, setLimitsTMP, setLowHigh,\\
     setMaxUFRate, setMinUFRate, setMinUFRateTreat,\\
     setRinsingBPRate,\\
-    setRinsingTime, setSignalLamp,\\
+    setRinsingTime, signalLamp,\\
     setSyringeType, setTherapyTime,\\
     setTreatmentWithoutHeparin,\\
     setUfRateForRinsing, setUfVol,\\
@@ -1097,7 +1097,7 @@ SoftwareRequirements~\circdef~
 % \subsection{Therapy Preparation}
 
 \begin{circusaction}
-AutomatedSelfTest~\circdef~autSelfTest \then (setSignalLamp := GREEN)
+AutomatedSelfTest~\circdef~autSelfTest \then (signalLamp := GREEN)
 \end{circusaction}
 
 \begin{circusaction}
@@ -1197,7 +1197,7 @@ TherapyPreparation~\circdef
 
 \subsection{Therapy Initiation}
 \begin{circusaction}
-EnableUI~\circdef~(setSignalLamp := YELLOW)
+EnableUI~\circdef~(signalLamp := YELLOW)
 \also ConnectPatientArterially~\circdef~connPatientArterially~\then~\Skip
 \also ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
 \also SetStopBloodFlow~\circdef~setBloodFlowInEBC?bloodFlowInEBC~\then~\Skip
@@ -1207,7 +1207,7 @@ EnableUI~\circdef~(setSignalLamp := YELLOW)
   \\\t2 ConnectPatientArterially \circseq
   \\\t2 SetStopBloodFlow\circseq
   \\\t2 ConnectPatientVenously \circseq
-  \\\t2 (setSignalLamp,hdMode := GREEN,RUN)
+  \\\t2 (signalLamp,hdMode := GREEN,RUN)
 \end{circusaction}
 
 \begin{circusaction}
@@ -1215,8 +1215,8 @@ MonitorBPLimits ~\circdef~\Skip
 \also TreatMinUFRate ~\circdef~ setMinUFRateTreat?ON \then \Skip
 \also HeparinBolus ~\circdef~\Skip
 \also ArterialBolus~\circdef~setArtBolusVol?artBolusVol \then \Skip
-\also InterruptDialysis~\circdef~ senHDMode!BYPASS \then (setSignalLamp := YELLOW)
-\also CompleteTreatment~\circdef~ therapyEnding \then (setSignalLamp := YELLOW)
+\also InterruptDialysis~\circdef~ senHDMode!BYPASS \then (signalLamp := YELLOW)
+\also CompleteTreatment~\circdef~ therapyEnding \then (signalLamp := YELLOW)
 \also DuringTherapy~\circdef~
       \\\t2 (MonitorBPLimits\\
             \interleave TreatMinUFRate\\

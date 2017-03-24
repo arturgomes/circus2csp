@@ -1,41 +1,31 @@
-include "sequence_aux.csp"
-include "function_aux.csp"
+include "../sequence_aux.csp"
+include "../function_aux.csp"
 
 
-NatValue = {0..2}
-datatype BUTTON = ON | OFF
-datatype SWITCH = ENABLED | DISABLED
-datatype DIRECTION = FORWARD | BACKWARDS
-datatype STATEPHASE = connectThePatient | initPhase | prepPhase | endPhase
-datatype ACTIVITY = rinsingEBC | applicationArterialBolus | anticoagDelivRun | reinfProcess | preparationOfDF | priming | rinsing | idle
-datatype LIDD = OPEN | CLOSED
-datatype CONCENTRATE = ACID | ACETATE | BICARBONATE
-
+NatValue = {0..10}
 HOUR = {0..1}
 MINUTE = {0..1}
 SECOND = {0..1}
 TIME = (HOUR,MINUTE)
-datatype HDMODE = RUN | ALARM | BYPASS
-datatype LAMP = GREEN | YELLOW
-datatype BOOL = TRUE | FALSE
+
 chkInterval = 1
 --------------------------------
 -- The universe of values
- datatype UNIVERSE = Nat.NatValue | SWI.SWITCH | LID.LIDD | DIR.DIRECTION | PAC.Set(ACTIVITY) | PST.Set(STATEPHASE) | HDM.HDMODE | BOO.BOOL | BUT.BUTTON | CON.CONCENTRATE | TIM.TIME
+ datatype UNIVERSE = Nat.NatValue | SWI.NatValue | LID.NatValue | DIR.NatValue | PAC.NatValue | PST.NatValue | HDM.NatValue | BOO.NatValue | BUT.NatValue | CON.NatValue | TIM.NatValue
 
 --------------------------------
 --Conversions
 subtype U_NAT = Nat.NatValue
-subtype U_SWI = SWI.SWITCH
-subtype U_LID = LID.LIDD
-subtype U_DIR = DIR.DIRECTION
-subtype U_PAC = PAC.Set(ACTIVITY)
-subtype U_PST = PST.Set(STATEPHASE)
-subtype U_HDM = HDM.HDMODE
-subtype U_BOO = BOO.BOOL
-subtype U_BUT = BUT.BUTTON
-subtype U_CON = CON.CONCENTRATE
-subtype U_TIM = TIM.TIME
+subtype U_SWI = SWI.NatValue
+subtype U_LID = LID.NatValue
+subtype U_DIR = DIR.NatValue
+subtype U_PAC = PAC.NatValue
+subtype U_PST = PST.NatValue
+subtype U_HDM = HDM.NatValue
+subtype U_BOO = BOO.NatValue
+subtype U_BUT = BUT.NatValue
+subtype U_CON = CON.NatValue
+subtype U_TIM = TIM.NatValue
 
 value(BOO.v) = v
 value(BUT.v) = v
@@ -82,8 +72,8 @@ type(x) =
 	 else if x == sv_HDMachine_bloodLines then U_BOO
 	 else if x == sv_HDMachine_minUFRateTreat then U_BUT
 	 else if x == sv_HDMachine_fillingBPRate then U_NAT
-	 else if x == sv_HDMachine_rinsingBPRate then U_NAT
-	 else if x == sv_HDMachine_rinsingTime then U_NAT
+	 else if x == sv_HDMachine_7BPRate then U_NAT
+	 else if x == sv_HDMachine_7Time then U_NAT
 	 else if x == sv_HDMachine_ufRateForRinsing then U_NAT
 	 else if x == sv_HDMachine_ufVolForRinsing then U_NAT
 	 else if x == sv_HDMachine_bloodFlowForConnectingPatient then U_NAT
@@ -147,8 +137,8 @@ tag(x) =
 	 else if x == sv_HDMachine_vpTransdPress then Nat
 	 else if x == sv_HDMachine_sadSensorFlow then Nat
 	 else if x == sv_HDMachine_fillingBPRate then Nat
-	 else if x == sv_HDMachine_rinsingBPRate then Nat
-	 else if x == sv_HDMachine_rinsingTime then Nat
+	 else if x == sv_HDMachine_7BPRate then Nat
+	 else if x == sv_HDMachine_7Time then Nat
 	 else if x == sv_HDMachine_ufRateForRinsing then Nat
 	 else if x == sv_HDMachine_ufVolForRinsing then Nat
 	 else if x == sv_HDMachine_bloodFlowForConnectingPatient then Nat
@@ -181,7 +171,7 @@ Memory(b) =
 Memorise(P, b) = 
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
 
-datatype NAME = sv_HDMachine_airVolLimit | sv_HDMachine_airVol | sv_HDMachine_alarm | sv_HDMachine_artBolusVol | sv_HDMachine_apTransdPress | sv_HDMachine_bloodFlowInEBC | sv_HDMachine_bypassValve | sv_HDMachine_fflowDirect | sv_HDMachine_hdActivity | sv_HDMachine_hdMachineState | sv_HDMachine_hdMode | sv_HDMachine_infSalineVol | sv_HDMachine_lastNonZeroBF | sv_HDMachine_lowerPressureLimit | sv_HDMachine_netFluidRemovalRate | sv_HDMachine_netFluidRemoval | sv_HDMachine_rotDirectionBP | sv_HDMachine_rotDirectionUFP | sv_HDMachine_safeUpperLimit | sv_HDMachine_timerIntervalR9 | sv_HDMachine_timerIntervalR10 | sv_HDMachine_timerIntervalR11 | sv_HDMachine_timerIntervalR12 | sv_HDMachine_timerIntervalR13 | sv_HDMachine_time | sv_HDMachine_upperPressureLimit | sv_HDMachine_volumeInEBC | sv_HDMachine_vpTransdPress | sv_HDMachine_sadSensorFlow | sv_HDMachine_bloodLines | sv_HDMachine_minUFRateTreat | sv_HDMachine_fillingBPRate | sv_HDMachine_rinsingBPRate | sv_HDMachine_rinsingTime | sv_HDMachine_ufRateForRinsing | sv_HDMachine_ufVolForRinsing | sv_HDMachine_bloodFlowForConnectingPatient | sv_HDMachine_conductivity | sv_HDMachine_bicarbonateAcetate | sv_HDMachine_bicarbonateConductivity | sv_HDMachine_dfTemperature | sv_HDMachine_dfFlow | sv_HDMachine_ufVol | sv_HDMachine_therapyTime | sv_HDMachine_minUFRate | sv_HDMachine_maxUFRate | sv_HDMachine_limitDeltaMinMaxAP | sv_HDMachine_actualTMPMaxTMP | sv_HDMachine_limitsTMP | sv_HDMachine_lowHigh | sv_HDMachine_extendedTMPLimitRange | sv_HDMachine_heparinStopTime | sv_HDMachine_heparinBolusVol | sv_HDMachine_heparinProfileRate | sv_HDMachine_treatmentWithoutHeparin | sv_HDMachine_syringeType | sv_SysClock_time
+datatype NAME = sv_HDMachine_airVolLimit | sv_HDMachine_airVol | sv_HDMachine_alarm | sv_HDMachine_artBolusVol | sv_HDMachine_apTransdPress | sv_HDMachine_bloodFlowInEBC | sv_HDMachine_bypassValve | sv_HDMachine_fflowDirect | sv_HDMachine_hdActivity | sv_HDMachine_hdMachineState | sv_HDMachine_hdMode | sv_HDMachine_infSalineVol | sv_HDMachine_lastNonZeroBF | sv_HDMachine_lowerPressureLimit | sv_HDMachine_netFluidRemovalRate | sv_HDMachine_netFluidRemoval | sv_HDMachine_rotDirectionBP | sv_HDMachine_rotDirectionUFP | sv_HDMachine_safeUpperLimit | sv_HDMachine_timerIntervalR9 | sv_HDMachine_timerIntervalR10 | sv_HDMachine_timerIntervalR11 | sv_HDMachine_timerIntervalR12 | sv_HDMachine_timerIntervalR13 | sv_HDMachine_time | sv_HDMachine_upperPressureLimit | sv_HDMachine_volumeInEBC | sv_HDMachine_vpTransdPress | sv_HDMachine_sadSensorFlow | sv_HDMachine_bloodLines | sv_HDMachine_minUFRateTreat | sv_HDMachine_fillingBPRate | sv_HDMachine_7BPRate | sv_HDMachine_7Time | sv_HDMachine_ufRateForRinsing | sv_HDMachine_ufVolForRinsing | sv_HDMachine_bloodFlowForConnectingPatient | sv_HDMachine_conductivity | sv_HDMachine_bicarbonateAcetate | sv_HDMachine_bicarbonateConductivity | sv_HDMachine_dfTemperature | sv_HDMachine_dfFlow | sv_HDMachine_ufVol | sv_HDMachine_therapyTime | sv_HDMachine_minUFRate | sv_HDMachine_maxUFRate | sv_HDMachine_limitDeltaMinMaxAP | sv_HDMachine_actualTMPMaxTMP | sv_HDMachine_limitsTMP | sv_HDMachine_lowHigh | sv_HDMachine_extendedTMPLimitRange | sv_HDMachine_heparinStopTime | sv_HDMachine_heparinBolusVol | sv_HDMachine_heparinProfileRate | sv_HDMachine_treatmentWithoutHeparin | sv_HDMachine_syringeType | sv_SysClock_time
 --------------------------------
 -- All possible bidings
 NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
@@ -191,118 +181,62 @@ channel mget, mset : NAME.UNIVERSE
 channel terminate
 MEM_I = {| mset,mget,terminate |}
 
-HDEnv = ( ( HDMachine [| Union({{| c |} | c <- { tick,getCurrentTime } }) |] SysClock ) \ Union({{| c |} | c <- { tick,getCurrentTime } }) )
+HDEnv = ( ( HDMachine [| {| tick,getCurrentTime |} |] SysClock ) \ {| tick,getCurrentTime |})
 
 HDMachine = 
-	( let restrict(bs) = dres(bs,{sv_HDMachine_airVolLimit,sv_HDMachine_airVol,sv_HDMachine_alarm,sv_HDMachine_artBolusVol,sv_HDMachine_apTransdPress,sv_HDMachine_bloodFlowInEBC,sv_HDMachine_bypassValve,sv_HDMachine_fflowDirect,sv_HDMachine_hdActivity,sv_HDMachine_hdMachineState,sv_HDMachine_hdMode,sv_HDMachine_infSalineVol,sv_HDMachine_lastNonZeroBF,sv_HDMachine_lowerPressureLimit,sv_HDMachine_netFluidRemovalRate,sv_HDMachine_netFluidRemoval,sv_HDMachine_rotDirectionBP,sv_HDMachine_rotDirectionUFP,sv_HDMachine_safeUpperLimit,sv_HDMachine_timerIntervalR9,sv_HDMachine_timerIntervalR10,sv_HDMachine_timerIntervalR11,sv_HDMachine_timerIntervalR12,sv_HDMachine_timerIntervalR13,sv_HDMachine_time,sv_HDMachine_upperPressureLimit,sv_HDMachine_volumeInEBC,sv_HDMachine_vpTransdPress,sv_HDMachine_sadSensorFlow,sv_HDMachine_bloodLines,sv_HDMachine_minUFRateTreat,sv_HDMachine_fillingBPRate,sv_HDMachine_rinsingBPRate,sv_HDMachine_rinsingTime,sv_HDMachine_ufRateForRinsing,sv_HDMachine_ufVolForRinsing,sv_HDMachine_bloodFlowForConnectingPatient,sv_HDMachine_conductivity,sv_HDMachine_bicarbonateAcetate,sv_HDMachine_bicarbonateConductivity,sv_HDMachine_dfTemperature,sv_HDMachine_dfFlow,sv_HDMachine_ufVol,sv_HDMachine_therapyTime,sv_HDMachine_minUFRate,sv_HDMachine_maxUFRate,sv_HDMachine_limitDeltaMinMaxAP,sv_HDMachine_actualTMPMaxTMP,sv_HDMachine_limitsTMP,sv_HDMachine_lowHigh,sv_HDMachine_extendedTMPLimitRange,sv_HDMachine_heparinStopTime,sv_HDMachine_heparinBolusVol,sv_HDMachine_heparinProfileRate,sv_HDMachine_treatmentWithoutHeparin,sv_HDMachine_syringeType,sv_SysClock_time})
+	( let restrict(bs) = dres(bs,{sv_HDMachine_airVolLimit,sv_HDMachine_airVol,sv_HDMachine_alarm,sv_HDMachine_artBolusVol,sv_HDMachine_apTransdPress,sv_HDMachine_bloodFlowInEBC,sv_HDMachine_bypassValve,sv_HDMachine_fflowDirect,sv_HDMachine_hdActivity,sv_HDMachine_hdMachineState,sv_HDMachine_hdMode,sv_HDMachine_infSalineVol,sv_HDMachine_lastNonZeroBF,sv_HDMachine_lowerPressureLimit,sv_HDMachine_netFluidRemovalRate,sv_HDMachine_netFluidRemoval,sv_HDMachine_rotDirectionBP,sv_HDMachine_rotDirectionUFP,sv_HDMachine_safeUpperLimit,sv_HDMachine_timerIntervalR9,sv_HDMachine_timerIntervalR10,sv_HDMachine_timerIntervalR11,sv_HDMachine_timerIntervalR12,sv_HDMachine_timerIntervalR13,sv_HDMachine_time,sv_HDMachine_upperPressureLimit,sv_HDMachine_volumeInEBC,sv_HDMachine_vpTransdPress,sv_HDMachine_sadSensorFlow,sv_HDMachine_bloodLines,sv_HDMachine_minUFRateTreat,sv_HDMachine_fillingBPRate,sv_HDMachine_7BPRate,sv_HDMachine_7Time,sv_HDMachine_ufRateForRinsing,sv_HDMachine_ufVolForRinsing,sv_HDMachine_bloodFlowForConnectingPatient,sv_HDMachine_conductivity,sv_HDMachine_bicarbonateAcetate,sv_HDMachine_bicarbonateConductivity,sv_HDMachine_dfTemperature,sv_HDMachine_dfFlow,sv_HDMachine_ufVol,sv_HDMachine_therapyTime,sv_HDMachine_minUFRate,sv_HDMachine_maxUFRate,sv_HDMachine_limitDeltaMinMaxAP,sv_HDMachine_actualTMPMaxTMP,sv_HDMachine_limitsTMP,sv_HDMachine_lowHigh,sv_HDMachine_extendedTMPLimitRange,sv_HDMachine_heparinStopTime,sv_HDMachine_heparinBolusVol,sv_HDMachine_heparinProfileRate,sv_HDMachine_treatmentWithoutHeparin,sv_HDMachine_syringeType,sv_SysClock_time})
 		within
-		|~| b:BINDINGS @ Memorise(( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( mget.sv_HDMachine_airVolLimit?v_sv_HDMachine_airVolLimit:(type(sv_HDMachine_airVolLimit)) -> mset.sv_HDMachine_airVolLimit.((tag(sv_HDMachine_airVolLimit)).0) -> SKIP ; mget.sv_HDMachine_airVol?v_sv_HDMachine_airVol:(type(sv_HDMachine_airVol)) -> mset.sv_HDMachine_airVol.((tag(sv_HDMachine_airVol)).0) -> SKIP ) ; mget.sv_HDMachine_alarm?v_sv_HDMachine_alarm:(type(sv_HDMachine_alarm)) -> mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).DISABLED) -> SKIP ) ; mget.sv_HDMachine_apTransdPress?v_sv_HDMachine_apTransdPress:(type(sv_HDMachine_apTransdPress)) -> mset.sv_HDMachine_apTransdPress.((tag(sv_HDMachine_apTransdPress)).0) -> SKIP ) ; mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> mset.sv_HDMachine_bloodFlowInEBC.((tag(sv_HDMachine_bloodFlowInEBC)).0) -> SKIP ) ; mget.sv_HDMachine_bypassValve?v_sv_HDMachine_bypassValve:(type(sv_HDMachine_bypassValve)) -> mset.sv_HDMachine_bypassValve.((tag(sv_HDMachine_bypassValve)).CLOSED) -> SKIP ) ; mget.sv_HDMachine_fflowDirect?v_sv_HDMachine_fflowDirect:(type(sv_HDMachine_fflowDirect)) -> mset.sv_HDMachine_fflowDirect.((tag(sv_HDMachine_fflowDirect)).FORWARD) -> SKIP ) ; mget.sv_HDMachine_hdActivity?v_sv_HDMachine_hdActivity:(type(sv_HDMachine_hdActivity)) -> mset.sv_HDMachine_hdActivity.((tag(sv_HDMachine_hdActivity)).{idle}) -> SKIP ) ; mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).{initPhase}) -> SKIP ) ; mget.sv_HDMachine_infSalineVol?v_sv_HDMachine_infSalineVol:(type(sv_HDMachine_infSalineVol)) -> mset.sv_HDMachine_infSalineVol.((tag(sv_HDMachine_infSalineVol)).0) -> SKIP ) ; mget.sv_HDMachine_lastNonZeroBF?v_sv_HDMachine_lastNonZeroBF:(type(sv_HDMachine_lastNonZeroBF)) -> mset.sv_HDMachine_lastNonZeroBF.((tag(sv_HDMachine_lastNonZeroBF)).0) -> SKIP ) ; mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> mset.sv_HDMachine_time.((tag(sv_HDMachine_time)).0) -> SKIP ) ; mget.sv_HDMachine_netFluidRemovalRate?v_sv_HDMachine_netFluidRemovalRate:(type(sv_HDMachine_netFluidRemovalRate)) -> mset.sv_HDMachine_netFluidRemovalRate.((tag(sv_HDMachine_netFluidRemovalRate)).0) -> SKIP ) ; mget.sv_HDMachine_netFluidRemoval?v_sv_HDMachine_netFluidRemoval:(type(sv_HDMachine_netFluidRemoval)) -> mset.sv_HDMachine_netFluidRemoval.((tag(sv_HDMachine_netFluidRemoval)).DISABLED) -> SKIP ) ; mget.sv_HDMachine_rotDirectionBP?v_sv_HDMachine_rotDirectionBP:(type(sv_HDMachine_rotDirectionBP)) -> mset.sv_HDMachine_rotDirectionBP.((tag(sv_HDMachine_rotDirectionBP)).FORWARD) -> SKIP ) ; mget.sv_HDMachine_rotDirectionUFP?v_sv_HDMachine_rotDirectionUFP:(type(sv_HDMachine_rotDirectionUFP)) -> mset.sv_HDMachine_rotDirectionUFP.((tag(sv_HDMachine_rotDirectionUFP)).FORWARD) -> SKIP ) ; mget.sv_HDMachine_safeUpperLimit?v_sv_HDMachine_safeUpperLimit:(type(sv_HDMachine_safeUpperLimit)) -> mset.sv_HDMachine_safeUpperLimit.((tag(sv_HDMachine_safeUpperLimit)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR9?v_sv_HDMachine_timerIntervalR9:(type(sv_HDMachine_timerIntervalR9)) -> mset.sv_HDMachine_timerIntervalR9.((tag(sv_HDMachine_timerIntervalR9)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR10?v_sv_HDMachine_timerIntervalR10:(type(sv_HDMachine_timerIntervalR10)) -> mset.sv_HDMachine_timerIntervalR10.((tag(sv_HDMachine_timerIntervalR10)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR11?v_sv_HDMachine_timerIntervalR11:(type(sv_HDMachine_timerIntervalR11)) -> mset.sv_HDMachine_timerIntervalR11.((tag(sv_HDMachine_timerIntervalR11)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR12?v_sv_HDMachine_timerIntervalR12:(type(sv_HDMachine_timerIntervalR12)) -> mset.sv_HDMachine_timerIntervalR12.((tag(sv_HDMachine_timerIntervalR12)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR13?v_sv_HDMachine_timerIntervalR13:(type(sv_HDMachine_timerIntervalR13)) -> mset.sv_HDMachine_timerIntervalR13.((tag(sv_HDMachine_timerIntervalR13)).0) -> SKIP ) ; mget.sv_HDMachine_lowerPressureLimit?v_sv_HDMachine_lowerPressureLimit:(type(sv_HDMachine_lowerPressureLimit)) -> mset.sv_HDMachine_lowerPressureLimit.((tag(sv_HDMachine_lowerPressureLimit)).0) -> SKIP ) ; mget.sv_HDMachine_upperPressureLimit?v_sv_HDMachine_upperPressureLimit:(type(sv_HDMachine_upperPressureLimit)) -> mset.sv_HDMachine_upperPressureLimit.((tag(sv_HDMachine_upperPressureLimit)).0) -> SKIP ) ; mget.sv_HDMachine_volumeInEBC?v_sv_HDMachine_volumeInEBC:(type(sv_HDMachine_volumeInEBC)) -> mset.sv_HDMachine_volumeInEBC.((tag(sv_HDMachine_volumeInEBC)).0) -> SKIP ) ; mget.sv_HDMachine_vpTransdPress?v_sv_HDMachine_vpTransdPress:(type(sv_HDMachine_vpTransdPress)) -> mset.sv_HDMachine_vpTransdPress.((tag(sv_HDMachine_vpTransdPress)).0) -> SKIP ) ; mget.sv_HDMachine_hdMode?v_sv_HDMachine_hdMode:(type(sv_HDMachine_hdMode)) -> mset.sv_HDMachine_hdMode.((tag(sv_HDMachine_hdMode)).RUN) -> SKIP ) ; mget.sv_HDMachine_bloodLines?v_sv_HDMachine_bloodLines:(type(sv_HDMachine_bloodLines)) -> mset.sv_HDMachine_bloodLines.((tag(sv_HDMachine_bloodLines)).FALSE) -> SKIP ) ; mget.sv_HDMachine_minUFRateTreat?v_sv_HDMachine_minUFRateTreat:(type(sv_HDMachine_minUFRateTreat)) -> mset.sv_HDMachine_minUFRateTreat.((tag(sv_HDMachine_minUFRateTreat)).OFF) -> SKIP ) ; ( ( ( ( ( preparationPhase -> ( ( ( ( ( ( autSelfTest -> mset.setSignalLamp.((tag(setSignalLamp)).GREEN) -> SKIP ; connectingConcentrate?HDMachine_bicarbonateAcetate -> SKIP ) ; inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient -> setFillingBPRate.sFBPRate -> setRinsingBPRate.sRBPRate -> setRinsingTime.sRTime -> setUfRateForRinsing.sUFRFRinsing -> setUfVolForRinsing.sUFVFRinsing -> setBloodFlowForConnectingPatient.sBFFCPatient -> SKIP ) ; ( ( ( ( atrialTubing -> SKIP ||| ventricularTubing -> SKIP ) ; salineBagLevel?HDMachine_infSalineVol -> SKIP ) ; setBloodLines -> mget.sv_HDMachine_bloodLines?v_sv_HDMachine_bloodLines:(type(sv_HDMachine_bloodLines)) -> mset.sv_HDMachine_bloodLines.((tag(sv_HDMachine_bloodLines)).TRUE) -> SKIP ) ; setRinsingBPRate?HDMachine_rinsingBPRate -> SKIP ) ) ; insertHeparinSyringe -> heparinLineIsVented -> SKIP ) ; ( ( ( inputOfSetDFParameters?sCond.sBAc.sBCond.sDFTemp.sDFFlow -> setConductivity.sCond -> setBicarbonateAcetate.sBAc -> setBicarbonateConductivity.sBCond -> setDfTemperature.sDFTemp -> setDfFlow.sDFFlow -> SKIP ; inputOfSetUFParameters?sUFVol.sTTime.sMiUFRate.sMaUFRate -> setUfVol.sUFVol -> setTherapyTime.sTTime -> setMinUFRate.sMiUFRate -> setMaxUFRate.sMaUFRate -> SKIP ) ; inputOfSetPressureParameters?sLDMMAP.sATMPMTMP.sLTMP.sLH.sETMPLR -> setLimitDeltaMinMaxAP.sLDMMAP -> setActualTMPMaxTMP.sATMPMTMP -> setLimitsTMP.sLTMP -> setLowHigh.sLH -> setExtendedTMPLimitRange.sETMPLR -> SKIP ) ; inputOfSetHeparinParameters?sHST.sHBV.sHPR.sTWH.sST -> setHeparinStopTime.sHST -> setHeparinBolusVol.sHBV -> setHeparinProfileRate.sHPR -> setTreatmentWithoutHeparin.sTWH -> setSyringeType.sST -> SKIP ) ) ; connectDialyzer -> fillArterialDrip -> stopBP -> SKIP ) ; therapyInitiation -> ( ( ( ( ( ( mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).connectThePatient) -> SKIP ; mset.setSignalLamp.((tag(setSignalLamp)).YELLOW) -> SKIP ) ; connPatientArterially -> SKIP ) ; setBloodFlowInEBC?HDMachine_bloodFlowInEBC -> SKIP ) ; connPatientVenously -> SKIP ) ; mget.sv_HDMachine_hdMode?v_sv_HDMachine_hdMode:(type(sv_HDMachine_hdMode)) -> mset.setSignalLamp.((tag(setSignalLamp)).GREEN) -> mset.sv_HDMachine_hdMode.((tag(sv_HDMachine_hdMode)).RUN) -> SKIP ) ; ( ( ( ( ( SKIP ||| setMinUFRateTreat?ON -> SKIP ) ||| SKIP ) ||| setArtBolusVol?HDMachine_artBolusVol -> SKIP ) ||| senHDMode.BYPASS -> mset.setSignalLamp.((tag(setSignalLamp)).YELLOW) -> SKIP ) ; therapyEnding -> mset.setSignalLamp.((tag(setSignalLamp)).YELLOW) -> SKIP ) ) ) ; therapyEnding -> SKIP ) [| Union({{| c |} | c <- MainTherapyChanSet }) |] ( let X = ( ( ( let muR1 = mget.sv_HDMachine_hdActivity?v_sv_HDMachine_hdActivity:(type(sv_HDMachine_hdActivity)) -> mget.sv_HDMachine_infSalineVol?v_sv_HDMachine_infSalineVol:(type(sv_HDMachine_infSalineVol)) -> (value(v_sv_HDMachine_hdActivity) == {applicationArterialBolus} and value(v_sv_HDMachine_infSalineVol) > 400 & ( stopBloodFlow -> SKIP ||| mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).ENABLED) -> produceAlarmSound -> SKIP ) [] not value(v_sv_HDMachine_hdActivity) == {applicationArterialBolus} and value(v_sv_HDMachine_infSalineVol) > 400 & muR1) within muR1 ) ||| ( ( ( ( let muNoFlowWatchDog = mget.sv_HDMachine_lastNonZeroBF?v_sv_HDMachine_lastNonZeroBF:(type(sv_HDMachine_lastNonZeroBF)) -> mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> ((value(v_sv_HDMachine_time) - value(v_sv_HDMachine_lastNonZeroBF)) > 120000 & tick -> stopBP -> ( mget.sv_HDMachine_alarm?v_sv_HDMachine_alarm:(type(sv_HDMachine_alarm)) -> mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).ENABLED) -> SKIP ; produceAlarmSound -> SKIP ) [] (value(v_sv_HDMachine_time) - value(v_sv_HDMachine_lastNonZeroBF)) <= 120000 & tick -> muNoFlowWatchDog) within muNoFlowWatchDog ) ||| ( let muBloodFlowSample = senBloodFlowInEBC?HDMachine_bloodFlowInEBC -> getCurrentTime?x -> ( mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> (value(v_sv_HDMachine_bloodFlowInEBC) != 0 & mset.sv_HDMachine_lastNonZeroBF.((tag(sv_HDMachine_lastNonZeroBF)).x) -> SKIP [] value(v_sv_HDMachine_bloodFlowInEBC) == 0 & SKIP) ; muBloodFlowSample ) within muBloodFlowSample ) ) ||| ( let muR3 = mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> mget.sv_HDMachine_dfFlow?v_sv_HDMachine_dfFlow:(type(sv_HDMachine_dfFlow)) -> mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> (value(v_sv_HDMachine_hdMachineState) == {initPhase} and value(v_sv_HDMachine_bloodFlowInEBC) < ((value(v_sv_HDMachine_dfFlow) * 70) / 100) & mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).ENABLED) -> produceAlarmSound -> SKIP [] not value(v_sv_HDMachine_hdMachineState) == {initPhase} and value(v_sv_HDMachine_bloodFlowInEBC) < ((value(v_sv_HDMachine_dfFlow) * 70) / 100) & muR3) within muR3 ) ) ||| ( let muR4 = mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mget.sv_HDMachine_rotDirectionBP?v_sv_HDMachine_rotDirectionBP:(type(sv_HDMachine_rotDirectionBP)) -> (value(v_sv_HDMachine_hdMachineState) == {initPhase} and value(v_sv_HDMachine_rotDirectionBP) == BACKWARDS & ( stopBP -> SKIP ||| mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).ENABLED) -> produceAlarmSound -> SKIP ) [] not value(v_sv_HDMachine_hdMachineState) == {initPhase} and value(v_sv_HDMachine_rotDirectionBP) == BACKWARDS & muR4) within muR4 ) ) ) ; X ) within X ) ) [| Union({{| c |} | c <- TherapyPhaseChanSet }) |] ( let muStatePhase = mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> ( ( ( preparationPhase -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).prepPhase) -> muStatePhase [] connectingToPatient -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).connectThePatient) -> muStatePhase) [] therapyInitiation -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).initPhase) -> muStatePhase) [] therapyEnding -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).endPhase) -> muStatePhase) within muStatePhase ) ) [| Union({{| c |} | c <- HDMachineStChanSet }) |] ( let muSensorReadings = ( ( ( ( ( ( ( ( ( ( ( ( ( ( senApTransdPress?HDMachine_apTransdPress -> muSensorReadings [] senBloodFlowInEBC?HDMachine_bloodFlowInEBC -> muSensorReadings) [] senBypassVol?HDMachine_bypassValve -> muSensorReadings) [] senFflowDirect?HDMachine_fflowDirect -> muSensorReadings) [] senInfVol?infVol -> muSensorReadings) [] senLastNonZeroBF?HDMachine_lastNonZeroBF -> muSensorReadings) [] senNetFluidRemoval?HDMachine_netFluidRemoval -> muSensorReadings) [] senNetFluidRemovalRate?HDMachine_netFluidRemovalRate -> muSensorReadings) [] senRotDirectBP?HDMachine_rotDirectionBP -> muSensorReadings) [] senRotDirectUFP?HDMachine_rotDirectionUFP -> muSensorReadings) [] senVolInEBC?HDMachine_volumeInEBC -> muSensorReadings) [] senSADSensorFlow?HDMachine_sadSensorFlow -> muSensorReadings) [] senVpTransdPress?HDMachine_vpTransdPress -> muSensorReadings) [] senHDMode?HDMachine_hdMode -> muSensorReadings) [] setMinUFRateTreat?HDMachine_minUFRateTreat -> muSensorReadings) within muSensorReadings ) ) ), restrict(b))
+		|~| b:BINDINGS @ Memorise(( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( mget.sv_HDMachine_airVolLimit?v_sv_HDMachine_airVolLimit:(type(sv_HDMachine_airVolLimit)) -> mset.sv_HDMachine_airVolLimit.((tag(sv_HDMachine_airVolLimit)).0) -> SKIP ; mget.sv_HDMachine_airVol?v_sv_HDMachine_airVol:(type(sv_HDMachine_airVol)) -> mset.sv_HDMachine_airVol.((tag(sv_HDMachine_airVol)).0) -> SKIP ) ; mget.sv_HDMachine_alarm?v_sv_HDMachine_alarm:(type(sv_HDMachine_alarm)) -> mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).0) -> SKIP ) ; mget.sv_HDMachine_apTransdPress?v_sv_HDMachine_apTransdPress:(type(sv_HDMachine_apTransdPress)) -> mset.sv_HDMachine_apTransdPress.((tag(sv_HDMachine_apTransdPress)).0) -> SKIP ) ; mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> mset.sv_HDMachine_bloodFlowInEBC.((tag(sv_HDMachine_bloodFlowInEBC)).0) -> SKIP ) ; mget.sv_HDMachine_bypassValve?v_sv_HDMachine_bypassValve:(type(sv_HDMachine_bypassValve)) -> mset.sv_HDMachine_bypassValve.((tag(sv_HDMachine_bypassValve)).1) -> SKIP ) ; mget.sv_HDMachine_fflowDirect?v_sv_HDMachine_fflowDirect:(type(sv_HDMachine_fflowDirect)) -> mset.sv_HDMachine_fflowDirect.((tag(sv_HDMachine_fflowDirect)).0) -> SKIP ) ; mget.sv_HDMachine_hdActivity?v_sv_HDMachine_hdActivity:(type(sv_HDMachine_hdActivity)) -> mset.sv_HDMachine_hdActivity.((tag(sv_HDMachine_hdActivity)).8) -> SKIP ) ; mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).2) -> SKIP ) ; mget.sv_HDMachine_infSalineVol?v_sv_HDMachine_infSalineVol:(type(sv_HDMachine_infSalineVol)) -> mset.sv_HDMachine_infSalineVol.((tag(sv_HDMachine_infSalineVol)).0) -> SKIP ) ; mget.sv_HDMachine_lastNonZeroBF?v_sv_HDMachine_lastNonZeroBF:(type(sv_HDMachine_lastNonZeroBF)) -> mset.sv_HDMachine_lastNonZeroBF.((tag(sv_HDMachine_lastNonZeroBF)).0) -> SKIP ) ; mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> mset.sv_HDMachine_time.((tag(sv_HDMachine_time)).0) -> SKIP ) ; mget.sv_HDMachine_netFluidRemovalRate?v_sv_HDMachine_netFluidRemovalRate:(type(sv_HDMachine_netFluidRemovalRate)) -> mset.sv_HDMachine_netFluidRemovalRate.((tag(sv_HDMachine_netFluidRemovalRate)).0) -> SKIP ) ; mget.sv_HDMachine_netFluidRemoval?v_sv_HDMachine_netFluidRemoval:(type(sv_HDMachine_netFluidRemoval)) -> mset.sv_HDMachine_netFluidRemoval.((tag(sv_HDMachine_netFluidRemoval)).0) -> SKIP ) ; mget.sv_HDMachine_rotDirectionBP?v_sv_HDMachine_rotDirectionBP:(type(sv_HDMachine_rotDirectionBP)) -> mset.sv_HDMachine_rotDirectionBP.((tag(sv_HDMachine_rotDirectionBP)).0) -> SKIP ) ; mget.sv_HDMachine_rotDirectionUFP?v_sv_HDMachine_rotDirectionUFP:(type(sv_HDMachine_rotDirectionUFP)) -> mset.sv_HDMachine_rotDirectionUFP.((tag(sv_HDMachine_rotDirectionUFP)).0) -> SKIP ) ; mget.sv_HDMachine_safeUpperLimit?v_sv_HDMachine_safeUpperLimit:(type(sv_HDMachine_safeUpperLimit)) -> mset.sv_HDMachine_safeUpperLimit.((tag(sv_HDMachine_safeUpperLimit)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR9?v_sv_HDMachine_timerIntervalR9:(type(sv_HDMachine_timerIntervalR9)) -> mset.sv_HDMachine_timerIntervalR9.((tag(sv_HDMachine_timerIntervalR9)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR10?v_sv_HDMachine_timerIntervalR10:(type(sv_HDMachine_timerIntervalR10)) -> mset.sv_HDMachine_timerIntervalR10.((tag(sv_HDMachine_timerIntervalR10)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR11?v_sv_HDMachine_timerIntervalR11:(type(sv_HDMachine_timerIntervalR11)) -> mset.sv_HDMachine_timerIntervalR11.((tag(sv_HDMachine_timerIntervalR11)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR12?v_sv_HDMachine_timerIntervalR12:(type(sv_HDMachine_timerIntervalR12)) -> mset.sv_HDMachine_timerIntervalR12.((tag(sv_HDMachine_timerIntervalR12)).0) -> SKIP ) ; mget.sv_HDMachine_timerIntervalR13?v_sv_HDMachine_timerIntervalR13:(type(sv_HDMachine_timerIntervalR13)) -> mset.sv_HDMachine_timerIntervalR13.((tag(sv_HDMachine_timerIntervalR13)).0) -> SKIP ) ; mget.sv_HDMachine_lowerPressureLimit?v_sv_HDMachine_lowerPressureLimit:(type(sv_HDMachine_lowerPressureLimit)) -> mset.sv_HDMachine_lowerPressureLimit.((tag(sv_HDMachine_lowerPressureLimit)).0) -> SKIP ) ; mget.sv_HDMachine_upperPressureLimit?v_sv_HDMachine_upperPressureLimit:(type(sv_HDMachine_upperPressureLimit)) -> mset.sv_HDMachine_upperPressureLimit.((tag(sv_HDMachine_upperPressureLimit)).0) -> SKIP ) ; mget.sv_HDMachine_volumeInEBC?v_sv_HDMachine_volumeInEBC:(type(sv_HDMachine_volumeInEBC)) -> mset.sv_HDMachine_volumeInEBC.((tag(sv_HDMachine_volumeInEBC)).0) -> SKIP ) ; mget.sv_HDMachine_vpTransdPress?v_sv_HDMachine_vpTransdPress:(type(sv_HDMachine_vpTransdPress)) -> mset.sv_HDMachine_vpTransdPress.((tag(sv_HDMachine_vpTransdPress)).0) -> SKIP ) ; mget.sv_HDMachine_hdMode?v_sv_HDMachine_hdMode:(type(sv_HDMachine_hdMode)) -> mset.sv_HDMachine_hdMode.((tag(sv_HDMachine_hdMode)).0) -> SKIP ) ; mget.sv_HDMachine_bloodLines?v_sv_HDMachine_bloodLines:(type(sv_HDMachine_bloodLines)) -> mset.sv_HDMachine_bloodLines.((tag(sv_HDMachine_bloodLines)).1) -> SKIP ) ; mget.sv_HDMachine_minUFRateTreat?v_sv_HDMachine_minUFRateTreat:(type(sv_HDMachine_minUFRateTreat)) -> mset.sv_HDMachine_minUFRateTreat.((tag(sv_HDMachine_minUFRateTreat)).1) -> SKIP ) ; ( ( ( ( ( preparationPhase -> ( ( ( ( ( ( autSelfTest -> SKIP ; connectingConcentrate?HDMachine_bicarbonateAcetate -> SKIP ) ; inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient -> SKIP ) ; ( ( ( ( atrialTubing -> SKIP ||| ventricularTubing -> SKIP ) ; salineBagLevel?HDMachine_infSalineVol -> SKIP ) ; mget.sv_HDMachine_bloodLines?v_sv_HDMachine_bloodLines:(type(sv_HDMachine_bloodLines)) -> mset.sv_HDMachine_bloodLines.((tag(sv_HDMachine_bloodLines)).0) -> SKIP ) ; SKIP ) ) ; insertHeparinSyringe -> heparinLineIsVented -> SKIP ) ; ( ( ( inputOfSetDFParameters?sCond.sBAc.sBCond.sDFTemp.sDFFlow -> SKIP ; inputOfSetUFParameters?sUFVol.sTTime.sMiUFRate.sMaUFRate -> SKIP ) ; inputOfSetPressureParameters?sLDMMAP.sATMPMTMP.sLTMP.sLH.sETMPLR -> SKIP ) ; inputOfSetHeparinParameters?sHST.sHBV.sHPR.sTWH.sST -> SKIP ) ) ; connectDialyzer -> fillArterialDrip -> stopBP -> SKIP ) ; therapyInitiation -> ( ( ( ( ( ( mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).1) -> SKIP ) ; connPatientArterially -> SKIP ) ; SKIP ) ; connPatientVenously -> SKIP ) ; mget.sv_HDMachine_hdMode?v_sv_HDMachine_hdMode:(type(sv_HDMachine_hdMode)) -> mset.sv_HDMachine_hdMode.((tag(sv_HDMachine_hdMode)).0) -> SKIP ) ; ( ( ( ( ( SKIP ||| SKIP ) ||| SKIP ) ||| SKIP ) ||| senHDMode.2 -> SKIP ) ; therapyEnding -> SKIP ) ) ) ; therapyEnding -> SKIP ) [| Union({{| c |} | c <- MainTherapyChanSet }) |] ( let X = ( ( ( let muR1 = mget.sv_HDMachine_hdActivity?v_sv_HDMachine_hdActivity:(type(sv_HDMachine_hdActivity)) -> mget.sv_HDMachine_infSalineVol?v_sv_HDMachine_infSalineVol:(type(sv_HDMachine_infSalineVol)) -> (value(v_sv_HDMachine_hdActivity) == 2 and value(v_sv_HDMachine_infSalineVol) > 400 & ( stopBloodFlow -> SKIP ||| mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).1) -> produceAlarmSound -> SKIP ) [] not value(v_sv_HDMachine_hdActivity) == 2 and value(v_sv_HDMachine_infSalineVol) > 400 & muR1) within muR1 ) ||| ( ( ( ( let muNoFlowWatchDog = mget.sv_HDMachine_lastNonZeroBF?v_sv_HDMachine_lastNonZeroBF:(type(sv_HDMachine_lastNonZeroBF)) -> mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> ((value(v_sv_HDMachine_time) - value(v_sv_HDMachine_lastNonZeroBF)) > 120000 & tick -> stopBP -> ( mget.sv_HDMachine_alarm?v_sv_HDMachine_alarm:(type(sv_HDMachine_alarm)) -> mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).1) -> SKIP ; produceAlarmSound -> SKIP ) [] (value(v_sv_HDMachine_time) - value(v_sv_HDMachine_lastNonZeroBF)) <= 120000 & tick -> muNoFlowWatchDog) within muNoFlowWatchDog ) ||| ( let muBloodFlowSample = senBloodFlowInEBC?HDMachine_bloodFlowInEBC -> getCurrentTime?x -> ( mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> (value(v_sv_HDMachine_bloodFlowInEBC) != 0 & mset.sv_HDMachine_lastNonZeroBF.((tag(sv_HDMachine_lastNonZeroBF)).x) -> SKIP [] value(v_sv_HDMachine_bloodFlowInEBC) == 0 & SKIP) ; muBloodFlowSample ) within muBloodFlowSample ) ) ||| ( let muR3 = mget.sv_HDMachine_bloodFlowInEBC?v_sv_HDMachine_bloodFlowInEBC:(type(sv_HDMachine_bloodFlowInEBC)) -> mget.sv_HDMachine_dfFlow?v_sv_HDMachine_dfFlow:(type(sv_HDMachine_dfFlow)) -> mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> (value(v_sv_HDMachine_hdMachineState) == 2 and value(v_sv_HDMachine_bloodFlowInEBC) < ((value(v_sv_HDMachine_dfFlow) * 70) / 100) & mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).1) -> produceAlarmSound -> SKIP [] not value(v_sv_HDMachine_hdMachineState) == 2 and value(v_sv_HDMachine_bloodFlowInEBC) < ((value(v_sv_HDMachine_dfFlow) * 70) / 100) & muR3) within muR3 ) ) ||| ( let muR4 = mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> mget.sv_HDMachine_rotDirectionBP?v_sv_HDMachine_rotDirectionBP:(type(sv_HDMachine_rotDirectionBP)) -> (value(v_sv_HDMachine_hdMachineState) == 2 and value(v_sv_HDMachine_rotDirectionBP) == 1 & ( stopBP -> SKIP ||| mset.sv_HDMachine_alarm.((tag(sv_HDMachine_alarm)).1) -> produceAlarmSound -> SKIP ) [] not value(v_sv_HDMachine_hdMachineState) == 2 and value(v_sv_HDMachine_rotDirectionBP) == 1 & muR4) within muR4 ) ) ) ; X ) within X ) ) [| Union({{| c |} | c <- TherapyPhaseChanSet }) |] ( let muStatePhase = mget.sv_HDMachine_hdMachineState?v_sv_HDMachine_hdMachineState:(type(sv_HDMachine_hdMachineState)) -> ( ( ( preparationPhase -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).3) -> muStatePhase [] connectingToPatient -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).1) -> muStatePhase) [] therapyInitiation -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).2) -> muStatePhase) [] therapyEnding -> mset.sv_HDMachine_hdMachineState.((tag(sv_HDMachine_hdMachineState)).0) -> muStatePhase) within muStatePhase ) ) [| Union({{| c |} | c <- HDMachineStChanSet }) |] ( let muSensorReadings = ( ( ( ( ( ( ( ( ( ( ( ( ( ( senApTransdPress?HDMachine_apTransdPress -> muSensorReadings [] senBloodFlowInEBC?HDMachine_bloodFlowInEBC -> muSensorReadings) [] senBypassVol?HDMachine_bypassValve -> muSensorReadings) [] senFflowDirect?HDMachine_fflowDirect -> muSensorReadings) [] senInfVol?infVol -> muSensorReadings) [] senLastNonZeroBF?HDMachine_lastNonZeroBF -> muSensorReadings) [] senNetFluidRemoval?HDMachine_netFluidRemoval -> muSensorReadings) [] senNetFluidRemovalRate?HDMachine_netFluidRemovalRate -> muSensorReadings) [] senRotDirectBP?HDMachine_rotDirectionBP -> muSensorReadings) [] senRotDirectUFP?HDMachine_rotDirectionUFP -> muSensorReadings) [] senVolInEBC?HDMachine_volumeInEBC -> muSensorReadings) [] senSADSensorFlow?HDMachine_sadSensorFlow -> muSensorReadings) [] senVpTransdPress?HDMachine_vpTransdPress -> muSensorReadings) [] senHDMode?HDMachine_hdMode -> muSensorReadings) [] muSensorReadings) within muSensorReadings ) ) ), restrict(b))
 )
 
 SysClock = 
-	( let restrict(bs) = dres(bs,{sv_HDMachine_airVolLimit,sv_HDMachine_airVol,sv_HDMachine_alarm,sv_HDMachine_artBolusVol,sv_HDMachine_apTransdPress,sv_HDMachine_bloodFlowInEBC,sv_HDMachine_bypassValve,sv_HDMachine_fflowDirect,sv_HDMachine_hdActivity,sv_HDMachine_hdMachineState,sv_HDMachine_hdMode,sv_HDMachine_infSalineVol,sv_HDMachine_lastNonZeroBF,sv_HDMachine_lowerPressureLimit,sv_HDMachine_netFluidRemovalRate,sv_HDMachine_netFluidRemoval,sv_HDMachine_rotDirectionBP,sv_HDMachine_rotDirectionUFP,sv_HDMachine_safeUpperLimit,sv_HDMachine_timerIntervalR9,sv_HDMachine_timerIntervalR10,sv_HDMachine_timerIntervalR11,sv_HDMachine_timerIntervalR12,sv_HDMachine_timerIntervalR13,sv_HDMachine_time,sv_HDMachine_upperPressureLimit,sv_HDMachine_volumeInEBC,sv_HDMachine_vpTransdPress,sv_HDMachine_sadSensorFlow,sv_HDMachine_bloodLines,sv_HDMachine_minUFRateTreat,sv_HDMachine_fillingBPRate,sv_HDMachine_rinsingBPRate,sv_HDMachine_rinsingTime,sv_HDMachine_ufRateForRinsing,sv_HDMachine_ufVolForRinsing,sv_HDMachine_bloodFlowForConnectingPatient,sv_HDMachine_conductivity,sv_HDMachine_bicarbonateAcetate,sv_HDMachine_bicarbonateConductivity,sv_HDMachine_dfTemperature,sv_HDMachine_dfFlow,sv_HDMachine_ufVol,sv_HDMachine_therapyTime,sv_HDMachine_minUFRate,sv_HDMachine_maxUFRate,sv_HDMachine_limitDeltaMinMaxAP,sv_HDMachine_actualTMPMaxTMP,sv_HDMachine_limitsTMP,sv_HDMachine_lowHigh,sv_HDMachine_extendedTMPLimitRange,sv_HDMachine_heparinStopTime,sv_HDMachine_heparinBolusVol,sv_HDMachine_heparinProfileRate,sv_HDMachine_treatmentWithoutHeparin,sv_HDMachine_syringeType,sv_SysClock_time})
+	( let restrict(bs) = dres(bs,{sv_SysClock_time})
 		within
-		|~| b:BINDINGS @ Memorise(( mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> mset.sv_HDMachine_time.((tag(sv_HDMachine_time)).0) -> SKIP ; ( let X = ( mget.sv_HDMachine_time?v_sv_HDMachine_time:(type(sv_HDMachine_time)) -> (value(v_sv_HDMachine_time) <= 3 & ( tick -> mset.sv_HDMachine_time.((tag(sv_HDMachine_time)).(value(v_sv_HDMachine_time) + 1)) -> SKIP ||| getCurrentTime.value(v_sv_HDMachine_time) -> SKIP ) [] value(v_sv_HDMachine_time) > 2 & mset.sv_HDMachine_time.((tag(sv_HDMachine_time)).0) -> SKIP) ; X ) within X ) ), restrict(b))
+		|~| b:BINDINGS @ Memorise(( mget.sv_SysClock_time?v_sv_SysClock_time:(type(sv_SysClock_time)) -> mset.sv_SysClock_time.((tag(sv_SysClock_time)).0) -> SKIP ; ( let X = ( mget.sv_SysClock_time?v_sv_SysClock_time:(type(sv_SysClock_time)) -> (value(v_sv_SysClock_time) <= 3 & ( tick -> mset.sv_SysClock_time.((tag(sv_SysClock_time)).(value(v_sv_SysClock_time) + 1)) -> SKIP ||| getCurrentTime.value(v_sv_SysClock_time) -> SKIP ) [] value(v_sv_SysClock_time) > 2 & mset.sv_SysClock_time.((tag(sv_SysClock_time)).0) -> SKIP) ; X ) within X ) ), restrict(b))
 )
-HDMachineStChanSet = {| getActualTMPMaxTMP,getAirVolLimit,getAirVol,getAlarm,getApTransdPress,getArtBolusVol,getBicarbonateAcetate,getBicarbonateConductivity,getBloodFlowForConnectingPatient,getBloodFlowInEBC,getBloodLines,getBypassValve,getConductivity,getDfFlow,getDfTemperature,getExtendedTMPLimitRange,getFflowDirect,getFillingBPRate,getHdActivity,getHdMachineState,getHDMode,getHeparinBolusVol,getHeparinProfileRate,getHeparinStopTime,getInfSalineVol,getLastNonZeroBF,getLimitDeltaMinMaxAP,getLimitsTMP,getLowerPressureLimit,getLowHigh,getMaxUFRate,getMinUFRate,getMinUFRateTreat,getNetFluidRemoval,getNetFluidRemovalRate,getRinsingBPRate,getRinsingTime,getRotDirectBP,getRotDirectUFP,getSADSensorFlow,getSafeUpperLimit,getSignalLamp,getSyringeType,getTherapyTime,getTimerIntervalR10,getTimerIntervalR11,getTimerIntervalR12,getTimerIntervalR13,getTimerIntervalR9,getTreatmentWithoutHeparin,getUfRateForRinsing,getUfVol,getUfVolForRinsing,getUpperPressureLimit,getVolInEBC,getVpTransdPress,setActualTMPMaxTMP,setAirVolLimit,setAirVol,setBicarbonateAcetate,setBicarbonateConductivity,setBloodFlowForConnectingPatient,setBloodFlowInEBC,setConductivity,setDfFlow,setDfTemperature,setExtendedTMPLimitRange,setFillingBPRate,setHeparinBolusVol,setHeparinProfileRate,setHeparinStopTime,setLastNonZeroBF,setLimitDeltaMinMaxAP,setLimitsTMP,setLowHigh,setMaxUFRate,setMinUFRate,setRinsingBPRate,setRinsingTime,setSyringeType,setTherapyTime,setTimerIntervalR10,setTimerIntervalR11,setTimerIntervalR12,setTimerIntervalR13,setTimerIntervalR9,setTreatmentWithoutHeparin,setUfRateForRinsing,setUfVol,setUfVolForRinsing,preparationPhase,connectingToPatient,therapyInitiation,therapyEnding |}
+HDMachineStChanSet = {| preparationPhase,connectingToPatient,therapyInitiation,therapyEnding |}
 SensorReadingsChanSet = {| senAirVol,senApTransdPress,senBloodFlowInEBC,senSADSensorFlow,senVpTransdPress |}
-MainTherapyChanSet = {| setActualTMPMaxTMP,setArtBolusVol,setBicarbonateAcetate,setBicarbonateConductivity,setBloodFlowForConnectingPatient,setBloodFlowInEBC,setBloodLines,setConductivity,setDfFlow,setDfTemperature,setExtendedTMPLimitRange,setFillingBPRate,setHDMode,setHeparinBolusVol,setHeparinProfileRate,setHeparinStopTime,setInfSalineVol,setLimitDeltaMinMaxAP,setLimitsTMP,setLowHigh,setMaxUFRate,setMinUFRate,setMinUFRateTreat,setRinsingBPRate,setRinsingTime,setSignalLamp,setSyringeType,setTherapyTime,setTreatmentWithoutHeparin,setUfRateForRinsing,setUfVol,setUfVolForRinsing,preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
-RinsingParametersStComm = {| setFillingBPRate,setRinsingBPRate,setRinsingTime,setUfRateForRinsing,setUfVolForRinsing,setBloodFlowForConnectingPatient |}
-HeparinParametersStComm = {| setHeparinStopTime,setHeparinBolusVol,setHeparinProfileRate,setTreatmentWithoutHeparin,setSyringeType |}
-PressureParametersStComm = {| setLimitDeltaMinMaxAP,setActualTMPMaxTMP,setLimitsTMP,setLowHigh,setExtendedTMPLimitRange |}
-UFParametersStComm = {| setUfVol,setTherapyTime,setMinUFRate,setMaxUFRate |}
-DFParametersStComm = {| setConductivity,setBicarbonateAcetate,setBicarbonateConductivity,setDfTemperature,setDfFlow |}
-DFParametersStChanSet = {| setBicarbonateAcetate,setBicarbonateConductivity,setDfFlow,setDfTemperature,setConductivity,getBicarbonateAcetate,getConductivity,getDfFlow,getDfTemperature,getBicarbonateConductivity |}
-UFParametersStChanSet = {| setMaxUFRate,setMinUFRate,setTherapyTime,setUfVol,getMaxUFRate,getMinUFRate,getTherapyTime,getUfVol |}
-HeparinParametersStChanSet = {| setTreatmentWithoutHeparin,setHeparinBolusVol,setHeparinProfileRate,getHeparinBolusVol,getHeparinProfileRate,getTreatmentWithoutHeparin,setSyringeType,getSyringeType |}
-PressureParametersStChanSet = {| setLimitDeltaMinMaxAP,setActualTMPMaxTMP,setLimitsTMP,setLowHigh,setExtendedTMPLimitRange,getLimitDeltaMinMaxAP,getActualTMPMaxTMP,getLimitsTMP,getLowHigh,getExtendedTMPLimitRange |}
-RinsingParametersStChanSet = {| setFillingBPRate,setRinsingBPRate,setRinsingTime,setUfVolForRinsing,setBloodFlowForConnectingPatient,getRinsingBPRate,getRinsingTime,setUfRateForRinsing,getUfRateForRinsing,getUfVolForRinsing,getBloodFlowForConnectingPatient,getFillingBPRate |}
-HDGenCompStChanSet = {| getAirVolLimit,getAirVol,getApTransdPress,getArtBolusVol,getBloodFlowInEBC,getBypassValve,getFflowDirect,getHdActivity,getHDMode,getInfSalineVol,getLastNonZeroBF,getLowerPressureLimit,getMinUFRateTreat,getNetFluidRemoval,getNetFluidRemovalRate,getSADSensorFlow,getSafeUpperLimit,getSignalLamp,getTimerIntervalR10,getTimerIntervalR11,getTimerIntervalR12,getTimerIntervalR13,getTimerIntervalR9,getUpperPressureLimit,getVolInEBC,getVpTransdPress,getBloodLines,setAirVolLimit,setAirVol,setAlarm,setBloodFlowInEBC,setLastNonZeroBF,setTimerIntervalR10,setTimerIntervalR11,setTimerIntervalR12,setTimerIntervalR13,setTimerIntervalR9,getRotDirectBP,getRotDirectUFP,preparationPhase,connectingToPatient,therapyInitiation,therapyEnding |}
-HDComm = {| getApTransdPress,getBloodFlowInEBC,getCurrentTime,getDfFlow,getHdActivity,getHdMachineState,getFflowDirect,getInfSalineVol,getVolInEBC,getLowerPressureLimit,getRotDirectUFP,getUpperPressureLimit,getDfTemperature,getVpTransdPress,senBloodFlowInEBC,senSADSensorFlow,setAirVol,setBloodFlowInEBC,setLastNonZeroBF,therapyInitiation,senVpTransdPress,getTimerIntervalR9,setTimerIntervalR9,getTimerIntervalR10,setTimerIntervalR10,getTimerIntervalR9 |}
+MainTherapyChanSet = {| preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
+RinsingParametersStComm = {||}
+HeparinParametersStComm = {||}
+PressureParametersStComm = {||}
+UFParametersStComm = {||}
+DFParametersStComm = {||}
+DFParametersStChanSet = {||}
+UFParametersStChanSet = {||}
+HeparinParametersStChanSet = {||}
+PressureParametersStChanSet = {||}
+RinsingParametersStChanSet = {||}
+HDGenCompStChanSet = {| preparationPhase,connectingToPatient,therapyInitiation,therapyEnding |}
+HDComm = {| senBloodFlowInEBC,senSADSensorFlow,therapyInitiation,senVpTransdPress |}
 SensorReadingsComm = {| senAirVol,senApTransdPress,senBloodFlowInEBC,senHDMode,senSADSensorFlow,senVpTransdPress |}
 TherapyPhaseChanSet = {| preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
-channel inputOfSetHeparinParameters : TIME.NatValue.NatValue.SWITCH.NatValue
-channel inputOfSetPressureParameters : NatValue.NatValue.SWITCH.SWITCH
+channel inputOfSetHeparinParameters : TIME.NatValue.NatValue.NatValue.NatValue
+channel inputOfSetPressureParameters : NatValue.NatValue.NatValue.NatValue.NatValue
 channel inputOfSetUFParameters : NatValue.NatValue.NatValue.NatValue
-channel inputOfSetDFParameters : NatValue.CONCENTRATE.NatValue.NatValue.NatValue
+channel inputOfSetDFParameters : NatValue.NatValue.NatValue.NatValue.NatValue
 channel inputOfSetRinsingParameters : NatValue.NatValue.NatValue.NatValue.NatValue.NatValue
 channel senVpTransdPress : NatValue
 channel senVolInEBC : NatValue
 channel senSADSensorFlow : NatValue
-channel senRotDirectUFP : DIRECTION
-channel senRotDirectBP : DIRECTION
-channel senNetFluidRemoval : SWITCH
+channel senRotDirectUFP : NatValue
+channel senRotDirectBP : NatValue
+channel senNetFluidRemoval : NatValue
 channel senNetFluidRemovalRate : NatValue
 channel senLastNonZeroBF : NatValue
 channel senInfVol : NatValue
-channel senHDMode : HDMODE
-channel senFflowDirect : DIRECTION
-channel senBypassVol : LIDD
+channel senHDMode : NatValue
+channel senFflowDirect : NatValue
+channel senBypassVol : NatValue
 channel senBloodFlowInEBC : NatValue
 channel senApTransdPress : NatValue
 channel senAirVol : NatValue
 channel senAirVolLimit : NatValue
-channel getVpTransdPress, setVpTransdPress : NatValue
-channel getVolInEBC, setVolInEBC : NatValue
-channel getUpperPressureLimit, setUpperPressureLimit : NatValue
-channel getUfVol, setUfVol : NatValue
-channel getUfVolForRinsing, setUfVolForRinsing : NatValue
-channel getUfRateForRinsing, setUfRateForRinsing : NatValue
-channel getTreatmentWithoutHeparin, setTreatmentWithoutHeparin : SWITCH
-channel getTime, setTime : NatValue
-channel getTimerIntervalR9, setTimerIntervalR9 : NatValue
-channel getTimerIntervalR13, setTimerIntervalR13 : NatValue
-channel getTimerIntervalR12, setTimerIntervalR12 : NatValue
-channel getTimerIntervalR11, setTimerIntervalR11 : NatValue
-channel getTimerIntervalR10, setTimerIntervalR10 : NatValue
-channel getTherapyTime, setTherapyTime : NatValue
-channel getSyringeType, setSyringeType : NatValue
-channel getSafeUpperLimit, setSafeUpperLimit : NatValue
-channel getSADSensorFlow, setSADSensorFlow : NatValue
-channel getSignalLamp, setSignalLamp : LAMP
-channel getRotDirectUFP, setRotDirectUFP : DIRECTION
-channel getRotDirectBP, setRotDirectBP : DIRECTION
-channel getRinsingTime, setRinsingTime : NatValue
-channel getRinsingBPRate, setRinsingBPRate : NatValue
-channel getNetFluidRemoval, setNetFluidRemoval : SWITCH
-channel getNetFluidRemovalRate, setNetFluidRemovalRate : NatValue
-channel getMinUFRate, setMinUFRate : NatValue
-channel getMinUFRateTreat, setMinUFRateTreat : BUTTON
-channel getMaxUFRate, setMaxUFRate : NatValue
-channel getLowHigh, setLowHigh : NatValue
-channel getLowerPressureLimit, setLowerPressureLimit : NatValue
-channel getLimitsTMP, setLimitsTMP : SWITCH
-channel getLimitDeltaMinMaxAP, setLimitDeltaMinMaxAP : NatValue
-channel getLastNonZeroBF, setLastNonZeroBF : NatValue
-channel getInfSalineVol, setInfSalineVol : NatValue
-channel getHeparinStopTime, setHeparinStopTime : TIME
-channel getHeparinProfileRate, setHeparinProfileRate : NatValue
-channel getHeparinBolusVol, setHeparinBolusVol : NatValue
-channel getHDMode, setHDMode : HDMODE
-channel getHdMachineState, setHdMachineState : Set(STATEPHASE)
-channel getHdActivity, setHdActivity : Set(ACTIVITY)
-channel getFillingBPRate, setFillingBPRate : NatValue
-channel getFflowDirect, setFflowDirect : DIRECTION
-channel getExtendedTMPLimitRange, setExtendedTMPLimitRange : SWITCH
-channel getDfTemperature, setDfTemperature : NatValue
-channel getDfFlow, setDfFlow : NatValue
-channel getConductivity, setConductivity : NatValue
-channel getBypassValve, setBypassValve : LIDD
-channel getBloodLines, setBloodLines : BOOL
-channel getBloodFlowInEBC, setBloodFlowInEBC : NatValue
-channel getBloodFlowForConnectingPatient, setBloodFlowForConnectingPatient : NatValue
-channel getBicarbonateConductivity, setBicarbonateConductivity : NatValue
-channel getBicarbonateAcetate, setBicarbonateAcetate : CONCENTRATE
-channel getArtBolusVol, setArtBolusVol : NatValue
-channel getApTransdPress, setApTransdPress : NatValue
-channel getAlarm, setAlarm : SWITCH
-channel getAirVol, setAirVol : NatValue
-channel getAirVolLimit, setAirVolLimit : NatValue
-channel getActualTMPMaxTMP, setActualTMPMaxTMP : NatValue
+
 channel getCurrentTime : NatValue
 channel tick
 channel salineBagLevel : NatValue
-channel connectingConcentrate : CONCENTRATE
+channel connectingConcentrate : NatValue
 channel insertHeparinSyringe, heparinLineIsVented
 channel fillArterialDrip, connPatientArterially, connPatientVenously
 channel disconnectDF, stopFlowDialyzer, stopCoagulantFlow
@@ -311,3 +245,11 @@ channel ventricularTubing, connectDialyzer
 channel autSelfTest, atrialTubing
 channel connectingToPatient, duringTherapy, therapyEnding
 channel preparationPhase, therapyInitiation
+
+
+
+MyHDMACHINE = let X = HDMachine; X within X
+assert MyHDMACHINE :[ deadlock free [FD] ]
+assert HDMachine :[ livelock free ]
+assert HDMachine :[ deterministic [F] ]
+

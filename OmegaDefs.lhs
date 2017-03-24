@@ -9,6 +9,7 @@ import Data.Char
 import Subs
 import AST
 import Errors
+
 \end{code}
 }
 \begin{code}
@@ -223,7 +224,10 @@ setminus (v : va) [] = (v : va)
 setminus (v : va) (b : vb)
      = (delete_from_list b (v : va)) ++ (setminus (v : va) vb)
 
-
+-- Function that takes the last n elements of a string 
+-- used in order to get U_TYP from sv_StateName_VarName_U_TYP
+lastN :: Int -> [a] -> [a]
+lastN n xs = drop (length xs - n) xs
 -- From Data.List
 
 member x [] = False
@@ -261,6 +265,19 @@ elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
 elem_by _  _ []         =  False
 elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
 
+-- | The 'stripPrefix' function drops the given prefix from a list.
+-- It returns 'Nothing' if the list did not start with the prefix
+-- given, or 'Just' the list after the prefix, if it does.
+--
+-- > stripPrefix "foo" "foobar" == Just "bar"
+-- > stripPrefix "foo" "foo" == Just ""
+-- > stripPrefix "foo" "barfoo" == Nothing
+-- > stripPrefix "foo" "barfoobaz" == Nothing
+stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
+stripPrefix [] ys = Just ys
+stripPrefix (x:xs) (y:ys)
+ | x == y = stripPrefix xs ys
+stripPrefix _ _ = Nothing
 
 isPrefixOf [] _ = True
 isPrefixOf _ [] = False
@@ -751,7 +768,7 @@ expand_action_names_CAction lst (CActionCommand c)
  = (CActionCommand (expand_action_names_CAction_comnd lst c))
 expand_action_names_CAction lst (CActionName nm)
   | (take 2 nm) == "mu" = (CActionName nm) 
-  | otherwise = expand_action_names_CAction lst $ get_action nm lst
+  | otherwise = get_action nm lst
 expand_action_names_CAction lst (CSPSkip)
  = (CSPSkip)
 expand_action_names_CAction lst (CSPStop)
@@ -1191,10 +1208,22 @@ get_proc_name x ((a,(va,x1),b):vst)
  = case x == va of
   True -> a
   _ -> get_proc_name x vst
+
+get_var_type :: ZName -> [(ZName, ZVar, ZExpr)] -> ZExpr
+get_var_type x [(a,(va,x1),b)]
+ = case x == va of
+  True -> b
+  _ -> error "type not found whilst get_var_type"
+get_var_type x ((a,(va,x1),b):vst)
+ = case x == va of
+  True -> b
+  _ -> get_var_type x vst
 \end{code}
 \begin{code}
 rename_ZGenFilt1 lst (Include s) = (Include s)
-rename_ZGenFilt1 lst (Choose (va,x) e) = (Choose ((join_name (join_name "sv" (get_proc_name va lst)) va),x) (rename_vars_ZExpr1 lst e))
+rename_ZGenFilt1 lst (Choose (va,x) e) 
+  = (Choose ((join_name (join_name (join_name "sv" (get_proc_name va lst)) va) newt),x) (rename_vars_ZExpr1 lst e))
+    where newt = (def_U_NAME $ get_vars_ZExpr e)
 rename_ZGenFilt1 lst (Check p) = (Check (rename_vars_ZPred1 lst p))
 rename_ZGenFilt1 lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 lst e1) (rename_vars_ZExpr1 lst e2))
 \end{code}
@@ -1202,19 +1231,18 @@ rename_ZGenFilt1 lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 lst e1
 rename_vars_ZVar1 :: [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
 rename_vars_ZVar1 lst (va,x)
  = case (inListVar1 va lst) of
-  True -> ((join_name (join_name "sv" (get_proc_name va lst)) va),x)
-  _ -> (va,x)
+    True -> ((join_name (join_name (join_name "sv" (get_proc_name va lst)) va) newt),x)
+    _ -> (va,x)
+    where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
 \end{code}
 \begin{code}
 rename_vars_ZExpr1 :: [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
 rename_vars_ZExpr1 lst (ZVar (va,x))
  = case (inListVar1 va lst) of
-  True -> (ZVar 
-            ((join_name 
-              (join_name "sv" 
-                        (get_proc_name va lst)) 
-              va),x))
-  _ -> (ZVar (va,x))
+    True -> (ZVar 
+              ((join_name (join_name (join_name "sv" (get_proc_name va lst)) va) newt),x))
+    _ -> (ZVar (va,x))
+  where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
 rename_vars_ZExpr1 lst (ZInt zi)
  = (ZInt zi)
 rename_vars_ZExpr1 lst (ZGiven gv)
@@ -1334,70 +1362,27 @@ get_delta_names_aux ((ZBranch0 (a,[])):xs)
   = [a]++(get_delta_names_aux xs)
 \end{code}
 
-
-
 \begin{code}
-get_vars_ZExpr :: ZExpr -> [ZName]
-get_vars_ZExpr (ZVar (('s':'t':'_':'v':'a':'r':'_':xs),x))
- = [('s':'t':'_':'v':'a':'r':'_':xs)]
-get_vars_ZExpr (ZFree1 va xpr)
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZTuple xpr)
- = concat (map get_vars_ZExpr xpr)
-get_vars_ZExpr (ZBinding xs)
- = (get_bindings_var xs)
-get_vars_ZExpr (ZSetDisplay xpr)
- = concat (map get_vars_ZExpr xpr)
-get_vars_ZExpr (ZSeqDisplay xpr)
- = concat (map get_vars_ZExpr xpr)
-get_vars_ZExpr (ZGenerator zrl xpr)
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZCross xpr)
- = concat (map get_vars_ZExpr xpr)
-get_vars_ZExpr (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
- = (get_vars_ZExpr expr1)++(get_vars_ZExpr expr2)
-get_vars_ZExpr (ZSetComp pname1 (Just xpr))
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZLambda pname1 xpr)
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZCall xpr1 xpr2)
- = (get_vars_ZExpr xpr1) ++(get_vars_ZExpr xpr2)
-get_vars_ZExpr (ZMu pname1 (Just xpr))
- = (get_vars_ZExpr xpr)
-get_vars_ZExpr (ZELet pname1 xpr1)
- = (get_bindings_var pname1)++(get_vars_ZExpr xpr1)
-get_vars_ZExpr (ZIf_Then_Else zp xpr1 xpr2)
- = (get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2)
-get_vars_ZExpr _ = []
+get_vars_ZExpr :: ZExpr -> ZName
+-- get_vars_ZExpr (ZVar (('\\':'\\':xs),x)) = (map toUpper (take 1 xs)) ++ (drop 1 xs)
+get_vars_ZExpr (ZVar (a,x)) 
+  = strip a "\92"
+get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[]))) 
+  = "P"++get_vars_ZExpr (ZVar (c,[]))
 \end{code}
 \begin{code}
-get_vars_ZPred (ZAnd p1 p2)
- = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
-get_vars_ZPred (ZOr p1 p2)
- = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
-get_vars_ZPred (ZImplies p1 p2)
- = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
-get_vars_ZPred (ZIff p1 p2)
- = ((get_vars_ZPred p1)++(get_vars_ZPred p2))
-get_vars_ZPred (ZNot p)
- = ((get_vars_ZPred p))
-get_vars_ZPred (ZEqual xpr1 xpr2)
- = ( (get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2))
-get_vars_ZPred (ZMember xpr1 xpr2)
- = ((get_vars_ZExpr xpr1)++(get_vars_ZExpr xpr2))
-get_vars_ZPred _
- = []
+strip str x
+  | x `isPrefixOf` str = drop 1 str
+  | otherwise = str
+    where Just restOfString = stripPrefix x str
 \end{code}
+
 Construction of the Universe set in CSP
 \begin{code}
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
 def_U_prefix x = (map toTitle (take 3 x))
 
--- def_U_NAME x = ("U_"++Data.Text.unpack(Data.Text.toUpper(Data.Text.take 3 (pack x))))
--- def_U_prefix x = (Data.Text.unpack(Data.Text.toTitle(Data.Text.take 3 (Data.Text.pack x))))
-
+-- Make UNIVERSE datatype in CSP
 mk_universe []
   = ""
 mk_universe [(a,b,c,d)]
@@ -1405,6 +1390,7 @@ mk_universe [(a,b,c,d)]
 mk_universe ((a,b,c,d):xs)
   = c++"."++d++" | "++(mk_universe xs)
 
+-- Make subtype U_TYP = TYP.TYPE
 mk_subtype []
   = ""
 mk_subtype [(a,b,c,d)]
@@ -1412,13 +1398,17 @@ mk_subtype [(a,b,c,d)]
 mk_subtype ((a,b,c,d):xs)
   = "subtype "++b++" = "++c++"."++d++"\n"++(mk_subtype xs)
 
+-- Make value(XXX.v) function call 
+-- This won't be used anymore in the next commit - 21.03.17
 mk_value []
   = ""
 mk_value [(a,b,c,d)]
-  = "value("++c++".v) = v\n"
+  = "value"++(lastN 3 b)++"("++c++".v) = v\n"
 mk_value ((a,b,c,d):xs)
-  = "value("++c++".v) = v\n"++(mk_value xs)
+  = "value"++(lastN 3 b)++"("++c++".v) = v\n"++(mk_value xs)
 
+-- Make type(x) function call 
+-- This won't be used anymore in the next commit - 21.03.17
 mk_type []
   = ""
 mk_type [(a,b,c,d)]
@@ -1426,6 +1416,8 @@ mk_type [(a,b,c,d)]
 mk_type ((a,b,c,d):xs)
   = a++" then "++b++"\n\t else if x == "++(mk_type xs)
 
+-- Make tag(x) function call 
+-- This won't be used anymore in the next commit - 21.03.17
 mk_tag []
   = ""
 mk_tag [(a,b,c,d)]
@@ -1472,20 +1464,24 @@ Pieces from MappingFunStatelessCircus file
 
 def_delta_mapping :: [(ZName, ZVar, ZExpr)] -> [ZExpr]
 def_delta_mapping [(n,(v,[]),t)] 
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "sv" n) v),[]),t])]
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
+    where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_mapping ((n,(v,[]),t):xs) 
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name "sv" n) v),[]),t])] 
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
     ++ (def_delta_mapping xs)
+    where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_mapping [] = []
 \end{code}
 
 \begin{code}
 def_delta_name :: [(ZName, ZVar, ZExpr)] -> [ZBranch]
 def_delta_name [(n,(v,[]),t)] 
-  = [ZBranch0 ((join_name (join_name "sv" n) v),[])]
+  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])]
+    where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_name ((n,(v,[]),t):xs) 
-  = [ZBranch0 ((join_name (join_name "sv" n) v),[])] 
+  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])] 
     ++ (def_delta_name xs)
+    where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_name [] = []
 
 \end{code}
@@ -1607,16 +1603,16 @@ Here I'm making the bindings for the main action.
 mk_main_action_bind :: [(ZName, ZVar, ZExpr)] -> CAction -> CAction
 mk_main_action_bind lst ca
   | null lst = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])) ] Nothing)] ca))
-  | otherwise = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst) ] Nothing)] ca))
+  | otherwise = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst lst) ] Nothing)] ca))
 \end{code}
 \begin{code}
-mk_inv :: [(ZName, ZVar, ZExpr)] -> ZPred
-mk_inv [(a,b,ZVar c)] 
-  = (ZMember (ZVar b) (ZVar c))
-mk_inv ((a,b,ZVar c):xs) 
-  = (ZAnd (mk_inv xs) (ZMember (ZVar b) (ZVar c)) ) 
-mk_inv (_:xs) 
-  = mk_inv xs
+mk_inv :: [(ZName, ZVar, ZExpr)] -> [(ZName, ZVar, ZExpr)] -> ZPred
+mk_inv lst [(a,(va,x),c)] 
+  = (ZMember (ZVar ((join_name (join_name (join_name "sv" a) va) newt),x)) (rename_vars_ZExpr1 lst c))
+    where newt = (def_U_NAME $ get_vars_ZExpr c)
+mk_inv lst ((a,b,c):xs) 
+  = (ZAnd (mk_inv lst xs) (mk_inv lst [(a,b,c)])) 
+-- mk_inv x (_:xs) = mk_inv x xs
 
 \end{code}
 

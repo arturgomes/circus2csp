@@ -1,34 +1,29 @@
+\begin{zed}
+SWITCH ::= ON | OFF
+\also NatValue == 0 \upto 3
+\end{zed}
 
 \begin{circus}
+  \circchannel start,stop\\
   \circchannel getCurrentTime~:~\nat\\
   \circchannel tick
 \end{circus}
 
-\begin{schema}{SysClockS}
- time : \nat
+\begin{schema}{SysCmdS}
+ time : \nat\\
+ swi : SWITCH
 \end{schema}
-\begin{zed}
-NatValue == 0 \upto 3
-\end{zed}
 \begin{circus}%
-  \circprocess\ ~SysClock2 ~\circdef~\circbegin
-  \circstate SysClockSt \defs SysClockS
-  ResetClock ~\circdef~
-  \\\t2  (time := 0) \circseq Clock\\
+  \circprocess\ ~SysCmd ~\circdef~\circbegin
+  \circstate SysCmdSt \defs SysCmdS
+  Start ~\circdef~
+  \\\t2 start \then (swi,time := ON,0) \circseq Clock\\
   Clock ~\circdef~ 
   \circmu~X \circspot 
-    ((\circif time \leq 3 \circthen (tick \then (time := time+1) \interleave (getCurrentTime!time \then \Skip))
-        \circelse time > 2 \circthen ((time := 0) \circseq Wait1) 
+    ((\circif time \leq 2 \circthen ((tick \then (time := time+1) \circseq X) \interleave (getCurrentTime!time \then X))
+        \circelse time > 2 \circthen ((time,swi := 0,OFF) \circseq (stop \then \Skip)) 
         \circfi) \circseq X)
-  Wait~\circdef~ \circvar n : \nat \circspot
-   \circif n> 0 \circthen (tick \then Wait (n-1))
-   \circelse n~=~0 \circthen \Skip
-   \circfi\\
-  Wait1~\circdef~ \circvar n : \nat \circspot
-   \circif n> 0 \circthen \Skip
-   \circelse n~=~0 \circthen \Skip
-   \circfi\\
-  \circspot ResetClock
+  \circspot Start
   \circend
 \end{circus}
 \begin{circus}

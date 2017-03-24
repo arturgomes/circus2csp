@@ -51,10 +51,10 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
     "\n"++(mk_value funivlst)++
-    "\ntype(x) ="++
-    "\n\t if x == "++(mk_type univlst)++
-    "\n\t else {}\n"  ++
-    "\ntag(x) ="++
+    -- "\ntype(x) ="++
+    -- "\n\t if x == "++(mk_type univlst)++
+    -- "\n\t else {}\n"  ++
+    -- "\ntag(x) ="++
     "\n\t if x == "++(mk_tag univlst)++
     "\n\t else Nat\n\n\n"++
     "--------------------------------\n-- MEMORY\n--------------------------------\n"++
@@ -199,6 +199,8 @@ get_channel_type (ZVar ("\\nat_1",b))
   = "NatValue"
 get_channel_type (ZVar (a,b))
   = a
+get_channel_type (ZCall (ZVar ("\\power",[])) (ZVar (v,[])))
+  = "Set("++v++")"
 get_channel_type (ZCross xs)
   = (get_channel_type_list xs)
 get_channel_type_list [x]
@@ -805,7 +807,7 @@ mapping_predicate lst (ZTrue{reason=[]})
 mapping_predicate lst (ZFalse{reason=[]})
   = "false"
 mapping_predicate lst (ZMember (ZVar (x,[])) (ZCall (ZVar ("\\delta",[])) (ZVar (n,[]))))
-  = "type("++n++")"  
+  = lastN 5 n  
 mapping_predicate lst (ZMember a b)
   = "member("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_predicate lst x
@@ -816,8 +818,26 @@ mapping_predicate lst x
 \subsection{Mapping Function for Channel Set Expressions}
 \begin{code}
 mapping_predicate_cs :: CSExp -> String
+{-
+The following one is not very well accepted by FDR as it may introduce differente type channels and therefore, it is incompatible.
+For instance, 
+
+Couldn't match expected type Event with actual type Int=>Event
+    In the expression: getCurrentTime
+    In the expression: {tick, getCurrentTime}
+    In the statement of a comprehension: c <- {tick, getCurrentTime}
+    Relevant variable types:
+        getCurrentTime :: Int=>Event
+        tick :: Event
+        HDMachine :: Proc
+        SysClock :: Proc
+
+I think it would be rather correct if we define it as {| x,y,z|}
+
+-}
 mapping_predicate_cs (cs)
-  = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
+  -- = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
+  = "{| "++ (mapping_set_cs_exp cs) ++" |}"
 mapping_set_cs_exp (CChanSet x)
   = "{ "++(mapping_ZExpr_def x)++" }"
 mapping_set_cs_exp (CSExpr x) 
@@ -842,7 +862,7 @@ The mapping function for sequence expressions is defined as follows:
 get_channel_name :: [ZPara] -> Comm -> ZName
 
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
-  = "mget."++x++"?"++v1++":(type("++x++"))"
+  = "mget."++x++"?"++v1++":"++lastN 5 x
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
   = "mset."++x++".((tag("++x++"))"++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
@@ -922,7 +942,6 @@ mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
 \end{code}
 
 \subsection{Mapping Function for Expressions}
-% ChanOutExp (ZCall (ZVar ("+",[])) (ZTuple [ZVar ("v_st_var_SysClock_time",[]),ZInt 1]))
 \begin{code}
 mapping_ZExpr :: [ZName] ->  ZExpr -> String
 
@@ -931,8 +950,8 @@ mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
 mapping_ZExpr lst (ZVar (a,_)) 
-  | (inListVar a lst) = "value(v_"++a++")"
-  | (is_ZVar_v_st a) = "value("++a++")"
+  | (inListVar a lst) = "value"++(lastN 3 a)++"(v_"++a++")"
+  | (is_ZVar_v_st a) = "value"++(lastN 3 a)++"("++a++")"
   | otherwise = a
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"
