@@ -1,5 +1,5 @@
-include "../sequence_aux.csp"
-include "../function_aux.csp"
+include "sequence_aux.csp"
+include "function_aux.csp"
 
 
 datatype SWITCH = ON | OFF
@@ -20,19 +20,13 @@ valueNAT(NAT.v) = v
 valueSWI(SWI.v) = v
 valuePST(PST.v) = v
 
-typeNAT(x) =
-  if x == sv_SysCmd_time_U_NAT then U_NAT else {}
-typeSWI(x) =
-  if x == sv_SysCmd_swi_U_SWI then U_SWI else {}
-typePST(x) =
-  if x == sv_SysCmd_phase_U_PST then U_PST else {}
+typeNAT(x) = U_NAT
+typeSWI(x) = U_SWI
+typePST(x) = U_PST
 
-tagNAT(x) =
-   if x == sv_SysCmd_time_U_NAT then NAT else NAT
-tagSWI(x) =
-   if x == sv_SysCmd_swi_U_SWI then SWI else SWI
-tagPST(x) =
-	 if x == sv_SysCmd_phase_U_PST then PST else PST
+tagNAT(x) = NAT
+tagSWI(x) = SWI
+tagPST(x) = PST
 
 
 --------------------------------
@@ -50,12 +44,17 @@ Memory(b1,b2,b3) =
 Memorise(P, b1,b2,b3) = 
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b1,b2,b3)) \ MEM_I
 
-datatype NAME = sv_SysCmd_time_U_NAT | sv_SysCmd_swi_U_SWI | sv_SysCmd_phase_U_PST
+
+datatype NAME = 
+  sv_SysCmd_time_U_NAT | sv_SysCmd_swi_U_SWI | sv_SysCmd_phase_U_PST
+subtype NAME_NAT = sv_SysCmd_time_U_NAT
+subtype NAME_SWI = sv_SysCmd_swi_U_SWI
+subtype NAME_PST = sv_SysCmd_phase_U_PST
 --------------------------------
 -- All possible bidings
-NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME})
-NAMES_VALUES_SWI = seq({seq({(n,v) | v <- typeSWI(n)}) | n <- NAME})
-NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME})
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+NAMES_VALUES_SWI = seq({seq({(n,v) | v <- typeSWI(n)}) | n <- NAME_SWI})
+NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME_PST})
 BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
 BINDINGS_SWI = {set(b) | b <- set(distCartProd(NAMES_VALUES_SWI))}
 BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
