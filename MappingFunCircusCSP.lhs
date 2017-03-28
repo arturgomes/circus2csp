@@ -51,10 +51,10 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
     "\n"++(mk_value funivlst)++
-    -- "\ntype(x) ="++
-    -- "\n\t if x == "++(mk_type univlst)++
-    -- "\n\t else {}\n"  ++
-    -- "\ntag(x) ="++
+    "\ntype(x) ="++
+    "\n\t if x == "++(mk_type univlst)++
+    "\n\t else {}\n"  ++
+    "\ntag(x) ="++
     "\n\t if x == "++(mk_tag univlst)++
     "\n\t else Nat\n\n\n"++
     "--------------------------------\n-- MEMORY\n--------------------------------\n"++
@@ -807,7 +807,7 @@ mapping_predicate lst (ZTrue{reason=[]})
 mapping_predicate lst (ZFalse{reason=[]})
   = "false"
 mapping_predicate lst (ZMember (ZVar (x,[])) (ZCall (ZVar ("\\delta",[])) (ZVar (n,[]))))
-  = lastN 5 n  
+  = "type("++n++")"  
 mapping_predicate lst (ZMember a b)
   = "member("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_predicate lst x
@@ -862,7 +862,7 @@ The mapping function for sequence expressions is defined as follows:
 get_channel_name :: [ZPara] -> Comm -> ZName
 
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
-  = "mget."++x++"?"++v1++":"++lastN 5 x
+  = "mget."++x++"?"++v1++":(type("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
   = "mset."++x++".((tag("++x++"))"++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
@@ -870,6 +870,7 @@ get_channel_name spec (ChanComm x y)
 get_channel_name spec (ChanGenComm _ _ _)
   = ""
 \end{code}
+
 \begin{code}
 get_channel_name_cont spec [] = ""
 get_channel_name_cont spec [(ChanOutExp v)] 
