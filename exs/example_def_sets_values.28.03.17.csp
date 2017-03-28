@@ -1,5 +1,5 @@
-include "sequence_aux.csp"
-include "function_aux.csp"
+include "../sequence_aux.csp"
+include "../function_aux.csp"
 
 
 datatype SWITCH = ON | OFF
