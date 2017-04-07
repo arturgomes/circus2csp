@@ -57,7 +57,7 @@ NatValue == 0 \upto maxbuff\\
 \circguard 
     output!cache \then
     ((\lcircguard size > 1 \rcircguard \circguard 
-          (\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then \Skip) \circseq \\
+          (\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then (cache:=x)) \circseq \\
           ((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))\\
       \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0)) \\
 

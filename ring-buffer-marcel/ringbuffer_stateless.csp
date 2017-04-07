@@ -175,40 +175,36 @@ let
         ---- value(vController_size) < maxbuff. Hence, incrementing it may take its value
         ---- outside the range of the channel. 
         --            mget.Controller_size?vController_size:(type(Controller_size)) ->
-                    (
-                        (value(vController_size) == 0) & 
-                            mset.Controller_cache.((tag(Controller_cache)).x) ->
-                            mset.Controller_size.((tag(Controller_size)).1) ->
-                            SKIP
-                        []
-                        (value(vController_size) > 0) & 
-                            write.(value(vController_top)).req!x -> 
-                            write.(value(vController_top)).ack?dumb ->  
-                            mset.Controller_size.((tag(Controller_size)).((value(vController_size))+1)) ->
-                            mset.Controller_top.((tag(Controller_top)).(((value(vController_top)) % maxring)+1)) ->
-                            SKIP
-                    )
-               []
-               (value(vController_size) > 0) &
-                    output!(value(vController_cache)) -> 
-                    (
-                        (value(vController_size) > 1) & 
-                            (|~| dumb:Value @ 
-                                read.(value(vController_bot)).req.dumb -> 
-                                read.(value(vController_bot)).ack?x -> 
-                                mset.Controller_cache.((tag(Controller_cache)).x) -> SKIP);
-                            
-(mset.Controller_size.
-    ((tag(Controller_size)).
-    (
-        (value(vController_size)) - 1)) ->
-                             mset.Controller_bot.((tag(Controller_bot)).(((value(vController_bot)) % maxring)+1)) ->
-                             SKIP)
-                        []
-                        (value(vController_size) == 1) & 
-                                mset.Controller_size.((tag(Controller_size)).0) ->
-                                SKIP
-                    )
+            (
+                (value(vController_size) == 0) & 
+                    mset.Controller_cache.((tag(Controller_cache)).x) ->
+                    mset.Controller_size.((tag(Controller_size)).1) ->
+                    SKIP
+                []
+                (value(vController_size) > 0) & 
+                    write.(value(vController_top)).req!x -> 
+                    write.(value(vController_top)).ack?dumb ->  
+                    mset.Controller_size.((tag(Controller_size)).((value(vController_size))+1)) ->
+                    mset.Controller_top.((tag(Controller_top)).(((value(vController_top)) % maxring)+1)) ->
+                    SKIP
+            )
+       []
+       (value(vController_size) > 0) &
+            output!(value(vController_cache)) -> 
+            (
+                (value(vController_size) > 1) & 
+                    (|~| dumb:Value @ 
+                        read.(value(vController_bot)).req.dumb -> 
+                        read.(value(vController_bot)).ack?x -> 
+                        mset.Controller_cache.((tag(Controller_cache)).x) -> SKIP);
+                        (mset.Controller_size.((tag(Controller_size)).((value(vController_size)) - 1)) ->
+                         mset.Controller_bot.((tag(Controller_bot)).(((value(vController_bot)) % maxring)+1)) ->
+                                         SKIP)
+            []
+            (value(vController_size) == 1) &
+                mset.Controller_size.((tag(Controller_size)).0) ->
+                                            SKIP
+            )
             )
         );
         MuControllerX

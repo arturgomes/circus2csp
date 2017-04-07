@@ -50,33 +50,42 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
     -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
     "\n\n--------------------------------"++
     "\n--Conversions\n"++(mk_subtype funivlst)++
-    "\n"++(mk_value funivlst)++
-    "\ntype(x) ="++
-    "\n\t if x == "++(mk_type univlst)++
-    "\n\t else {}\n"  ++
-    "\ntag(x) ="++
-    "\n\t if x == "++(mk_tag univlst)++
-    "\n\t else Nat\n\n\n"++
-    "--------------------------------\n-- MEMORY\n--------------------------------\n"++
-    "Memory(b) =\n"++
-    "   ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))\n"++
-    "   [] ([] n:dom(b) @ mset.n?x:type(n) -> Memory(over(b,n,x)))\n"++
-    "   [] terminate -> SKIP\n\n"++
-    "Memorise(P, b) = \n"++ 
-    "    ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \\ MEM_I\n"  
+    "\n\n"++(mk_value funivlst)++
+    "\n\n"++(mk_type funivlst)++
+    "\n\n"++(mk_tag funivlst)++
+    "\n\n--------------------------------"++
+    "\n-- MEMORY"++
+    "\n--------------------------------\n"++
+    "Memory("++mk_mem_param funivlst++") = "++
+    "\n\t"++ mk_mget_mem_bndg funivlst funivlst ++ 
+    "\n"++ mk_mset_mem_bndg funivlst funivlst ++ 
+    "\n\t\t[] terminate -> SKIP\n\n"++
+    "Memorise(P,"++mk_mem_param funivlst++") = \n"++ 
+    "    ((P; terminate -> SKIP) [| MEM_I |] Memory("++mk_mem_param funivlst++")) \\ MEM_I\n"  
   where
     univlst = (def_universe spec)
-    funivlst = nub (filter_types_universe univlst)
+    funivlst = remdups (filter_types_universe univlst)
 -- ZAbbreviation ("TIME",[]) (ZSetComp [Choose ("h",[]) (ZVar ("\\nat",[])),Choose ("m",[]) (ZVar ("\\nat",[]))] (Just (ZTuple [ZVar ("h",[]),ZVar ("m",[])])))
 
 mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
-  = "\n--------------------------------"++
-    "\n-- All possible bidings"++
-    "\nNAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})"++ 
-    "\nBINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}\n"
-
+  = ""
 mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetComp xl (Just (ZTuple ztp))))
   = "\n"++ n ++ " = (" ++ mapping_ZTuple ztp ++ ")"
+
+mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b) zbs)
+  = "\ndatatype NAME = " 
+    ++ (mapping_ZBranch_list spec zbs) 
+    ++ "\n" ++ make_subtype_NAME zbs 
+    ++ "\n--------------------------------" 
+    ++ "\n-- All possible bidings" 
+    ++ "\n\n" ++ nameval
+    ++ "\n\n" ++ bindingsval
+    ++ "\n"
+    where
+      znames = remdups $ map select_zname_f_zbr zbs
+      ztypes = remdups $ map select_type_zname znames
+      nameval = mk_charll_to_charl "\n" $ map mk_NAME_VALUES_TYPE ztypes
+      bindingsval = mk_charll_to_charl "\n" $ map mk_BINDINGS_TYPE ztypes
 
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
   = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list spec zbs) 
@@ -242,11 +251,11 @@ mapping_CSExp_get_cs spec (c:cs)
 \subsection{Mapping Circus Processes Declaration}
 
 \begin{code}
-mapping_ProcDecl :: [ZPara] -> ProcDecl -> String
---mapping_ProcDecl spec (CGenProcess zn (x:xs) pd)
+mapping_ProcDecl ::  [ZPara] -> ProcDecl -> String
+--mapping_ProcDecl procn spec (CGenProcess zn (x:xs) pd)
 --  = (show zn) ++ " = "
 mapping_ProcDecl spec (CProcess zn pd)
-  = "\n" ++ zn ++ (mapping_ProcessDef spec pd)
+  = "\n" ++ zn ++ (mapping_ProcessDef zn spec pd)
 mapping_ProcDecl spec _
   = ""
 \end{code}
@@ -254,81 +263,80 @@ mapping_ProcDecl spec _
 \subsection{Mapping Circus Processes Definition}
 NOTE:Process definition index is not yet defined.
 \begin{code}
-mapping_ProcessDef :: [ZPara] -> ProcessDef -> String
-mapping_ProcessDef spec (ProcDef cp)
-  = " = " ++ (mapping_CProc spec cp)
-mapping_ProcessDef spec (ProcDefSpot xl pd)
-  = "("++(mapping_ZGenFilt_list spec xl ) ++ ")" ++ (mapping_ProcessDef spec pd)
--- mapping_ProcessDef spec (ProcDefIndex (x:xs) pd)
---  = "("++(getZGenFilt (x:xs)) ++ ") = " ++ (mapping_CProc spec cp)
+mapping_ProcessDef :: ZName -> [ZPara] -> ProcessDef -> String
+mapping_ProcessDef procn spec (ProcDef cp)
+  = " = " ++ (mapping_CProc procn spec cp)
+mapping_ProcessDef procn spec (ProcDefSpot xl pd)
+  = "("++(mapping_ZGenFilt_list  spec xl ) ++ ")" ++ (mapping_ProcessDef procn spec pd)
+-- mapping_ProcessDef procn spec (ProcDefIndex (x:xs) pd)
+--  = "("++(getZGenFilt (x:xs)) ++ ") = " ++ (mapping_CProc procn spec cp)
 \end{code}
 \begin{code}
 mapping_ZGenFilt :: [ZPara] -> ZGenFilt -> String
-mapping_ZGenFilt spec (Choose v _) = fst v
+mapping_ZGenFilt  spec (Choose v _) = fst v
 
 mapping_ZGenFilt_list :: [ZPara] -> [ZGenFilt] -> String
-mapping_ZGenFilt_list spec [x]
-  = (mapping_ZGenFilt spec x)
-mapping_ZGenFilt_list spec (x:xs)
-  = (mapping_ZGenFilt spec x) ++ "," ++ (mapping_ZGenFilt_list spec xs)
+mapping_ZGenFilt_list  spec [x]
+  = (mapping_ZGenFilt  spec x)
+mapping_ZGenFilt_list  spec (x:xs)
+  = (mapping_ZGenFilt  spec x) ++ "," ++ (mapping_ZGenFilt_list  spec xs)
 \end{code}
 
 
 \subsection{Mapping Circus Processes}
 Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
 \begin{code}
-mapping_CProc :: [ZPara] -> CProc -> String
-
-mapping_CProc spec (CExtChoice a b)
-  = "( " ++ (mapping_CProc spec a)
+mapping_CProc :: ZName -> [ZPara] -> CProc -> String
+mapping_CProc procn spec (CExtChoice a b)
+  = "( " ++ (mapping_CProc procn spec a)
     ++ " [] "
-    ++ (mapping_CProc spec b) ++ " )"
-mapping_CProc spec (CHide a cs)
-  = "( " ++ (mapping_CProc spec a)
+    ++ (mapping_CProc procn spec b) ++ " )"
+mapping_CProc procn spec (CHide a cs)
+  = "( " ++ (mapping_CProc procn spec a)
     ++  " \\ "
     ++ mapping_predicate_cs (cs) ++ " )"
-mapping_CProc spec (CIntChoice a b)
-  = "( " ++ (mapping_CProc spec a)
+mapping_CProc procn spec (CIntChoice a b)
+  = "( " ++ (mapping_CProc procn spec a)
     ++ " |~| "
-    ++ (mapping_CProc spec b) ++ " )"
-mapping_CProc spec (CInterleave a b)
-  = "( " ++ (mapping_CProc spec a)
+    ++ (mapping_CProc procn spec b) ++ " )"
+mapping_CProc procn spec (CInterleave a b)
+  = "( " ++ (mapping_CProc procn spec a)
     ++ " ||| "
-    ++ (mapping_CProc spec b) ++ " )"
-mapping_CProc spec (CircusProc zn)
+    ++ (mapping_CProc procn spec b) ++ " )"
+mapping_CProc procn spec (CircusProc zn)
   = zn
-mapping_CProc spec (CParParal cs a b)
-  = "( " ++ (mapping_CProc spec a)
+mapping_CProc procn spec (CParParal cs a b)
+  = "( " ++ (mapping_CProc procn spec a)
     ++ " [| "
     ++ mapping_predicate_cs (cs)
     ++ " |] "
-    ++ (mapping_CProc spec b) ++ " )"
-mapping_CProc spec (CSeq a b)
-  = "( " ++ (mapping_CProc spec a)
+    ++ (mapping_CProc procn spec b) ++ " )"
+mapping_CProc procn spec (CSeq a b)
+  = "( " ++ (mapping_CProc procn spec a)
     ++ " ; "
-    ++ (mapping_CProc spec b) ++ " )"
-mapping_CProc spec (CRepExtChProc [(Choose (x,[]) s)] a)
+    ++ (mapping_CProc procn spec b) ++ " )"
+mapping_CProc procn spec (CRepExtChProc [(Choose (x,[]) s)] a)
   = "[] "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ (mapping_CProc spec a)
-mapping_CProc spec (CRepIntChProc [(Choose (x,[]) s)] a)
+    ++ (mapping_CProc procn spec a)
+mapping_CProc procn spec (CRepIntChProc [(Choose (x,[]) s)] a)
   = "|~| "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ (mapping_CProc spec a)
-mapping_CProc spec (CRepInterlProc [(Choose (x,[]) s)] a)
+    ++ (mapping_CProc procn spec a)
+mapping_CProc procn spec (CRepInterlProc [(Choose (x,[]) s)] a)
   = "|||"
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ (mapping_CProc spec a)
-mapping_CProc spec (CRepParalProc cse [(Choose (x,[]) s)] a)
+    ++ (mapping_CProc procn spec a)
+mapping_CProc procn spec (CRepParalProc cse [(Choose (x,[]) s)] a)
   = " [| "
     ++ mapping_predicate_cs (cse)
     ++ " |] "
@@ -336,85 +344,85 @@ mapping_CProc spec (CRepParalProc cse [(Choose (x,[]) s)] a)
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ (mapping_CProc spec a)
-mapping_CProc spec (CRepSeqProc [(Choose (x,[]) s)] a)
+    ++ (mapping_CProc procn spec a)
+mapping_CProc procn spec (CRepSeqProc [(Choose (x,[]) s)] a)
   = "; "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ (mapping_CProc spec a)
-mapping_CProc spec (ProcStalessMain pps ca)
-  | pps == [] = "\n\t" ++ (mapping_CAction spec ca)
-  | otherwise = "\n\tlet " ++ (mapping_PPar_list spec pps)
-    ++ "within " ++ (mapping_CAction spec ca)
--- (mapping_CProc spec CGenProc zn (x:xs))
+    ++ (mapping_CProc procn spec a)
+mapping_CProc procn spec (ProcStalessMain pps ca)
+  | pps == [] = "\n\t" ++ (mapping_CAction procn spec ca)
+  | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec pps)
+    ++ "within " ++ (mapping_CAction procn spec ca)
+-- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
-mapping_CProc spec (CParamProc zn xl)
+mapping_CProc procn spec (CParamProc zn xl)
    = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
--- (mapping_CProc spec CSimpIndexProc zn (x:xs))
+-- (mapping_CProc procn spec CSimpIndexProc zn (x:xs))
 --   = undefined
--- (mapping_CProc spec ProcMain zp (x:xs) ca)
+-- (mapping_CProc procn spec ProcMain zp (x:xs) ca)
 --   = undefined
-mapping_CProc spec (CProcRename n (zv:zvs) (xp:xps))
-  = n ++"[["++ (map_rename spec (zv:zvs) (xp:xps)) ++"]]"
-mapping_CProc spec x
+mapping_CProc procn spec (CProcRename n (zv:zvs) (xp:xps))
+  = n ++"[["++ (map_rename procn spec (zv:zvs) (xp:xps)) ++"]]"
+mapping_CProc procn spec x
   = fail ("not implemented by mapping_CProc: " ++ show x)
 \end{code}
 \begin{code}
-map_rename spec [y] [x]
-  = (mapping_Comm spec y)++ " <- "++ (mapping_Comm spec x)
-map_rename spec (y:zvs) (x:xps)
-  = (mapping_Comm spec y)++ " <- "++ (mapping_Comm spec x)++", "++(map_rename spec zvs xps)
-map_rename _ [] _ = ""
-map_rename _ _ [] = ""
+map_rename procn spec [y] [x]
+  = (mapping_Comm procn spec y)++ " <- "++ (mapping_Comm procn spec x)
+map_rename procn spec (y:zvs) (x:xps)
+  = (mapping_Comm procn spec y)++ " <- "++ (mapping_Comm procn spec x)++", "++(map_rename procn spec zvs xps)
+map_rename _ _ [] _ = ""
+map_rename _ _ _ [] = ""
 \end{code}
 \subsection{Mapping Circus Processes Paragraphs}
 NOTE: $CNameSet$ and $ProcZPara$ is not yet implmented
 \begin{code}
-mapping_PPar :: [ZPara] -> PPar -> String
---mapping_PPar spec (CNameSet zn nse)
+mapping_PPar :: ZName -> [ZPara] -> PPar -> String
+--mapping_PPar procn spec (CNameSet zn nse)
 --  = undefined
-mapping_PPar spec (CParAction zn (CircusAction (CActionCommand (CVResDecl ls a ))))
-  = zn ++"("++ (mapping_ZGenFilt_list spec ls) ++ ") =" ++ (mapping_CAction spec a)
-mapping_PPar spec (CParAction zn pa)
-  = zn ++ (mapping_ParAction spec pa)
-mapping_PPar spec x
+mapping_PPar procn spec (CParAction zn (CircusAction (CActionCommand (CVResDecl ls a ))))
+  = zn ++"("++ (mapping_ZGenFilt_list  spec ls) ++ ") =" ++ (mapping_CAction procn spec a)
+mapping_PPar procn spec (CParAction zn pa)
+  = zn ++ (mapping_ParAction procn spec pa)
+mapping_PPar procn spec x
   = fail ("Not implemented by mapping_PPar: " ++ show x)
---mapping_PPar spec (ProcZPara zp)
+--mapping_PPar procn spec (ProcZPara zp)
 --  = undefined
 \end{code}
 \begin{code}
-mapping_PPar_list :: [ZPara] -> [PPar] -> String
-mapping_PPar_list spec []
+mapping_PPar_list :: ZName -> [ZPara] -> [PPar] -> String
+mapping_PPar_list procn spec []
   = ""
-mapping_PPar_list spec [x]
-  = mapping_PPar spec x ++ "\n\t"
-mapping_PPar_list spec (x:xs)
-  = (mapping_PPar spec x) ++ "\n\t\t" ++ (mapping_PPar_list spec xs)
+mapping_PPar_list procn spec [x]
+  = mapping_PPar procn spec x ++ "\n\t"
+mapping_PPar_list procn spec (x:xs)
+  = (mapping_PPar procn spec x) ++ "\n\t\t" ++ (mapping_PPar_list procn spec xs)
 \end{code}
 
 \subsection{Mapping Parameterised Circus Actions}
 \begin{code}
-mapping_ParAction :: [ZPara] -> ParAction -> String
-mapping_ParAction spec (CircusAction ca)
-  = " = " ++ (mapping_CAction spec ca)
-mapping_ParAction spec (ParamActionDecl xl pa)
-  = "("++(mapping_ZGenFilt_list spec xl ) ++ ") = " ++ (mapping_ParAction spec pa)
+mapping_ParAction :: ZName -> [ZPara] -> ParAction -> String
+mapping_ParAction procn spec (CircusAction ca)
+  = " = " ++ (mapping_CAction procn spec ca)
+mapping_ParAction procn spec (ParamActionDecl xl pa)
+  = "("++(mapping_ZGenFilt_list  spec xl ) ++ ") = " ++ (mapping_ParAction procn spec pa)
 \end{code}
 }
 \subsection{Mapping Circus Actions}
 NOTE: $CActionSchemaExpr$ is not yet implemented.
 
 \begin{code}
-mapping_CAction :: [ZPara] -> CAction -> ZName
-mapping_CAction spec (CActionCommand cc)
-  = "("++mapping_CCommand spec cc++")"
-mapping_CAction spec (CActionName zn)
+mapping_CAction :: ZName -> [ZPara] -> CAction -> ZName
+mapping_CAction procn spec (CActionCommand cc)
+  = "("++mapping_CCommand procn spec cc++")"
+mapping_CAction procn spec (CActionName zn)
   = zn
-mapping_CAction spec (CSPUnfAction x (CActionName v))
+mapping_CAction procn spec (CSPUnfAction x (CActionName v))
   = x ++"("++v++")"
---mapping_CAction spec (CActionSchemaExpr zse)
+--mapping_CAction procn spec (CActionSchemaExpr zse)
 --  = undefined
 \end{code}
 \begin{circus}
@@ -423,10 +431,10 @@ mapping_CAction spec (CSPUnfAction x (CActionName v))
 \end{circus}
 
 \begin{code}
-mapping_CAction spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   = case np of
-    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} -> ("++ (mapping_CAction spec a)++")"
-    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names spec) p) ++ "} -> ("++ (mapping_CAction spec a)++")"
+    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
+    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names spec) p) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
     where
       np = (mapping_predicate (get_delta_names spec) p)
 \end{code}
@@ -438,26 +446,26 @@ mapping_CAction spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 % \Upsilon_A(c.v\then\ A)\circdef~\tco{c.v -> }\Upsilon_A(A)
 % \end{circus}
 % \begin{code}
-% mapping_CAction spec (CSPCommAction (ChanComm c [ChanDotExp (ZVar (x,y))]) a)
+% mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanDotExp (ZVar (x,y))]) a)
 %   = (get_channel_name spec (ChanComm c [ChanDotExp (ZVar (x,y))]))
 %     ++ " -> "
 %     ++ show x
-%     ++ mapping_CAction spec (a)
+%     ++ mapping_CAction procn spec (a)
 % \end{code}
 
 \begin{circus}
 \Upsilon_A(c!v \then\ A)\circdef~\tco{c!v -> }\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[]))]) a)
+mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[]))]) a)
   = (get_channel_name spec (ChanComm c [ChanOutExp (ZVar (x,[]))]))
     ++ " -> "
-    ++ mapping_CAction spec (a) ++ ""
+    ++ mapping_CAction procn spec (a) ++ ""
 
-mapping_CAction spec (CSPCommAction (ChanComm c lst) a)
+mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
   = (get_channel_name spec (ChanComm c lst))
     ++ " -> "
-    ++ mapping_CAction spec (a) ++ ""
+    ++ mapping_CAction procn spec (a) ++ ""
 \end{code}
 
 
@@ -465,34 +473,34 @@ mapping_CAction spec (CSPCommAction (ChanComm c lst) a)
 \Upsilon_A(c\then\ A)\circdef~\tco{c -> }\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPCommAction c a)
+mapping_CAction procn spec (CSPCommAction c a)
   = (get_channel_name spec c)
     ++ " -> "
-    ++ mapping_CAction spec (a) ++ ""
+    ++ mapping_CAction procn spec (a) ++ ""
 \end{code}
 
 \begin{circus}
 \Upsilon_A(A \extchoice B) \circdef~\Upsilon_A(A) ~\tco{[]} \Upsilon_A(B)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPExtChoice a b)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPExtChoice a b)
+  = "( " ++ mapping_CAction procn spec (a)
     ++ " [] "
-    ++ mapping_CAction spec (b) ++ ")"
+    ++ mapping_CAction procn spec (b) ++ ")"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(g \& A)\circdef~\Upsilon_{\mathbb{B}}(g)~\tco{\&}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPGuard g ca)
+mapping_CAction procn spec (CSPGuard g ca)
  -- I'm using the True Guard
   -- and False Guard laws directly
   -- into the translation.
   = case guard of
-    "true" -> (mapping_CAction spec ca) -- True Law (true & A = A)
+    "true" -> (mapping_CAction procn spec ca) -- True Law (true & A = A)
     "false" -> "STOP"                   -- False Law (false & A = Stop)
-    _ -> "( " ++ guard ++ " & " ++ (mapping_CAction spec ca) ++ " )"
+    _ -> "( " ++ guard ++ " & " ++ (mapping_CAction procn spec ca) ++ " )"
   where guard = (mapping_predicate (get_delta_names spec) g)
 \end{code}
 
@@ -500,8 +508,8 @@ mapping_CAction spec (CSPGuard g ca)
 \Upsilon_A(A \circhide cs) \circdef~\Upsilon_A(A)~\tco{\textbackslash} \Upsilon_{\mathbb{P}^{cs}} (cs)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPHide a cs)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPHide a cs)
+  = "( " ++ mapping_CAction procn spec (a)
     ++  "\\"
     ++ mapping_predicate_cs (cs) ++ " )"
 \end{code}
@@ -510,61 +518,61 @@ mapping_CAction spec (CSPHide a cs)
 \Upsilon_A(A \intchoice B) \circdef~\Upsilon_A(A)~\tco{|\textasciitilde|} \Upsilon_A(B)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPIntChoice a b)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPIntChoice a b)
+  = "( " ++ mapping_CAction procn spec (a)
     ++ " |~| "
-    ++ mapping_CAction spec (b) ++ " )"
+    ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 \begin{code}
-mapping_CAction spec (CSPInterleave ca cb)
-   = "( " ++ mapping_CAction spec (ca)
+mapping_CAction procn spec (CSPInterleave ca cb)
+   = "( " ++ mapping_CAction procn spec (ca)
      ++ " ||| "
-     ++ mapping_CAction spec (cb) ++ " )"
+     ++ mapping_CAction procn spec (cb) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(A |[ns1 | ns2]| B) \circdef~\Upsilon_A(A)~\tco{|||}~\Upsilon_A(B)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPNSInter ns1 ns2 a b)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
+  = "( " ++ mapping_CAction procn spec (a)
     ++ "|||"
-    ++ mapping_CAction spec (b) ++ " )"
+    ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(A\lpar ns1|cs|ns2\rpar B)\circdef~\Upsilon_A(A)~\tco{[|}~\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|]}\Upsilon_A(B)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPNSParal ns1 cs ns2 a b)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPNSParal ns1 cs ns2 a b)
+  = "( " ++ mapping_CAction procn spec (a)
     ++ " [| "
     ++ mapping_predicate_cs (cs)
     ++ " |] "
-    ++ mapping_CAction spec (b) ++ " )"
+    ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 \begin{code}
-mapping_CAction spec (CSPParAction zn xl)
+mapping_CAction procn spec (CSPParAction zn xl)
   = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
 \end{code}
 % \begin{code}
-% mapping_CAction spec (CSPParal cs a b)
-%   = mapping_CAction spec (a)
+% mapping_CAction procn spec (CSPParal cs a b)
+%   = mapping_CAction procn spec (a)
 %     ++ " [| "
 %     ++ mapping_predicate_cs (cs)
 %     ++ " |] "
-%     ++ mapping_CAction spec (b)
+%     ++ mapping_CAction procn spec (b)
 % \end{code}
 
 \begin{circus}
 \Upsilon (\circmu X \circspot\ A(X )) \circdef~\tco{let Arec =}~\Upsilon_A(A(A_{rec}))~\tco{within Arec}
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRecursion x a)
+mapping_CAction procn spec (CSPRecursion x a)
   = "( " ++ "let "
     ++ x
     ++ " = "
-    ++ mapping_CAction spec (a)
+    ++ mapping_CAction procn spec (a)
     ++ " within "
     ++ x ++ " )"
 \end{code}
@@ -573,56 +581,56 @@ mapping_CAction spec (CSPRecursion x a)
 \Upsilon_A(\Extchoice x : S \circspot A)\circdef~\tco{[] x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
+mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
   = "( " ++ "[] "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ mapping_CAction spec (a) ++ " )"
+    ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(\Intchoice x : S \circspot A)\circdef~\tco{|\textasciitilde| x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
+mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
   = "( " ++ "|~| "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ mapping_CAction spec (a) ++ " )"
+    ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 % \begin{code}
-% mapping_CAction spec (CSPRepInterl [(Choose (x,[]) s)] a)
+% mapping_CAction procn spec (CSPRepInterl [(Choose (x,[]) s)] a)
 %   = "||| "
 %     ++  show x
 %     ++ " : "
 %     ++ (mapping_ZExpr (get_delta_names spec) s)
 %     ++ " @ "
-%     ++ mapping_CAction spec (a)
+%     ++ mapping_CAction procn spec (a)
 % \end{code}
 
 \begin{circus}
 \Upsilon_A(\Interleave x : S \circspot \lpar \emptyset \rpar A) \circdef~\tco{||| x:}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRepInterlNS [(Choose (x,[]) s)] NSExpEmpty a)
+mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[]) s)] NSExpEmpty a)
   = "( " ++ "||| "
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ mapping_CAction spec (a) ++ " )"
+    ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(\lpar cs \rpar x : S \circspot \lpar \emptyset \rpar A)\circdef~\tco{[|}\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|] x :}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRepParalNS cs [(Choose (x,[]) s)] NSExpEmpty a)
+mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[]) s)] NSExpEmpty a)
   = "( " ++ "[| "
     ++ mapping_predicate_cs (cs)
     ++ " |] "
@@ -630,37 +638,37 @@ mapping_CAction spec (CSPRepParalNS cs [(Choose (x,[]) s)] NSExpEmpty a)
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ mapping_CAction spec (a) ++ " )"
+    ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(\Semi x : S \circspot A)\circdef~\tco{; x :}\Upsilon_{seq}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPRepSeq [(Choose (x,[]) s)] a)
+mapping_CAction procn spec (CSPRepSeq [(Choose (x,[]) s)] a)
   = "( " ++ "; "
     ++  show x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names spec) s)
     ++ " @ "
-    ++ mapping_CAction spec (a) ++ " )"
+    ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(A \circseq B) \circdef~\Upsilon_A(A)~\tco{;}~\Upsilon_A(B)
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPSeq a b)
-  = "( " ++ mapping_CAction spec (a)
+mapping_CAction procn spec (CSPSeq a b)
+  = "( " ++ mapping_CAction procn spec (a)
     ++ " ; "
-    ++ mapping_CAction spec (b) ++ " )"
+    ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 
 \begin{circus}
 \Upsilon_A(\Skip) \defs~\tco{SKIP}
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPSkip)
+mapping_CAction procn spec (CSPSkip)
   = "SKIP"
 \end{code}
 
@@ -668,7 +676,7 @@ mapping_CAction spec (CSPSkip)
 \Upsilon_A(\Stop) \defs~\tco{STOP}
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPStop)
+mapping_CAction procn spec (CSPStop)
   = "STOP"
 \end{code}
 
@@ -676,58 +684,71 @@ mapping_CAction spec (CSPStop)
 \Upsilon_A(\Chaos) \defs~\tco{CHAOS}
 \end{circus}
 \begin{code}
-mapping_CAction spec (CSPChaos)
+mapping_CAction procn spec (CSPChaos)
   = "CHAOS"
 \end{code}
 \begin{code}
-mapping_CAction spec x
+mapping_CAction procn spec x
   = fail ("not implemented by mapping_CAction: " ++ show x)
 \end{code}
 
 \subsection{Mapping Circus Commands}
 NOTE: $CAssumpt$, $CommandBrace$, $CommandBracket$ not implemented yet
 \begin{code}
-mapping_CCommand :: [ZPara] -> CCommand -> ZName
-mapping_CCommand spec (CAssign (x:xs) (y:ys))
+mapping_CCommand :: ZName -> [ZPara] -> CCommand -> ZName
+mapping_CCommand procn spec (CAssign (x:xs) (y:ys))
   = error ("Assignments are not available in CSP")
-mapping_CCommand spec (CAssumpt (x:xs) zpa zpb)
+mapping_CCommand procn spec (CAssumpt (x:xs) zpa zpb)
   = error ("Assumptions are not available in CSP")
-mapping_CCommand spec (CIf cga)
-  = mapping_CGActions spec cga
--- mapping_CCommand spec (CommandBrace zp)
+mapping_CCommand procn spec (CIf cga)
+  = mapping_CGActions procn spec cga
+-- mapping_CCommand procn spec (CommandBrace zp)
 --   = undefined
--- mapping_CCommand spec (CommandBracket zp)
+-- mapping_CCommand procn spec (CommandBracket zp)
 --   = undefined
--- mapping_CCommand spec (CResDecl (x:xs) ca)
+-- mapping_CCommand procn spec (CResDecl (x:xs) ca)
 --   = undefined
 -- TODO 09/03/17 - restrict(bs) is getting all the state var from all processes but it needs to take into account only the current proc being used.
-mapping_CCommand spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
- = " let restrict(bs) = dres(bs,{"++(mapping_ZExpr_def (get_delta_names spec))++"})"
-    ++"\n\t\twithin"
-    ++"\n\t\t|~| b:BINDINGS @ Memorise("++(mapping_CAction spec ca)++", restrict(b))\n"
-mapping_CCommand spec (CValDecl (x:xs) ca)
+
+{- I need to change this and split the types so we have something like:
+let restrictNAT(bs) = dres(bs,{sv_SysCmd_time_U_NAT})
+        restrictSWI(bs) = dres(bs,{sv_SysCmd_swi_U_SWI})
+        restrictPST(bs) = dres(bs,{sv_SysCmd_phase_U_PST})
+    within-} -- TODOOOOOO
+mapping_CCommand procn spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
+ = "let "++ restr
+    ++"\n\twithin"
+    ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++", "++restn++")\n"
+    where
+      znames = (get_delta_names spec)
+      ztypes = remdups $ map select_type_zname znames
+      restr = mk_charll_to_charl "\n" $ map (mk_restrict spec znames) ztypes
+      bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
+      restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
+
+mapping_CCommand procn spec (CValDecl (x:xs) ca)
    = ""
--- mapping_CCommand spec (CVResDecl (x:xs) ca)
+-- mapping_CCommand procn spec (CVResDecl (x:xs) ca)
 --   = undefined
-mapping_CCommand spec x
+mapping_CCommand procn spec x
   = fail ("not implemented by mapping_CCommand: " ++ show x)
 \end{code}
 
 \subsection{Mapping Circus Guarded Actions}
 \begin{code}
-mapping_CGActions :: [ZPara] -> CGActions -> ZName
-mapping_CGActions spec (CircThenElse cga1 cga2)
-  = (mapping_CGActions spec cga1) ++ " [] " ++ (mapping_CGActions spec cga2)
-mapping_CGActions spec (CircGAction zp ca)
-  = (mapping_predicate (get_delta_names spec) zp) ++ " & " ++ (mapping_CAction spec ca)
+mapping_CGActions :: ZName -> [ZPara] -> CGActions -> ZName
+mapping_CGActions procn spec (CircThenElse cga1 cga2)
+  = (mapping_CGActions procn spec cga1) ++ " [] " ++ (mapping_CGActions procn spec cga2)
+mapping_CGActions procn spec (CircGAction zp ca)
+  = (mapping_predicate (get_delta_names spec) zp) ++ " & " ++ (mapping_CAction procn spec ca)
 \end{code}
 
 \subsection{Mapping Channel Communication}
 \begin{code}
-mapping_Comm :: [ZPara] -> Comm -> String
-mapping_Comm spec (ChanComm zn xs)
-  = zn ++ (mapString mapping_CParameter spec xs)
-mapping_Comm spec (ChanGenComm zn xs ys)
+mapping_Comm :: ZName -> [ZPara] -> Comm -> String
+mapping_Comm procn spec (ChanComm zn xs)
+  = zn ++ (mapString (mapping_CParameter procn) spec xs)
+mapping_Comm procn spec (ChanGenComm zn xs ys)
   = error ("Assumptions are not yet implemented")
 \end{code}
 
@@ -738,33 +759,33 @@ mapString f s [x] = (f s x)
 mapString f s (x:xs) = (f s x) ++ (mapString f s xs)
 \end{code}
 \begin{code}
-mapping_CParameter :: [ZPara] -> CParameter -> ZName
-mapping_CParameter spec (ChanInp zn)
+mapping_CParameter :: ZName -> [ZPara] -> CParameter -> ZName
+mapping_CParameter procn spec (ChanInp zn)
   = zn
-mapping_CParameter spec (ChanInpPred zn zp)
+mapping_CParameter procn spec (ChanInpPred zn zp)
  = zn ++ (mapping_predicate (get_delta_names spec) zp)
-mapping_CParameter spec (ChanOutExp ze)
-  = mapping_CParameter spec (ChanDotExp ze)
-mapping_CParameter spec (ChanDotExp ze)
+mapping_CParameter procn spec (ChanOutExp ze)
+  = mapping_CParameter procn spec (ChanDotExp ze)
+mapping_CParameter procn spec (ChanDotExp ze)
   = "."++(mapping_ZExpr (get_delta_names spec) ze)
 \end{code}
 
 \subsection{Mapping Circus Namesets}
 \begin{code}
 
--- mapping_NSExp spec (NSExpEmpty)
+-- mapping_NSExp procn spec (NSExpEmpty)
 --   = undefined
--- mapping_NSExp spec (NSExprMult (x:xs))
+-- mapping_NSExp procn spec (NSExprMult (x:xs))
 --   = undefined
--- mapping_NSExp spec (NSExprSngl zn)
+-- mapping_NSExp procn spec (NSExprSngl zn)
 --   = undefined
--- mapping_NSExp spec (NSHide nse1 nse2)
+-- mapping_NSExp procn spec (NSHide nse1 nse2)
 --   = undefined
--- mapping_NSExp spec (NSIntersect nse1 nse2)
+-- mapping_NSExp procn spec (NSIntersect nse1 nse2)
 --   = undefined
--- mapping_NSExp spec (NSUnion nse1 nse2)
+-- mapping_NSExp procn spec (NSUnion nse1 nse2)
 --   = undefined
-mapping_NSExp spec x
+mapping_NSExp procn spec x
   = fail ("not implemented by mapping_NSExp: " ++ show x)
 \end{code}
 
@@ -807,7 +828,7 @@ mapping_predicate lst (ZTrue{reason=[]})
 mapping_predicate lst (ZFalse{reason=[]})
   = "false"
 mapping_predicate lst (ZMember (ZVar (x,[])) (ZCall (ZVar ("\\delta",[])) (ZVar (n,[]))))
-  = "type("++n++")"  
+  = "type"++(lastN 3 x)++"("++n++")"  
 mapping_predicate lst (ZMember a b)
   = "member("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_predicate lst x
@@ -837,9 +858,9 @@ I think it would be rather correct if we define it as {| x,y,z|}
 -}
 mapping_predicate_cs (cs)
   -- = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
-  = "{| "++ (mapping_set_cs_exp cs) ++" |}"
+  = (mapping_set_cs_exp cs) 
 mapping_set_cs_exp (CChanSet x)
-  = "{ "++(mapping_ZExpr_def x)++" }"
+  = "{| "++(mapping_ZExpr_def x)++" |}"
 mapping_set_cs_exp (CSExpr x) 
   = x
 mapping_set_cs_exp (ChanSetUnion a b)
@@ -862,9 +883,9 @@ The mapping function for sequence expressions is defined as follows:
 get_channel_name :: [ZPara] -> Comm -> ZName
 
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
-  = "mget."++x++"?"++v1++":(type("++x++"))"
+  = "mget."++x++"?"++v1++":(type"++(lastN 3 x)++"("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mset."++x++".((tag("++x++"))"++(get_channel_name_cont spec xs)++")"
+  = "mset."++x++".("++(lastN 3 x)++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -1005,7 +1026,7 @@ mapping_ZExpr lst (ZSeqDisplay []) = "<>"
 mapping_ZExpr lst (ZSeqDisplay _) = ""
 mapping_ZExpr lst (ZSetComp _ _ ) = ""
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(concat (map (mapping_ZExpr lst) x))++"}"
+mapping_ZExpr lst (ZSetDisplay x) = "{"++(mk_charll_to_charl ", " $ (map (mapping_ZExpr lst) x))++"}"
 mapping_ZExpr lst (ZStrange _) = ""
 mapping_ZExpr lst (ZTheta _) = ""
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"

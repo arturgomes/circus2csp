@@ -17,8 +17,6 @@ join_name n v = n ++ "_" ++ v
 \end{code}
 
 
-
-
 Auxiliary function to propagate $get$ communication through the variables and local variables of an action.
 \begin{circus}
 make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
@@ -282,6 +280,11 @@ stripPrefix _ _ = Nothing
 isPrefixOf [] _ = True
 isPrefixOf _ [] = False
 isPrefixOf (x : xs) (y : ys) = (x == y && isPrefixOf xs ys)
+
+splitOn :: Eq a => a -> [a] -> [[a]]
+splitOn d [] = []
+splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
+
 \end{code}
 
 get State variables from names
@@ -556,7 +559,8 @@ isRecursive_CAction name (CSPHide c cs)
 isRecursive_CAction name (CSPRecursion n c)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPUnfAction n c)
- = isRecursive_CAction name c
+  | name == n = True
+  | otherwise = False
 isRecursive_CAction name (CSPUnParAction lsta c nm)
  = isRecursive_CAction name c
 isRecursive_CAction name (CSPRepSeq lsta c)
@@ -681,13 +685,12 @@ renameRecursive_CAction name (CSPInterleave ca cb)
 renameRecursive_CAction name (CSPHide c cs)
  = (CSPHide (renameRecursive_CAction name c) cs)
 renameRecursive_CAction name (CSPParAction nm xp)
- = (CSPParAction nm xp)
+  | nm == name = (CSPParAction ("mu"++nm) xp)
+  | otherwise = (CSPParAction nm xp) 
 renameRecursive_CAction name (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
-renameRecursive_CAction name (CSPRecursion n (CSPSeq c (CActionName n1)))
- = case n == n1 of
-   True -> (CSPRecursion n (CSPSeq (renameRecursive_CAction name c) (CActionName n)))
-   False -> (CSPRecursion n (CSPSeq (renameRecursive_CAction name c) (CActionName n1)))
+renameRecursive_CAction name (CSPRecursion n c)
+ = (CSPRecursion n (renameRecursive_CAction name c))
 renameRecursive_CAction name (CSPRecursion n c)
  = (CSPRecursion n (renameRecursive_CAction name c))
 renameRecursive_CAction name (CSPUnParAction namea c nm)
@@ -1380,7 +1383,7 @@ strip str x
 Construction of the Universe set in CSP
 \begin{code}
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
-def_U_prefix x = (map toTitle (take 3 x))
+def_U_prefix x = (map toUpper (take 3 x))
 
 -- Make UNIVERSE datatype in CSP
 mk_universe []
@@ -1412,19 +1415,130 @@ mk_value ((a,b,c,d):xs)
 mk_type []
   = ""
 mk_type [(a,b,c,d)]
-  = a++" then "++b
+  = "type"++(lastN 3 b)++"(x) = U_"++(lastN 3 b)++"\n"
 mk_type ((a,b,c,d):xs)
-  = a++" then "++b++"\n\t else if x == "++(mk_type xs)
+  = "type"++(lastN 3 b)++"(x) = U_"++(lastN 3 b)++"\n"++(mk_type xs)
 
 -- Make tag(x) function call 
--- This won't be used anymore in the next commit - 21.03.17
 mk_tag []
   = ""
 mk_tag [(a,b,c,d)]
-  = a++" then "++c
+  = "tag"++(lastN 3 b)++"(x) = "++(lastN 3 b)++"\n"
 mk_tag ((a,b,c,d):xs)
-  = a++" then "++c++"\n\t else if x == "++(mk_tag xs)
+  = "tag"++(lastN 3 b)++"(x) = "++(lastN 3 b)++"\n"++(mk_tag xs)
+
+-- make Memory(b_type1,b_type2,b_type3) parameters
+mk_mem_param :: [(t, [Char], t1, t2)] -> [Char]
+mk_mem_param [] = ""
+mk_mem_param [(a,b,c,d)] = "b_"++(lastN 3 b) 
+mk_mem_param ((a,b,c,d):xs)
+  = (mk_mem_param [(a,b,c,d)]) ++", "++ (mk_mem_param xs)
+
+-- list of b_type parameters 
+mk_mem_param_lst :: [(t, [Char], t1, t2)] -> [[Char]]
+mk_mem_param_lst [] = []
+mk_mem_param_lst [(a,b,c,d)] = ["b_"++(lastN 3 b)] 
+mk_mem_param_lst ((a,b,c,d):xs)
+  = (mk_mem_param_lst [(a,b,c,d)]) ++ (mk_mem_param_lst xs)
+
+-- replace b_type by over(b_type,n,x) in case x == a
+repl_mem_param_over :: [Char] -> [[Char]] -> [[Char]]
+
+repl_mem_param_over _ [] = []
+repl_mem_param_over a [x]
+  | (lastN 3 x) == a  = ["over("++x++",n,x)"]
+  | otherwise = [x]
+repl_mem_param_over a (x:xs) 
+  = (repl_mem_param_over a [x]) ++ (repl_mem_param_over a xs)
+
+-- list of b_type parameters into string of b_type1,b_type2,...
+mk_charll_to_charl :: [Char] -> [[Char]] -> [Char]
+mk_charll_to_charl _ [] = ""
+mk_charll_to_charl sp [x] = x
+mk_charll_to_charl sp (x:xs) = x++sp++(mk_charll_to_charl sp xs)
+
+-- make mget external choices of Memory proc 
+mk_mget_mem_bndg :: [(t3, [Char], t4, t5)] -> [(t, [Char], t1, t2)] -> [Char]
+mk_mget_mem_bndg fs [] 
+  = ""
+mk_mget_mem_bndg fs [(a,b,c,d)] 
+  = "([] n:dom(b_"++(lastN 3 b)++") @ mget.n!(apply(b_"++(lastN 3 b)++",n)) -> Memory("++(mk_mem_param fs)++"))"
+mk_mget_mem_bndg fs ((a,b,c,d):xs)
+  = mk_mget_mem_bndg fs [(a,b,c,d)] 
+  ++"\n\t[] "++mk_mget_mem_bndg fs xs
+
+
+-- make mset external choices of Memory proc
+mk_mset_mem_bndg fs [] 
+  = ""
+mk_mset_mem_bndg fs [(a,b,c,d)] 
+  = "\t[] ([] n:dom(b_"
+      ++(lastN 3 b)
+      ++") @ mset.n?x:type"
+      ++ (lastN 3 b)
+      ++"(n) -> Memory("
+      ++  ( mk_charll_to_charl "," (repl_mem_param_over (lastN 3 b) (mk_mem_param_lst fs) ))
+      ++"))"
+mk_mset_mem_bndg fs ((a,b,c,d):xs)
+  = mk_mset_mem_bndg fs [(a,b,c,d)] 
+  ++"\n"++mk_mset_mem_bndg fs xs
+
+
+-- make subtype NAME_TYPE1, subtype...
+
+-- first we get the names from NAME datatype
+select_zname_f_zbr (ZBranch0 (n,[])) = n
+select_zname_f_zbr _ = ""
+
+--then we get the type of some name
+select_type_zname n = (lastN 3 n)
+
+-- now we filter a list of names nms of a selected type tp
+filter_znames_f_type [] tp = []
+filter_znames_f_type [n] tp 
+  | (lastN 3 n) == tp = [n]
+  | otherwise = []
+filter_znames_f_type (n:nms) tp
+  = (filter_znames_f_type [n] tp) ++ (filter_znames_f_type nms tp)
+
+-- with all that, we create a subtype NAME_TYPEX
+lst_subtype t [] = []
+lst_subtype t [z] 
+      | (lastN 3 z) == t = [z]
+      | otherwise = []
+lst_subtype t (z:zs) 
+      | (lastN 3 z) == t = [z] ++ (lst_subtype t zs) 
+      | otherwise = (lst_subtype t zs) 
+make_subtype_NAME zb
+  = nametypels
+  where
+    make_subtype znls zt = "subtype NAME_"++zt++" = "++mk_charll_to_charl " | " (lst_subtype zt znls)
+    znames = remdups $ map select_zname_f_zbr zb 
+    ztypes = remdups $ map select_type_zname znames
+    nametypels = mk_charll_to_charl "\n" $ map (make_subtype znames) ztypes
+
+-- make NAME_VALUES_TYPE
+mk_NAME_VALUES_TYPE n 
+  = "NAMES_VALUES_"++n++" = seq({seq({(n,v) | v <- type"++n++"(n)}) | n <- NAME_"++n++"})"
+-- make BINDINGS_TYPE
+mk_BINDINGS_TYPE n 
+  = "BINDINGS_"++n++" = {set(b) | b <- set(distCartProd(NAMES_VALUES_"++n++"))}"
+-- make restrict functions within main action
+mk_binding_list n 
+  = "b_"++n++" : BINDINGS_" ++ n
+mk_restrict spec vlst n  
+    = "\t\trestrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ lst_subtype n vlst)++"})"
+    where 
+      univlst = (def_universe spec)
+      funivlst = remdups (filter_types_universe univlst)
+      bndlst = mk_mem_param_lst funivlst
+
+mk_restrict_name n 
+  = "restrict"++n++"("++"b_"++n++")"
+
 \end{code}
+
+
 \begin{code}
 -- extract the delta variables and types in here'
 def_universe [(ZAbbreviation ("\\delta",[]) (ZSetDisplay xs))]
@@ -1440,12 +1554,12 @@ def_universe []
 \begin{code}
 def_universe_aux :: [ZExpr] -> [(String, [Char], [Char], [Char])]
 def_universe_aux [] = []
-def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "Nat", "NatValue")]
+def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "NAT", "NatValue")]
 def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])]= [(b,(def_U_NAME c), (def_U_prefix c), c)]
-def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "Nat", "NatValue"):(def_universe_aux xs))
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "NAT", "NatValue"):(def_universe_aux xs))
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
 def_universe_aux [(ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))]))]
-  = [(b,(def_U_NAME ("POWER_"++c)), (def_U_prefix ("POWER_"++c)), ("Set("++c++")"))]
+  = [(b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")"))]
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))])):xs)
   = ((b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")")):(def_universe_aux xs))
 \end{code}

@@ -1,103 +1,129 @@
-include "sequence_aux.csp"
-include "function_aux.csp"
+include "exs/sequence_aux.csp"
+include "exs/function_aux.csp"
 
 
-datatype SWITCH = ON | OFF
-datatype STATUS = START | RUNNING | IDLE | INTERRUPT
-NatValue = {0..3}
-SWITCHPARA = (SWITCH,NatValue)
+maxbuff = 2
+maxring = (maxbuff - 1)
+Value = {0..2}
+CellId = {1..2}
+datatype Direction = req | ack
+NatValue = {0..maxbuff}
 --------------------------------
 -- The universe of values
- datatype UNIVERSE = NAT.NatValue | SWI.SWITCHPARA | PST.Set(STATUS)
+ datatype UNIVERSE = NAT.NatValue | CEL.CellId | VAL.Value
 
 --------------------------------
 --Conversions
 subtype U_NAT = NAT.NatValue
-subtype U_SWI = SWI.SWITCHPARA
-subtype U_PST = PST.Set(STATUS)
+subtype U_CEL = CEL.CellId
+subtype U_VAL = VAL.Value
+
 
 valueNAT(NAT.v) = v
-valueSWI(SWI.v) = v
-valuePST(PST.v) = v
+valueCEL(CEL.v) = v
+valueVAL(VAL.v) = v
 
-typeNAT(x) =
-  if x == sv_SysCmd_time_U_NAT then U_NAT else {}
-typeSWI(x) =
-  if x == sv_SysCmd_swi_U_SWI then U_SWI else {}
-typePST(x) =
-  if x == sv_SysCmd_phase_U_PST then U_PST else {}
 
-tagNAT(x) =
-   if x == sv_SysCmd_time_U_NAT then NAT else NAT
-tagSWI(x) =
-   if x == sv_SysCmd_swi_U_SWI then SWI else SWI
-tagPST(x) =
-	 if x == sv_SysCmd_phase_U_PST then PST else PST
+typeNAT(x) = U_NAT
+typeCEL(x) = U_CEL
+typeVAL(x) = U_VAL
+
+
+tagNAT(x) = NAT
+tagCEL(x) = CEL
+tagVAL(x) = VAL
 
 
 --------------------------------
 -- MEMORY
 --------------------------------
-Memory(b1,b2,b3) =
-   ([] n:dom(b1) @ mget.n!(apply(b1,n)) -> Memory(b1,b2,b3))
-   []  ([] n:dom(b2) @ mget.n!(apply(b2,n)) -> Memory(b1,b2,b3))
-   []  ([] n:dom(b3) @ mget.n!(apply(b3,n)) -> Memory(b1,b2,b3))
-   [] ([] n:dom(b1) @ mset.n?x:typeNAT(n) -> Memory(over(b1,n,x),b2,b3))
-   [] ([] n:dom(b2) @ mset.n?x:typeSWI(n) -> Memory(b1,over(b2,n,x),b3))
-   [] ([] n:dom(b3) @ mset.n?x:typePST(n) -> Memory(b1,b2,over(b3,n,x)))
-   [] terminate -> SKIP
+Memory(b_NAT, b_CEL, b_VAL) = 
+	([] n:dom(b_NAT) @ mget.n!(apply(b_NAT,n)) -> Memory(b_NAT, b_CEL, b_VAL))
+	[] ([] n:dom(b_CEL) @ mget.n!(apply(b_CEL,n)) -> Memory(b_NAT, b_CEL, b_VAL))
+	[] ([] n:dom(b_VAL) @ mget.n!(apply(b_VAL,n)) -> Memory(b_NAT, b_CEL, b_VAL))
+	[] ([] n:dom(b_NAT) @ mset.n?x:typeNAT(n) -> Memory(over(b_NAT,n,x),b_CEL,b_VAL))
+	[] ([] n:dom(b_CEL) @ mset.n?x:typeCEL(n) -> Memory(b_NAT,over(b_CEL,n,x),b_VAL))
+	[] ([] n:dom(b_VAL) @ mset.n?x:typeVAL(n) -> Memory(b_NAT,b_CEL,over(b_VAL,n,x)))
+		[] terminate -> SKIP
 
-Memorise(P, b1,b2,b3) = 
-    ((P; terminate -> SKIP) [| MEM_I |] Memory(b1,b2,b3)) \ MEM_I
+Memorise(P,b_NAT, b_CEL, b_VAL) = 
+    ((P; terminate -> SKIP) [| MEM_I |] Memory(b_NAT, b_CEL, b_VAL)) \ MEM_I
 
-datatype NAME = sv_SysCmd_time_U_NAT | sv_SysCmd_swi_U_SWI | sv_SysCmd_phase_U_PST
+datatype NAME = sv_Controller_cache_U_VAL | sv_Controller_size_U_NAT | sv_Controller_top_U_CEL | sv_Controller_bot_U_CEL | sv_RingCell_v_U_VAL
+subtype NAME_NAT = sv_Controller_size_U_NAT
+subtype NAME_CEL = sv_Controller_top_U_CEL | sv_Controller_bot_U_CEL
+subtype NAME_VAL = sv_Controller_cache_U_VAL | sv_RingCell_v_U_VAL
 --------------------------------
 -- All possible bidings
-NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME})
-NAMES_VALUES_SWI = seq({seq({(n,v) | v <- typeSWI(n)}) | n <- NAME})
-NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME})
+
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+NAMES_VALUES_CEL = seq({seq({(n,v) | v <- typeCEL(n)}) | n <- NAME_CEL})
+NAMES_VALUES_VAL = seq({seq({(n,v) | v <- typeVAL(n)}) | n <- NAME_VAL})
+
 BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
-BINDINGS_SWI = {set(b) | b <- set(distCartProd(NAMES_VALUES_SWI))}
-BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
+BINDINGS_CEL = {set(b) | b <- set(distCartProd(NAMES_VALUES_CEL))}
+BINDINGS_VAL = {set(b) | b <- set(distCartProd(NAMES_VALUES_VAL))}
 
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 MEM_I = {| mset,mget,terminate |}
 
-MakeTick = 
-	tick -> SKIP
+DBuffer = ( ( ControllerR [| CtrI |] DRing ) \ CtrI )
 
-SysCmd = 
-	( let restrictNAT(bs) = dres(bs,{sv_SysCmd_time_U_NAT})
-        restrictSWI(bs) = dres(bs,{sv_SysCmd_swi_U_SWI})
-        restrictPST(bs) = dres(bs,{sv_SysCmd_phase_U_PST})
-		within
-		|~| b1:BINDINGS_NAT, b2:BINDINGS_SWI,b3:BINDINGS_PST @ Memorise(start -> 
-      ( mget.sv_SysCmd_swi_U_SWI?v_sv_SysCmd_swi_U_SWI:(typeSWI(sv_SysCmd_swi_U_SWI)) -> 
-        mget.sv_SysCmd_time_U_NAT?v_sv_SysCmd_time_U_NAT:(typeNAT(sv_SysCmd_time_U_NAT)) -> 
-        mget.sv_SysCmd_phase_U_PST?v_sv_SysCmd_phase_U_PST:(typePST(sv_SysCmd_phase_U_PST)) -> 
-        mset.sv_SysCmd_swi_U_SWI.(SWI.(ON,0)) -> 
-        mset.sv_SysCmd_time_U_NAT.(NAT.0) -> 
-        mset.sv_SysCmd_phase_U_PST.(PST.{START}) -> SKIP ;
-        mget.sv_SysCmd_time_U_NAT?v_sv_SysCmd_time_U_NAT:(typeNAT(sv_SysCmd_time_U_NAT)) -> 
-        (let XClock = (valueNAT(v_sv_SysCmd_time_U_NAT) <= 2 & 
-                   ( ( tick -> 
-                     mset.sv_SysCmd_time_U_NAT.(NAT.(valueNAT(v_sv_SysCmd_time_U_NAT) + 1)) -> 
-                     mset.sv_SysCmd_phase_U_PST.(PST.{RUNNING,IDLE}) -> SKIP 
-                     ||| getCurrentTime.valueNAT(v_sv_SysCmd_time_U_NAT) -> SKIP ) ; XClock )
-                   [] valueNAT(v_sv_SysCmd_time_U_NAT) > 2 & 
-                     ( mset.sv_SysCmd_time_U_NAT.(NAT.0) -> 
-                     mset.sv_SysCmd_swi_U_SWI.(SWI.(OFF,1)) -> 
-                     mset.sv_SysCmd_phase_U_PST.(PST.{INTERRUPT}) -> SKIP ; 
-                     stop -> SKIP )) ; XClock within XClock) ), restrictNAT(b1), restrictSWI(b2), restrictPST(b3))
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+	(let 		restrictNAT(bs) = dres(bs,{sv_Controller_size_U_NAT})
+		restrictCEL(bs) = dres(bs,{sv_Controller_top_U_CEL, sv_Controller_bot_U_CEL})
+		restrictVAL(bs) = dres(bs,{sv_Controller_cache_U_VAL, sv_RingCell_v_U_VAL})
+	within
+		|~| b_NAT : BINDINGS_NAT, b_CEL : BINDINGS_CEL, b_VAL : BINDINGS_VAL @ Memorise(( mget.sv_Controller_cache_U_VAL?v_sv_Controller_cache_U_VAL:(typeVAL(sv_Controller_cache_U_VAL)) -> mget.sv_Controller_size_U_NAT?v_sv_Controller_size_U_NAT:(typeNAT(sv_Controller_size_U_NAT)) -> mget.sv_Controller_top_U_CEL?v_sv_Controller_top_U_CEL:(typeCEL(sv_Controller_top_U_CEL)) -> mget.sv_Controller_bot_U_CEL?v_sv_Controller_bot_U_CEL:(typeCEL(sv_Controller_bot_U_CEL)) -> mset.sv_Controller_cache_U_VAL.(VAL.0) -> mset.sv_Controller_size_U_NAT.(NAT.0) -> mset.sv_Controller_top_U_CEL.(CEL.1) -> mset.sv_Controller_bot_U_CEL.(CEL.1) -> SKIP ; ( let X = ( mget.sv_Controller_top_U_CEL?v_sv_Controller_top_U_CEL:(typeCEL(sv_Controller_top_U_CEL)) -> mget.sv_Controller_cache_U_VAL?v_sv_Controller_cache_U_VAL:(typeVAL(sv_Controller_cache_U_VAL)) -> mget.sv_Controller_bot_U_CEL?v_sv_Controller_bot_U_CEL:(typeCEL(sv_Controller_bot_U_CEL)) -> mget.sv_Controller_size_U_NAT?v_sv_Controller_size_U_NAT:(typeNAT(sv_Controller_size_U_NAT)) -> ( ( valueNAT(v_sv_Controller_size_U_NAT) < maxbuff & input?x -> ( ( valueNAT(v_sv_Controller_size_U_NAT) == 0 & mset.sv_Controller_cache_U_VAL.(VAL.x) -> mget.sv_Controller_size_U_NAT?v_sv_Controller_size_U_NAT:(typeNAT(sv_Controller_size_U_NAT)) -> mset.sv_Controller_size_U_NAT.(NAT.1) -> SKIP ) [] ( valueNAT(v_sv_Controller_size_U_NAT) > 0 & write.valueCEL(v_sv_Controller_top_U_CEL).req.x -> write.valueCEL(v_sv_Controller_top_U_CEL).ack?dumb -> mset.sv_Controller_size_U_NAT.(NAT.(valueNAT(v_sv_Controller_size_U_NAT) + 1)) -> mget.sv_Controller_top_U_CEL?v_sv_Controller_top_U_CEL:(typeCEL(sv_Controller_top_U_CEL)) -> mset.sv_Controller_top_U_CEL.(CEL.(valueCEL(v_sv_Controller_top_U_CEL) % maxring + 1)) -> SKIP )) ) [] ( valueNAT(v_sv_Controller_size_U_NAT) > 0 & output.valueVAL(v_sv_Controller_cache_U_VAL) -> ( ( valueNAT(v_sv_Controller_size_U_NAT) > 1 & 
+			( ( |~| dumb : Value @ 
+				read.valueCEL(v_sv_Controller_bot_U_CEL).req.dumb -> 
+				read.valueCEL(v_sv_Controller_bot_U_CEL).ack?x -> 
+				mset.sv_Controller_cache_U_VAL.(VAL.x) -> mset.sv_Controller_size_U_NAT.(NAT.(valueNAT(v_sv_Controller_size_U_NAT) - 1)) -> SKIP ; mget.sv_Controller_bot_U_CEL?v_sv_Controller_bot_U_CEL:(typeCEL(sv_Controller_bot_U_CEL)) -> mset.sv_Controller_bot_U_CEL.(CEL.(valueCEL(v_sv_Controller_bot_U_CEL) % maxring + 1)) -> SKIP ) ) 
+		) [] ( valueNAT(v_sv_Controller_size_U_NAT) == 1 & mset.sv_Controller_size_U_NAT.(NAT.0) -> SKIP )) )) ; X ) within X ) ), restrictNAT(b_NAT), restrictCEL(b_CEL), restrictVAL(b_VAL))
 )
-channel tick
-channel getCurrentTime : NatValue
-channel start, stop
 
+DRing = |||i : CellId @ IRCell(i)
 
-Clock = 
-  (SysCmd \ {|mget,mset,terminate,getCurrentTime|}) 
-  [| {|tick|} |] MakeTick 
+IRCell(i) = RingCell[[rrd <- rdi.i, wrt <- wrti.i]]
 
-assert Clock [FD= MakeTick
+RingCell = 
+	(let 		restrictNAT(bs) = dres(bs,{sv_Controller_size_U_NAT})
+		restrictCEL(bs) = dres(bs,{sv_Controller_top_U_CEL, sv_Controller_bot_U_CEL})
+		restrictVAL(bs) = dres(bs,{sv_Controller_cache_U_VAL, sv_RingCell_v_U_VAL})
+	within
+		|~| b_NAT : BINDINGS_NAT, b_CEL : BINDINGS_CEL, b_VAL : BINDINGS_VAL @ Memorise(( ( |~| x : Value @ mget.sv_RingCell_v_U_VAL?v_sv_RingCell_v_U_VAL:(typeVAL(sv_RingCell_v_U_VAL)) -> mset.sv_RingCell_v_U_VAL.(VAL.x) -> SKIP ) ; ( let X = ( mget.sv_RingCell_v_U_VAL?v_sv_RingCell_v_U_VAL:(typeVAL(sv_RingCell_v_U_VAL)) -> ( wrt.req?x -> mset.sv_RingCell_v_U_VAL.(VAL.x) -> wrt.ack.x -> SKIP [] rrd.req?dumb -> rrd.ack.valueVAL(v_sv_RingCell_v_U_VAL) -> SKIP) ; X ) within X ) ), restrictNAT(b_NAT), restrictCEL(b_CEL), restrictVAL(b_VAL))
+)
+CtrI = {| rdi,wrti |}
+channel rrd, wrt : Direction.Value
+channel write, read, rdi, wrti : CellId.Direction.Value
+channel input, output : Value
+
+--------------------------------
+-- THE ABSTRACT BUFFER
+--------------------------------
+
+-- It takes its inputs and supplies its outputs on two different
+-- typed channels.
+
+ABuffer =
+  let BufferState(s)= #s > 0 & output!head(s) -> BufferState(tail(s))
+                      []
+                      #s < maxbuff & input?x -> BufferState(s ^ <x>)
+
+  within
+    BufferState(<>)
+
+--------------------------------
+-- THE RING BUFFER
+--------------------------------
+MemoryControllerR = Controller[[ read <- rdi, write <- wrti]]
+MemoryDBuffer = (MemoryControllerR [| {| rdi, wrti |} |] DRing) \ {| rdi, wrti |}
+
+--------------------------------
+-- VERIFICATION
+--------------------------------
+assert ABuffer [FD= MemoryDBuffer
+assert MemoryDBuffer [FD= ABuffer

@@ -116,7 +116,8 @@ omega_CProc spec (ProcStalessMain xls ca)
     [] 
     main_action)
     where 
-      expAct = map (expand_action_names_PPar xls) xls
+      remRecAct = map recursive_PPar xls
+      expAct = map (expand_action_names_PPar remRecAct) remRecAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
@@ -133,7 +134,8 @@ omega_CProc spec (ProcMain zp xls ca)
     main_action)
     where 
       nstate = (def_mem_st_Circus_aux spec spec)
-      expAct = map (expand_action_names_PPar xls) xls
+      remRecAct = map recursive_PPar xls
+      expAct = map (expand_action_names_PPar remRecAct) remRecAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)

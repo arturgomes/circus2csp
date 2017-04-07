@@ -25,11 +25,10 @@ SWITCHPARA = (SWITCH,NatValue)
  datatype UNIVERSE = NAT.NatValue | SWI.SWITCHPARA | PST.Set(STATUS)
 
 --------------------------------
---Conversions
+-- Conversions
 subtype U_NAT = NAT.NatValue
 subtype U_SWI = SWI.SWITCHPARA
 subtype U_PST = PST.Set(STATUS)
-
 
 -- We first must define function value for each type within the spec
 valueNAT(NAT.v) = v
@@ -95,10 +94,9 @@ SysCmd =
         restrictSWI(bs) = dres(bs,{sv_SysCmd_swi_U_SWI})
         restrictPST(bs) = dres(bs,{sv_SysCmd_phase_U_PST})
 		within
-
     -- as well as BINDINGS for each type and then the main action works
     -- accordingly to the translated spec.
-		|~| b1:BINDINGS_NAT, b2:BINDINGS_SWI,b3:BINDINGS_PST @ Memorise(start -> 
+		|~| b1:BINDINGS_NAT, b2:BINDINGS_SWI, b3:BINDINGS_PST @ Memorise(start -> 
       ( mget.sv_SysCmd_swi_U_SWI?v_sv_SysCmd_swi_U_SWI:(typeSWI(sv_SysCmd_swi_U_SWI)) -> 
         mget.sv_SysCmd_time_U_NAT?v_sv_SysCmd_time_U_NAT:(typeNAT(sv_SysCmd_time_U_NAT)) -> 
         mget.sv_SysCmd_phase_U_PST?v_sv_SysCmd_phase_U_PST:(typePST(sv_SysCmd_phase_U_PST)) -> 
