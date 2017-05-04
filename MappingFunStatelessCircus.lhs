@@ -63,85 +63,84 @@ omega_Circus_aux spec (x:xs)
 \begin{code}
 omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
 omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
-  = (CGenProcess zn (x:xs) (omega_ProcessDef spec pd))
-    -- where
-      -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
+  = (CGenProcess zn (x:xs) (omega_ProcessDef zn spec pd))
 omega_ProcDecl spec (CProcess zn pd)
-  = (CProcess zn (omega_ProcessDef spec pd))
-    -- where
-      -- npd = (rename_vars_ProcessDef1 (def_mem_st_Circus_aux spec) pd)
+  = (CProcess zn (omega_ProcessDef zn spec pd))
 \end{code}
 
 \subsection{Mapping Circus Processes Definition}
 \begin{code}
-omega_ProcessDef :: [ZPara] -> ProcessDef -> ProcessDef
-omega_ProcessDef spec (ProcDefSpot xl pd)
-  = (ProcDefSpot xl (omega_ProcessDef spec pd))
-omega_ProcessDef spec (ProcDefIndex xl pd)
-  = (ProcDefIndex xl (omega_ProcessDef spec pd))
-omega_ProcessDef spec (ProcDef cp)
-  = (ProcDef (omega_CProc spec cp))
+omega_ProcessDef :: ZName -> [ZPara] -> ProcessDef -> ProcessDef
+omega_ProcessDef zn spec (ProcDefSpot xl pd)
+  = (ProcDefSpot xl (omega_ProcessDef zn spec pd))
+omega_ProcessDef zn spec (ProcDefIndex xl pd)
+  = (ProcDefIndex xl (omega_ProcessDef zn spec pd))
+omega_ProcessDef zn spec (ProcDef cp)
+  = (ProcDef (omega_CProc zn spec cp))
 \end{code}
 
 \subsection{Mapping Circus Processes}
 Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
 \begin{code}
-omega_CProc :: [ZPara] -> CProc -> CProc
-omega_CProc spec (CExtChoice a b)
-  = (CExtChoice (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CHide a cs)
-  = (CHide (omega_CProc spec a) cs)
-omega_CProc spec (CIntChoice a b)
-  = (CIntChoice (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CInterleave a b)
-  = (CInterleave (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CircusProc zn)
-  = (CircusProc zn)
-omega_CProc spec (CParParal cs a b)
-  = (CParParal cs (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (CRepExtChProc [(Choose x s)] a)
-  = (CRepExtChProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepIntChProc [(Choose x s)] a)
-  = (CRepIntChProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepInterlProc [(Choose x s)] a)
-  = (CRepInterlProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepParalProc cse [(Choose x s)] a)
-  = (CRepParalProc cse [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CRepSeqProc [(Choose x s)] a)
-  = (CRepSeqProc [(Choose x s)] (omega_CProc spec a))
-omega_CProc spec (CSeq a b)
-  = (CSeq (omega_CProc spec a) (omega_CProc spec b))
-omega_CProc spec (ProcStalessMain xls ca)
+omega_CProc :: ZName -> [ZPara] -> CProc -> CProc
+omega_CProc zn spec (CExtChoice a b)
+  = (CExtChoice (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (CHide a cs)
+  = (CHide (omega_CProc zn spec a) cs)
+omega_CProc zn spec (CIntChoice a b)
+  = (CIntChoice (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (CInterleave a b)
+  = (CInterleave (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (CircusProc zns)
+  = (CircusProc zns)
+omega_CProc zn spec (CParParal cs a b)
+  = (CParParal cs (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (CRepExtChProc [(Choose x s)] a)
+  = (CRepExtChProc [(Choose x s)] (omega_CProc zn spec a))
+omega_CProc zn spec (CRepIntChProc [(Choose x s)] a)
+  = (CRepIntChProc [(Choose x s)] (omega_CProc zn spec a))
+omega_CProc zn spec (CRepInterlProc [(Choose x s)] a)
+  = (CRepInterlProc [(Choose x s)] (omega_CProc zn spec a))
+omega_CProc zn spec (CRepParalProc cse [(Choose x s)] a)
+  = (CRepParalProc cse [(Choose x s)] (omega_CProc zn spec a))
+omega_CProc zn spec (CRepSeqProc [(Choose x s)] a)
+  = (CRepSeqProc [(Choose x s)] (omega_CProc zn spec a))
+omega_CProc zn spec (CSeq a b)
+  = (CSeq (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (ProcStalessMain xls ca)
   = (ProcStalessMain 
     [] 
     main_action)
     where 
+      -- newLocVar = map rename_actions_loc_var xls
+      -- remRecAct = map recursive_PPar newLocVar
       remRecAct = map recursive_PPar xls
       expAct = map (expand_action_names_PPar remRecAct) remRecAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       main_action = refAC
-omega_CProc spec (CGenProc zn (x:xs))
-  = (CGenProc zn (x:xs))
-omega_CProc spec (CParamProc zn (x:xs))
-  = (CParamProc zn (x:xs))
-omega_CProc spec (CSimpIndexProc zn (x:xs))
-  = (CSimpIndexProc zn (x:xs))
-omega_CProc spec (ProcMain zp xls ca)
+omega_CProc zn spec (CGenProc zns (x:xs))
+  = (CGenProc zns (x:xs))
+omega_CProc zn spec (CParamProc zns (x:xs))
+  = (CParamProc zns (x:xs))
+omega_CProc zn spec (CSimpIndexProc zns (x:xs))
+  = (CSimpIndexProc zns (x:xs))
+omega_CProc zn spec (ProcMain zp xls ca)
   = (ProcStalessMain 
     [] 
     main_action)
     where 
-      nstate = (def_mem_st_Circus_aux spec spec)
+      nstate = filter_main_action_bind zn $ (def_mem_st_Circus_aux spec spec)
+      -- newLocVar = map rename_actions_loc_var xls
+      -- remRecAct = map recursive_PPar newLocVar
       remRecAct = map recursive_PPar xls
       expAct = map (expand_action_names_PPar remRecAct) remRecAct
       nomegaAC = (expand_action_names_CAction expAct ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
-      -- main_action = mk_main_action_bind nstate $ (expand_action_names_CAction expAct ca)
       main_action = mk_main_action_bind nstate $ refAC
-omega_CProc spec x
+omega_CProc zn spec x
   = x
 \end{code}
 

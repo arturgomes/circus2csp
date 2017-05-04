@@ -4,7 +4,6 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 \ignore{
 \begin{code}
 module OmegaDefs where
-import Data.Char
 -- import Data.Text hiding (map,concat,all,take)
 import Subs
 import AST
@@ -12,9 +11,7 @@ import Errors
 
 \end{code}
 }
-\begin{code}
-join_name n v = n ++ "_" ++ v
-\end{code}
+
 
 
 Auxiliary function to propagate $get$ communication through the variables and local variables of an action.
@@ -263,23 +260,6 @@ elem_by :: (a -> a -> Bool) -> a -> [a] -> Bool
 elem_by _  _ []         =  False
 elem_by eq y (x:xs)     =  y `eq` x || elem_by eq y xs
 
--- | The 'stripPrefix' function drops the given prefix from a list.
--- It returns 'Nothing' if the list did not start with the prefix
--- given, or 'Just' the list after the prefix, if it does.
---
--- > stripPrefix "foo" "foobar" == Just "bar"
--- > stripPrefix "foo" "foo" == Just ""
--- > stripPrefix "foo" "barfoo" == Nothing
--- > stripPrefix "foo" "barfoobaz" == Nothing
-stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
-stripPrefix [] ys = Just ys
-stripPrefix (x:xs) (y:ys)
- | x == y = stripPrefix xs ys
-stripPrefix _ _ = Nothing
-
-isPrefixOf [] _ = True
-isPrefixOf _ [] = False
-isPrefixOf (x : xs) (y : ys) = (x == y && isPrefixOf xs ys)
 
 splitOn :: Eq a => a -> [a] -> [[a]]
 splitOn d [] = []
@@ -1222,6 +1202,9 @@ get_var_type x ((a,(va,x1),b):vst)
   True -> b
   _ -> get_var_type x vst
 \end{code}
+
+
+
 \begin{code}
 rename_ZGenFilt1 lst (Include s) = (Include s)
 rename_ZGenFilt1 lst (Choose (va,x) e) 
@@ -1348,42 +1331,43 @@ rename_vars_ZPred1 lst (ZPSchema sp)
 
 \begin{code}
 -- extract the delta variables in here'
-get_delta_names [(ZFreeTypeDef ("NAME",[]) xs)]
-  = get_delta_names_aux xs
-get_delta_names ((ZFreeTypeDef ("NAME",[]) xs):xss)
-  = (get_delta_names_aux xs)++(get_delta_names xss)
-get_delta_names (_:xs)
-  = (get_delta_names xs)
-get_delta_names []
+get_delta_names1 [(ZFreeTypeDef ("NAME",[]) xs)]
+  = get_delta_names_aux1 xs
+get_delta_names1 ((ZFreeTypeDef ("NAME",[]) xs):xss)
+  = (get_delta_names_aux1 xs)++(get_delta_names1 xss)
+get_delta_names1 (_:xs)
+  = (get_delta_names1 xs)
+get_delta_names1 []
   = []
 \end{code}
 
 \begin{code}
-get_delta_names_aux [(ZBranch0 (a,[]))]
-  = [a]
-get_delta_names_aux ((ZBranch0 (a,[])):xs)
-  = [a]++(get_delta_names_aux xs)
+get_delta_names_aux1 [(ZBranch0 (a,[]))] = [a]
+get_delta_names_aux1 ((ZBranch0 (a,[])):xs) = [a]++(get_delta_names_aux1 xs)
+\end{code}
+\begin{code}
+-- extract the delta variables in here' from the same state
+get_delta_names zn [(ZFreeTypeDef ("NAME",[]) xs)]
+  = get_delta_names_aux zn xs
+get_delta_names zn ((ZFreeTypeDef ("NAME",[]) xs):xss)
+  = (get_delta_names_aux zn xs)++(get_delta_names zn xss)
+get_delta_names zn (_:xs)
+  = (get_delta_names zn xs)
+get_delta_names _ []
+  = []
 \end{code}
 
 \begin{code}
-get_vars_ZExpr :: ZExpr -> ZName
--- get_vars_ZExpr (ZVar (('\\':'\\':xs),x)) = (map toUpper (take 1 xs)) ++ (drop 1 xs)
-get_vars_ZExpr (ZVar (a,x)) 
-  = strip a "\92"
-get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[]))) 
-  = "P"++get_vars_ZExpr (ZVar (c,[]))
-\end{code}
-\begin{code}
-strip str x
-  | x `isPrefixOf` str = drop 1 str
-  | otherwise = str
-    where Just restOfString = stripPrefix x str
+get_delta_names_aux zn [(ZBranch0 (a,[]))]
+  | isPrefixOf zn a = [a]
+  | otherwise = []
+get_delta_names_aux zn ((ZBranch0 (a,[])):xs)
+  | isPrefixOf zn a = [a]++(get_delta_names_aux zn xs)
+  | otherwise = (get_delta_names_aux zn xs)
 \end{code}
 
 Construction of the Universe set in CSP
 \begin{code}
-def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
-def_U_prefix x = (map toUpper (take 3 x))
 
 -- Make UNIVERSE datatype in CSP
 mk_universe []
@@ -1714,6 +1698,15 @@ get_state_var_aux _ _ = []
 
 Here I'm making the bindings for the main action. 
 \begin{code}
+filter_main_action_bind 
+  :: ZName -> [(ZName, ZVar, ZExpr)] ->[(ZName, ZVar, ZExpr)]
+filter_main_action_bind zn [(a,b,c)] 
+  | zn == a = [(a,b,c)]
+  | otherwise = []
+filter_main_action_bind zn ((a,b,c):ls)
+  | zn == a = [(a,b,c)] ++ filter_main_action_bind zn ls
+  | otherwise = filter_main_action_bind zn ls
+
 mk_main_action_bind :: [(ZName, ZVar, ZExpr)] -> CAction -> CAction
 mk_main_action_bind lst ca
   | null lst = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])) ] Nothing)] ca))

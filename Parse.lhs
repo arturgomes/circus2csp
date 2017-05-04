@@ -1964,7 +1964,7 @@ circus_command_var
 			cut;
 			optnls;
 	  		prc <- circus_action;
-			return (CValDecl (concat decls) prc)}
+			return (CVarDecl (concat decls) prc)}
 			
 circus_command_bracket :: EParser ZToken CCommand
 circus_command_bracket

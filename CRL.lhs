@@ -101,6 +101,12 @@ crl_variableBlockSequenceExtension
   =  Done{orig = Just e, refined = Just (CActionCommand (CVarDecl [(Choose (x,[]) t)] (CSPSeq (CSPSeq a1 a2) a3))), proviso=[prov]}
   where
     prov = (ZMember (ZSetDisplay [ZVar (x,[])]) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr (free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr (free_var_CAction a3)])))
+crl_variableBlockSequenceExtension
+      e@(CSPSeq a1
+            (CActionCommand (CVarDecl [(Choose (x,[]) t)] a2)))
+  =  Done{orig = Just e, refined = Just (CActionCommand (CVarDecl [(Choose (x,[]) t)] (CSPSeq a1 a2))), proviso=[prov]}
+  where
+    prov = (ZMember (ZSetDisplay [ZVar (x,[])]) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr (free_var_CAction a1)])))
 crl_variableBlockSequenceExtension _ = None
 \end{code}
 % law 5 - NOT WORKING AND I DONT KNOW WHY!!!!
@@ -145,6 +151,12 @@ crl_variableBlockIntroduction_backwards e@(CActionCommand (CVarDecl [(Choose (x,
   =  Done{orig = Just e, refined = Just a, proviso = [prov]}
   where
   prov = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr (free_var_CAction a))))
+
+crl_variableBlockIntroduction_backwards e@(CSPCommAction (ChanComm x f) (CActionCommand (CValDecl [Choose (y,[]) (ZVar (t,[]))] a)))
+  =  Done{orig = Just e, refined = Just ref, proviso = [prov]}
+  where
+    ref = (CActionCommand (CValDecl [Choose (y,[]) (ZVar (t,[]))] (CSPCommAction (ChanComm x f) a)))
+    prov = (ZNot (ZMember (ZVar (y,[])) (ZSetDisplay $ zvar_to_zexpr (free_var_CAction (CSPCommAction (ChanComm x f) a)))))
 crl_variableBlockIntroduction_backwards _ = None
 \end{code}
 % law 6
@@ -211,7 +223,7 @@ crl_seqSkipUnit_b _ = None
 crl_recUnfold :: CAction -> Refinement CAction
 crl_recUnfold e@(CSPRecursion x1 (CSPUnfAction f (CActionName x2)))
   = case (x1 == x2) of
-      True         -> Done{orig = Just e, refined = Just (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1)))),proviso=[]}
+      True -> Done{orig = Just e, refined = Just (CSPUnfAction f (CSPRecursion x1 (CSPUnfAction f (CActionName x1)))),proviso=[]}
       False -> None
 crl_recUnfold _ = None 
 \end{code}
@@ -340,7 +352,6 @@ crl_chanExt1 _ _ = None
 \end{code}
 % Law 13 (Hiding expansion 2$^*$)
 \begin{lawn}[Hiding expansion 2$^*$]\sl
-
     \begin{zed}
       A \circhide cs
       \\ = \\
@@ -363,7 +374,7 @@ crl_hidingExpansion2 _ _ = None
     \begin{circus}
         (c \then Skip) \circhide \lchanset c \rchanset = \Skip%
         \also
-        (c.e \then Skip) \circhide \lchanset c \rchanset = Skip%
+        (c.e \then Skip) \circhide \lchanset c \rchanset = \Skip%
     \end{circus}%
  \label{law:prefixHiding}
 \end{lawn}
@@ -392,7 +403,6 @@ crl_hidingIdentity e@(CSPHide a (CChanSet cs))
   = Done{orig = Just e, refined = Just a, proviso=[p1]}
     where
       p1 = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay $zname_to_zexpr cs,ZSetDisplay (usedC a)])) (ZVar ("\\emptyset",[])))
-
 crl_hidingIdentity _ = None
 \end{code}
 % Law 16 (Parallelism composition/External choice---exchange)
@@ -414,11 +424,12 @@ crl_parExtChoiceExchange
   = case pred of
       True ->  Done{orig = Just e, refined = Just ref, proviso=[]}
       False -> None
-      where astop = (CSPNSParal ns1 cs ns2 a1 b2) == (CSPNSParal ns2 cs ns1 a2 b1)
-            ref = (CSPNSParal ns1 cs ns2
+      where 
+        astop = (CSPNSParal ns1 cs ns2 a1 b2) == (CSPNSParal ns2 cs ns1 a2 b1)
+        ref = (CSPNSParal ns1 cs ns2
                   (CSPExtChoice a1 b1)
                   (CSPExtChoice a2 b2))
-            pred = (ns1 == ns11 && cs1 == cs && ns2 == ns21) && astop
+        pred = (ns1 == ns11 && cs1 == cs && ns2 == ns21) && astop
 crl_parExtChoiceExchange _ = None
 \end{code}
 % Law 17 (Parallelism composition/External choice---distribution$^*$)
@@ -500,9 +511,9 @@ crl_hidingExternalChoiceDistribution
   = Done{orig = Just e, refined = Just ref, proviso=[p1]}
     where
       p1 = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay (initials a1),ZSetDisplay (initials a1)]),ZSetDisplay (zname_to_zexpr cs)])) (ZVar ("\\emptyset",[])))
-      ref= (CSPExtChoice
-                  (CSPHide a1 (CChanSet cs))
-                  (CSPHide a2 (CChanSet cs)))
+      ref = (CSPExtChoice
+              (CSPHide a1 (CChanSet cs))
+              (CSPHide a2 (CChanSet cs)))
 
 
 crl_hidingExternalChoiceDistribution _ = None
@@ -856,26 +867,43 @@ crl_inputPrefixParallelismDistribution2 _ = None
   \label{law:prefixSkip}
 \end{lawn}
 \begin{code}
-crl_prefixSkip :: CAction -> Refinement CAction
-crl_prefixSkip e@(CSPCommAction (ChanComm c [ChanDotExp x]) a)
-  = Done{orig = Just e, refined = Just ref, proviso=[]}
-    where
-      ref = (CSPSeq (CSPCommAction
-              (ChanComm c [ChanDotExp x]) CSPSkip) a)
-crl_prefixSkip e@(CSPCommAction c a)
-  = Done{orig = Just e, refined = Just ref, proviso=[]}
-    where
-      ref = (CSPSeq (CSPCommAction c CSPSkip) a)
-crl_prefixSkip _ = None
+
+-- crl_prefixSkip :: CAction -> Refinement CAction
+-- crl_prefixSkip e@(CSPCommAction (ChanComm c [ChanDotExp x]) a)
+--   = Done{orig = Just e, refined = Just ref, proviso=[]}
+--     where
+--       ref = (CSPSeq (CSPCommAction
+--               (ChanComm c [ChanDotExp x]) CSPSkip) a)
+-- crl_prefixSkip e@(CSPCommAction c a)
+--   = Done{orig = Just e, refined = Just ref, proviso=[]}
+--     where
+--       ref = (CSPSeq (CSPCommAction c CSPSkip) a)
+-- crl_prefixSkip _ = None
+
+-- 9/04/18
+-- I had to make these two auxiliary functions in order to
+-- put the crl_prefixSkip_backwards function working properly.
+-- Basically, it searches for a CSPSkip within a prefixed action
+-- and then removes the CSPSkip replacing it with a2, the RHS of 
+-- a CSPSeq action.
+endPrefWithSkip (CSPCommAction c CSPSkip) = True
+endPrefWithSkip (CSPCommAction c c1) = endPrefWithSkip c1
+endPrefWithSkip _ = False
+
+remPrefSkip a2 (CSPCommAction c CSPSkip) = (CSPCommAction c a2)
+remPrefSkip a2 (CSPCommAction c c1) = (CSPCommAction c (remPrefSkip a2 c1))
+
 crl_prefixSkip_backwards :: CAction -> Refinement CAction
 crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
   = Done{orig = Just e, refined = Just ref, proviso=[]}
     where
       ref = (CSPCommAction (ChanComm c [ChanDotExp x]) a)
-crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction c CSPSkip) a)
-  = Done{orig = Just e, refined = Just ref, proviso=[]}
+crl_prefixSkip_backwards e@(CSPSeq a1 a2)
+  | endPrefWithSkip a1 
+      = Done{orig = Just e, refined = Just ref, proviso=[]}
+  | otherwise = None
     where
-      ref = (CSPCommAction c a)
+      ref = remPrefSkip a2 a1
 crl_prefixSkip_backwards _ = None
 \end{code}
 \begin{lawn}[Prefix/Parallelism composition---distribution]\sl
@@ -2004,7 +2032,7 @@ Testing area
 -- And it will write the refinement of cexample2 into the ref_steps.txt file.
 
 cexample = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2"))
-cexample2 = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2"))) (CActionName "a2"))
+cexample2 = (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v2",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2")))
 cexample3 = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (ZAnd (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))) (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 2]) (ZVar (">",[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))) (CActionName "X"))))))
 cexample4 = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (ZAnd (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))) (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 2]) (ZVar (">",[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))) (CActionName "X"))))))
 cexample5= (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))

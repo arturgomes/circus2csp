@@ -1,0 +1,45 @@
+\begin{circus}
+RANGE == 0 \upto 2
+\also \circchannel tick,time
+\also \circchannel out : (RANGE, RANGE)
+\end{circus}
+\begin{circus}
+\circprocess\ Chrono \circdef\\
+\circbegin\\ 
+\circstate AState \defs [ sec, min : RANGE ]
+AInit \circdef (sec,min:=0,0)
+IncSec \circdef (sec,min:=(sec+1)\mod 3,min)
+IncMin  \circdef (min,sec:=(min+1)\mod 3,sec)
+Run \circdef 
+  (tick \then IncSec \circseq 
+    ((\lcircguard sec = 0 \rcircguard \circguard IncMin) 
+    \extchoice (\lcircguard sec \neq 0 \rcircguard \circguard \Skip)))
+    \extchoice (time \then out!(min, sec) \then \Skip) 
+\circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))
+\circend
+\end{circus}
+\begin{circus}
+\circchannel inc, minsReq\\
+\also \circchannel ans : RANGE\\
+\also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
+\end{circus}
+\begin{circus}
+\circprocess Chronometer \circdef\ \circbegin
+\circstate State \defs [ sec : RANGE ; min : RANGE ]
+SecInit \circdef (sec:=0)
+IncSec \circdef (sec:=(sec+1)\mod 3)
+RunSec  \circdef  
+    tick \then IncSec \circseq
+    ((\lcircguard sec = 0 \rcircguard \circguard inc \then \Skip) 
+    \extchoice (\lcircguard sec \neq 0 \rcircguard \circguard \Skip))
+    \extchoice time \then minsReq \then ans?mins \then out!(mins,sec) 
+      \then \Skip 
+MinInit \circdef (min:=0)
+IncMin \circdef (min:=(min+1)\mod 3)
+RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)
+\circspot 
+(((SecInit \circseq (\circmu X \circspot (RunSec \circseq X)))
+\lpar {seq} | Sync | {min} \rpar 
+(MinInit \circseq (\circmu X \circspot (RunMin \circseq X)))) \circhide Sync)
+\circend
+\end{circus}

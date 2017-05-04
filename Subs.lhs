@@ -1,55 +1,61 @@
-\section{Substitution}
+Substitution\section{Substitution}
 
 
 \ignore{
 \begin{code}
 module Subs
 -- $Id: Subs.hs,v 1.25 2005-02-25 14:04:11 marku Exp $
-
 \end{code}
 }
 
-Defines substitution-related functions over Z terms. These functions should be
-applied only to unfolded terms (so ZESchema, ZTheta expressions etc. are not
-handled here).
+Defines substitution-related functions over Z terms. These functions
+should be applied only to unfolded terms (so ZESchema, ZTheta
+expressions etc. are not handled here).
 
-Exports ZExpr and ZPred as instances of SubsTerm, which is a type class
-containing functions for performing substitution, determining free variables,
-etc.
+Exports ZExpr and ZPred as instances of SubsTerm, which is a type
+class containing functions for performing substitution, determining
+free variables, etc.
 
-Note that 'substitute sub vs term' takes a set of variables, vs, as well as
-the substitution, sub.  This varset must include all free variables of the
-entire term that the substituted term will be placed inside (including free
-vars of 'term' itself), plus any bound variables that 'term' is within the
-scope of.  This allows the substitute function to preserve the 'no-repeated-
-bound-vars' invariant.
+Note that 'substitute sub vs term' takes a set of variables, vs, as
+well as the substitution, sub.  This varset must include all free
+variables of the entire term that the substituted term will be placed
+inside (including free vars of 'term' itself), plus any bound
+variables that 'term' is within the scope of.  This allows the
+substitute function to preserve the 'no-repeated- bound-vars'
+invariant.
 
 \begin{code}
 (
   avoid_variables,
   choose_fresh_var,
+  def_U_NAME,
+  def_U_prefix,
   diff_varset,
   empty_varset,
-  free_vars,    -- Hugs does not export this automatically
-  free_var_ZExpr,
-  free_var_ZPred,
   free_var_CAction,
+  free_var_ZExpr,
   free_var_ZGenFilt,
+  free_var_ZPred,
+  free_vars,    -- Hugs does not export this automatically
   fvars_expr,
   fvars_genfilt,
   fvars_pred,
+  get_vars_ZExpr,
   in_varset,
   inter_varset,
+  isPrefixOf,
+  join_name,
   make_subinfo,
+  -- rename_actions_loc_var,
   rename_bndvars,
   rename_lhsvars,  -- only for use by Unfold really.
   show_varset,
+  sub_CAction,
   sub_expr,
   sub_genfilt,
   sub_genfilt2,
+  sub_ParAction,
   sub_pred,
-  sub_CAction,
-
   subs_add,
   subs_avoid,
   subs_domain,
@@ -72,6 +78,7 @@ where
 
 import AST
 import FiniteSets
+import Data.Char
 
 type Substitution = [(ZVar,ZExpr)]
 
@@ -152,26 +159,26 @@ show_varset     (VarSet vs) = show_zvars [v | ZVar v <- vs]
 \end{code}
 
 \subsection{$SubstitutionInfo$ ADT}
-
+ 
 It is convenient to pass around more information than just the
-substitution, so we pass around this SubstitutionInfo type,
-which contains the substitution, plus the set of variables
-which must be avoided when choosing new local variables.
-This 'avoid' set must contain:
+substitution, so we pass around this SubstitutionInfo type, which
+contains the substitution, plus the set of variables which must be
+avoided when choosing new local variables. This 'avoid' set must
+contain:
 
  \begin{itemize}   
 
-\item  all free variables of the entire term that surrounds the term that
-substitute is being applied to (usually none, because most complete terms have
-no free vars). Note: This is slightly stronger than necessary -- it could be
-just the free vars minus the domain of the substitution.
+\item  all free variables of the entire term that surrounds the term
+that substitute is being applied to (usually none, because most
+complete terms have no free vars). Note: This is slightly stronger
+than necessary -- it could be just the free vars minus the domain of
+the substitution.
 
-\item  all outer bound variables of the entire term (so that the substitution
-preserves the uniquify invariant -- no repeated bound variable names on any
-path into the term)
+\item  all outer bound variables of the entire term (so that the
+substitution preserves the uniquify invariant -- no repeated bound
+variable names on any path into the term)
 
-\item  all free variables in the range of the substitution (because we must
-avoid capturing these) 
+\item  all free variables in the range of the substitution (because we must avoid capturing these)
 
 \end{itemize} 
 \subsection{Substitution -- Manipulating sets}
@@ -320,35 +327,53 @@ sub_ParAction subs (ParamActionDecl vZGenFilt_lst vParAction)
   = (ParamActionDecl vZGenFilt_lst2 vParAction2)
   where
     (vZGenFilt_lst2,vParAction2) = sub_genfilt sub_ParAction subs vZGenFilt_lst vParAction
-
 \end{code}
 \begin{code}
-
 sub_CAction :: SubstitutionInfo -> CAction -> CAction
-sub_CAction subs (CActionSchemaExpr x) = (CActionSchemaExpr x)
-sub_CAction subs (CActionCommand c) = (CActionCommand (sub_CCommand subs c))
-sub_CAction subs (CActionName nm) = (CActionName nm)
-sub_CAction subs (CSPCommAction cc c) = (CSPCommAction (sub_Comm subs cc) (sub_CAction subs c))
-sub_CAction subs (CSPGuard p c) = (CSPGuard (sub_pred subs p) (sub_CAction subs c))
-sub_CAction subs (CSPSeq ca cb) = (CSPSeq (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPExtChoice ca cb) = (CSPExtChoice (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPIntChoice ca cb) = (CSPIntChoice (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPNSParal ns1 cs ns2 ca cb) = (CSPNSParal ns1 cs ns2 (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPParal cs ca cb) = (CSPParal cs (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPNSInter ns1 ns2 ca cb) = (CSPNSInter ns1 ns2 (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPInterleave ca cb) = (CSPInterleave (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPHide c cs) = (CSPHide (sub_CAction subs c) cs)
-sub_CAction subs (CSPParAction nm xp) = (CSPParAction nm xp)
-sub_CAction subs (CSPRenAction nm cr) = (CSPRenAction nm cr)
-sub_CAction subs (CSPRecursion nm c) = (CSPRecursion nm (sub_CAction subs c))
-sub_CAction subs (CSPUnParAction lst c nm) = (CSPUnParAction lst (sub_CAction subs c) nm)
-sub_CAction subs (CSPRepSeq lst c) = (CSPRepSeq lst (sub_CAction subs c))
-sub_CAction subs (CSPRepExtChoice lst c) = (CSPRepExtChoice lst (sub_CAction subs c))
-sub_CAction subs (CSPRepIntChoice lst c) = (CSPRepIntChoice lst (sub_CAction subs c))
-sub_CAction subs (CSPRepParalNS cs lst ns c) = (CSPRepParalNS cs lst ns (sub_CAction subs c))
-sub_CAction subs (CSPRepParal cs lst c) = (CSPRepParal cs lst (sub_CAction subs c))
-sub_CAction subs (CSPRepInterlNS lst ns c) = (CSPRepInterlNS lst ns (sub_CAction subs c))
-sub_CAction subs (CSPRepInterl lst c) = (CSPRepInterl lst (sub_CAction subs c))
+sub_CAction subs (CActionCommand c) 
+  = (CActionCommand (sub_CCommand subs c))
+sub_CAction subs (CSPCommAction cc c) 
+  = (CSPCommAction (sub_Comm subs cc) (sub_CAction subs c))
+sub_CAction subs (CSPGuard p c) 
+  = (CSPGuard (sub_pred subs p) (sub_CAction subs c))
+sub_CAction subs (CSPSeq ca cb) 
+  = (CSPSeq (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPExtChoice ca cb) 
+  = (CSPExtChoice (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPIntChoice ca cb) 
+  = (CSPIntChoice (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPNSParal ns1 cs ns2 ca cb) 
+  = (CSPNSParal ns1 cs ns2 (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPParal cs ca cb) 
+  = (CSPParal cs (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPNSInter ns1 ns2 ca cb) 
+  = (CSPNSInter ns1 ns2 (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPInterleave ca cb) 
+  = (CSPInterleave (sub_CAction subs ca) (sub_CAction subs cb))
+sub_CAction subs (CSPHide c cs) 
+  = (CSPHide (sub_CAction subs c) cs)
+sub_CAction subs (CSPParAction nm xp) 
+  = (CSPParAction nm xp)
+sub_CAction subs (CSPRenAction nm cr) 
+  = (CSPRenAction nm cr)
+sub_CAction subs (CSPRecursion nm c) 
+  = (CSPRecursion nm (sub_CAction subs c))
+sub_CAction subs (CSPUnParAction lst c nm) 
+  = (CSPUnParAction lst (sub_CAction subs c) nm)
+sub_CAction subs (CSPRepSeq lst c) 
+  = (CSPRepSeq lst (sub_CAction subs c))
+sub_CAction subs (CSPRepExtChoice lst c) 
+  = (CSPRepExtChoice lst (sub_CAction subs c))
+sub_CAction subs (CSPRepIntChoice lst c) 
+  = (CSPRepIntChoice lst (sub_CAction subs c))
+sub_CAction subs (CSPRepParalNS cs lst ns c) 
+  = (CSPRepParalNS cs lst ns (sub_CAction subs c))
+sub_CAction subs (CSPRepParal cs lst c) 
+  = (CSPRepParal cs lst (sub_CAction subs c))
+sub_CAction subs (CSPRepInterlNS lst ns c) 
+  = (CSPRepInterlNS lst ns (sub_CAction subs c))
+sub_CAction subs (CSPRepInterl lst c) 
+  = (CSPRepInterl lst (sub_CAction subs c))
 sub_CAction subs x = x
 
 \end{code}
@@ -452,16 +477,18 @@ rename_lhsvars clash inuse (v:vs)
 
 \end{code}
 \subsection{Substitution}
-This is the most complex part of substitution. The scope rules for $[ZGenFilt]$
-lists are fairly subtle (see AST.hs) and on top of those, we have to do a
-substitution, being careful (as usual!) to rename any of the bound variables
-that might capture variables in the range of the substitution.  This is enough
-to make life exciting...
 
-The '$subfunc$' argument is either $sub_pred$ or $sub_expr$. It is passed as a
-parameter so that this function can work on $[ZGenFilt]$ lists that are followed
-by either kind of term. (An earlier version used the type class 'substitute',
-and avoided having this parameter, but GHC 4.02 did not like that).
+This is the most complex part of substitution. The scope rules for
+$[ZGenFilt]$ lists are fairly subtle (see AST.hs) and on top of those,
+we have to do a substitution, being careful (as usual!) to rename any
+of the bound variables that might capture variables in the range of
+the substitution.  This is enough to make life exciting...
+
+The '$subfunc$' argument is either $sub_pred$ or $sub_expr$. It is
+passed as a parameter so that this function can work on $[ZGenFilt]$
+lists that are followed by either kind of term. (An earlier version
+used the type class 'substitute', and avoided having this parameter,
+but GHC 4.02 did not like that).
 
 \begin{code}
 
@@ -540,11 +567,9 @@ rename_bndvars clash inuse (c@(Check _):gfs0)
   = (c:gfs, subs)
   where
   (gfs, subs) = rename_bndvars clash inuse gfs0
-
-
 \end{code}
-\subsection{Free Variables for $Expressions$}
 
+\subsection{Free Variables for $Expressions$}
 
 \begin{code}
 free_var_ZExpr :: ZExpr -> [ZVar]
@@ -751,4 +776,85 @@ decors  = [[]] ++ [d2++d | d2 <- decors, d <- decors0]
 
 avoid_variables :: Env -> VarSet
 avoid_variables = varset_from_zvars . map fst . local_values
+\end{code}
+
+
+\subsection{New features for \Circus}
+Renaming local variables of an action
+\begin{code}
+rename_ZGenFilt_loc_var (Choose (va,x) e) 
+  = (Choose ((join_name (join_name "lv" va) newt),x) e)
+  where 
+        newt = (def_U_NAME $ get_vars_ZExpr e)
+rename_ZGenFilt_loc_var _ = error "local var translation not defined for this"
+\end{code}
+Then we also make a function that returns all the local variable definitions
+\begin{code}
+list_ZGenFilt_loc_var (Choose (va,x) e) 
+  = [((va,x),e)]
+list_ZGenFilt_loc_var _ = []
+list_ZGenFilt_loc_var' (Choose (va,x) e) 
+  = [ZVar (va,x)]
+list_ZGenFilt_loc_var' _ = []
+\end{code}
+\begin{code}
+-- rename_actions_loc_var (CParAction a (ParamActionDecl vZGenFilt_lst vCAction))
+--   = (CParAction a (ParamActionDecl vZGenFilt_lst2 vCAction2))
+--   where 
+--     locVar = map list_ZGenFilt_loc_var vZGenFilt_lst
+--     renLocVar = map rename_ZGenFilt_loc_var vZGenFilt_lst
+--     newLocVar = map list_ZGenFilt_loc_var' renLocVar
+--     subs = mergeTwoLists locVar newLocVar
+--     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_ParAction subs vZGenFilt_lst vCAction
+-- rename_actions_loc_var _ = []
+
+mergeTwoLists [] [] = []
+mergeTwoLists [x] [y] = [(x,y)]
+mergeTwoLists (x:xs) (y:ys) = [(x,y)] ++ (mergeTwoLists xs ys)
+mergeTwoLists _ _ = error "Error whilst mergin two lists" 
+
+
+def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
+def_U_prefix x = (map toUpper (take 3 x))
+\end{code}
+
+\begin{code}
+get_vars_ZExpr :: ZExpr -> ZName
+-- get_vars_ZExpr (ZVar (('\\':'\\':xs),x)) = (map toUpper (take 1 xs)) ++ (drop 1 xs)
+get_vars_ZExpr (ZVar (a,x)) 
+  = strip a "\92"
+get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[]))) 
+  = "P"++get_vars_ZExpr (ZVar (c,[]))
+\end{code}
+
+\begin{code}
+join_name n v = n ++ "_" ++ v
+\end{code}
+
+\begin{code}
+
+-- | The 'stripPrefix' function drops the given prefix from a list.
+-- It returns 'Nothing' if the list did not start with the prefix
+-- given, or 'Just' the list after the prefix, if it does.
+--
+-- > stripPrefix "foo" "foobar" == Just "bar"
+-- > stripPrefix "foo" "foo" == Just ""
+-- > stripPrefix "foo" "barfoo" == Nothing
+-- > stripPrefix "foo" "barfoobaz" == Nothing
+stripPrefix :: Eq a => [a] -> [a] -> Maybe [a]
+stripPrefix [] ys = Just ys
+stripPrefix (x:xs) (y:ys)
+ | x == y = stripPrefix xs ys
+stripPrefix _ _ = Nothing
+
+strip str x
+  | x `isPrefixOf` str = drop 1 str
+  | otherwise = str
+    where Just restOfString = stripPrefix x str
+\end{code}
+
+\begin{code}
+isPrefixOf [] _ = True
+isPrefixOf _ [] = False
+isPrefixOf (x : xs) (y : ys) = (x == y && isPrefixOf xs ys)
 \end{code}

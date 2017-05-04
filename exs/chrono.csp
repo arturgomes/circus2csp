@@ -1,5 +1,5 @@
-include "exs/sequence_aux.csp"
-include "exs/function_aux.csp"
+include "../isequence_aux.csp"
+include "../function_aux.csp"
 
 RANGE = {0..2}
 --------------------------------

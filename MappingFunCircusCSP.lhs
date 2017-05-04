@@ -102,9 +102,9 @@ mapping_CircParagraphs spec (CircChannel cc2)
 mapping_CircParagraphs spec (ZAbbreviation ("\\delta",[]) (ZSetDisplay ls)) 
   = ""
 mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetDisplay ls)) 
-  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names spec) (ZSetDisplay ls))
+  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
 mapping_CircParagraphs spec (ZAbbreviation (n,[]) expr) 
-  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names spec) expr)
+  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
 -- mapping_CircParagraphs spec (ZPredicate zp)
 --   = undefined
 -- mapping_CircParagraphs spec (ZAxDef zgfs)
@@ -212,6 +212,12 @@ get_channel_type (ZCall (ZVar ("\\power",[])) (ZVar (v,[])))
   = "Set("++v++")"
 get_channel_type (ZCross xs)
   = (get_channel_type_list xs)
+get_channel_type (ZTuple xls) = "(" ++ get_channel_type_tuple xls ++ ")"
+
+get_channel_type_tuple [ZVar (a,[])] = a
+get_channel_type_tuple ((ZVar (a,[])):xs)
+  = a ++ "," ++ (get_channel_type_tuple xs)
+
 get_channel_type_list [x]
   = (get_channel_type x)
 get_channel_type_list (x:xs)
@@ -276,10 +282,10 @@ mapping_ZGenFilt :: [ZPara] -> ZGenFilt -> String
 mapping_ZGenFilt  spec (Choose v _) = fst v
 
 mapping_ZGenFilt_list :: [ZPara] -> [ZGenFilt] -> String
-mapping_ZGenFilt_list  spec [x]
-  = (mapping_ZGenFilt  spec x)
-mapping_ZGenFilt_list  spec (x:xs)
-  = (mapping_ZGenFilt  spec x) ++ "," ++ (mapping_ZGenFilt_list  spec xs)
+mapping_ZGenFilt_list spec [x]
+  = (mapping_ZGenFilt spec x)
+mapping_ZGenFilt_list spec (x:xs)
+  = (mapping_ZGenFilt spec x) ++ "," ++ (mapping_ZGenFilt_list  spec xs)
 \end{code}
 
 
@@ -319,21 +325,21 @@ mapping_CProc procn spec (CRepExtChProc [(Choose (x,[]) s)] a)
   = "[] "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (CRepIntChProc [(Choose (x,[]) s)] a)
   = "|~| "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (CRepInterlProc [(Choose (x,[]) s)] a)
   = "|||"
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (CRepParalProc cse [(Choose (x,[]) s)] a)
@@ -342,14 +348,14 @@ mapping_CProc procn spec (CRepParalProc cse [(Choose (x,[]) s)] a)
     ++ " |] "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (CRepSeqProc [(Choose (x,[]) s)] a)
   = "; "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (ProcStalessMain pps ca)
@@ -359,7 +365,7 @@ mapping_CProc procn spec (ProcStalessMain pps ca)
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
 mapping_CProc procn spec (CParamProc zn xl)
-   = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
+   = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names1 spec)) xl) ++ ")"
 -- (mapping_CProc procn spec CSimpIndexProc zn (x:xs))
 --   = undefined
 -- (mapping_CProc procn spec ProcMain zp (x:xs) ca)
@@ -384,7 +390,7 @@ mapping_PPar :: ZName -> [ZPara] -> PPar -> String
 --mapping_PPar procn spec (CNameSet zn nse)
 --  = undefined
 mapping_PPar procn spec (CParAction zn (CircusAction (CActionCommand (CVResDecl ls a ))))
-  = zn ++"("++ (mapping_ZGenFilt_list  spec ls) ++ ") =" ++ (mapping_CAction procn spec a)
+  = zn ++"("++ (mapping_ZGenFilt_list spec ls) ++ ") =" ++ (mapping_CAction procn spec a)
 mapping_PPar procn spec (CParAction zn pa)
   = zn ++ (mapping_ParAction procn spec pa)
 mapping_PPar procn spec x
@@ -434,24 +440,20 @@ mapping_CAction procn spec (CSPUnfAction x (CActionName v))
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   = case np of
     "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
-    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names spec) p) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
+    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names1 spec) p) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
     where
-      np = (mapping_predicate (get_delta_names spec) p)
+      np = (mapping_predicate (get_delta_names1 spec) p)
 \end{code}
 \begin{circus}
 \Upsilon_A(c?x\then A)\circdef~\tco{c?x -> } \Upsilon_A(A)
 \end{circus}
-
-% \begin{circus}
-% \Upsilon_A(c.v\then\ A)\circdef~\tco{c.v -> }\Upsilon_A(A)
-% \end{circus}
-% \begin{code}
-% mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanDotExp (ZVar (x,y))]) a)
-%   = (get_channel_name spec (ChanComm c [ChanDotExp (ZVar (x,y))]))
-%     ++ " -> "
-%     ++ show x
-%     ++ mapping_CAction procn spec (a)
-% \end{code}
+\begin{code}
+mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
+  = (get_channel_name spec (ChanComm c [ChanInp x]))
+    ++ " -> "
+    ++ show x
+    ++ mapping_CAction procn spec (a)
+\end{code}
 
 \begin{circus}
 \Upsilon_A(c!v \then\ A)\circdef~\tco{c!v -> }\Upsilon_A(A)
@@ -501,7 +503,7 @@ mapping_CAction procn spec (CSPGuard g ca)
     "true" -> (mapping_CAction procn spec ca) -- True Law (true & A = A)
     "false" -> "STOP"                   -- False Law (false & A = Stop)
     _ -> "( " ++ guard ++ " & " ++ (mapping_CAction procn spec ca) ++ " )"
-  where guard = (mapping_predicate (get_delta_names spec) g)
+  where guard = (mapping_predicate (get_delta_names1 spec) g)
 \end{code}
 
 \begin{circus}
@@ -553,7 +555,7 @@ mapping_CAction procn spec (CSPNSParal ns1 cs ns2 a b)
 \end{code}
 \begin{code}
 mapping_CAction procn spec (CSPParAction zn xl)
-  = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names spec)) xl) ++ ")"
+  = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names1 spec)) xl) ++ ")"
 \end{code}
 % \begin{code}
 % mapping_CAction procn spec (CSPParal cs a b)
@@ -585,7 +587,7 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
   = "( " ++ "[] "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
@@ -598,7 +600,7 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
   = "( " ++ "|~| "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
@@ -608,7 +610,7 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
 %   = "||| "
 %     ++  show x
 %     ++ " : "
-%     ++ (mapping_ZExpr (get_delta_names spec) s)
+%     ++ (mapping_ZExpr (get_delta_names1 spec) s)
 %     ++ " @ "
 %     ++ mapping_CAction procn spec (a)
 % \end{code}
@@ -621,7 +623,7 @@ mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[]) s)] NSExpEmpty a)
   = "( " ++ "||| "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
@@ -636,7 +638,7 @@ mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[]) s)] NSExpEmpty a)
     ++ " |] "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
@@ -649,7 +651,7 @@ mapping_CAction procn spec (CSPRepSeq [(Choose (x,[]) s)] a)
   = "( " ++ "; "
     ++  show x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names spec) s)
+    ++ (mapping_ZExpr (get_delta_names1 spec) s)
     ++ " @ "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
@@ -708,19 +710,13 @@ mapping_CCommand procn spec (CIf cga)
 --   = undefined
 -- mapping_CCommand procn spec (CResDecl (x:xs) ca)
 --   = undefined
--- TODO 09/03/17 - restrict(bs) is getting all the state var from all processes but it needs to take into account only the current proc being used.
 
-{- I need to change this and split the types so we have something like:
-let restrictNAT(bs) = dres(bs,{sv_SysCmd_time_U_NAT})
-        restrictSWI(bs) = dres(bs,{sv_SysCmd_swi_U_SWI})
-        restrictPST(bs) = dres(bs,{sv_SysCmd_phase_U_PST})
-    within-} -- TODOOOOOO
 mapping_CCommand procn spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
  = "let "++ restr
     ++"\n\twithin"
     ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++", "++restn++")\n"
     where
-      znames = (get_delta_names spec)
+      znames = (get_delta_names1 spec)
       ztypes = remdups $ map select_type_zname znames
       restr = mk_charll_to_charl "\n" $ map (mk_restrict spec znames) ztypes
       bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
@@ -740,7 +736,7 @@ mapping_CGActions :: ZName -> [ZPara] -> CGActions -> ZName
 mapping_CGActions procn spec (CircThenElse cga1 cga2)
   = (mapping_CGActions procn spec cga1) ++ " [] " ++ (mapping_CGActions procn spec cga2)
 mapping_CGActions procn spec (CircGAction zp ca)
-  = (mapping_predicate (get_delta_names spec) zp) ++ " & " ++ (mapping_CAction procn spec ca)
+  = (mapping_predicate (get_delta_names1 spec) zp) ++ " & " ++ (mapping_CAction procn spec ca)
 \end{code}
 
 \subsection{Mapping Channel Communication}
@@ -763,11 +759,11 @@ mapping_CParameter :: ZName -> [ZPara] -> CParameter -> ZName
 mapping_CParameter procn spec (ChanInp zn)
   = zn
 mapping_CParameter procn spec (ChanInpPred zn zp)
- = zn ++ (mapping_predicate (get_delta_names spec) zp)
+ = zn ++ (mapping_predicate (get_delta_names1 spec) zp)
 mapping_CParameter procn spec (ChanOutExp ze)
   = mapping_CParameter procn spec (ChanDotExp ze)
 mapping_CParameter procn spec (ChanDotExp ze)
-  = "."++(mapping_ZExpr (get_delta_names spec) ze)
+  = "."++(mapping_ZExpr (get_delta_names1 spec) ze)
 \end{code}
 
 \subsection{Mapping Circus Namesets}
@@ -897,29 +893,29 @@ get_channel_name_cont spec [] = ""
 get_channel_name_cont spec [(ChanOutExp v)] 
   = get_channel_name_cont spec [(ChanDotExp v)]
 get_channel_name_cont spec [(ChanDotExp v)] 
-  = "."++(mapping_ZExpr (get_delta_names spec) v)
+  = "."++(mapping_ZExpr (get_delta_names1 spec) v)
 get_channel_name_cont spec [(ChanInp v)] 
   = "?"++v
 get_channel_name_cont spec [(ChanInpPred v x)] 
-  = "?"++v++":"++(mapping_predicate (get_delta_names spec) x)
+  = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)
 get_channel_name_cont spec ((ChanOutExp v) : xs) 
   = get_channel_name_cont spec ((ChanDotExp v) : xs) 
 get_channel_name_cont spec ((ChanDotExp v) : xs) 
-  = "."++(mapping_ZExpr (get_delta_names spec) v)++(get_channel_name_cont spec xs)
+  = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs) 
   = "?"++v++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInpPred v x) : xs) 
-  = "?"++v++":"++(mapping_predicate (get_delta_names spec) x)++(get_channel_name_cont spec xs)
+  = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)++(get_channel_name_cont spec xs)
 \end{code}
 \begin{code}
 get_c_chan_type :: [ZPara] -> ZName -> [CDecl] -> String
 get_c_chan_type spec c [(CChanDecl a b)]
   = case a == c of
-      True -> mapping_ZExpr (get_delta_names spec) b
+      True -> mapping_ZExpr (get_delta_names1 spec) b
       False -> error "Channel not found"
 get_c_chan_type spec c ((CChanDecl a b):xs)
   = case a == c of
-      True -> mapping_ZExpr (get_delta_names spec) b
+      True -> mapping_ZExpr (get_delta_names1 spec) b
       False -> get_c_chan_type spec c xs
 get_c_chan_type spec c (_:xs)
   = get_c_chan_type spec c xs

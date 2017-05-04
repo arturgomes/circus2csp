@@ -14,7 +14,7 @@ where
 | "omega_prime_CAction CSPSkip = CSPSkip"
 | "omega_prime_CAction CSPStop = CSPStop"
 | "omega_prime_CAction CSPChaos = CSPChaos"
-| "omega_prime_CAction (CSPSeq ca cb) = (CSPSeq (omega_prime_CAction ca) (omega_prime_CAction cb))"
+| "omega_prime_CAction (CSPSeq ca cb) = (CSPSeq (omega_prime_CAction ca) (omega_CAction cb))"
 | "omega_prime_CAction x = omega_CAction x"
 
 
