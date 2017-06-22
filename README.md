@@ -11,9 +11,9 @@ In our testings we use GHC version 7.8.4
 
 Once you have cloned/downloaded this project, you should then write:
 
-...
+```
 make circus
-...
+```
 
 It will build the translator tool with a binary file "circus".
 
@@ -24,9 +24,9 @@ If you're familiar with JAZA, you'll see a very similar prompt. Just type ``help
 ## Loading a file
 In order to load a file, enter the following code, with **filename++ being the name of your file 
 
-... 
+```
 load filename
-...
+```
 
 ## Printing a file
 If you want to display the current loaded specification, write ``show`` on the prompt, and it will print the entire specification. It will also generate a file **spec.txt** so you can open it in your text editor.
