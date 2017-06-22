@@ -1,45 +1,64 @@
+\section{From \Circus\ to \CSPM\ through an example}
+We describe the develpment of a modified version of a simple example from 
+Oliveira's PhD thesis~\cite{MV05}: a chronometer. In fact, we use two models 
+of a chronometer, a abstract model, $AChrono$ and a more concrete one, 
+$Chrono$. For model checking purposes, we restrict the type $RANGE$ for values 
+from 0 up to 2, instead of the conventional range form 0 up to 59, used for 
+minutes and seconds. Three channels are used: the clock $tick$ every second; 
+when the $time$ is requested, the channel $out$ outputs the minutes and 
+seconds as a pair.
 \begin{circus}
 RANGE == 0 \upto 2
 \also \circchannel tick,time
-\also \circchannel out : (RANGE, RANGE)
+\also \circchannel out : \{min,sec : RANGE @ (min,sec)\}
 \end{circus}
+We start the construction of the \Circus\ process $AChrono$ with the 
+definition of the state $AState$ with two state components: $sec$ and $min$, 
+for seconds and minutes respectively.
 \begin{circus}
-\circprocess\ Chrono \circdef\\
+\circprocess\ AChrono \circdef\\
 \circbegin\\ 
-\circstate AState \defs [ sec, min : RANGE ]
-AInit \circdef (sec,min:=0,0)
-IncSec \circdef (sec,min:=(sec+1)\mod 3,min)
-IncMin  \circdef (min,sec:=(min+1)\mod 3,sec)
-Run \circdef 
-  (tick \then IncSec \circseq 
-    ((\lcircguard sec = 0 \rcircguard \circguard IncMin) 
-    \extchoice (\lcircguard sec \neq 0 \rcircguard \circguard \Skip)))
-    \extchoice (time \then out!(min, sec) \then \Skip) 
-\circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))
+\circstate AState \defs [ sec, min : RANGE ]\\
+AInit \circdef (sec,min:=0,0)\\
+IncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+IncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+Run \circdef \\
+
+   (tick \then IncSec \circseq \\
+    (\circif  sec = 0 \circthen IncMin
+        \circelse sec \neq 0 \circthen \Skip \circfi ))\ 
+    \extchoice (time \then out!(min, sec) \then \Skip) \\
+\circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))\\
 \circend
 \end{circus}
+Before translating the abstract representation of the chronometer $AChrono$ 
+into \CSPM, we introduce a second model, more concrete of a chronometer. This 
+time, we will separate the minutes and the seconds, each one in a separate 
+action $Minutes$ and the $Seconds$. We therefore introduce three channels: 
+$inc$ used by $Seconds$ to tell $Minutes$ to increment its minutes; at 
+anytime, $Seconds$ can request the current minutes, through $minsReq$ and it 
+will then output the current count for $mins$ and $sec$, through the channel 
+$out$. We also define a \Circus\ channel set $Sync$ with the three above 
+presented channels.
 \begin{circus}
-\circchannel inc, minsReq\\
-\also \circchannel ans : RANGE\\
+\circchannel inc, minsReq
+\also \circchannel ans : RANGE
 \also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
-\end{circus}
-\begin{circus}
-\circprocess Chronometer \circdef\ \circbegin
-\circstate State \defs [ sec : RANGE ; min : RANGE ]
-SecInit \circdef (sec:=0)
-IncSec \circdef (sec:=(sec+1)\mod 3)
-RunSec  \circdef  
-    tick \then IncSec \circseq
-    ((\lcircguard sec = 0 \rcircguard \circguard inc \then \Skip) 
-    \extchoice (\lcircguard sec \neq 0 \rcircguard \circguard \Skip))
+\also \circprocess Chrono \circdef\ \circbegin\\
+\circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\
+SecInit \circdef (sec:=0)\\
+IncSec \circdef (sec:=(sec+1)\mod 3)\\
+RunSec \circdef 
+(tick \then IncSec \circseq
+    (\circif  sec = 0 \circthen inc \then \Skip
+    \circelse sec \neq 0 \circthen \Skip \circfi)
     \extchoice time \then minsReq \then ans?mins \then out!(mins,sec) 
-      \then \Skip 
-MinInit \circdef (min:=0)
-IncMin \circdef (min:=(min+1)\mod 3)
-RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)
-\circspot 
-(((SecInit \circseq (\circmu X \circspot (RunSec \circseq X)))
-\lpar {seq} | Sync | {min} \rpar 
-(MinInit \circseq (\circmu X \circspot (RunMin \circseq X)))) \circhide Sync)
+      \then \Skip )  \\
+Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+MinInit \circdef (min:=0)\\
+IncMin \circdef (min:=(min+1)\mod 3)\\
+RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
+Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circspot ((Seconds \lpar {seq} | Sync | {min} \rpar Minutes ) \circhide Sync)\\
 \circend
 \end{circus}

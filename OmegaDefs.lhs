@@ -28,7 +28,7 @@ make_get_com [x] c
 make_get_com (x:xs) c
   = (CSPCommAction (ChanComm "mget"
     [ChanDotExp (ZVar (x,[])),ChanInp ("v_"++x)]) (make_get_com xs c))
-make_get_com x c = c    
+make_get_com x c = c
 \end{code}
 
 \begin{code}
@@ -49,11 +49,11 @@ get_guard_pair (CircGAction g2 a2)
 get_guard_pair (CircThenElse (CircGAction g2 a2) glx)
   = ((g2,a2):(get_guard_pair glx))
 \end{code}
-The function $rename\_guard\_pair$ will rename the guards to $v_$ prefix of free variables.
+The function $rename\_guard\_pair$ will rename the guards to $v\_$ prefix of free variables.
 
 \begin{code}
 rename_guard_pair :: [ZName] -> [(ZPred, CAction)] -> [(ZPred, CAction)]
-rename_guard_pair sub [(a,b)] 
+rename_guard_pair sub [(a,b)]
   = [((substitute (mk_sub_list sub) (free_vars a) a),b)]
 rename_guard_pair sub ((a,b):xs) = [((substitute (mk_sub_list sub) (free_vars a) a),b)]++(rename_guard_pair sub xs)
 \end{code}
@@ -64,9 +64,10 @@ mk_guard_pair :: (CAction -> CAction) -> [(ZPred, CAction)] -> CGActions
 mk_guard_pair f [(g,a)] = (CircGAction g (f a))
 mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair f ls))
 \end{code}
-The function $mk\_sub\_list$ will make a list of substitution variables to $v_$ prefix.
+The function $mk\_sub\_list$ will make a list of substitution variables to $v\_$ prefix.
 \begin{code}
 mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
+mk_sub_list [] = []
 mk_sub_list [x] = [((x,[]),(ZVar ("v_"++x,[])))]
 mk_sub_list (x:xs) = [((x,[]),(ZVar ("v_"++x,[])))]++(mk_sub_list xs)
 \end{code}
@@ -138,7 +139,7 @@ inListVar x (va:vst)
 
 \subsection{Auxiliary functions for the definition of $\Omega_{A}$}
 The use of Isabelle/HOL made me rethink of what was being produced
-with the functions below. First, a $CSPParAction$, $A(x)$, does not need to call $omega\_CAction$ again, as it does not change anything, so I removed it when a list of parameters $x$ is a singleton. Then, I realised that I don't need to call $omega\_CAction$ at all in any of the $rep\_$ functions as that function is called for the result of any $rep\_$ function. Finally, I don't need to carry the triple with the state variable names/types. 
+with the functions below. First, a $CSPParAction$, $A(x)$, does not need to call $omega\_CAction$ again, as it does not change anything, so I removed it when a list of parameters $x$ is a singleton. Then, I realised that I don't need to call $omega\_CAction$ at all in any of the $rep\_$ functions as that function is called for the result of any $rep\_$ function. Finally, I don't need to carry the triple with the state variable names/types.
 
 Function used to propagate $CSPRepSeq$ actions
 
@@ -219,7 +220,7 @@ setminus (v : va) [] = (v : va)
 setminus (v : va) (b : vb)
      = (delete_from_list b (v : va)) ++ (setminus (v : va) vb)
 
--- Function that takes the last n elements of a string 
+-- Function that takes the last n elements of a string
 -- used in order to get U_TYP from sv_StateName_VarName_U_TYP
 lastN :: Int -> [a] -> [a]
 lastN n xs = drop (length xs - n) xs
@@ -608,12 +609,12 @@ isRecursive_if name (CircThenElse ga gb)
 We then rename the recursive call in order to make $\mu X \spot Action \seq X$.
 \begin{code}
 recursive_PPar (CParAction zn ca)
-  | isRecursive_CAction zn (get_CircusAction ca) 
+  | isRecursive_CAction zn (get_CircusAction ca)
         = (CParAction zn (makeRecursive_ParAction zn ca))
   | otherwise = (CParAction zn ca)
-recursive_PPar (ProcZPara a) 
+recursive_PPar (ProcZPara a)
   = (ProcZPara a)
-recursive_PPar (CNameSet n ns) 
+recursive_PPar (CNameSet n ns)
   = (CNameSet n ns)
 
 get_CircusAction (CircusAction ca) = ca
@@ -623,15 +624,15 @@ get_CircusAction (ParamActionDecl ls pa) = get_CircusAction pa
 \begin{code}
 makeRecursive_PPar (CParAction zn pa)
   = (CParAction zn (makeRecursive_ParAction zn pa))
-makeRecursive_PPar (ProcZPara a) 
+makeRecursive_PPar (ProcZPara a)
   = (ProcZPara a)
-makeRecursive_PPar (CNameSet n ns) 
+makeRecursive_PPar (CNameSet n ns)
   = (CNameSet n ns)
 \end{code}
 \begin{code}
-makeRecursive_ParAction name (CircusAction ca) 
+makeRecursive_ParAction name (CircusAction ca)
   = (CircusAction (makeRecursive_CAction name ca))
-makeRecursive_ParAction name (ParamActionDecl ls pa) 
+makeRecursive_ParAction name (ParamActionDecl ls pa)
   = (ParamActionDecl ls (makeRecursive_ParAction name pa))
 \end{code}
 \begin{code}
@@ -666,7 +667,7 @@ renameRecursive_CAction name (CSPHide c cs)
  = (CSPHide (renameRecursive_CAction name c) cs)
 renameRecursive_CAction name (CSPParAction nm xp)
   | nm == name = (CSPParAction ("mu"++nm) xp)
-  | otherwise = (CSPParAction nm xp) 
+  | otherwise = (CSPParAction nm xp)
 renameRecursive_CAction name (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
 renameRecursive_CAction name (CSPRecursion n c)
@@ -750,8 +751,8 @@ expand_action_names_CAction lst (CActionSchemaExpr x)
 expand_action_names_CAction lst (CActionCommand c)
  = (CActionCommand (expand_action_names_CAction_comnd lst c))
 expand_action_names_CAction lst (CActionName nm)
-  | (take 2 nm) == "mu" = (CActionName nm) 
-  | otherwise = get_action nm lst
+  | (take 2 nm) == "mu" = (CActionName nm)
+  | otherwise = get_action nm lst lst
 expand_action_names_CAction lst (CSPSkip)
  = (CSPSkip)
 expand_action_names_CAction lst (CSPStop)
@@ -845,15 +846,15 @@ get_if lst (CircThenElse (CircGAction p a) gb)
 \end{code}
 
 \begin{code}
-get_action _ [] = error "Action list is empty"
-get_action name [(CParAction n (CircusAction a))]
-  | name == n = a
+get_action _ lst [] = error "Action list is empty"
+get_action name lst [(CParAction n (CircusAction a))]
+  | name == n = expand_action_names_CAction lst a
   | otherwise = error ("Action "++(name)++" not found")
-get_action name ((CParAction n (CircusAction a)):xs)
-  | (name == n) = a
-  | otherwise = get_action name xs
-get_action name (_:xs)
-  = get_action name xs
+get_action name lst ((CParAction n (CircusAction a)):xs)
+  | (name == n) = expand_action_names_CAction lst a
+  | otherwise = get_action name lst xs
+get_action name lst (_:xs)
+  = get_action name lst xs
 \end{code}
 
 \begin{code}
@@ -1107,7 +1108,7 @@ rename_vars_CParameter1 lst (ChanDotExp ze)
 \begin{code}
 rename_vars_CCommand1 :: [(ZName, ZVar, ZExpr)] -> CCommand -> CCommand
 rename_vars_CCommand1 lst (CAssign zv ze)
- = (CAssign (map (rename_vars_ZVar1 lst) zv) 
+ = (CAssign (map (rename_vars_ZVar1 lst) zv)
             (map (rename_vars_ZExpr1 lst) ze))
 rename_vars_CCommand1 lst (CIf ga)
  = (CIf (rename_vars_CGActions1 lst ga))
@@ -1207,7 +1208,7 @@ get_var_type x ((a,(va,x1),b):vst)
 
 \begin{code}
 rename_ZGenFilt1 lst (Include s) = (Include s)
-rename_ZGenFilt1 lst (Choose (va,x) e) 
+rename_ZGenFilt1 lst (Choose (va,x) e)
   = (Choose ((join_name (join_name (join_name "sv" (get_proc_name va lst)) va) newt),x) (rename_vars_ZExpr1 lst e))
     where newt = (def_U_NAME $ get_vars_ZExpr e)
 rename_ZGenFilt1 lst (Check p) = (Check (rename_vars_ZPred1 lst p))
@@ -1225,7 +1226,7 @@ rename_vars_ZVar1 lst (va,x)
 rename_vars_ZExpr1 :: [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
 rename_vars_ZExpr1 lst (ZVar (va,x))
  = case (inListVar1 va lst) of
-    True -> (ZVar 
+    True -> (ZVar
               ((join_name (join_name (join_name "sv" (get_proc_name va lst)) va) newt),x))
     _ -> (ZVar (va,x))
   where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
@@ -1385,7 +1386,7 @@ mk_subtype [(a,b,c,d)]
 mk_subtype ((a,b,c,d):xs)
   = "subtype "++b++" = "++c++"."++d++"\n"++(mk_subtype xs)
 
--- Make value(XXX.v) function call 
+-- Make value(XXX.v) function call
 -- This won't be used anymore in the next commit - 21.03.17
 mk_value []
   = ""
@@ -1394,7 +1395,7 @@ mk_value [(a,b,c,d)]
 mk_value ((a,b,c,d):xs)
   = "value"++(lastN 3 b)++"("++c++".v) = v\n"++(mk_value xs)
 
--- Make type(x) function call 
+-- Make type(x) function call
 -- This won't be used anymore in the next commit - 21.03.17
 mk_type []
   = ""
@@ -1403,7 +1404,7 @@ mk_type [(a,b,c,d)]
 mk_type ((a,b,c,d):xs)
   = "type"++(lastN 3 b)++"(x) = U_"++(lastN 3 b)++"\n"++(mk_type xs)
 
--- Make tag(x) function call 
+-- Make tag(x) function call
 mk_tag []
   = ""
 mk_tag [(a,b,c,d)]
@@ -1414,14 +1415,14 @@ mk_tag ((a,b,c,d):xs)
 -- make Memory(b_type1,b_type2,b_type3) parameters
 mk_mem_param :: [(t, [Char], t1, t2)] -> [Char]
 mk_mem_param [] = ""
-mk_mem_param [(a,b,c,d)] = "b_"++(lastN 3 b) 
+mk_mem_param [(a,b,c,d)] = "b_"++(lastN 3 b)
 mk_mem_param ((a,b,c,d):xs)
   = (mk_mem_param [(a,b,c,d)]) ++", "++ (mk_mem_param xs)
 
--- list of b_type parameters 
+-- list of b_type parameters
 mk_mem_param_lst :: [(t, [Char], t1, t2)] -> [[Char]]
 mk_mem_param_lst [] = []
-mk_mem_param_lst [(a,b,c,d)] = ["b_"++(lastN 3 b)] 
+mk_mem_param_lst [(a,b,c,d)] = ["b_"++(lastN 3 b)]
 mk_mem_param_lst ((a,b,c,d):xs)
   = (mk_mem_param_lst [(a,b,c,d)]) ++ (mk_mem_param_lst xs)
 
@@ -1432,7 +1433,7 @@ repl_mem_param_over _ [] = []
 repl_mem_param_over a [x]
   | (lastN 3 x) == a  = ["over("++x++",n,x)"]
   | otherwise = [x]
-repl_mem_param_over a (x:xs) 
+repl_mem_param_over a (x:xs)
   = (repl_mem_param_over a [x]) ++ (repl_mem_param_over a xs)
 
 -- list of b_type parameters into string of b_type1,b_type2,...
@@ -1441,21 +1442,21 @@ mk_charll_to_charl _ [] = ""
 mk_charll_to_charl sp [x] = x
 mk_charll_to_charl sp (x:xs) = x++sp++(mk_charll_to_charl sp xs)
 
--- make mget external choices of Memory proc 
+-- make mget external choices of Memory proc
 mk_mget_mem_bndg :: [(t3, [Char], t4, t5)] -> [(t, [Char], t1, t2)] -> [Char]
-mk_mget_mem_bndg fs [] 
+mk_mget_mem_bndg fs []
   = ""
-mk_mget_mem_bndg fs [(a,b,c,d)] 
+mk_mget_mem_bndg fs [(a,b,c,d)]
   = "([] n:dom(b_"++(lastN 3 b)++") @ mget.n!(apply(b_"++(lastN 3 b)++",n)) -> Memory("++(mk_mem_param fs)++"))"
 mk_mget_mem_bndg fs ((a,b,c,d):xs)
-  = mk_mget_mem_bndg fs [(a,b,c,d)] 
+  = mk_mget_mem_bndg fs [(a,b,c,d)]
   ++"\n\t[] "++mk_mget_mem_bndg fs xs
 
 
 -- make mset external choices of Memory proc
-mk_mset_mem_bndg fs [] 
+mk_mset_mem_bndg fs []
   = ""
-mk_mset_mem_bndg fs [(a,b,c,d)] 
+mk_mset_mem_bndg fs [(a,b,c,d)]
   = "\t[] ([] n:dom(b_"
       ++(lastN 3 b)
       ++") @ mset.n?x:type"
@@ -1464,7 +1465,7 @@ mk_mset_mem_bndg fs [(a,b,c,d)]
       ++  ( mk_charll_to_charl "," (repl_mem_param_over (lastN 3 b) (mk_mem_param_lst fs) ))
       ++"))"
 mk_mset_mem_bndg fs ((a,b,c,d):xs)
-  = mk_mset_mem_bndg fs [(a,b,c,d)] 
+  = mk_mset_mem_bndg fs [(a,b,c,d)]
   ++"\n"++mk_mset_mem_bndg fs xs
 
 
@@ -1479,7 +1480,7 @@ select_type_zname n = (lastN 3 n)
 
 -- now we filter a list of names nms of a selected type tp
 filter_znames_f_type [] tp = []
-filter_znames_f_type [n] tp 
+filter_znames_f_type [n] tp
   | (lastN 3 n) == tp = [n]
   | otherwise = []
 filter_znames_f_type (n:nms) tp
@@ -1487,37 +1488,37 @@ filter_znames_f_type (n:nms) tp
 
 -- with all that, we create a subtype NAME_TYPEX
 lst_subtype t [] = []
-lst_subtype t [z] 
+lst_subtype t [z]
       | (lastN 3 z) == t = [z]
       | otherwise = []
-lst_subtype t (z:zs) 
-      | (lastN 3 z) == t = [z] ++ (lst_subtype t zs) 
-      | otherwise = (lst_subtype t zs) 
+lst_subtype t (z:zs)
+      | (lastN 3 z) == t = [z] ++ (lst_subtype t zs)
+      | otherwise = (lst_subtype t zs)
 make_subtype_NAME zb
   = nametypels
   where
     make_subtype znls zt = "subtype NAME_"++zt++" = "++mk_charll_to_charl " | " (lst_subtype zt znls)
-    znames = remdups $ map select_zname_f_zbr zb 
+    znames = remdups $ map select_zname_f_zbr zb
     ztypes = remdups $ map select_type_zname znames
     nametypels = mk_charll_to_charl "\n" $ map (make_subtype znames) ztypes
 
 -- make NAME_VALUES_TYPE
-mk_NAME_VALUES_TYPE n 
+mk_NAME_VALUES_TYPE n
   = "NAMES_VALUES_"++n++" = seq({seq({(n,v) | v <- type"++n++"(n)}) | n <- NAME_"++n++"})"
 -- make BINDINGS_TYPE
-mk_BINDINGS_TYPE n 
+mk_BINDINGS_TYPE n
   = "BINDINGS_"++n++" = {set(b) | b <- set(distCartProd(NAMES_VALUES_"++n++"))}"
 -- make restrict functions within main action
-mk_binding_list n 
+mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
-mk_restrict spec vlst n  
+mk_restrict spec vlst n
     = "\t\trestrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ lst_subtype n vlst)++"})"
-    where 
+    where
       univlst = (def_universe spec)
       funivlst = remdups (filter_types_universe univlst)
       bndlst = mk_mem_param_lst funivlst
 
-mk_restrict_name n 
+mk_restrict_name n
   = "restrict"++n++"("++"b_"++n++")"
 
 \end{code}
@@ -1561,10 +1562,10 @@ Pieces from MappingFunStatelessCircus file
 \begin{code}
 
 def_delta_mapping :: [(ZName, ZVar, ZExpr)] -> [ZExpr]
-def_delta_mapping [(n,(v,[]),t)] 
+def_delta_mapping [(n,(v,[]),t)]
   = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
     where newt = (def_U_NAME $ get_vars_ZExpr t)
-def_delta_mapping ((n,(v,[]),t):xs) 
+def_delta_mapping ((n,(v,[]),t):xs)
   = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
     ++ (def_delta_mapping xs)
     where newt = (def_U_NAME $ get_vars_ZExpr t)
@@ -1573,11 +1574,11 @@ def_delta_mapping [] = []
 
 \begin{code}
 def_delta_name :: [(ZName, ZVar, ZExpr)] -> [ZBranch]
-def_delta_name [(n,(v,[]),t)] 
+def_delta_name [(n,(v,[]),t)]
   = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])]
     where newt = (def_U_NAME $ get_vars_ZExpr t)
-def_delta_name ((n,(v,[]),t):xs) 
-  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])] 
+def_delta_name ((n,(v,[]),t):xs)
+  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])]
     ++ (def_delta_name xs)
     where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_name [] = []
@@ -1585,9 +1586,9 @@ def_delta_name [] = []
 \end{code}
 \begin{code}
 get_pre_Circ_proc :: [ZPara] -> [ZPara]
-get_pre_Circ_proc ((Process cp):xs) 
+get_pre_Circ_proc ((Process cp):xs)
   = (get_pre_Circ_proc xs)
-get_pre_Circ_proc (x:xs) 
+get_pre_Circ_proc (x:xs)
   = x:(get_pre_Circ_proc xs)
 get_pre_Circ_proc []
   = []
@@ -1617,7 +1618,7 @@ retrive_schemas spec (ZSRef (ZSPlain nn) [] [])
   = case res of
       Just e' -> e'
       Nothing -> error "Schema definition not found!"
-    where 
+    where
       res = (retrieve_z_schema_state nn spec)
 retrive_schemas spec (ZS1 x a)
   = (retrive_schemas spec a)
@@ -1644,7 +1645,7 @@ retrieve_z_schema_state n (_:xs) = retrieve_z_schema_state n xs
 def_mem_st_CircParagraphs :: [ZPara] -> ZPara -> [(ZName, ZVar, ZExpr)]
 def_mem_st_CircParagraphs spec (Process cp)
   = (def_mem_st_ProcDecl spec ncp)
-    where 
+    where
       ncp = rename_z_schema_state spec cp
 def_mem_st_CircParagraphs spec x
   = []
@@ -1677,7 +1678,7 @@ def_mem_st_CProc spec name x
 \end{code}
 
 
-\begin{code}  
+\begin{code}
 get_state_var :: [ZPara] -> ZName -> ZSExpr -> [(ZName, ZVar, ZExpr)]
 get_state_var spec name (ZSRef (ZSPlain nn) [] [])
   = case statev of
@@ -1696,11 +1697,11 @@ get_state_var_aux name (Choose x y) = [(name, x, y)]
 get_state_var_aux _ _ = []
 \end{code}
 
-Here I'm making the bindings for the main action. 
+Here I'm making the bindings for the main action.
 \begin{code}
-filter_main_action_bind 
+filter_main_action_bind
   :: ZName -> [(ZName, ZVar, ZExpr)] ->[(ZName, ZVar, ZExpr)]
-filter_main_action_bind zn [(a,b,c)] 
+filter_main_action_bind zn [(a,b,c)]
   | zn == a = [(a,b,c)]
   | otherwise = []
 filter_main_action_bind zn ((a,b,c):ls)
@@ -1714,11 +1715,11 @@ mk_main_action_bind lst ca
 \end{code}
 \begin{code}
 mk_inv :: [(ZName, ZVar, ZExpr)] -> [(ZName, ZVar, ZExpr)] -> ZPred
-mk_inv lst [(a,(va,x),c)] 
+mk_inv lst [(a,(va,x),c)]
   = (ZMember (ZVar ((join_name (join_name (join_name "sv" a) va) newt),x)) (rename_vars_ZExpr1 lst c))
     where newt = (def_U_NAME $ get_vars_ZExpr c)
-mk_inv lst ((a,b,c):xs) 
-  = (ZAnd (mk_inv lst xs) (mk_inv lst [(a,b,c)])) 
+mk_inv lst ((a,b,c):xs)
+  = (ZAnd (mk_inv lst xs) (mk_inv lst [(a,b,c)]))
 -- mk_inv x (_:xs) = mk_inv x xs
 
 \end{code}
@@ -1745,31 +1746,31 @@ EX: [] i: {a,b,c} @ A(x)
    = A(a) [] A(b) [] A(c)
 \begin{code}
 propagate_CSPRep (CActionSchemaExpr e) = (CActionSchemaExpr e)
-propagate_CSPRep (CActionCommand c) = (CActionCommand c) 
-propagate_CSPRep (CActionName n) = (CActionName n) 
-propagate_CSPRep (CSPSkip) = (CSPSkip) 
-propagate_CSPRep (CSPStop ) = (CSPStop ) 
-propagate_CSPRep (CSPChaos) = (CSPChaos) 
-propagate_CSPRep (CSPCommAction c a) = (CSPCommAction c (propagate_CSPRep a)) 
-propagate_CSPRep (CSPGuard p a) = (CSPGuard p (propagate_CSPRep a)) 
-propagate_CSPRep (CSPSeq a1 a2) = (CSPSeq (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPExtChoice a1 a2) = (CSPExtChoice (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPIntChoice a1 a2) = (CSPIntChoice (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPNSParal n1 c n2 a1 a2) = (CSPNSParal n1 c n2 (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPParal c a1 a2) = (CSPParal c (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPNSInter n1 n2 a1 a2) = (CSPNSInter n1 n2 (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPInterleave a1 a2) = (CSPInterleave (propagate_CSPRep a1) (propagate_CSPRep a2)) 
-propagate_CSPRep (CSPHide a c) = (CSPHide (propagate_CSPRep a) c) 
-propagate_CSPRep (CSPParAction n ls) = (CSPParAction n ls) 
-propagate_CSPRep (CSPRenAction n r) = (CSPRenAction n r) 
-propagate_CSPRep (CSPRecursion n a) = (CSPRecursion n (propagate_CSPRep a)) 
-propagate_CSPRep (CSPUnParAction ls a n) = (CSPUnParAction ls (propagate_CSPRep a) n) 
-propagate_CSPRep (CSPRepExtChoice ls a) = (CSPRepExtChoice ls (propagate_CSPRep a)) 
-propagate_CSPRep (CSPRepIntChoice ls a) = (CSPRepIntChoice ls (propagate_CSPRep a)) 
-propagate_CSPRep (CSPRepParalNS c ls n a) = (CSPRepParalNS c ls n (propagate_CSPRep a)) 
-propagate_CSPRep (CSPRepParal c ls a) = (CSPRepParal c ls (propagate_CSPRep a)) 
-propagate_CSPRep (CSPRepInterlNS ls n a) = (CSPRepInterlNS ls n (propagate_CSPRep a)) 
-propagate_CSPRep (CSPRepInterl ls a) = (CSPRepInterl ls (propagate_CSPRep a)) 
+propagate_CSPRep (CActionCommand c) = (CActionCommand c)
+propagate_CSPRep (CActionName n) = (CActionName n)
+propagate_CSPRep (CSPSkip) = (CSPSkip)
+propagate_CSPRep (CSPStop ) = (CSPStop )
+propagate_CSPRep (CSPChaos) = (CSPChaos)
+propagate_CSPRep (CSPCommAction c a) = (CSPCommAction c (propagate_CSPRep a))
+propagate_CSPRep (CSPGuard p a) = (CSPGuard p (propagate_CSPRep a))
+propagate_CSPRep (CSPSeq a1 a2) = (CSPSeq (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPExtChoice a1 a2) = (CSPExtChoice (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPIntChoice a1 a2) = (CSPIntChoice (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPNSParal n1 c n2 a1 a2) = (CSPNSParal n1 c n2 (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPParal c a1 a2) = (CSPParal c (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPNSInter n1 n2 a1 a2) = (CSPNSInter n1 n2 (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPInterleave a1 a2) = (CSPInterleave (propagate_CSPRep a1) (propagate_CSPRep a2))
+propagate_CSPRep (CSPHide a c) = (CSPHide (propagate_CSPRep a) c)
+propagate_CSPRep (CSPParAction n ls) = (CSPParAction n ls)
+propagate_CSPRep (CSPRenAction n r) = (CSPRenAction n r)
+propagate_CSPRep (CSPRecursion n a) = (CSPRecursion n (propagate_CSPRep a))
+propagate_CSPRep (CSPUnParAction ls a n) = (CSPUnParAction ls (propagate_CSPRep a) n)
+propagate_CSPRep (CSPRepExtChoice ls a) = (CSPRepExtChoice ls (propagate_CSPRep a))
+propagate_CSPRep (CSPRepIntChoice ls a) = (CSPRepIntChoice ls (propagate_CSPRep a))
+propagate_CSPRep (CSPRepParalNS c ls n a) = (CSPRepParalNS c ls n (propagate_CSPRep a))
+propagate_CSPRep (CSPRepParal c ls a) = (CSPRepParal c ls (propagate_CSPRep a))
+propagate_CSPRep (CSPRepInterlNS ls n a) = (CSPRepInterlNS ls n (propagate_CSPRep a))
+propagate_CSPRep (CSPRepInterl ls a) = (CSPRepInterl ls (propagate_CSPRep a))
 \end{code}
 
 

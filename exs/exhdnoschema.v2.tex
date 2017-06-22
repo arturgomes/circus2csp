@@ -50,11 +50,12 @@ NatValue == 0 \upto 2
 \circchannel getAlarm, setAlarm~:~SWITCH\\
 \circchannel getApTransdPress, setApTransdPress~:~\nat\\
 \circchannel getArtBolusVol, setArtBolusVol~:~\nat\\
-\circchannel getBicarbonateAcetate, setBicarbonateAcetate~:~CONCENTRATE\\% \comment{I don't see invariants for this one}\\
+\circchannel getBicarbonateAcetate, setBicarbonateAcetate~:~CONCENTRATE\\
 \circchannel getBicarbonateConductivity, setBicarbonateConductivity~:~\nat\\
 \circchannel getBloodFlowForConnectingPatient, setBloodFlowForConnectingPatient~:~\nat\\
 \circchannel getBloodFlowInEBC, setBloodFlowInEBC~:~\nat\\
-\circchannel getBloodLines, setBloodLines~:~BOOL\\
+\circchannel getBloodLines~:~BOOL\\
+\circchannel setBloodLines\\
 \circchannel getBypassValve, setBypassValve~:~LIDD\\
 \circchannel getConductivity, setConductivity~:~\nat\\
 \circchannel getDfFlow, setDfFlow~:~\nat\\
@@ -122,7 +123,7 @@ NatValue == 0 \upto 2
   \circchannel inputOfSetRinsingParameters~:~\nat \cross \nat \cross \nat \cross \nat \cross \nat \cross \nat\\
   \circchannel inputOfSetDFParameters~:~\nat \cross CONCENTRATE \cross \nat\cross \nat \cross \nat\\
   \circchannel inputOfSetUFParameters~:~\nat \cross \nat\cross \nat\cross \nat\\
-  \circchannel inputOfSetPressureParameters~:~\nat \cross \nat \cross SWITCH \cross SWITCH\\
+  \circchannel inputOfSetPressureParameters~:~\nat \cross \nat \cross SWITCH \cross \nat\cross SWITCH\\
   \circchannel inputOfSetHeparinParameters~:~TIME \cross \nat \cross \nat \cross SWITCH \cross \nat\\
 \end{circus}
 %</zedtypes>
@@ -267,7 +268,7 @@ NatValue == 0 \upto 2
     setLimitDeltaMinMaxAP, setLimitsTMP, setLowHigh,\\
     setMaxUFRate, setMinUFRate, setMinUFRateTreat,\\
     setRinsingBPRate,\\
-    setRinsingTime, signalLamp,\\
+    setRinsingTime, 
     setSyringeType, setTherapyTime,\\
     setTreatmentWithoutHeparin,\\
     setUfRateForRinsing, setUfVol,\\
@@ -315,7 +316,7 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
 \end{circus}
 
 \begin{schema}{SysClockS}
- time : \nat
+ stime : \nat
 \end{schema}
 
 \begin{circus}%
@@ -324,13 +325,13 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
 \end{circus}
 \begin{circusaction}
   ResetClock ~\circdef~
-  \\\t2 (time := 0) \circseq Clock\\
+  \\\t2 (stime := 0) \circseq Clock\\
 \end{circusaction}
 \begin{circusaction}
   Clock ~\circdef~
   \\\t2 \circmu~X \circspot 
-    ((\circif time \leq 3 \circthen (tick \then (time := time+1) \interleave (getCurrentTime!time \then \Skip))
-        \circelse time > 2 \circthen ((time := 0) \circseq \Skip) 
+    ((\circif stime \leq 3 \circthen (tick \then (stime := stime+1) \interleave (getCurrentTime!stime \then \Skip))
+        \circelse stime > 2 \circthen ((stime := 0) \circseq \Skip) 
         \circfi) \circseq X)
 \end{circusaction}
 
@@ -358,6 +359,7 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
     rotDirectionBP~:~DIRECTION\\
     rotDirectionUFP~:~DIRECTION~\\
     safeUpperLimit~:~\nat\\
+    signalLamp~:~LAMP\\
     timerIntervalR9~:~\nat\\
     timerIntervalR10~:~\nat\\
     timerIntervalR11~:~\nat\\
@@ -515,12 +517,12 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
 \end{circusaction}
 \begin{circusaction}
   StatePhase \circdef\\\t1 
-  (preparationPhase \then (hdMachineState := prepPhase) \circseq StatePhase\\
+  (preparationPhase \then (hdMachineState := \{prepPhase\}) \circseq StatePhase\\
           \extchoice connectingToPatient \then
-          \\\t2 (hdMachineState := connectThePatient) \circseq StatePhase\\
+          \\\t2 (hdMachineState := \{connectThePatient\}) \circseq StatePhase\\
           \extchoice therapyInitiation
-          \then (hdMachineState := initPhase) \circseq StatePhase\\
-          \extchoice therapyEnding \then (hdMachineState := endPhase) \circseq StatePhase)
+          \then (hdMachineState := \{initPhase\}) \circseq StatePhase\\
+          \extchoice therapyEnding \then (hdMachineState := \{endPhase\}) \circseq StatePhase)
 \end{circusaction}
 \begin{circusaction}
     InitState ~\circdef~ HDGenCompInit \circseq SensorReadings
@@ -1134,51 +1136,51 @@ RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\th
 \begin{circusaction}
 SetRinsingParameters~\circdef
   \\\t1 inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient \then 
-  \\\t1 setFillingBPRate!sFBPRate \then 
-  \\\t1 setRinsingBPRate!sRBPRate \then 
-  \\\t1 setRinsingTime!sRTime \then 
-  \\\t1 setUfRateForRinsing!sUFRFRinsing \then 
-  \\\t1 setUfVolForRinsing!sUFVFRinsing \then 
-  \\\t1 setBloodFlowForConnectingPatient!sBFFCPatient \then \Skip
+  \\\t1 (fillingBPRate:=sFBPRate) \circseq 
+  \\\t1 (rinsingBPRate:=sRBPRate) \circseq 
+  \\\t1 (rinsingTime:=sRTime) \circseq 
+  \\\t1 (ufRateForRinsing:=sUFRFRinsing) \circseq 
+  \\\t1 (ufVolForRinsing:=sUFVFRinsing) \circseq 
+  \\\t1 (bloodFlowForConnectingPatient:=sBFFCPatient)
 
 \end{circusaction}
 \begin{circusaction}
 SetDFParameters~\circdef~
     \\\t1 inputOfSetDFParameters?sCond.sBAc.sBCond.sDFTemp.sDFFlow \then
-    \\\t1 setConductivity!sCond \then
-    \\\t1 setBicarbonateAcetate!sBAc \then
-    \\\t1 setBicarbonateConductivity!sBCond \then
-    \\\t1 setDfTemperature!sDFTemp \then
-    \\\t1 setDfFlow!sDFFlow \then \Skip
+    \\\t1 (conductivity:=sCond) \circseq
+    \\\t1 (bicarbonateAcetate:=sBAc) \circseq
+    \\\t1 (bicarbonateConductivity:=sBCond) \circseq
+    \\\t1 (dfTemperature:=sDFTemp) \circseq
+    \\\t1 (dfFlow:=sDFFlow)
 
 \end{circusaction}
 \begin{circusaction}
   SetUFParameters~\circdef~
     \\\t1 inputOfSetUFParameters?sUFVol.sTTime.sMiUFRate.sMaUFRate \then
-    \\\t1 setUfVol!sUFVol \then
-    \\\t1 setTherapyTime!sTTime \then
-    \\\t1 setMinUFRate!sMiUFRate \then
-    \\\t1 setMaxUFRate!sMaUFRate \then \Skip
+    \\\t1 (ufVol:=sUFVol) \circseq
+    \\\t1 (therapyTime:=sTTime) \circseq
+    \\\t1 (minUFRate:=sMiUFRate) \circseq
+    \\\t1 (maxUFRate:=sMaUFRate)
 
 \end{circusaction}
 \begin{circusaction}
   SetPressureParameters~\circdef~
     \\\t1 inputOfSetPressureParameters?sLDMMAP.sATMPMTMP.sLTMP.sLH.sETMPLR \then
-    \\\t1 setLimitDeltaMinMaxAP!sLDMMAP \then
-    \\\t1 setActualTMPMaxTMP!sATMPMTMP \then
-    \\\t1 setLimitsTMP!sLTMP \then
-    \\\t1 setLowHigh!sLH \then
-    \\\t1 setExtendedTMPLimitRange!sETMPLR \then \Skip
+    \\\t1 (limitDeltaMinMaxAP:=sLDMMAP) \circseq
+    \\\t1 (actualTMPMaxTMP:=sATMPMTMP) \circseq
+    \\\t1 (limitsTMP:=sLTMP) \circseq
+    \\\t1 (lowHigh:=sLH) \circseq
+    \\\t1 (extendedTMPLimitRange:=sETMPLR) 
 
 \end{circusaction}
 \begin{circusaction}
   SetHeparinParameters~\circdef~
     \\\t1 inputOfSetHeparinParameters?sHST.sHBV.sHPR.sTWH.sST \then
-    \\\t1 setHeparinStopTime!sHST \then
-    \\\t1 setHeparinBolusVol!sHBV \then
-    \\\t1 setHeparinProfileRate!sHPR \then
-    \\\t1 setTreatmentWithoutHeparin!sTWH \then
-    \\\t1 setSyringeType!sST \then \Skip
+    \\\t1 (heparinStopTime:=sHST) \circseq
+    \\\t1 (heparinBolusVol:=sHBV) \circseq
+    \\\t1 (heparinProfileRate:=sHPR) \circseq
+    \\\t1 (treatmentWithoutHeparin:=sTWH) \circseq
+    \\\t1 (syringeType:=sST) 
 
 \end{circusaction}
 \begin{circusaction}
@@ -1202,7 +1204,7 @@ EnableUI~\circdef~(signalLamp := YELLOW)
 \also ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
 \also SetStopBloodFlow~\circdef~setBloodFlowInEBC?bloodFlowInEBC~\then~\Skip
 \also ConnectPatientStartTherapy~\circdef~
-  \\\t2 (hdMachineState := connectThePatient) \circseq
+  \\\t2 (hdMachineState := \{connectThePatient\}) \circseq
   \\\t2 EnableUI \circseq
   \\\t2 ConnectPatientArterially \circseq
   \\\t2 SetStopBloodFlow\circseq
@@ -1257,17 +1259,18 @@ TherapyEnding~\circdef
 
 \begin{circusaction}
 MainTherapy~\circdef
-  TherapyPreparation
-  \circseq TherapyInitiation
-  \circseq TherapyEnding
+  (TherapyPreparation
+    \circseq TherapyInitiation
+    \circseq TherapyEnding) \interleave (getCurrentTime?time \then \Skip)
 \end{circusaction}
 
 \begin{circusaction}
 HDMachineMain~\circdef HDGenCompInit \circseq
-(((MainTherapy
+%((
+(MainTherapy
         \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
-        \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
-        \lpar \emptyset | HDMachineStChanSet | \emptyset \rpar SensorReadings)
+       % \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
+        %\lpar \emptyset | HDMachineStChanSet | \emptyset \rpar SensorReadings)
 
 \end{circusaction}
 

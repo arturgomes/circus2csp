@@ -447,20 +447,6 @@ omega_CAction (CActionCommand (CValDecl xs a))
 omega_CAction (CActionCommand (CAssign varls valls))
   = make_get_com (remdups $ concat (map get_ZVar_st varls))  (make_set_com omega_CAction varls (map rename_ZExpr valls) CSPSkip)
 \end{code}
-\begin{circus}
-\Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
-   \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-   \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
-   \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
-\end{circus}
-\begin{code}
-omega_CAction (CActionCommand (CIf (CircGAction g a)))
-  = make_get_com lsx (rename_vars_CAction (CActionCommand
-             (CIf (CircGAction g (omega_prime_CAction a)))))
-  where
-   lsx = remdups $ concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
-
-\end{code}
 
 \begin{circus}
 \Omega_A (A \circhide cs) \circdef \Omega_A (A) \circhide cs
@@ -495,6 +481,19 @@ omega_CAction (CActionCommand (CIf gax))
    gpair = get_guard_pair gax
    lsx = concat (map get_ZVar_st (remdups (concat (map free_var_ZPred (map fst gpair)))))
 \end{code}
+% \begin{circus}
+% \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
+%    \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+%    \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
+% \end{circus}
+% \begin{code}
+% omega_CAction (CActionCommand (CIf (CircGAction g a)))
+%   = make_get_com lsx (rename_vars_CAction (CActionCommand
+%              (CIf (CircGAction g (omega_prime_CAction a)))))
+%   where
+%    lsx = remdups $ concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
+% \end{code}
 
 \begin{circus}
 \Omega_A (\circmu X \circspot A(X)) \circdef \circmu X \circspot \Omega_A(A(X))

@@ -451,7 +451,6 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
   = (get_channel_name spec (ChanComm c [ChanInp x]))
     ++ " -> "
-    ++ show x
     ++ mapping_CAction procn spec (a)
 \end{code}
 
@@ -487,7 +486,7 @@ mapping_CAction procn spec (CSPCommAction c a)
 \begin{code}
 mapping_CAction procn spec (CSPExtChoice a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ " [] "
+    ++ "\n\t\t [] "
     ++ mapping_CAction procn spec (b) ++ ")"
 \end{code}
 
@@ -528,7 +527,7 @@ mapping_CAction procn spec (CSPIntChoice a b)
 \begin{code}
 mapping_CAction procn spec (CSPInterleave ca cb)
    = "( " ++ mapping_CAction procn spec (ca)
-     ++ " ||| "
+     ++ "\n\t\t ||| "
      ++ mapping_CAction procn spec (cb) ++ " )"
 \end{code}
 
@@ -538,7 +537,7 @@ mapping_CAction procn spec (CSPInterleave ca cb)
 \begin{code}
 mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ "|||"
+    ++ "\n\t\t|||"
     ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 
@@ -548,9 +547,9 @@ mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
 \begin{code}
 mapping_CAction procn spec (CSPNSParal ns1 cs ns2 a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ " [| "
+    ++ "\n\t\t [| "
     ++ mapping_predicate_cs (cs)
-    ++ " |] "
+    ++ " |] \n\t\t"
     ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 \begin{code}
@@ -588,7 +587,7 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names1 spec) s)
-    ++ " @ "
+    ++ " @\n\t\t\t "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
@@ -601,7 +600,7 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
     ++  x
     ++ " : "
     ++ (mapping_ZExpr (get_delta_names1 spec) s)
-    ++ " @ "
+    ++ " @\n\t\t\t "
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
@@ -879,9 +878,9 @@ The mapping function for sequence expressions is defined as follows:
 get_channel_name :: [ZPara] -> Comm -> ZName
 
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
-  = "mget."++x++"?"++v1++":(type"++(lastN 3 x)++"("++x++"))"
+  = "\n\t\tmget."++x++"?"++v1++":(type"++(lastN 3 x)++"("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "mset."++x++".("++(lastN 3 x)++(get_channel_name_cont spec xs)++")"
+  = "\n\t\tmset."++x++".("++(lastN 3 x)++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
