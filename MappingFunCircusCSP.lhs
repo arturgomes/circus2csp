@@ -44,28 +44,51 @@ mapping_Circus spec (x:xs)
 
 mapping_CircParagraphs :: [ZPara] -> ZPara -> String
 mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
-  = "\n--------------------------------"++
-    "\n-- The universe of values"++
-    "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
-    -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
-    "\n\n--------------------------------"++
-    "\n--Conversions\n"++(mk_subtype funivlst)++
-    "\n\n"++(mk_value funivlst)++
-    "\n\n"++(mk_type funivlst)++
-    "\n\n"++(mk_tag funivlst)++
-    "\n\n--------------------------------"++
-    "\n-- MEMORY"++
-    "\n--------------------------------\n"++
-    "Memory("++mk_mem_param funivlst++") = "++
-    "\n\t"++ mk_mget_mem_bndg funivlst funivlst ++ 
-    "\n"++ mk_mset_mem_bndg funivlst funivlst ++ 
-    "\n\t\t[] terminate -> SKIP\n\n"++
-    "Memorise(P,"++mk_mem_param funivlst++") = \n"++ 
-    "    ((P; terminate -> SKIP) [| MEM_I |] Memory("++mk_mem_param funivlst++")) \\ MEM_I\n"  
+  = case res of
+    False -> ("\n--------------------------------"++
+            "\n-- The universe of values"++
+            "\n datatype " ++ "UNIVERSE" ++ " = " ++ (mk_universe funivlst)++
+            -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
+            "\n\n--------------------------------"++
+            "\n--Conversions\n"++(mk_subtype funivlst)++
+            "\n\n"++(mk_value funivlst)++
+            "\n\n"++(mk_type funivlst)++
+            "\n\n"++(mk_tag funivlst)++
+            "\n\n--------------------------------"++
+            "\n-- MEMORY"++
+            "\n--------------------------------\n"++
+            "Memory("++mk_mem_param funivlst++") = "++
+            "\n\t"++ mk_mget_mem_bndg funivlst funivlst ++ 
+            "\n"++ mk_mset_mem_bndg funivlst funivlst ++ 
+            "\n\t\t[] terminate -> SKIP\n\n"++
+            "Memorise(P,"++mk_mem_param funivlst++") = \n"++ 
+            "    ((P; terminate -> SKIP) [| MEM_I |] Memory("++mk_mem_param funivlst++")) \\ MEM_I\n") 
+    True -> ""
   where
     univlst = (def_universe spec)
     funivlst = remdups (filter_types_universe univlst)
--- ZAbbreviation ("TIME",[]) (ZSetComp [Choose ("h",[]) (ZVar ("\\nat",[])),Choose ("m",[]) (ZVar ("\\nat",[]))] (Just (ZTuple [ZVar ("h",[]),ZVar ("m",[])])))
+    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
+
+
+mapping_CircParagraphs spec (CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])])
+  = case res of
+    False -> "\n" ++ mapping_CDecl spec [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])]
+    True -> ""
+    where
+      res =  member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
+mapping_CircParagraphs spec (CircChannel [CChan "terminate"])
+  = case res of
+    False -> "\n" ++ mapping_CDecl spec [CChan "terminate"]
+    True -> ""
+    where
+      res =  member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
+mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"]))
+  = case res of
+    False -> "\n" ++ "MEM_I" ++ " = " ++ (mapping_CSExp spec (CChanSet ["mset","mget","terminate"]))
+    True -> ""
+    where
+      res =  member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
+
 
 mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
   = ""
@@ -73,19 +96,22 @@ mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetComp xl (Just (ZTuple ztp
   = "\n"++ n ++ " = (" ++ mapping_ZTuple ztp ++ ")"
 
 mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b) zbs)
-  = "\ndatatype NAME = " 
-    ++ (mapping_ZBranch_list spec zbs) 
-    ++ "\n" ++ make_subtype_NAME zbs 
-    ++ "\n--------------------------------" 
-    ++ "\n-- All possible bidings" 
-    ++ "\n\n" ++ nameval
-    ++ "\n\n" ++ bindingsval
-    ++ "\n"
+  = case res of
+    False -> ("\ndatatype NAME = " 
+            ++ (mapping_ZBranch_list spec zbs) 
+            ++ "\n" ++ make_subtype_NAME zbs 
+            ++ "\n--------------------------------" 
+            ++ "\n-- All possible bidings" 
+            ++ "\n\n" ++ nameval
+            ++ "\n\n" ++ bindingsval
+            ++ "\n") 
+    True -> ""
     where
       znames = remdups $ map select_zname_f_zbr zbs
       ztypes = remdups $ map select_type_zname znames
       nameval = mk_charll_to_charl "\n" $ map mk_NAME_VALUES_TYPE ztypes
       bindingsval = mk_charll_to_charl "\n" $ map mk_BINDINGS_TYPE ztypes
+      res =  member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
 
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
   = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list spec zbs) 
@@ -213,6 +239,9 @@ get_channel_type (ZCall (ZVar ("\\power",[])) (ZVar (v,[])))
 get_channel_type (ZCross xs)
   = (get_channel_type_list xs)
 get_channel_type (ZTuple xls) = "(" ++ get_channel_type_tuple xls ++ ")"
+get_channel_type (ZSetComp [Choose (a,[]) (ZVar (at,[])),Choose (b,[]) (ZVar (bt,[]))] (Just (ZTuple [ZVar (a1,[]),ZVar (b1,[])]))) = 
+  "(" ++ get_channel_type_tuple [(ZVar (at,[])),(ZVar (bt,[]))] ++ ")"
+get_channel_type _ = ""
 
 get_channel_type_tuple [ZVar (a,[])] = a
 get_channel_type_tuple ((ZVar (a,[])):xs)
@@ -240,7 +269,7 @@ mapping_CSExp spec (ChanSetUnion a b)
   = "union("++(mapping_CSExp spec a)++","
     ++(mapping_CSExp spec b)++")"
 mapping_CSExp spec (CSEmpty)
-  = "{| |}"
+  = "{ }"
 mapping_CSExp spec (CSExpr zn)
   = zn
 \end{code}
@@ -854,6 +883,7 @@ I think it would be rather correct if we define it as {| x,y,z|}
 mapping_predicate_cs (cs)
   -- = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
   = (mapping_set_cs_exp cs) 
+mapping_set_cs_exp (CSEmpty) = "{}"
 mapping_set_cs_exp (CChanSet x)
   = "{| "++(mapping_ZExpr_def x)++" |}"
 mapping_set_cs_exp (CSExpr x) 
@@ -933,9 +963,13 @@ get_chan_list _ = []
 mapping_ZTuple [ZVar ("\\nat",_)] = "NatValue"
 mapping_ZTuple [ZVar ("\\nat_1",_)] = "NatValue"
 -- mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
-mapping_ZTuple [ZVar (v,_)] = v
+mapping_ZTuple [ZVar (v,_)]
+  | (is_ZVar_v_st v) = "value"++(lastN 3 v)++"("++v++")"
+  | otherwise = v
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
-mapping_ZTuple ((ZVar (v,_)):xs) = (v) ++ "," ++ (mapping_ZTuple xs)
+mapping_ZTuple ((ZVar (v,_)):xs)
+  | (is_ZVar_v_st v) = "value"++(lastN 3 v)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
+  | otherwise = v ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple _ = ""
 \end{code}

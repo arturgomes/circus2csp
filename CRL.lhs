@@ -1971,7 +1971,7 @@ getRef ::  [Refinement CAction] -> Maybe CAction
 getRef [] = Nothing
 getRef [e@(Done{orig=x, refined=y, proviso=z})] = y
 getRef [None] = Nothing
-getRef xs = Just $ get_refined (last xs)
+getRef xs = getRef [last xs]
 \end{code}
 
 \subsection{Testing the tool}
@@ -1993,6 +1993,7 @@ get_orig :: Refinement CAction -> CAction
 get_orig (Done{orig=Just a,refined=_,proviso=_}) = a
 get_refined :: Refinement CAction -> CAction
 get_refined (Done{orig=_,refined=Just b,proviso=_}) = b
+get_refined (Done{orig=Just a,refined=Nothing,proviso=_}) = a
 get_proviso :: Refinement CAction -> [ZPred]
 get_proviso None = []
 get_proviso (Done{orig=_,refined=_,proviso=c}) = c

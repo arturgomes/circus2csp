@@ -107,6 +107,14 @@ omega_CProc zn spec (CRepSeqProc [(Choose x s)] a)
   = (CRepSeqProc [(Choose x s)] (omega_CProc zn spec a))
 omega_CProc zn spec (CSeq a b)
   = (CSeq (omega_CProc zn spec a) (omega_CProc zn spec b))
+omega_CProc zn spec (ProcStalessMain [] ca)
+  = (ProcStalessMain 
+    [] 
+    main_action)
+    where 
+      omegaAC = omega_CAction ca
+      refAC = isRefined' omegaAC (runRefinement omegaAC)
+      main_action = refAC
 omega_CProc zn spec (ProcStalessMain xls ca)
   = (ProcStalessMain 
     [] 
@@ -126,6 +134,7 @@ omega_CProc zn spec (CParamProc zns (x:xs))
   = (CParamProc zns (x:xs))
 omega_CProc zn spec (CSimpIndexProc zns (x:xs))
   = (CSimpIndexProc zns (x:xs))
+
 omega_CProc zn spec (ProcMain zp xls ca)
   = (ProcStalessMain 
     [] 
@@ -140,6 +149,7 @@ omega_CProc zn spec (ProcMain zp xls ca)
       omegaAC = omega_CAction nomegaAC
       refAC = isRefined' omegaAC (runRefinement omegaAC)
       main_action = mk_main_action_bind nstate $ refAC
+
 omega_CProc zn spec x
   = x
 \end{code}
@@ -502,6 +512,7 @@ omega_CAction (CActionCommand (CIf gax))
 is written in Haskell as:
 
 \begin{code}
+--  TODO Jun 30 2017: rename the recursion action name, so it won't clash with any Circus action name.
 omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
 \end{code}
 

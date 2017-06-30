@@ -1030,12 +1030,12 @@ csexpr_ecsn ::  EParser ZToken CSExp
 csexpr_ecsn
 	= do {ws <- zword; -- N
    		return (CSExpr ws)}
+	+++ do {tok L_LCHANSET; tok L_RCHANSET; -- \lchanset \rchanset
+		return CSEmpty}
 	+++ do {tok L_LCHANSET; -- \lchanset N^{+} \rchanset
   		ws <- opt [] (zword `sepby1` do {optnls; tok L_COMMA; optnls});
  		tok L_RCHANSET;
  		return (CChanSet ws)}
-	+++ do {tok L_LCHANSET; tok L_RCHANSET; -- \lchanset \rchanset
-		return CSEmpty}
 	+++ do {tok L_OPENPAREN;
 			optnls;
 			xx <- circuscsexpr;

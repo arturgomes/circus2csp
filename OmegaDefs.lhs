@@ -1332,6 +1332,7 @@ rename_vars_ZPred1 lst (ZPSchema sp)
 
 \begin{code}
 -- extract the delta variables in here'
+get_delta_names1 :: [ZPara] -> [String]
 get_delta_names1 [(ZFreeTypeDef ("NAME",[]) xs)]
   = get_delta_names_aux1 xs
 get_delta_names1 ((ZFreeTypeDef ("NAME",[]) xs):xss)
@@ -1343,8 +1344,12 @@ get_delta_names1 []
 \end{code}
 
 \begin{code}
-get_delta_names_aux1 [(ZBranch0 (a,[]))] = [a]
-get_delta_names_aux1 ((ZBranch0 (a,[])):xs) = [a]++(get_delta_names_aux1 xs)
+get_delta_names_aux1 :: [ZBranch] -> [String]
+get_delta_names_aux1 [] = []
+get_delta_names_aux1 [(ZBranch0 (a,_))] = [a]
+get_delta_names_aux1 [_] = []
+get_delta_names_aux1 ((ZBranch0 (a,_)):xs) = [a]++(get_delta_names_aux1 xs)
+get_delta_names_aux1 (_:xs) = (get_delta_names_aux1 xs)
 \end{code}
 \begin{code}
 -- extract the delta variables in here' from the same state
@@ -1777,4 +1782,14 @@ propagate_CSPRep (CSPRepInterl ls a) = (CSPRepInterl ls (propagate_CSPRep a))
 \begin{code}
 make_memory_proc =
   CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[]) (ZVar ("BINDING",[]))] (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[])),ChanOutExp (ZCall (ZVar ("b",[])) (ZVar ("n",[])))]) (CSPParAction "Memory" [ZVar ("b",[])]))) (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))
+\end{code}
+Checking if the Delta is empty. That means that there's no state in any process in the specification.
+\begin{code}
+check_empty_delta [ZAbbreviation ("\\delta",_) (ZSetDisplay [])] = True
+check_empty_delta [ZAbbreviation ("\\delta",_) (ZSetDisplay _)] = False
+check_empty_delta [_] = False
+check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay [])):xs) = True
+check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay _)):xs) = False
+check_empty_delta (_:xs) = check_empty_delta xs
+
 \end{code}
