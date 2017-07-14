@@ -1,4 +1,4 @@
-Substitution\section{Substitution}
+\chapter{Substitution}
 
 
 \ignore{
@@ -682,75 +682,98 @@ fvars_genfilt gfs inner = foldr adjust inner gfs
 
 free_var_CAction :: CAction -> [ZVar]
 free_var_CAction (CActionSchemaExpr x) = []
-free_var_CAction (CActionCommand c) = (free_var_comnd c)
+free_var_CAction (CActionCommand c) 
+  = (free_var_CCommand c)
 free_var_CAction (CActionName nm) = []
 free_var_CAction (CSPSkip) = []
 free_var_CAction (CSPStop) = []
 free_var_CAction (CSPChaos) = []
-free_var_CAction (CSPCommAction (ChanComm com xs) c) = (get_chan_var xs)++(free_var_CAction c)
-free_var_CAction (CSPGuard p c) = (free_var_ZPred p)++(free_var_CAction c)
-free_var_CAction (CSPSeq ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPExtChoice ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPIntChoice ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPParal cs ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSInter ns1 ns2 ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPInterleave ca cb) = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPHide c cs) = (free_var_CAction c)
+free_var_CAction (CSPCommAction (ChanComm com xs) c) 
+  = (free_var_CParameter xs)++(free_var_CAction c)
+free_var_CAction (CSPGuard p c) 
+  = (free_var_ZPred p)++(free_var_CAction c)
+free_var_CAction (CSPSeq ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPExtChoice ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPIntChoice ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPParal cs ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPNSInter ns1 ns2 ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPInterleave ca cb) 
+  = (free_var_CAction ca)++(free_var_CAction cb)
+free_var_CAction (CSPHide c cs) 
+  = (free_var_CAction c)
 free_var_CAction (CSPParAction nm xp) = []
 free_var_CAction (CSPRenAction nm cr) = []
-free_var_CAction (CSPRecursion nm c) = (free_var_CAction c)
-free_var_CAction (CSPUnParAction lst c nm) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepSeq lst c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepExtChoice lst c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepIntChoice lst c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepParalNS cs lst ns c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepParal cs lst c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepInterlNS lst ns c) =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepInterl lst c) =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRecursion nm c) 
+  = (free_var_CAction c)
+free_var_CAction (CSPUnParAction lst c nm) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepSeq lst c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepExtChoice lst c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepIntChoice lst c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepParalNS cs lst ns c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepParal cs lst c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepInterlNS lst ns c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPRepInterl lst c) 
+  =  free_var_ZGenFilt lst free_var_CAction c
+\end{code}
+
+\subsection{Free variables - $CParameter$}
+\begin{code}
+free_var_CParameter :: [CParameter] -> [ZVar]
+free_var_CParameter [] = []
+free_var_CParameter [ChanDotExp x] = free_var_ZExpr x
+free_var_CParameter [ChanOutExp x] = free_var_ZExpr x
+free_var_CParameter [ChanInpPred _ x] = free_var_ZPred x
+free_var_CParameter [_] = []
+free_var_CParameter ((ChanDotExp x):xs) = (free_var_ZExpr x)++(free_var_CParameter xs)
+free_var_CParameter ((ChanOutExp x):xs) = (free_var_ZExpr x)++(free_var_CParameter xs)
+free_var_CParameter ((ChanInpPred _ x):xs) = (free_var_ZPred x)++(free_var_CParameter xs)
+free_var_CParameter (_:xs) = (free_var_CParameter xs)
 \end{code}
 
 
-\begin{code}
-get_chan_var :: [CParameter] -> [ZVar]
-get_chan_var [] = []
-get_chan_var [ChanDotExp (ZVar (x,_))] = [(x,[])]
-get_chan_var [ChanOutExp (ZVar (x,_))] = [(x,[])]
-get_chan_var [_] = []
-get_chan_var ((ChanDotExp (ZVar (x,_))):xs) = [(x,[])]++(get_chan_var xs)
-get_chan_var ((ChanOutExp (ZVar (x,_))):xs) = [(x,[])]++(get_chan_var xs)
-get_chan_var (_:xs) = (get_chan_var xs)
-\end{code}
-
-
-\subsection{Free Variables for \Circus\ commands }
+\subsection{Free Variables for \Circus\ commands -- $CCommand$}
 
 \begin{code}
-free_var_comnd (CAssign v e)
+free_var_CCommand (CAssign v e)
  = v
-free_var_comnd (CIf ga)
+free_var_CCommand (CIf ga)
  = free_var_if ga
-free_var_comnd (CVarDecl lst c)
+free_var_CCommand (CVarDecl lst c)
  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_comnd (CAssumpt n p1 p2)
+free_var_CCommand (CAssumpt n p1 p2)
  = []
-free_var_comnd (CAssumpt1 n p)
+free_var_CCommand (CAssumpt1 n p)
  = []
-free_var_comnd (CPrefix p1 p2)
+free_var_CCommand (CPrefix p1 p2)
  = []
-free_var_comnd (CPrefix1 p)
+free_var_CCommand (CPrefix1 p)
  = []
-free_var_comnd (CommandBrace z)
+free_var_CCommand (CommandBrace z)
  = (free_var_ZPred z)
-free_var_comnd (CommandBracket z)
+free_var_CCommand (CommandBracket z)
  = (free_var_ZPred z)
-free_var_comnd (CValDecl lst c)
+free_var_CCommand (CValDecl lst c)
  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_comnd (CResDecl lst c)
+free_var_CCommand (CResDecl lst c)
  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_comnd (CVResDecl lst c)
+free_var_CCommand (CVResDecl lst c)
  =  free_var_ZGenFilt lst free_var_CAction c
 \end{code}
+\subsection{Free Variables for \Circus\ Guards -- $CGActions$}
 
 \begin{code}
 free_var_if (CircGAction p a)
@@ -825,6 +848,8 @@ get_vars_ZExpr (ZVar (a,x))
   = strip a "\92"
 get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[]))) 
   = "P"++get_vars_ZExpr (ZVar (c,[]))
+get_vars_ZExpr x
+  = "unknown"
 \end{code}
 
 \begin{code}

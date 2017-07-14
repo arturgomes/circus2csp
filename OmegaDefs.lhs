@@ -1,4 +1,4 @@
-\section{Misc functions -- File: DefSets.lhs}
+\chapter{Misc functions -- File: OmegaDefs.lhs}
 Functions used for manipulating lists (Z Sets and sequences, as well as calculating the provisos from the Circus Refinement laws)
 
 \ignore{
@@ -12,13 +12,12 @@ import Errors
 \end{code}
 }
 
-
-
-Auxiliary function to propagate $get$ communication through the variables and local variables of an action.
+\subsection{$make\_get\_com$}
+This function will take the list of state variables $[ZName]$ that are free in an expression $e$, with no duplicates, and then make a $mget$ for each one, with a copy of such value with the prefix $v\_$. It will recurse until the point where a single element $x$ is left and then the prefixed action continues behaving like $c$.
 \begin{circus}
 make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then A
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then A
 \end{circus}
 \begin{code}
 make_get_com :: [ZName] -> CAction -> CAction
@@ -30,7 +29,8 @@ make_get_com (x:xs) c
     [ChanDotExp (ZVar (x,[])),ChanInp ("v_"++x)]) (make_get_com xs c))
 make_get_com x c = c
 \end{code}
-
+\subsection{$make\_set\_com$}
+This function updates the values of the $Memory$ process by generating a sequence of $mset$ communications and then it behaves like $f~c$, where $f$ may be the $omega\_CAction$ or $omega\_prime\_CAction$.
 \begin{code}
 make_set_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
 make_set_com f [(x,_)] [y] c
@@ -40,6 +40,7 @@ make_set_com f ((x,_):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
      [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
+\subsection{$get\_guard\_pair$}
 
 The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list of tuples $(ZPred, CAction)$
 \begin{code}
@@ -49,6 +50,8 @@ get_guard_pair (CircGAction g2 a2)
 get_guard_pair (CircThenElse (CircGAction g2 a2) glx)
   = ((g2,a2):(get_guard_pair glx))
 \end{code}
+\subsection{$rename\_guard\_pair$}
+
 The function $rename\_guard\_pair$ will rename the guards to $v\_$ prefix of free variables.
 
 \begin{code}
@@ -57,6 +60,7 @@ rename_guard_pair sub [(a,b)]
   = [((substitute (mk_sub_list sub) (free_vars a) a),b)]
 rename_guard_pair sub ((a,b):xs) = [((substitute (mk_sub_list sub) (free_vars a) a),b)]++(rename_guard_pair sub xs)
 \end{code}
+\subsection{$mk\_guard\_pair$}
 
 The function $mk\_guard\_pair$ transforms a list of tuples $(ZPred, CAction)$ and produces $CircThenElse$ pieces according to the size of the list.
 \begin{code}
@@ -64,6 +68,8 @@ mk_guard_pair :: (CAction -> CAction) -> [(ZPred, CAction)] -> CGActions
 mk_guard_pair f [(g,a)] = (CircGAction g (f a))
 mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair f ls))
 \end{code}
+\subsection{$mk\_sub\_list$}
+
 The function $mk\_sub\_list$ will make a list of substitution variables to $v\_$ prefix.
 \begin{code}
 mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
@@ -79,6 +85,7 @@ getWrtV xs = []
 \end{code}
 
 
+\subsection{$mk\_sub\_list$}
 
 \begin{code}
 rename_ZPred (ZFalse{reason=a})
@@ -198,7 +205,7 @@ rep_CSPRepInterlNS a ns y (x:xs)
            (Just (ZCall (ZVar (ns,[])) (ZVar (y,[])))) ) )
      (CSPParAction a [x]) (rep_CSPRepInterlNS a ns y xs) )
 \end{code}
-
+\subsection{Functions imported from $Data.List$}
 \begin{code}
  -- Artur - 15/12/2016
  -- What we find below this line was taken from the Data.List module
@@ -267,30 +274,47 @@ splitOn d [] = []
 splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
 
 \end{code}
-
-get State variables from names
+\section{Functions for manipulating the State}
+\subsection{$get\_ZVar\_st$}
+This function extracts those variables $ZVar$ that are a state variable member.
 \begin{code}
 get_ZVar_st ((('s':'v':'_':xs),x))
  = [('s':'v':'_':xs)]
 get_ZVar_st x
  = []
 \end{code}
+\subsection{$is\_ZVar\_st$}
+
 \begin{code}
 is_ZVar_st a = isPrefixOf "sv" a
+\end{code}
+
+\subsection{$is\_ZVar\_v\_st$}
+
+\begin{code}
 is_ZVar_v_st a = isPrefixOf "v_sv" a
 \end{code}
 
+\section{Functions for variable renaming -- $v\_$}
 
+\subsection{$rename\_ZVar$}
+Renames a $ZVar$ that is a state variable.
 
 \begin{code}
+rename_ZVar :: ([Char], t) -> ([Char], t)
 rename_ZVar (va,x)
   = case (is_st_var va) of
      True -> ("v_"++va,x)
      False -> (va,x)
+\end{code}
+
+\subsection{$rename\_ZExpr$}
+Renames a $ZExpr$ where any $ZVar$ belonging to the state variable set will then be renamed with the $v\_$ prefix.
+
+\begin{code}
+rename_ZExpr :: ZExpr -> ZExpr
 rename_ZExpr (ZVar (va,x))
- = case (is_st_var va) of
-   True -> (ZVar ("v_"++va,x))
-   False -> (ZVar (va,x))
+ = (ZVar (rename_ZVar (va,x)))
 rename_ZExpr (ZInt zi)
  = (ZInt zi)
 rename_ZExpr (ZGiven gv)
@@ -356,10 +380,12 @@ rename_ZExpr (ZTheta zs)
 rename_ZExpr x
  = x
 \end{code}
-
+\subsection{$bindingsVar$}
+Auxiliary function for renaming, where any binding is renamed as well as its related $ZExpr$.
 \begin{code}
-bindingsVar []
- = []
+bindingsVar :: [(ZVar, ZExpr)] -> [(ZVar, ZExpr)]
+
+bindingsVar [] = []
 bindingsVar [((va,x),b)]
  = case (is_st_var va) of
    True -> [(("v_"++va,x),(rename_ZExpr b))]
@@ -370,6 +396,8 @@ bindingsVar (((va,x),b):xs)
    False -> [((va,x),(rename_ZExpr b))]++(bindingsVar xs)
 \end{code}
 
+\subsection{$rename\_vars\_CParameter$}
+Renaming any variable in a channel parameter.
 
 \begin{code}
 rename_vars_CParameter (ChanInp zn)
@@ -383,6 +411,8 @@ rename_vars_CParameter (ChanDotExp ze)
 \end{code}
 
 
+\subsection{$CParameter$}
+Renaming any variable in a channel parameter.
 \begin{code}
 rename_vars_Comm (ChanComm zn cpls)
  = (ChanComm zn (map rename_vars_CParameter  cpls))
@@ -1448,20 +1478,22 @@ mk_charll_to_charl sp [x] = x
 mk_charll_to_charl sp (x:xs) = x++sp++(mk_charll_to_charl sp xs)
 
 -- make mget external choices of Memory proc
-mk_mget_mem_bndg :: [(t3, [Char], t4, t5)] -> [(t, [Char], t1, t2)] -> [Char]
-mk_mget_mem_bndg fs []
+mk_mget_mem_bndg :: [(t3, [Char], t4, t5)] -> [Char]
+mk_mget_mem_bndg fs = mk_mget_mem_bndg' fs fs
+
+mk_mget_mem_bndg' :: [(t3, [Char], t4, t5)] -> [(t, [Char], t1, t2)] -> [Char]
+mk_mget_mem_bndg' fs []
   = ""
-mk_mget_mem_bndg fs [(a,b,c,d)]
+mk_mget_mem_bndg' fs [(a,b,c,d)]
   = "([] n:dom(b_"++(lastN 3 b)++") @ mget.n!(apply(b_"++(lastN 3 b)++",n)) -> Memory("++(mk_mem_param fs)++"))"
-mk_mget_mem_bndg fs ((a,b,c,d):xs)
-  = mk_mget_mem_bndg fs [(a,b,c,d)]
-  ++"\n\t[] "++mk_mget_mem_bndg fs xs
+mk_mget_mem_bndg' fs ((a,b,c,d):xs)
+  = mk_mget_mem_bndg' fs [(a,b,c,d)]
+  ++"\n\t[] "++mk_mget_mem_bndg' fs xs
 
 
 -- make mset external choices of Memory proc
-mk_mset_mem_bndg fs []
-  = ""
-mk_mset_mem_bndg fs [(a,b,c,d)]
+mk_mset_mem_bndg fs = mk_mset_mem_bndg' fs fs
+mk_mset_mem_bndg' fs [(a,b,c,d)]
   = "\t[] ([] n:dom(b_"
       ++(lastN 3 b)
       ++") @ mset.n?x:type"
@@ -1469,12 +1501,20 @@ mk_mset_mem_bndg fs [(a,b,c,d)]
       ++"(n) -> Memory("
       ++  ( mk_charll_to_charl "," (repl_mem_param_over (lastN 3 b) (mk_mem_param_lst fs) ))
       ++"))"
-mk_mset_mem_bndg fs ((a,b,c,d):xs)
-  = mk_mset_mem_bndg fs [(a,b,c,d)]
-  ++"\n"++mk_mset_mem_bndg fs xs
+mk_mset_mem_bndg' fs ((a,b,c,d):xs)
+  = mk_mset_mem_bndg' fs [(a,b,c,d)]
+  ++"\n"++mk_mset_mem_bndg' fs xs
 
 
 -- make subtype NAME_TYPE1, subtype...
+
+-- this function returns the entire set of NAME
+get_znames_from_NAME [(ZFreeTypeDef ("NAME",[]) xs)] = xs
+get_znames_from_NAME [_] = []
+
+
+get_znames_from_NAME ((ZFreeTypeDef ("NAME",[]) xs):axs) = xs
+get_znames_from_NAME (_:axs) = get_znames_from_NAME axs
 
 -- first we get the names from NAME datatype
 select_zname_f_zbr (ZBranch0 (n,[])) = n
@@ -1517,7 +1557,7 @@ mk_BINDINGS_TYPE n
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
 mk_restrict spec vlst n
-    = "\t\trestrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ lst_subtype n vlst)++"})"
+    = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ lst_subtype n vlst)++"})"
     where
       univlst = (def_universe spec)
       funivlst = remdups (filter_types_universe univlst)

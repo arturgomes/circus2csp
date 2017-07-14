@@ -1,5 +1,5 @@
 %!TEX root = MAIN.tex
-\section{Circus Refinement Laws}
+\chapter{Circus Refinement Laws}
 
 \ignore{
 \begin{code}
@@ -25,8 +25,8 @@ import Data.Time
         (\circvar\ d:T \circspot A1 \lpar ns1 | cs | ns2 \rpar A2) %
     \end{circus}%
     \begin{itemize}
-        \item: From D24.1 -- $\{d,d'\} \cap FV(A2) = \emptyset$
-        \item: From Oliveira's Thesis: $x \notin FV(A_2) \cup ns_1 \cup ns_2$
+        \item From D24.1 -- $\{d,d'\} \cap FV(A2) = \emptyset$
+        \item From Oliveira's Thesis: $x \notin FV(A_2) \cup ns_1 \cup ns_2$
     \end{itemize}
   \label{law:var-exp-par}
 \end{lawn}
@@ -1538,7 +1538,7 @@ isDeterministic a
 
 \subsection{Mechanism for applying the refinement laws}
 
-First I'm listing all the refinement laws currently available. Then I'm putting it as the variable "reflaws".
+First I'm listing all the refinement laws currently available. Then I'm putting it as the variable "reflaws".\ignore{
 \begin{code}
 -- Description of each function:
 
@@ -1599,6 +1599,9 @@ First I'm listing all the refinement laws currently available. Then I'm putting 
 -- For Circus Processes:
 -- crl_promVarState :: CProc -> Refinement CProc
 -- crl_promVarState2 :: CProc -> ZSName -> Refinement CProc
+\end{code}
+}
+\begin{code}
 reflawsCAction :: [CAction -> Refinement CAction]
 reflawsCAction 
         = [crl_assignmentRemoval,
@@ -1671,6 +1674,9 @@ data Refinement t = None
 Then I'm starting to implement the mechanism itself. Basically, it will try to apply the refinement laws one by one until a result $Refinement CAction$ is returned.
 \begin{code}
 type RFun t = t -> Refinement t 
+\end{code}
+The function $applyCAction$ will try to apply a refinement law $r$ on an action $e$. If the result from applying it is $Done\{\ldots\}$, then this is the result. Otherwise, it will try to apply recursively to the inner parts of the $CAction$.
+\begin{code}
 
 applyCAction :: (RFun CAction) -> (RFun CAction)
 applyCAction r e@(CActionCommand (CIf g))
@@ -1907,15 +1913,20 @@ applyCAction r e
      r'@(Done{orig = _or, refined = _re, proviso=_pr}) -> r'
      None ->  None
 
-
--- Applies a refinement law into a list of actions.
+\end{code}
+\subsection{Applying to a list of actions -- $applyCActions$}
+Applies a refinement law into a list of actions.
+\begin{code}
 applyCActions :: RFun CAction -> [CAction] -> [Refinement CAction]
 applyCActions r [] = []
 applyCActions r [e]
  = [applyCAction r e]
 applyCActions r (e:es)
  = (applyCAction r e):(applyCActions r es)
-
+\end{code}
+\subsection{Applying to a list of guarded actions -- $applyCActionsIf$}
+Applies a refinement law into a list of actions.
+\begin{code}
 applyCActionsIf :: RFun CAction -> CGActions -> (CGActions,[ZPred])
 applyCActionsIf r (CircGAction zp ca)
   = ((CircGAction zp (isRefined ca ca')), get_proviso ca')
@@ -1924,10 +1935,11 @@ applyCActionsIf r (CircThenElse ga gb)
  = ((CircThenElse ga' gb'),prova++provb)
   where (ga',prova) = (applyCActionsIf r ga)
         (gb',provb) = (applyCActionsIf r gb)
+\end{code}
 
-
----
--- This will control if something was refined or not
+\subsection{Checking the refinement results}
+This will control if something was refined or not
+\begin{code}
 isRefined :: CAction-> Refinement CAction -> CAction
 isRefined a b
   = case b of 
@@ -2024,9 +2036,9 @@ print_ref' (x:xs) = print_ref_steps x ++ (print_ref' xs)
 print_file_ref fname example = writeFile fname $ print_ref $runStepRefinement example
 
 \end{code}
+\ignore{
 Testing area
 \begin{code}
-
 -- Usage:
 -- you can type 
 -- $ print_file_ref "ref_steps.txt" cexample2
@@ -2039,4 +2051,4 @@ cexample4 = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]
 cexample5= (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))
             
 
-\end{code}
+\end{code}}

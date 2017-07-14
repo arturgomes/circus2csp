@@ -1,6 +1,8 @@
-\documentclass[10pt]{article}
+\documentclass[10pt]{report}
 \usepackage[a4paper,margin=0.5in]{geometry}
 \usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
 \usepackage[color]{circus}
 \usepackage{listings}
 \usepackage{lstlhs}
@@ -14,7 +16,7 @@
 % {\endverbatim\normalsize\ruleafter}
 
 \newcommand*{\fcourier}{\fontfamily{pcr}\selectfont}
-\DeclareTextFontCommand{\tco}{\fcourier}
+\DeclareTextFontCommand{\tco}{\fcourier\color{blue}}
 
 \newcounter{examplecounter}
 \newenvironment{lawn}[1][]{%
@@ -31,6 +33,24 @@
   {\newline\noindent\ provided\begin{itemize}}
   {\end{itemize}}
 
+
+
+\def\Circus{{\sf\slshape{Circus}}}
+\def\CRefine{{\sf\slshape{CRefine}}}
+\def\JCircus{{\sf\slshape{JCircus}}}
+\def\CircusT{{\sf\slshape{Circus~Time}}}
+
+\newcommand{\Timeout}[1]{\stackrel{#1}{\rres}}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\newcommand{\CSPM}{$CSP_M$}
+
+
+%et al. in italic
+\newcommand{\etal}{\textit{et al}. }
+\newcommand{\wrt}{\textit{w.r.t.}}
+\newcommand{\ie}{\textit{i}.\textit{e}., }
+\newcommand{\eg}{\textit{e}.\textit{g}. }
+
 \author{Artur Oliveira Gomes}
 
 \title{Circus to CSP}
@@ -39,13 +59,13 @@
 \begin{document}
 \maketitle
 \tableofcontents
-
-\input{AST.lhs}
-\input{Subs.lhs}
-\input{MappingFunStatelessCircus.lhs}
-\input{CRL.lhs}
+\appendix
+% \input{AST.lhs}
+% \input{Subs.lhs}
+% \input{MappingFunStatelessCircus.lhs}
+% \input{CRL.lhs}
 \input{MappingFunCircusCSP.lhs}
-\input{OmegaDefs.lhs}
+% \input{OmegaDefs.lhs}
 
 % \input{circus_ref_laws.lhs}
 

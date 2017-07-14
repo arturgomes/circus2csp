@@ -174,24 +174,15 @@
     %begin{enumerate}
       %item Port Base (used in both port types)
         %<*PortBaseType>
-        \begin{schema}{PortBaseType}
-          Name: NameType\\
-          MaxMessageSize : DecOrHexValueType\\
-          Direction: PortDirectionType
-        \end{schema}
-        %</PortBaseType>
-      %item Sampling Port
-        %<*SamplingPortType>
-        \begin{schema}{A653\_SamplingPortType}
-          PortBaseType
-        \end{schema}
-        %</SamplingPortType>
-      %item Queuing Port
-        %<*QueueingPortType>
-        \begin{schema}{A653\_QueueingPortType}
-          PortBaseType\\
-          MaxNbMessage: DecOrHexValueType
-        \end{schema}
+\begin{schema}{PortBaseType}
+  Name: NameType\\
+  MaxMessageSize : DecOrHexValueType\\
+  Direction: PortDirectionType
+\end{schema}
+\begin{zed} A653\_QueueingPortType \defs PortBaseType \land [MaxNbMessage: DecOrHexValueType]
+\end{zed}
+\begin{zed} A653\_SamplingPortType \defs PortBaseType
+\end{zed}
         %</QueueingPortType>
       %item Partition Ports Definition
         %<*PartitionPort>
@@ -325,12 +316,12 @@
   \end{schema}
   %</PartitionVariableAttributes>
   %<*partitionstatus>
-  \begin{schema}{PARTITION\_STATUS\_TYPE}
-    Identifier:PARTITION\_ID\_TYPE\\
-    Period:SYSTEM\_TIME\_TYPE\\
-    Duration:SYSTEM\_TIME\_TYPE\\
-    PartitionVariables
-  \end{schema}
+  \begin{zed} PARTITION\_STATUS\_TYPE \defs
+    [Identifier:PARTITION\_ID\_TYPE;\\
+        Period:SYSTEM\_TIME\_TYPE;\\
+        Duration:SYSTEM\_TIME\_TYPE]\\
+    \land PartitionVariables
+  \end{zed}
   %</partitionstatus>
 \end{enumerate}
 
@@ -524,13 +515,13 @@
   ExecPartitionServices ~\circdef~\\
   \t1  execPartition.partitionId \then\\
   \t1  (
-    \circmu~X \circspot
+    \circmu~muX \circspot
      (
       SetPartitionMode\\
         \extchoice~~ GetPartitionStatus\\
         \extchoice~~ GetSamplingPortId\\
         \extchoice~~ GetTime 
-       ) \circseq X\\
+       ) \circseq muX\\
     % interruption is not yet supported
     % \circinterrupt~
     % (interruptPartition.partitionId \then \Skip)
@@ -553,7 +544,7 @@
   ExecPartition ~\circdef~initPartition.partitionId \then\\
   \t1  part\_send\_partHM\_table.partitionId!pHM!sysError \then \\
   \t1  moduleEndInit \then\\
-  \t1  ((\circmu~X \circspot ExecPartitionServices\circseq X)\\
+  \t1  ((\circmu~muX \circspot ExecPartitionServices\circseq muX)\\
   % \circinterrupt~ (endPartition.partitionId \then \Skip\\
   %   \extchoice~~ reinitPartition.partitionId \then ReinitPartition )
    )
@@ -562,7 +553,7 @@
 %<*ReinitPartition>
 \begin{circusaction}
   ReinitPartition ~\circdef~partHM\_restart\_partition.partitionId \then\\
-  \t1  ((\circmu~X \circspot ExecPartitionServices\circseq X)\\
+  \t1  ((\circmu~muX \circspot ExecPartitionServices\circseq muX)\\
   % \circinterrupt~ (endPartition.partitionId \then \Skip\\
   %   \extchoice~~ reinitPartition.partitionId \then ReinitPartition
   %   )
@@ -580,7 +571,7 @@
 \begin{circus}
   \circprocess\ PartitionHM ~\circdef~ partitionId : PARTITION\_ID\_TYPE \circspot 
   \circbegin~
-\circstate PartitionHMSt == [pHM:A653\_PartitionHMTableType;\\
+\circstate PartitionHMSt \defs [pHM:A653\_PartitionHMTableType;\\
   \t3  sysError : \seq_1 A653\_ErrorIdentifierType]
 
   \t1  \circspot (part\_send\_partHM\_table.partitionId?phm?se \then \\
@@ -604,10 +595,7 @@
   \t1  partHM:\seq_1 A653\_PartitionHMTableType;\\
   \t2  sysError : \seq_1 A653\_ErrorIdentifierType \\
   \t2  \circspot
-    \lpar \lchanset moduleInit, moduleEnd, moduleEndInit \rchanset \rpar \\
-   pid:partitionIds  \circspot 
-    (A653\_Partition(pid, partHM(pid), sysError))
-     \lpar PartitionHMChannels \rpar PartitionHM(pid)\\
+    \lpar \lchanset moduleInit, moduleEnd, moduleEndInit \rchanset \rpar pid:partitionIds  \circspot (A653\_Partition(pid, partHM(pid), sysError)) \lpar PartitionHMChannels \rpar PartitionHM(pid)\\
     
 \end{circus}%
 %</procPartitions>
@@ -762,14 +750,14 @@
   ExecApexServices ~\circdef
   execPartition?pid \then\\
   \t1  (
-    \circmu~X \circspot
+    \circmu~muX \circspot
     (
       GET\_TIME \\
       \extchoice~~ SET\_PARTITION\_MODE\\
       \extchoice~~ GET\_PARTITION\_STATUS\\
       \extchoice~~ GET\_SAMPLING\_PORT\_ID
       
-       )\circseq X\\
+       )\circseq muX\\
     % \circinterrupt~ 
     % (
     %   interruptPartition.pid \then \Skip\\
@@ -792,7 +780,7 @@
 %<*ExecApex>  
 \begin{circusaction}
   ExecApex ~\circdef~ apex\_send\_mpHM\_table!mpHM!sysError \then\\
-    \t1  moduleEndInit \then (\circmu~X \circspot ExecApexServices \circseq X)
+    \t1  moduleEndInit \then (\circmu~muX \circspot ExecApexServices \circseq muX)
         %\circinterrupt~ moduleHMDecision \then HMDecInterruption
 \end{circusaction}
 %</ExecApex>
@@ -808,7 +796,7 @@
 %<*MultiPartitionHM>
 \begin{circus}
   \circprocess\ MultiPartitionHM ~\circdef~ \circbegin
-  \t1 \circstate MultiPartitionHMSt ==\\
+  \t1 \circstate MultiPartitionHMSt \defs\\
   \t3  [mpHM: \seq_1 A653\_MultiPartitionHMTableType;\\
   \t4  sysError : \seq_1 A653\_ErrorIdentifierType]\\
 
@@ -841,7 +829,7 @@
 
 \begin{circus}
   \circprocess\ OperatingSystem ~\circdef~ module:Module \circspot \circbegin
-\circstate OSSt == OS
+\circstate OSSt \defs OS
 \end{circus}
 \begin{schema}{OS}
   % partitions\_variables : \iseq_1[PartitionVariables]\\
@@ -865,31 +853,32 @@
 %</InitPartitions>
 
 %<*MajorTimeFrame>
-  \begin{schema}{MajorTimeFrame}
-    \Delta OSSt\\
-    getMajorTimeFrame : PartitionsType
-  \where
-    \forall x: \ran module.Partitions\\
-    \t1  @ \#~(module.Partitions \rres \{ x\}) = \#~(getMajorTimeFrame \rres \{ x\})\\
-    \forall p1,p2 : \ran getMajorTimeFrame\\
-    \t1  @ ((p1.PartitionPeriodicity).Period > (p2.PartitionPeriodicity).Period)\\
-    major\_time\_frame' =  ((getMajorTimeFrame(1)).PartitionPeriodicity).Period\\
-    %(\theta (OSSt \hide (major\_time\_frame ))' = \theta (OSSt \hide (major\_time\_frame)))
-    
-  \end{schema}
+  % \begin{schema}{MajorTimeFrame}
+  %   \Delta OSSt\\
+  %   getMajorTimeFrame : PartitionsType
+  % \where
+  %   \forall x: \ran module.Partitions\\
+  %   \t1  @ \#~(module.Partitions \rres \{ x\}) = \#~(getMajorTimeFrame \rres \{ x\})\\
+  %   \forall p1,p2 : \ran getMajorTimeFrame\\
+  %   \t1  @ ((p1.PartitionPeriodicity).Period > (p2.PartitionPeriodicity).Period)\\
+  %   major\_time\_frame' =  ((getMajorTimeFrame(1)).PartitionPeriodicity).Period\\
+  %   %(\theta (OSSt \hide (major\_time\_frame ))' = \theta (OSSt \hide (major\_time\_frame)))
+  % \end{schema}
+ \begin{circusaction} MajorTimeFrame \circdef \Skip \end{circusaction}   
 %</MajorTimeFrame>
 %<*NextPartition>
-  \begin{schema}{NextPartition}
-    \Delta OSSt\\
-  \where
-    current\_partition' = head~(module.Schedules \filter \\
-    \t2 \{p:A653\_PartitionTimeWindowType | \\
-    \t4  (system\_time \mod major\_time\_frame) \leq p.Offset\})\\
-   ( (module.Partitions(current\_partition\_id')).PartitionDefinition).Name=\\
-    \t4  (current\_partition').PartitionNameRef\\
-    % \theta (OSSt \hide (current\_partition\_id, current\_partition))' =\\ 
-    % \t1  \theta (OSSt \hide (current\_partition\_id, current\_partition))
-  \end{schema}
+ \begin{circusaction} NextPartition \circdef \Skip \end{circusaction}   
+  % \begin{schema}{NextPartition}
+  %   \Delta OSSt\\
+  % \where
+  %   current\_partition' = head~(module.Schedules \filter \\
+  %   \t2 \{p:A653\_PartitionTimeWindowType | \\
+  %   \t4  (system\_time \mod major\_time\_frame) \leq p.Offset\})\\
+  %  ( (module.Partitions(current\_partition\_id')).PartitionDefinition).Name=\\
+  %   \t4  (current\_partition').PartitionNameRef\\
+  %   % \theta (OSSt \hide (current\_partition\_id, current\_partition))' =\\ 
+  %   % \t1  \theta (OSSt \hide (current\_partition\_id, current\_partition))
+  % \end{schema}
 %</NextPartition>
 %<*UpdateSystemTime>
 \begin{circusaction}
@@ -903,23 +892,25 @@
 \end{circusaction}
 %</OSGetTime>
 %<*OSGetPartitionStatus>  
-\begin{schema}{PartitionStatus}
-  \Xi OSSt\\
-  p! : PARTITION\_STATUS\_TYPE
-\where
-  (p!).Identifier =\\
-  \t1 ((module.Partitions(current\_partition\_id)).PartitionDefinition).Identifier\\
-  (p!).Period =\\
-  \t1 ((module.Partitions(current\_partition\_id)).PartitionPeriodicity).Period\\
-  (p!).Duration =\\
-  \t1 ((module.Partitions(current\_partition\_id)).PartitionPeriodicity).Duration\\
-  (p!).LOCK\_LEVEL =\\
-  \t1 (partitions\_variables(current\_partition\_id)).LOCK\_LEVEL\\
-  (p!).OPERATING\_MODE =\\
-  \t1 (partitions\_variables(current\_partition\_id)).OPERATING\_MODE\\
-  (p!).START\_CONDITION =\\
-  \t1 (partitions\_variables(current\_partition\_id)).START\_CONDITION
-\end{schema}
+ \begin{circusaction} PartitionStatus \circdef \Skip \end{circusaction}   
+
+% \begin{schema}{PartitionStatus}
+%   \Xi OSSt\\
+%   p! : PARTITION\_STATUS\_TYPE
+% \where
+%   (p!).Identifier =\\
+%   \t1 ((module.Partitions(current\_partition\_id)).PartitionDefinition).Identifier\\
+%   (p!).Period =\\
+%   \t1 ((module.Partitions(current\_partition\_id)).PartitionPeriodicity).Period\\
+%   (p!).Duration =\\
+%   \t1 ((module.Partitions(current\_partition\_id)).PartitionPeriodicity).Duration\\
+%   (p!).LOCK\_LEVEL =\\
+%   \t1 (partitions\_variables(current\_partition\_id)).LOCK\_LEVEL\\
+%   (p!).OPERATING\_MODE =\\
+%   \t1 (partitions\_variables(current\_partition\_id)).OPERATING\_MODE\\
+%   (p!).START\_CONDITION =\\
+%   \t1 (partitions\_variables(current\_partition\_id)).START\_CONDITION
+% \end{schema}
 
 \begin{circusaction}
   OSGetPartitionStatus ~\circdef~ \circvar p:PARTITION\_STATUS\_TYPE \circspot\\
@@ -928,20 +919,22 @@
 \end{circusaction}
 %</OSGetPartitionStatus>
 %<*SetPMode>
-  \begin{schema}{SetPMode}
-    \Delta OSSt\\
-    nopm?:OPERATING\_MODE\_TYPE
-  \where
-    partitions\_variables' =\\
-    (\LET o == \lblot~ OPERATING\_MODE == nopm?,\\
-        START\_CONDITION ==\\
-      \t1  (partitions\_variables(current\_partition\_id)).START\_CONDITION,\\
-      LOCK\_LEVEL ==\\
-      \t1  (partitions\_variables(current\_partition\_id)).LOCK\_LEVEL ~\rblot\\
-    \t1 @ partitions\_variables \oplus \{current\_partition\_id \mapsto o\})\\
-    % \theta (OSSt \hide (current\_partition\_id, current\_partition, partitions\_variables))' =\\ 
-    % \t1  \theta (OSSt \hide (current\_partition\_id, current\_partition, partitions\_variables))
-  \end{schema}
+ \begin{circusaction} SetPMode \circdef \Skip \end{circusaction}   
+
+  % \begin{schema}{SetPMode}
+  %   \Delta OSSt\\
+  %   nopm?:OPERATING\_MODE\_TYPE
+  % \where
+  %   partitions\_variables' =\\
+  %   (\LET o == \lblot~ OPERATING\_MODE == nopm?,\\
+  %       START\_CONDITION ==\\
+  %     \t1  (partitions\_variables(current\_partition\_id)).START\_CONDITION,\\
+  %     LOCK\_LEVEL ==\\
+  %     \t1  (partitions\_variables(current\_partition\_id)).LOCK\_LEVEL ~\rblot\\
+  %   \t1 @ partitions\_variables \oplus \{current\_partition\_id \mapsto o\})\\
+  %   % \theta (OSSt \hide (current\_partition\_id, current\_partition, partitions\_variables))' =\\ 
+  %   % \t1  \theta (OSSt \hide (current\_partition\_id, current\_partition, partitions\_variables))
+  % \end{schema}
 %</SetPMode>
 %<*OSSetPartitionMode>
 \begin{circusaction}
@@ -981,7 +974,7 @@
   ExecOSServices ~\circdef~\\
   \t1  execPartition.current\_partition\_id \then \\
   \t1  (
-    \circmu~X \circspot
+    \circmu~muX \circspot
      (
       
         OSGetTime \\
@@ -989,7 +982,7 @@
         \extchoice~~ OSSetPartitionMode \\
         \extchoice~~ OSGetSamplingPortId
        )
-    \circseq X
+    \circseq muX
    )
 \end{circusaction}
 %</ExecOSServices>
@@ -1007,12 +1000,12 @@
 \begin{circusaction}
   ExecOS ~\circdef~ \circvar getMajorTimeFrame : PartitionsType \circspot \lschexpract MajorTimeFrame \rschexpract \circseq \\
   \t1 (
-  \circmu~X \circspot UpdateSystemTime \circseq \lschexpract NextPartition \rschexpract \circseq\\
+  \circmu~muX \circspot UpdateSystemTime \circseq \lschexpract NextPartition \rschexpract \circseq\\
   (\circif 
     (current\_partition.Offset >\\
     \t2  (system\_time \mod major\_time\_frame) ) \circthen\\
   \t1  \circwait (current\_partition.Offset -\\
-  \t2 (system\_time \mod major\_time\_frame) ) \circseq X\\
+  \t2 (system\_time \mod major\_time\_frame) ) \circseq muX\\
   \circelse~~(current\_partition.Offset =\\
     \t2  (system\_time \mod major\_time\_frame) ) \circthen\\
     \t1  (ExecOSServices% \Timeout{current\_partition.Duration} \\ 
@@ -1036,22 +1029,22 @@
 %<*TimerBegin>
 \begin{circus}
   \circprocess\ Timer ~\circdef~ \circbegin
-  \t1 \circstate\ TimerSt == [clock : SYSTEM\_TIME\_TYPE]
+  \t1 \circstate\ TimerSt \defs [clock : SYSTEM\_TIME\_TYPE]
 \end{circus}
 %</TimerSt>
 %<*Counter> 
 \begin{circusaction}
   \t1 Counter ~\circdef~ (
-  \circmu~X~\circspot~\\
+  \circmu~muX~\circspot~\\
     (
     (%\circwait (1) \circseq 
     clock := clock + 1)\\
     \interleave~ (
       
-        (\circmu~Y~\circspot~updateClock!clock \then Y) 
+        (\circmu~muY~\circspot~updateClock!clock \then muY) 
           %\Timeout{1} \Skip
        )
-    )\circseq X
+    )\circseq muX
    )
 \end{circusaction}
 
@@ -1080,7 +1073,7 @@
 \begin{circus}
   \circprocess\ ModuleHM ~\circdef~ \circbegin
 
-  \t1 \circstate\ ModuleHMSt == [modHM:\seq_1 A653\_ModuleHMTableType;\\
+  \t1 \circstate\ ModuleHMSt \defs [modHM:\seq_1 A653\_ModuleHMTableType;\\
   \t4  sysError : \seq_1 A653\_ErrorIdentifierType]\\
   \t1 \circspot (os\_send\_modHM\_table?mp?se \then (modHM, sysError := mp, se))\\ %InitModuleHM
     %\t4  \circinterrupt moduleEnd \then \Skip 

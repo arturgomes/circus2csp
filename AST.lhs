@@ -1,9 +1,9 @@
-\section{Abstract Syntax Trees}
+\chapter{Abstract Syntax Trees}
 Both Z and Circus AST are found here.
 \begin{code}
 module AST where
 \end{code}
-
+\ignore{
 \begin{verbatim}
 --
 -- $Id: AST.hs,v 1.58 2005-03-26 13:07:43 marku Exp $
@@ -101,10 +101,10 @@ module AST where
 --   after the unfold phase.  That is, they are not 'Nothing'.
 -- * All schema expressions are removed during the Unfold phase.
 \end{verbatim}
+}
+\section{Z Abstract Syntax}
 
-\subsection{Z Abstract Syntax}
-
-\subsubsection{Z Given Sets}
+\subsection{Z Given Sets}
 \begin{code}
 type GivenSet = ZVar      -- names of given sets.
 type GivenValue = String  -- members of given sets are strings
@@ -115,11 +115,14 @@ type ZFSet = [ZExpr]      -- But always manipulate via FiniteSets functions.
 
 TODO: Make this a separate module, perhaps combined with \texttt{VarSet}.
 
-\subsubsection{Z Names and Decorations}
+\subsection{Z Names and Decorations}
 \begin{code}
 type ZDecor = String      -- a decoration: ''', '!', '?' or '_N'
 type ZVar = (String, [ZDecor]) -- all kinds of Z names
 type ZName = String
+\end{code}
+\ignore{
+\begin{code}
 
 make_zvar :: String -> [ZDecor] -> ZVar
 make_zvar s dl = (s,dl)
@@ -166,8 +169,8 @@ show_zvar (s,dl) = s ++ concat dl
 show_zvars :: [ZVar] -> String
 show_zvars = concatMap ((' ':) . show_zvar)
 \end{code}
-
-\subsubsection{Z Relations and Functions}
+}
+\subsection{Z Relations and Functions}
 \begin{code}
 data ZReln   -- binary toolkit relations (all take one arg: a pair)
   = ZLessThan        -- 3 < 4
@@ -252,7 +255,7 @@ data ZStrange -- toolkit functions/sets that defy categorization!
 \end{code}
 
 \newpage
-\subsubsection{Z Generators and Filters}
+\subsection{Z Generators and Filters}
 These 'Generator or Filter' terms are used to represent the
 search space within quantifiers, set comprehensions, schemas.
 All (Include ...) terms should be expanded out before being
@@ -291,7 +294,9 @@ data ZGenFilt
   | Check ZPred
   | Evaluate ZVar ZExpr ZExpr -- This means Let x==e | e \in t
   deriving (Eq,Ord,Show)
-
+\end{code}
+\ignore{
+\begin{code}
 
 genfilt_names :: [ZGenFilt] -> [ZVar]
 genfilt_names []                   = []
@@ -301,8 +306,8 @@ genfilt_names (Evaluate v _ _:gfs) = v : genfilt_names gfs
 genfilt_names (Include s:gfs)
   = error ("genfilt_names called before "++show s++" expanded.")
 \end{code}
-
-\subsubsection{Z Expressions}
+}
+\subsection{Z Expressions}
 \begin{code}
 data ZExpr
   = ---------- Basic Z values (non-set values) ----------
@@ -364,6 +369,9 @@ are the most common kinds of results.
 
 \begin{code}
 type ZValue = ZExpr
+\end{code}
+\ignore{
+\begin{code}
 is_pair :: ZValue -> Bool
 is_pair (ZTuple [_,_]) = True
 is_pair _              = False
@@ -397,8 +405,8 @@ zrelations = ZFuncSet{domset=ZUniverse,
           is_non_empty=False,
           is_finite   =False}
 \end{code}
-
-\subsubsection{Z Predicates}
+}
+\subsection{Z Predicates}
 \begin{code}
 data ZPred
   = ZFalse{reason::[ZPred]}
@@ -422,7 +430,7 @@ ztrue = ZTrue{reason=[]}
 zfalse = ZFalse{reason=[]}
 \end{code}
 
-\subsubsection{Z Schemas}
+\subsection{Z Schemas}
 \begin{code}
 data ZSExpr
   = ZSchema [ZGenFilt]
@@ -458,7 +466,7 @@ data ZS2
   deriving (Eq,Ord,Show)
 \end{code}
 
-\subsubsection{Z Paragraphs}
+\subsection{Z Paragraphs}
 \begin{code}
 data ZPara
   = ZGivenSetDecl GivenSet       -- [XXX]
@@ -491,7 +499,7 @@ isBranch0 _            = False
 type ZSpec = [ZPara]
 \end{code}
 
-
+\ignore{
 Any \texttt{ZExpr}/\texttt{ZValue} that satisfies 'isCanonical'
 is fully evaluated into a unique form.
 For such terms, \verb"==" is equivalent to semantic equality.
@@ -538,7 +546,7 @@ Note 1:
 The reduction of those lambda terms checks domain membership,
 which includes proving definedness.
 So any standalone \texttt{ZFree1} term must be defined.
-
+}
 \section{Circus Abstract Syntax}
 
 \begin{verbatim}
@@ -548,34 +556,34 @@ So any standalone \texttt{ZFree1} term must be defined.
 --------------------------------------
 \end{verbatim}
 
-\subsubsection{Circus Program}
+\subsection{Circus Program}
+A \Circus\ program is a list of paragraphs, $ZPara$.
 \begin{code}
 type CProgram = [ZPara]
+\end{code} 
 
---
--- Channel and chanset decl
---
+\subsection{\Circus\ Channel Declaration -- $CDecl$}
+\begin{code}
+
 data CDecl
   = CChan ZName                             --  no type is defined
   | CChanDecl ZName ZExpr                   -- channel_name : type
   | CGenChanDecl ZName ZName ZExpr          -- generic chan decl
   deriving (Eq,Ord,Show)
-{-
-Channel Schema declaration is left out for now, but
+\end{code} 
+
+Channel Schema, $SchemaExp$, declaration is left out for now, but
 one could declare it as:
 
-\begin{schema}
-\circchan c1:\nat \\
-\circchan c2:\nat \\
+\begin{schema}{SchExpr}
+\circchannel c1:\nat \\
+\circchannel c2:\nat \\
 \end{schema}
 
-and therefore, would need to define it in terms of the Z parser
--- | SchemaExp -- left out for now
+and therefore, would need to define it in terms of the Z parser.
 
--}
-\end{code}
 
-\subsubsection{Circus Channel Expression}
+\subsection{\Circus\ Channel Expression -- $CSExp$}
 \begin{code}
 data CSExp
   = CSExpr ZName                           -- a chanset decl from another chanset
@@ -588,7 +596,7 @@ data CSExp
 
 \end{code}
 
-\subsubsection{Circus Process}
+\subsection{\Circus\ Process -- $ProcDecl$}
 \begin{code}
 data ProcDecl
   = CProcess ZName ProcessDef              -- \circprocess N \circdef ProcDef
@@ -596,12 +604,20 @@ data ProcDecl
   | CGenProcess ZName [ZName] ProcessDef   -- \circprocess N[N^{+}] \circdef ProcDef
   deriving (Eq,Ord,Show)
 
+\end{code}
+
+\subsection{\Circus\ Process -- $ProcessDef$}
+\begin{code}
 data ProcessDef
   = ProcDefSpot [ZGenFilt] ProcessDef      -- Decl \circspot ProcDef
   | ProcDefIndex [ZGenFilt] ProcessDef     -- Decl \circindex ProcDef
   | ProcDef CProc                          -- Proc
   deriving (Eq,Ord,Show)
 
+\end{code}
+
+\subsection{\Circus\ Process -- $CProc$}
+\begin{code}
 data CProc
   = CRepSeqProc [ZGenFilt] CProc           -- \Semi Decl \circspot Proc
   | CRepExtChProc [ZGenFilt] CProc         -- \Extchoice Decl \circspot Proc
@@ -631,7 +647,7 @@ data CProc
  deriving (Eq,Ord,Show)
 \end{code}
 
-\subsubsection{Circus Name-Sets}
+\subsection{\Circus\ Name-Sets}
 
 \begin{code}
 data NSExp
@@ -646,19 +662,24 @@ data NSExp
   deriving (Eq,Ord,Show)
 \end{code}
 
-\subsubsection{Circus Actions}
+\subsection{Process paragraphs -- $PPar$}
 \begin{code}
 data PPar
  = ProcZPara ZPara                         -- Par
  | CParAction ZName ParAction              -- N \circdef ParAction
  | CNameSet ZName NSExp                    -- \circnameset N == NSExp
  deriving (Eq,Ord,Show)
+\end{code}
+\subsection{Parametrised Actions -- $ParAction$}
+\begin{code}
 
 data ParAction
  = CircusAction CAction                                 -- Action
  | ParamActionDecl [ZGenFilt] ParAction    -- Decl \circspot ParAction
  deriving (Eq,Ord,Show)
-
+\end{code}
+\subsection{\Circus\ Actions -- $CAction$}
+\begin{code}
 data CAction
  = CActionSchemaExpr ZSExpr               -- \lschexpract S \rschexpract
  | CActionCommand CCommand
@@ -689,15 +710,17 @@ data CAction
   deriving (Eq,Ord,Show)
 \end{code}
 
-\subsubsection{Circus Communication}
+\subsection{\Circus\ Communication}
 
 \begin{code}
 data Comm
   = ChanComm ZName [CParameter]           -- N CParameter*
   | ChanGenComm ZName [ZExpr] [CParameter]-- N [Exp^{+}] CParameter *
   deriving (Eq,Ord,Show)
+\end{code}
 
-
+\subsection{\Circus\ Communication -- $CParameter$ }
+\begin{code}
 data CParameter
    = ChanInp ZName                        -- ?N
    | ChanInpPred ZName ZPred              -- ?N : Pred
@@ -706,7 +729,7 @@ data CParameter
    deriving (Eq,Ord,Show)
 \end{code}
 
-\subsubsection{Circus Commands}
+\subsection{\Circus\ Commands -- $CCommand$}
 
 \begin{code}
 data CCommand
@@ -723,20 +746,30 @@ data CCommand
   | CommandBrace ZPred                    -- \{Pred\}
   | CommandBracket ZPred                  -- [Pred]
   deriving (Eq,Ord,Show)
+\end{code}
+
+\subsection{\Circus\ Guards -- $CGActions$}
+
+\begin{code}
 
 data CGActions
  = CircGAction ZPred CAction                 -- Pred \circthen Action
  | CircThenElse CGActions CGActions    -- CGActions \circelse GActions
  -- | CircElse ParAction    -- \circelse CAction
  deriving (Eq,Ord,Show)
+\end{code}
+
+\subsection{Circus Renaming -- $CReplace$}
+
+\begin{code}
 
 data CReplace
   = CRename [ZVar] [ZVar]        -- A[yi / xi] = CRename (ZVar xi []) (ZVar yi [])
   | CRenameAssign [ZVar] [ZVar]  -- A[yi := xi] = CRenameAssign (ZVar xi []) (ZVar yi [])
   deriving (Eq,Ord,Show)
 \end{code}
-
-\subsection{Environments}
+\ignore{
+\section{Environments}
 
 Used during traversal/evaluation of terms
 
@@ -832,7 +865,7 @@ envLookupVar v env =
 
 \end{code}
 
-\subsection{Visitor Classes for Z Terms}
+\section{Visitor Classes for Z Terms}
 
 \begin{code}
 data ZTerm
@@ -924,7 +957,7 @@ pushGFType (Choose v t) = pushLocal v t
 pushGFType _ = return ()
 \end{code}
 
-\subsubsection{Default Traversal Functions}
+\subsection{Default Traversal Functions}
 
 The following \verb"traverse*" functions are useful defaults
 for visitor methods.  They recurse through Z terms, invoking
@@ -1142,7 +1175,7 @@ traverseTerm (ZSExpr e) = visitSExpr e >>= (return . ZSExpr)
 traverseTerm (ZNull)    = return ZNull
 \end{code}
 
-\subsubsection{Circus Traversal}
+\subsection{Circus Traversal}
 
 \begin{code}
 traverseCDecl cd = fail "traverseCDecl is not implemented"
@@ -1151,3 +1184,4 @@ traverseCDecl cd = fail "traverseCDecl is not implemented"
 --traverseCDecl (CMultChanDecl v e ) = visitCDecl v e >>= (return . CMultChanDecl)
 --traverseCDecl (CGenChanDecl  v1 v2 e ) = visitCDecl v1 v2 e >>= (return . CGenChanDecl)
 \end{code}
+}

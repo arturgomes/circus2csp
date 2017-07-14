@@ -1,5 +1,5 @@
 
-\section{Mapping Functions - Stateless Circus}
+\chapter{Mapping Functions - Stateless Circus}
 Mapping Omega Functions from Circus to Circus
 
 \ignore{
