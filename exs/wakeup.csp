@@ -29,18 +29,18 @@ tagALA(x) = ALA
 --------------------------------
 -- MEMORY
 --------------------------------
-Memory(b_RAN, b_ALA) = 
+Memory(b_RAN, b_ALA) =
 	([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN, b_ALA))
 	[] ([] n:dom(b_ALA) @ mget.n!(apply(b_ALA,n)) -> Memory(b_RAN, b_ALA))
 	[] ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory(over(b_RAN,n,x),b_ALA))
 	[] ([] n:dom(b_ALA) @ mset.n?x:typeALA(n) -> Memory(b_RAN,over(b_ALA,n,x)))
 		[] terminate -> SKIP
 
-Memorise(P,b_RAN, b_ALA) = 
+Memorise(P,b_RAN, b_ALA) =
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b_RAN, b_ALA)) \ MEM_I
 
 --------------------------------
- -- NAME -- 
+ -- NAME --
 --------------------------------
 datatype NAME = sv_WakeUp_sec_U_RAN | sv_WakeUp_min_U_RAN | sv_WakeUp_buzz_U_ALA
 subtype NAME_RAN = sv_WakeUp_sec_U_RAN | sv_WakeUp_min_U_RAN
@@ -50,55 +50,55 @@ NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
 NAMES_VALUES_ALA = seq({seq({(n,v) | v <- typeALA(n)}) | n <- NAME_ALA})
 
 --------------------------------
- -- BINDINGS -- 
+ -- BINDINGS --
 --------------------------------
 BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
 BINDINGS_ALA = {set(b) | b <- set(distCartProd(NAMES_VALUES_ALA))}
 
 
 --------------------------------
- -- mget, mset and terminate -- 
+ -- mget, mset and terminate --
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEM_I -- 
+ -- MEM_I --
 --------------------------------
 MEM_I = {| mset,mget,terminate |}
 
-WakeUp = 
+WakeUp =
 	(let  restrictRAN(bs) = dres(bs,{sv_WakeUp_sec_U_RAN, sv_WakeUp_min_U_RAN})
  restrictALA(bs) = dres(bs,{sv_WakeUp_buzz_U_ALA})
 	within
 		|~| b_RAN : BINDINGS_RAN, b_ALA : BINDINGS_ALA @ Memorise(
-		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) -> 
-		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) -> 
-		mget.sv_WakeUp_buzz_U_ALA?v_sv_WakeUp_buzz_U_ALA:(typeALA(sv_WakeUp_buzz_U_ALA)) -> 
-		mset.sv_WakeUp_sec_U_RAN.(RAN.0) -> 
-		mset.sv_WakeUp_min_U_RAN.(RAN.0) -> 
-		mset.sv_WakeUp_buzz_U_ALA.(ALA.OFF) -> ( let X = ( tick -> 
-		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) -> 
-		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) -> 
-		mset.sv_WakeUp_sec_U_RAN.(RAN.(valueRAN(v_sv_WakeUp_sec_U_RAN) + 1) % 3) -> 
-		mset.sv_WakeUp_min_U_RAN.(RAN.valueRAN(v_sv_WakeUp_min_U_RAN)) -> 
-		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) -> 
-		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) -> 
-		mget.sv_WakeUp_buzz_U_ALA?v_sv_WakeUp_buzz_U_ALA:(typeALA(sv_WakeUp_buzz_U_ALA)) -> ( ( ( ( ( valueRAN(v_sv_WakeUp_sec_U_RAN) == 0 & 
-		mset.sv_WakeUp_min_U_RAN.(RAN.(valueRAN(v_sv_WakeUp_min_U_RAN) + 1) % 3) -> 
+		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) ->
+		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) ->
+		mget.sv_WakeUp_buzz_U_ALA?v_sv_WakeUp_buzz_U_ALA:(typeALA(sv_WakeUp_buzz_U_ALA)) ->
+		mset.sv_WakeUp_sec_U_RAN.(RAN.0) ->
+		mset.sv_WakeUp_min_U_RAN.(RAN.0) ->
+		mset.sv_WakeUp_buzz_U_ALA.(ALA.OFF) -> ( let X = ( tick ->
+		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) ->
+		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) ->
+		mset.sv_WakeUp_sec_U_RAN.(RAN.(valueRAN(v_sv_WakeUp_sec_U_RAN) + 1) % 3) ->
+		mset.sv_WakeUp_min_U_RAN.(RAN.valueRAN(v_sv_WakeUp_min_U_RAN)) ->
+		mget.sv_WakeUp_min_U_RAN?v_sv_WakeUp_min_U_RAN:(typeRAN(sv_WakeUp_min_U_RAN)) ->
+		mget.sv_WakeUp_sec_U_RAN?v_sv_WakeUp_sec_U_RAN:(typeRAN(sv_WakeUp_sec_U_RAN)) ->
+		mget.sv_WakeUp_buzz_U_ALA?v_sv_WakeUp_buzz_U_ALA:(typeALA(sv_WakeUp_buzz_U_ALA)) -> ( ( ( ( ( valueRAN(v_sv_WakeUp_sec_U_RAN) == 0 &
+		mset.sv_WakeUp_min_U_RAN.(RAN.(valueRAN(v_sv_WakeUp_min_U_RAN) + 1) % 3) ->
 		mset.sv_WakeUp_sec_U_RAN.(RAN.valueRAN(v_sv_WakeUp_sec_U_RAN)) -> SKIP )
 		 [] ( valueRAN(v_sv_WakeUp_sec_U_RAN) != 0 & SKIP ))
-		 [] ( valueRAN(v_sv_WakeUp_min_U_RAN) == 1 & radioOn -> 
+		 [] ( valueRAN(v_sv_WakeUp_min_U_RAN) == 1 & radioOn ->
 		mset.sv_WakeUp_buzz_U_ALA.(ALA.ON) -> SKIP ))
 		 [] time -> out.(valueRAN(v_sv_WakeUp_min_U_RAN),valueRAN(v_sv_WakeUp_sec_U_RAN)) -> SKIP)
-		 [] snooze -> 
+		 [] snooze ->
 		mset.sv_WakeUp_buzz_U_ALA.(ALA.OFF) -> SKIP) ; X ) within X ), restrictRAN(b_RAN), restrictALA(b_ALA))
 )
 channel out : (RANGE,RANGE)
 channel tick, time, snooze, radioOn
 
 
-MyWakeUp = (let X = WakeUpN; X within X)
+MyWakeUp = (let X = WakeUp; X within X)
 assert MyWakeUp :[ deadlock free [FD] ]
-assert WakeUpN :[ livelock free ]
-assert WakeUpN :[ deterministic [FD] ]
+assert WakeUp :[ livelock free ]
+assert WakeUp :[ deterministic [FD] ]
