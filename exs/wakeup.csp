@@ -98,7 +98,7 @@ channel out : (RANGE,RANGE)
 channel tick, time, snooze, radioOn
 
 
-MyWakeUp = (let X = WakeUpN; X within X)
+MyWakeUp = (let X = WakeUp; X within X)
 assert MyWakeUp :[ deadlock free [FD] ]
-assert WakeUpN :[ livelock free ]
-assert WakeUpN :[ deterministic [FD] ]
+assert WakeUp :[ livelock free ]
+assert WakeUp :[ deterministic [FD] ]

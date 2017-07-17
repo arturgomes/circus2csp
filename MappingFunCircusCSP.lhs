@@ -76,16 +76,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
             (mk_subtype funivlst)++
             "\n\n"++(mk_value funivlst)++
             "\n\n"++(mk_type funivlst)++
-            "\n\n"++(mk_tag funivlst)++
-            "\n\n--------------------------------"++
-            "\n-- MEMORY"++
-            "\n--------------------------------\n"++
-            "Memory("++mk_mem_param funivlst++") = "++
-            "\n\t"++ mk_mget_mem_bndg funivlst ++ 
-            "\n"++ mk_mset_mem_bndg funivlst ++ 
-            "\n\t\t[] terminate -> SKIP\n\n"++
-            "Memorise(P,"++mk_mem_param funivlst++") = \n"++ 
-            "    ((P; terminate -> SKIP) [| MEM_I |] Memory("++mk_mem_param funivlst++")) \\ MEM_I\n") 
+            "\n\n"++(mk_tag funivlst)) 
     True -> ""
   where
     univlst = (def_universe spec)
@@ -638,6 +629,7 @@ NOTE: $CNameSet$ and $ProcZPara$ is not yet implemented
 \begin{code}
 mapping_PPar :: ZName -> [ZPara] -> PPar -> String
 --mapping_PPar procn spec (CNameSet zn nse) --  = undefined
+-- mapping_PPar procn spec (CParAction "Memory" (CircusAction (CActionCommand (CVResDecl decl a ))))
 mapping_PPar procn spec (CParAction p (CircusAction (CActionCommand (CVResDecl decl a ))))
   = p ++"("++ (mapping_ZGenFilt_list spec decl) ++ ") =" ++ (mapping_CAction procn spec a)
 mapping_PPar procn spec (CParAction p pa)

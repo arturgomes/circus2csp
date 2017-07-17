@@ -16,12 +16,15 @@ import Data.Char
 import Formatter
 import System.IO          -- Standard IO library, so we can catch IO errors etc.
 import Control.Exception
+import Control.Monad
+import System.Directory
 import MappingFunStatelessCircus
 --import System.Console.Readline  -- was Readline
 
 prompt1 = "CircusParser> " -- prompt for each command
 prompt2 = "      " -- a visible, but cut/pastable, prompt for multiline input
 
+specname = ""
 -- These determine how most large output terms are displayed.
 pinfo = pinfo_extz 75
 output_zexpr = zexpr_stdout pinfo
@@ -41,14 +44,14 @@ main
         putStrLn ""
         putStrLn "Type `help' to see the available commands."
         putStrLn ""
-      	get_cmd animator0
+      	get_cmd animator0 ""
 
 
-get_cmd :: Animator -> IO ()
-get_cmd anim
+get_cmd :: Animator -> String -> IO ()
+get_cmd anim fn
   = do  -- TODO: this catch does not work with Hugs.  Find out why.
 	s <- catch (getLineEdit prompt1) ((\err -> return "quit")::(IOException -> IO String))
-	get_cmd2 (dropWhile isSpace s) anim
+	get_cmd2 (dropWhile isSpace s) anim fn
 
 
 -- This handles reading any extra lines of input, until a complete
@@ -59,51 +62,30 @@ get_cmd anim
 -- until a similar '\end{...}' is found.
 -- It handles empty lines, comments and 'echo' lines itself, but
 -- passes other commands to do_cmd.
-get_cmd2 :: String -> Animator -> IO ()
-get_cmd2 ""       anim = get_cmd anim  -- empty command line
-get_cmd2 ('%':_)  anim = get_cmd anim  -- a comment line
-get_cmd2 ('e':'c':'h':'o':' ':rest) anim =
-    done_cmd(anim, Done rest)   -- echoes the rest of the line
-get_cmd2 (';':rest)  anim =
-    get_cmd3 ";" [rest] openbrackets anim
-    where
-    openbrackets = length(filter openbracket rest)
-		   - length(filter closebracket rest)
-get_cmd2 cmd anim
-    | isPrefixOf "\\begin{" cmd
-      = get_para (reverse endcmd) [cmd] anim
-    | otherwise
-      = get_cmd3 word
-	  [reverse (dropWhile isSpace (reverse rest))] -- take spaces off end.
-	  (length(filter openbracket rest) - length(filter closebracket rest))
-	  anim
+get_cmd2 :: String -> Animator -> String -> IO ()
+get_cmd2 ""       anim fn = get_cmd anim fn -- empty command line
+get_cmd2 ('%':_)  anim fn = get_cmd anim fn  -- a comment line
+get_cmd2 cmd anim fn
+ = get_cmd3 word
+    [reverse (dropWhile isSpace (reverse rest))] -- take spaces off end.
+    (length(filter openbracket rest) - length(filter closebracket rest))
+    anim fn
     where
     (word,rest) = span isAlpha cmd
     endcmd = "\\end{" ++ takeWhile isAlpha (drop (length "\\begin{") cmd)
-		      ++ "}"
+          ++ "}"
 
--- This reads one paragraph of Z input (upto an \end{...} command).
-get_para :: String -> [String] -> Animator -> IO ()
-get_para revendcmd ("EOF":_) anim =
-    return ()
-get_para revendcmd sofar anim
-    | revendcmd `isPrefixOf` (dropWhile isSpace (reverse (head sofar))) =
-	done_cmd (pushpara (unlines (reverse sofar)) anim)
-    | otherwise =
-	do  {s <- getLineEdit prompt2;
-	     get_para revendcmd (s:sofar) anim}
-
-get_cmd3 :: String -> [String] -> Int -> Animator -> IO ()
+get_cmd3 :: String -> [String] -> Int -> Animator -> String -> IO ()
 -- 'sofar' is a list of the input lines for this command (in reverse order).
 -- The Int argument is the number of unclosed brackets in 'sofar'.
-get_cmd3 cmd sofar opened anim
+get_cmd3 cmd sofar opened anim fn 
     | opened <= 0
-      = do_cmd cmd (dropWhile isSpace (concatMap ('\n':) (reverse sofar))) anim
+      = do_cmd cmd (dropWhile isSpace (concatMap ('\n':) (reverse sofar))) anim fn
     | otherwise
       = do  s <- getLineEdit prompt2
 	    let opened2 = opened + length (filter openbracket s)
 				 - length (filter closebracket s)
-	    get_cmd3 cmd (s:sofar) opened2 anim
+	    get_cmd3 cmd (s:sofar) opened2 anim fn
 
 openbracket :: Char -> Bool
 openbracket '(' = True
@@ -121,31 +103,11 @@ closebracket  _  = False
 help =
   ["Available commands:",
    fmtcmd "quit"                   "Exit the animator",
-   fmtcmd "\\begin{..}..\\end{..}" "Enter a Z paragraph",
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "show"                   "Display a summary of whole spec.",
    fmtcmd "tocsp"                   "Map the whole spec into CSP.",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
-   -- fmtcmd "show N"                 "Display unfolded definition of N",
-   -- fmtcmd "pop"                    "Delete last Z paragraph",
    fmtcmd "reset"                  "Reset the whole specification",
-   -- fmtcmd "do S"                   "Execute schema expression S",
-   -- fmtcmd "; S (or 'then S')"      "Compose schema S with the current state",
-   -- fmtcmd "next (or 'n')"          "Show the next state of current schema",
-   -- fmtcmd "curr"                   "Reshow the current state",
-   -- fmtcmd "prev (or 'p')"          "Show the previous state",
-   -- fmtcmd "state N"                "Show the N'th state",
-   -- fmtcmd "undo"                   "Undo the current operation",
-   -- fmtcmd "eval E"                 "Evaluate expression E",
-   -- fmtcmd "evalp P"                "Evaluate predicate P",
-   -- fmtcmd "why"      "Show the optimized code of the most recent evaluation",
-   -- fmtcmd "checktrue P"     "Check that P is true, else give an error.",
-   -- fmtcmd "checkundef P"    "Check that P is undefined, else give an error.",
-   -- fmtcmd "echo msg..."            "Echo msg (the rest of the line)",
-   -- fmtcmd "set"                    "Show current settings",
-   -- fmtcmd "set setsize NNN"        "Set maximum set size to NNN",
-   -- fmtcmd "set searchsize NNN"     "Set maximum search space to NNN",
-   -- fmtcmd "writebztt machine file" "Write a state machine in BZTT syntax",
    fmtcmd "help"                   "Display this message",
    fmtcmd "% comment"              "(Ignored)"
   ]
@@ -158,8 +120,8 @@ help =
 --  (I often forget to get out of the animator before doing a
 --   ":load" command while developing the animator in Emacs).
 
-do_cmd :: [Char] -> String -> Animator -> IO ()
-do_cmd cmd args anim
+do_cmd :: [Char] -> String -> Animator -> String -> IO ()
+do_cmd cmd args anim fn
   | cmd == "quit" =
       return ()
   | cmd == ":load" =
@@ -168,129 +130,67 @@ do_cmd cmd args anim
 		    ++ "\nDo the load again...");
 	  return ()}
   | cmd == "help" && args =="" =
-      do {putStr (unlines help); get_cmd anim}
+      do {putStr (unlines help); get_cmd anim fn}
   | cmd == "load" =
       catch
 	  (do {putStrLn ("Loading '"++args++"' ...");
-	       spec <- readFile args;
+	       spec <- readFile (args++".tex");
 	       done_cmd (pushfile args spec anim)})
 	  (\err ->
 	      do {putStrLn (show (err :: IOException));
-		  get_cmd anim})
-  | cmd == "pop" && args == "" =
-      done_cmd (poppara anim)
+		  get_cmd anim fn})
   | cmd == "reset" && args == "" =
       done_cmd (resetanimator anim)
   | cmd == "show" =
-      done_cmd (anim, showinfo args)
+      done_cmd (anim, showC,fn)
   | cmd == "tocsp" =
-      done_cmd (anim, upslonCircus anim)
+      done_cmd (anim, upslonCircus anim fn, fn)
   | cmd == "omega" =
-      done_cmd (omegaCircus anim)
-  | cmd == "do" =
-      do  let (anim2,ans) = execschema args anim
-	  if isDone ans
-	     then done_cmd(showstate 0 anim2)
-	     else done_cmd(anim2,ans)
-  | cmd == "then" || cmd == ";" =
-      do {(anim2,ans) <- compose_schema rd args anim;
-	  if isDone ans
-	    then done_cmd (showstate 0 anim2)
-	    else done_cmd (anim2,ans)}
-  | cmd == "next" || cmd == "n" =
-      done_cmd (showstate (currstate anim + 1) anim)
-  | cmd == "curr" =
-      done_cmd (showstate (currstate anim) anim)
-  | cmd == "prev" || cmd == "p" =
-      done_cmd (showstate (currstate anim - 1) anim)
-  | cmd == "state" && all isDigit args =
-      done_cmd (showstate (read args) anim)
-  | cmd == "undo" && args == "" =
-      done_cmd (popstate anim)
-  | cmd == "why" && args == "" =
-      done_cmd (anim, showcode anim)
-  | cmd == "code" && args == "" =
-      done_cmd (anim, Done "'code' has been renamed to 'why'.")
-  | cmd == "eval" =
-      done_cmd (evalexpression args anim)
-  | cmd == "evalp" =
-      done_cmd (evalpredicate args anim)
-  | cmd == "checktrue" =
-      do  let (anim2,ans) = evalpredicate args anim
-	  checktrue ans args
-	  get_cmd anim2
-  | cmd == "checkundef" =
-      do  let (anim2,ans) = evalpredicate args anim
-	  checkundef ans args
-	  get_cmd anim2
-  | cmd == "set" =
-      do_settings (words args) anim
-  | cmd == "writebztt" =
-      do  (anim2,ans) <- writebztt (words args) anim
-	  done_cmd (anim2,ans)
+      done_cmd (omegaCircus anim fn)
   | otherwise =
       do  putStrLn "Unknown/illegal command."
-	  get_cmd anim
+	  get_cmd anim fn
   where
   -- rd is used to read input values from user
   rd p = getLineEdit ("    Input " ++ p ++ " = ")
-  showinfo "" = showspec anim
-  showinfo s = showunfolded args anim
-
--- This prompts for an entire Z paragraph on standard input.
--- First argument is the end command that terminates the paragraph
--- Second argument is the lines of input so far (in reverse order!).
-do_paragraph :: String -> [String] -> Animator -> IO ()
-do_paragraph endcmd cmds anim
-  | isSuffixOf endcmd (head cmds)
-    = done_cmd (pushpara (unlines (reverse cmds)) anim)
-  | otherwise
-    = do s <- getLineEdit prompt2
-	 do_paragraph endcmd (canonical s : cmds) anim
-
-do_settings :: [String] -> Animator -> IO ()
-do_settings [] anim =
-    do  let ss = ["\t" ++ k ++ "    \t" ++ show (get_setting k anim)
-		  | k <- settings]
-	putStrLn ("Current settings are:\n" ++ unlines ss)
-	get_cmd anim
-do_settings [key,val] anim
-    | not (all isDigit val) =
-	done_cmd (anim, errstr ("Illegal value in `set' command: " ++ val))
-    | not (key `elem` settings) =
-	done_cmd (anim, errstr ("Illegal command: set " ++ key))
-    | otherwise =
-	done_cmd (set_setting key (read val) anim)
-do_settings _ anim =
-    done_cmd (anim, errstr "Illegal set command")
+  showC = showCircus anim
 
 
-done_cmd :: (Animator, Answer) -> IO ()
-done_cmd (anim, Done s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
--- done_cmd (anim, Spec s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
-done_cmd (anim, ErrorMsg m)   = do {putErrorMsg m; get_cmd anim}
-done_cmd (anim, ErrorLocns es)= do {putStrLn (unlines (map fmtperr es));
-				    get_cmd anim}
-done_cmd (anim, Value v)      = do {output_zexpr v; get_cmd anim}
-done_cmd (anim, Pred p)       = do {output_zpred p; get_cmd anim}
-done_cmd (anim, BoolValue v)  = do {putStrLn (show v); get_cmd anim}
-done_cmd (anim, Defn v)       = do {output_zpara v; get_cmd anim}
--- done_cmd (anim, Spec sp)       = do {map_circus sp sp; get_cmd anim}
-done_cmd (anim, SchemaCode name (ZSetComp gfs (Just (ZBinding bs))) depth) =
-    do  -- output_zpara (ZSchemaDef (ZSPlain name) (ZSchema gfs))
-	-- Here is a alternative to the above line, that numbers the lines.
-	putStrLn ("\\begin{schema}{"++name++"}")
-        mapM (putStrLn . fmtgfs) (zip [1..] gfs)
-	putStrLn "\\end{schema}"
-	let hidden = genfilt_names gfs \\ (map fst bs)
-	if hidden == []
-	   then putStr ""
-	   else putStrLn ("hiding: " ++ show_zvars hidden)
-	if depth < length gfs
-	  then putStrLn("The maximum number of true constraints was "
-			++ show depth ++ ".")
-	  else putStr ""
-	get_cmd anim
+done_cmd :: (Animator, Answer,String) -> IO ()
+done_cmd (anim, DoneUpsilon s f,args)   
+  = do {putStrLn s; touch (args++".csp"); writeStr (args++".csp") s; get_cmd anim args}
+done_cmd (anim, DoneOmega s f,args) 
+  = do {putStrLn s; touch (args++".csp"); writeStr (args++".hc") s; get_cmd anim args}
+done_cmd (anim, Done s,args) 
+  = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim args}
+done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
+done_cmd (anim, ErrorLocns es,args)= do {putStrLn (unlines (map fmtperr es));
+           get_cmd anim args}
+
+-- done_cmd :: (Animator, Answer) -> IO ()
+-- done_cmd (anim, DoneUpsilon s f)   
+--   = do {putStrLn s; touch (f++".csp"); writeStr (f++".csp") s; get_cmd anim}
+-- done_cmd (anim, DoneOmega s f)
+--   = do {putStrLn s; touch (f++".csp"); writeStr (f++".hc") s; get_cmd anim}
+-- done_cmd (anim, Done s)
+--   = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
+-- -- done_cmd (anim, Spec s)       = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim}
+-- done_cmd (anim, ErrorMsg m)   = do {putErrorMsg m; get_cmd anim}
+-- done_cmd (anim, ErrorLocns es)= do {putStrLn (unlines (map fmtperr es));
+-- 				    get_cmd anim}
+
+
+-- Artur
+touch :: FilePath -> IO ()
+touch name = do
+  exists <- doesFileExist name
+  unless exists $ appendFile name ""
+writeStr :: FilePath -> String -> IO ()
+writeStr fp c =
+    bracket
+      (openFile fp WriteMode)
+      hClose
+      (\h -> hPutStr h c)
 
 fmtgfs :: (Int,ZGenFilt) -> String
 fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
@@ -300,28 +200,6 @@ fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
 fmtgfs (n,gf) =
    show n ++ "  " ++ zgenfilt_string pinfo gf
 
--- map_circus xls (x:xs) = (mapping_Circus xls x)++(map_circus xls xs)
-checktrue, checkundef :: Answer -> String -> IO ()
-checktrue (BoolValue True) pred = return ()  -- ignore successful results
-checktrue ans pred = checkpred ans ("checktrue " ++ pred)
-
-checkundef (ErrorMsg m) pred
-    | isUndefMsg m = return ()  -- ignore successful results
-checkundef ans pred = checkpred ans ("checkundef " ++ pred)
-
-checkpred :: Answer -> String -> IO ()
--- this handles the common cases of checktrue and checkundef
-checkpred (BoolValue b) cmd =
-    putStrLn ("Error: " ++ show b ++ " returned from: " ++ cmd)
-checkpred (ErrorMsg m) cmd =
-    do  putStrLn ("Error in: " ++ cmd)
-	putErrorMsg m
-checkpred (ErrorLocns es) cmd =
-    do  putStrLn ("Error in: " ++ cmd)
-	putStr (unlines (map fmtperr es))
-checkpred _ cmd =
-    -- This should never happen.
-    putStrLn ("Error: Unexpected animator answer from: " ++ cmd)
 
 
 putErrorMsg :: ErrorMsg -> IO ()
@@ -337,9 +215,6 @@ putMsgPart (MPred p)  = output_zpred p
 putMsgPart (MVars vs) = putStr (show_zvars vs)
 
 
--- Strips leading and trailing whitespace
-canonical :: String -> String
-canonical = reverse . dropWhile isSpace . reverse . dropWhile isSpace
 
 -- Left justifies a string
 ljustify :: Int -> String -> String

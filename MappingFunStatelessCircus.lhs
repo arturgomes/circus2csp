@@ -109,7 +109,7 @@ omega_CProc zn spec (CSeq a b)
   = (CSeq (omega_CProc zn spec a) (omega_CProc zn spec b))
 omega_CProc zn spec (ProcStalessMain [] ca)
   = (ProcStalessMain 
-    [] 
+    [make_memory_proc] 
     main_action)
     where 
       omegaAC = omega_CAction ca
@@ -117,7 +117,7 @@ omega_CProc zn spec (ProcStalessMain [] ca)
       main_action = refAC
 omega_CProc zn spec (ProcStalessMain xls ca)
   = (ProcStalessMain 
-    [] 
+    [make_memory_proc] 
     main_action)
     where 
       -- newLocVar = map rename_actions_loc_var xls
@@ -137,7 +137,7 @@ omega_CProc zn spec (CSimpIndexProc zns (x:xs))
 
 omega_CProc zn spec (ProcMain zp xls ca)
   = (ProcStalessMain 
-    [] 
+    [make_memory_proc] 
     main_action)
     where 
       nstate = filter_main_action_bind zn $ (def_mem_st_Circus_aux spec spec)
