@@ -22,7 +22,7 @@ It will build the translator tool with a binary file "circus".
 If you're familiar with JAZA, you'll see a very similar prompt. Just type ``help`` and you'll see the list of options.
 
 ## Loading a file
-In order to load a file, enter the following code, with **filename++ being the name of your file 
+In order to load a file, enter the following code, with **filename** being the name of your file 
 
 ```
 load filename

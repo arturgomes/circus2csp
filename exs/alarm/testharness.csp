@@ -1,0 +1,9 @@
+include "out.csp"
+
+assert AChrono :[deterministic [FD]]
+assert Chrono :[deterministic [FD]]
+assert WakeUp :[deterministic [FD]]
+
+HWakeUp = WakeUp \ {| snooze, radioOn |}
+
+assert HWakeUp :[deterministic [FD]]
