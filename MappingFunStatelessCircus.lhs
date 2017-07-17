@@ -34,9 +34,9 @@ omega_Circus spec
       CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"])]
     ++ (omega_Circus_aux spec1 spec1)
     where 
-      spec1 = (map (rename_vars_ZPara1 (def_mem_st_Circus_aux spec spec)) spec) -- renaming variables for highlighting which state var is from which process
-      names = (def_delta_name (def_mem_st_Circus_aux spec1 spec1))
-      deltamap = (def_delta_mapping (def_mem_st_Circus_aux spec1 spec1))
+      spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec) -- renaming variables for highlighting which state var is from which process
+      names = (def_delta_name (def_mem_st_Circus_aux spec spec))
+      deltamap = (def_delta_mapping (def_mem_st_Circus_aux spec spec))
 \end{code}
 
 \subsection{Omega functions}

@@ -48,12 +48,12 @@ mapping_Circus spec (x:xs)
   MK_{value}(fulst)\\
   MK_{type}(fulst)\\
   MK_{tag}(fulst)\\\\
-  \tco{Memory(}MK_{mem\_param}(fulst)\tco{)=}\\
-  \qquad MK_{mget}(fulst)\\
-  \qquad MK_{mset}(fulst)\\
-  \qquad \tco{[] terminate -> SKIP}\\\\
-  \tco{Memorise(P,}MK_{mem\_param}(fulst)\tco{)=}\\
-  \qquad\tco{((P ; terminate -> SKIP)[|MEM\_I|] Memory(}MK_{mem\_param}(fulst)\tco{))\textbackslash MEM\_I}
+  % \tco{Memory(}MK_{mem\_param}(fulst)\tco{)=}\\
+  % \qquad MK_{mget}(fulst)\\
+  % \qquad MK_{mset}(fulst)\\
+  % \qquad \tco{[] terminate -> SKIP}\\\\
+  % \tco{Memorise(P,}MK_{mem\_param}(fulst)\tco{)=}\\
+  % \qquad\tco{((P ; terminate -> SKIP)[|MEM\_I|] Memory(}MK_{mem\_param}(fulst)\tco{))\textbackslash MEM\_I}
 \end{circus}
     \begin{provs}
       \item $\delta(\emptyset) \notin spec$ -- There is at least one element in the $\delta$ mapping.
@@ -592,7 +592,26 @@ mapping_CProc procn spec (CRepSeqProc [(Choose (x,[]) s)] a)
 mapping_CProc procn spec (ProcStalessMain al ma)
   | al == [] = "\n\t" ++ (mapping_CAction procn spec ma)
   | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec al)
+    ++ memproc
     ++ "within " ++ (mapping_CAction procn spec ma)
+  where
+    memproc = (case res of
+                False -> 
+                  "\n\t\t--------------------------------"++
+                  "\n\t\t-- MEMORY"++
+                  "\n\t\t--------------------------------\n"++
+                  "\t\tMemory("++mk_mem_param funivlst++") ="
+                  ++ mk_mget_mem_bndg funivlst
+                  ++ mk_mset_mem_bndg funivlst ++ 
+                  "\n\t\t    [] terminate -> SKIP\n\n"++
+                  "\t\tMemorise(P,"++mk_mem_param funivlst++") ="++ 
+                  "\n\t\t    ((P; terminate -> SKIP) [| MEM_I |]"++
+                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n" 
+                True -> "")
+
+    univlst = (def_universe spec)
+    funivlst = remdups (filter_types_universe univlst)
+    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
 mapping_CProc procn spec (CParamProc zn xl)
@@ -630,6 +649,7 @@ NOTE: $CNameSet$ and $ProcZPara$ is not yet implemented
 mapping_PPar :: ZName -> [ZPara] -> PPar -> String
 --mapping_PPar procn spec (CNameSet zn nse) --  = undefined
 -- mapping_PPar procn spec (CParAction "Memory" (CircusAction (CActionCommand (CVResDecl decl a ))))
+mapping_PPar procn spec (CParAction "Memory" x) = ""
 mapping_PPar procn spec (CParAction p (CircusAction (CActionCommand (CVResDecl decl a ))))
   = p ++"("++ (mapping_ZGenFilt_list spec decl) ++ ") =" ++ (mapping_CAction procn spec a)
 mapping_PPar procn spec (CParAction p pa)

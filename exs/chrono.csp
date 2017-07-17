@@ -1,6 +1,7 @@
 include "exs/sequence_aux.csp"
 include "exs/function_aux.csp"
 
+
 RANGE = {0..2}
 --------------------------------
 -- The universe of values
@@ -10,36 +11,60 @@ RANGE = {0..2}
 --Conversions
 subtype U_RAN = RAN.RANGE
 
+
 valueRAN(RAN.v) = v
+
+
 typeRAN(x) = U_RAN
+
+
 tagRAN(x) = RAN
 
+--------------------------------
+ -- NAME -- 
+--------------------------------
+datatype NAME = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
+subtype NAME_RAN = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
+
+NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
+
+--------------------------------
+ -- BINDINGS -- 
+--------------------------------
+BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEM_I -- 
+--------------------------------
+MEM_I = {| mset,mget,terminate |}
+
+Chrono = 
+	let Memory(b) =( ( ( [] n : dom(b) @
+			 mget.n.apply(b,n) -> Memory(b) )
+		 [] ( [] n : dom(b) @
+			 
+		mset.n.(n?nv:typenv(n)) -> Memory(over(b,n,nv)) ))
+		 [] terminate -> SKIP)
+	
 --------------------------------
 -- MEMORY
 --------------------------------
 Memory(b_RAN) = 
-	([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN))
+    ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN))
 	[] ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory(over(b_RAN,n,x)))
 		[] terminate -> SKIP
 
 Memorise(P,b_RAN) = 
-    ((P; terminate -> SKIP) [| MEM_I |] Memory(b_RAN)) \ MEM_I
-
-datatype NAME = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
-subtype NAME_RAN = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
---------------------------------
--- All possible bidings
-
-NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
-
-BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
-
-channel mget, mset : NAME.UNIVERSE
-channel terminate
-MEM_I = {| mset,mget,terminate |}
-
-Chrono = 
-	(let 		restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
+    ((P; terminate -> SKIP) [| MEM_I |] 
+    Memory(b_RAN)) \ MEM_I
+within (let  restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
 	within
 		|~| b_RAN : BINDINGS_RAN @ Memorise(( ( 
 		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> 
@@ -61,7 +86,25 @@ channel ans : RANGE
 channel inc, minsReq
 
 AChrono = 
-	(let 		restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
+	let Memory(b) =( ( ( [] n : dom(b) @
+			 mget.n.apply(b,n) -> Memory(b) )
+		 [] ( [] n : dom(b) @
+			 
+		mset.n.(n?nv:typenv(n)) -> Memory(over(b,n,nv)) ))
+		 [] terminate -> SKIP)
+	
+--------------------------------
+-- MEMORY
+--------------------------------
+Memory(b_RAN) = 
+    ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN))
+	[] ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory(over(b_RAN,n,x)))
+		[] terminate -> SKIP
+
+Memorise(P,b_RAN) = 
+    ((P; terminate -> SKIP) [| MEM_I |] 
+    Memory(b_RAN)) \ MEM_I
+within (let  restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
 	within
 		|~| b_RAN : BINDINGS_RAN @ Memorise(
 		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> 
@@ -79,17 +122,3 @@ AChrono =
 )
 channel out : (RANGE,RANGE)
 channel tick, time
-
-
-assert AChrono [FD= Chrono
-assert Chrono [FD= (AChrono \ Sync)
-
-MyAChrono = (let X = AChrono; X within X)
-assert MyAChrono :[ deadlock free [FD] ]
-assert AChrono \ MEM_I :[ livelock free ]
-assert AChrono \ MEM_I :[ deterministic [FD] ]
-
-MyChrono = (let X = Chrono; X within X)
-assert MyChrono :[ deadlock free [FD] ]
-assert Chrono :[ livelock free ]
-assert Chrono :[ deterministic [FD] ]
