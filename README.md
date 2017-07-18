@@ -23,7 +23,7 @@ If you're familiar with JAZA, you'll see a very similar prompt. Just type ``help
 
 ## Loading a file
 In order to load a file, enter the following code, with **filename** being the name of your file 
-
+without the extension .tex
 ```
 load filename
 ```
@@ -33,15 +33,29 @@ If you want to display the current loaded specification, write ``show`` on the p
 
 ## Applying Omega functions
 
-Then you'll be able to apply the omega transformation, just typing ``omega``. The operation is done if no warnings is shown. Hit ``show`` again and see the result from the operation.
+Then you'll be able to apply the omega transformation, just typing ``omega``. The operation is done if no warnings is shown. Hit ``show`` again and see the result from the operation. A *.hc file is produced with the Haskell representation of the specification. This can later on be translated back to latex.
 
 ## From Circus to CSP
 
 After executing the ``omega`` operation, the final operation is the ``tocsp`` so you can use it in FDR.
 
-Please have in mind that the file **spec.txt** is rewritten with the CSP code. You'll have to copy the files **function_aux.csp** and **sequence_aux.csp** along with the generated code, in order to use FDR. Both files contains auxiliary definitions regarding sets and sequences. These are very important and useful. 
+The result of the translation will produce a file *.csp with the new spec ready to run on FDR. You'll have to copy the files **function_aux.csp** and **sequence_aux.csp** along with the generated code, in order to use FDR. Both files contains auxiliary definitions regarding sets and sequences. These are very important and useful. 
 
 
 # References
 
 * Oliveira M.V.M., Sampaio A.C.A., Conserva Filho M.S. (2014) Model-Checking Circus State-Rich Specifications. In: Albert E., Sekerinski E. (eds) Integrated Formal Methods. IFM 2014. Lecture Notes in Computer Science, vol 8739. Springer, Cham
+
+# CHANGELOG
+
+## 
+New version 0.5
+Now that we can load the files without the extension .tex, we produce
+two other files : .hc and .csp on the same folder of the .tex file:
+    .hc is the file containing the haskell AST representation of the spec
+    .csp is the translated specification in CSP
+Now we also load multiple processes within the same file without name
+clashing.
+We also are able to have tailored Memory and Memorise actions within
+a CSP process with respect only to the types used within the scope
+of that process.
