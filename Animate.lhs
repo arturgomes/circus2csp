@@ -166,7 +166,7 @@ upslonCircus anim args = getspecCSP args (applyUpslon anim)
 applyUpslon anim
   = upslonHeader ++ (mapping_Circus (reverse (map origpara (spec anim))) (reverse (map origpara (spec anim))))
 
-upslonHeader = "include \"exs/sequence_aux.csp\"\ninclude \"exs/function_aux.csp\"\n\n"
+upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
 
 resetanimator :: Animator -> (Animator,Answer,String)
 resetanimator anim

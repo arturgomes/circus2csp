@@ -1,4 +1,4 @@
-include "out.csp"
+include "models.csp"
 
 assert AChrono :[deterministic [FD]]
 assert Chrono :[deterministic [FD]]

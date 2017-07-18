@@ -287,12 +287,14 @@ get_ZVar_st x
 
 \begin{code}
 is_ZVar_st a = isPrefixOf "sv" a
+is_ZVar_st' a procn = isPrefixOf (join_name "sv" procn) a
 \end{code}
 
 \subsection{$is\_ZVar\_v\_st$}
 
 \begin{code}
 is_ZVar_v_st a = isPrefixOf "v_sv" a
+is_ZVar_v_st' a procn = isPrefixOf (join_name "v_sv" procn)  a
 \end{code}
 
 \section{Functions for variable renaming -- $v\_$}
@@ -1402,12 +1404,12 @@ get_delta_names _ []
 \end{code}
 
 \begin{code}
-get_delta_names_aux zn [(ZBranch0 (a,[]))]
-  | isPrefixOf zn a = [a]
+get_delta_names_aux procn [(ZBranch0 (a,[]))]
+  | is_ZVar_st' a procn = [a]
   | otherwise = []
-get_delta_names_aux zn ((ZBranch0 (a,[])):xs)
-  | isPrefixOf zn a = [a]++(get_delta_names_aux zn xs)
-  | otherwise = (get_delta_names_aux zn xs)
+get_delta_names_aux procn ((ZBranch0 (a,[])):xs)
+  | is_ZVar_st' a procn = [a]++(get_delta_names_aux procn xs)
+  | otherwise = (get_delta_names_aux procn xs)
 \end{code}
 
 Construction of the Universe set in CSP
@@ -1456,18 +1458,18 @@ mk_tag ((a,b,c,d):xs)
   = "tag"++(lastN 3 b)++"(x) = "++(lastN 3 b)++"\n"++(mk_tag xs)
 
 -- make Memory(b_type1,b_type2,b_type3) parameters
-mk_mem_param :: [(t, [Char], t1, t2)] -> [Char]
+mk_mem_param :: [String] -> String
 mk_mem_param [] = ""
-mk_mem_param [(a,b,c,d)] = "b_"++(lastN 3 b)
-mk_mem_param ((a,b,c,d):xs)
-  = (mk_mem_param [(a,b,c,d)]) ++", "++ (mk_mem_param xs)
+mk_mem_param [b] = "b_"++(lastN 3 b)
+mk_mem_param (b:xs)
+  = (mk_mem_param [b]) ++", "++ (mk_mem_param xs)
 
 -- list of b_type parameters
-mk_mem_param_lst :: [(t, [Char], t1, t2)] -> [[Char]]
+mk_mem_param_lst :: [String] -> [String]
 mk_mem_param_lst [] = []
-mk_mem_param_lst [(a,b,c,d)] = ["b_"++(lastN 3 b)]
-mk_mem_param_lst ((a,b,c,d):xs)
-  = (mk_mem_param_lst [(a,b,c,d)]) ++ (mk_mem_param_lst xs)
+mk_mem_param_lst [b] = ["b_"++(lastN 3 b)]
+mk_mem_param_lst (b:xs)
+  = (mk_mem_param_lst [b]) ++ (mk_mem_param_lst xs)
 
 -- replace b_type by over(b_type,n,x) in case x == a
 repl_mem_param_over :: [Char] -> [[Char]] -> [[Char]]
@@ -1486,22 +1488,23 @@ mk_charll_to_charl sp [x] = x
 mk_charll_to_charl sp (x:xs) = x++sp++(mk_charll_to_charl sp xs)
 
 -- make mget external choices of Memory proc
-mk_mget_mem_bndg :: [(t3, [Char], t4, t5)] -> [Char]
+mk_mget_mem_bndg :: [String] -> String
 mk_mget_mem_bndg fs = mk_mget_mem_bndg' fs fs
 
-mk_mget_mem_bndg' :: [(t3, [Char], t4, t5)] -> [(t, [Char], t1, t2)] -> [Char]
+mk_mget_mem_bndg' :: [String] -> [String] -> String
 mk_mget_mem_bndg' fs []
   = ""
-mk_mget_mem_bndg' fs [(a,b,c,d)]
+mk_mget_mem_bndg' fs [b]
   = "([] n:dom(b_"++(lastN 3 b)++") @ mget.n!(apply(b_"++(lastN 3 b)++",n)) -> Memory("++(mk_mem_param fs)++"))"
-mk_mget_mem_bndg' fs ((a,b,c,d):xs)
-  = mk_mget_mem_bndg' fs [(a,b,c,d)]
+mk_mget_mem_bndg' fs (b:xs)
+  = mk_mget_mem_bndg' fs [b]
   ++"\n\t\t    [] "++mk_mget_mem_bndg' fs xs
 
 
 -- make mset external choices of Memory proc
 mk_mset_mem_bndg fs = mk_mset_mem_bndg' fs fs
-mk_mset_mem_bndg' fs [(a,b,c,d)]
+mk_mset_mem_bndg' fs [] = ""
+mk_mset_mem_bndg' fs [b]
   = "\n\t\t    [] ([] n:dom(b_"
       ++(lastN 3 b)
       ++") @ mset.n?x:type"
@@ -1509,8 +1512,8 @@ mk_mset_mem_bndg' fs [(a,b,c,d)]
       ++"(n) -> Memory("
       ++  ( mk_charll_to_charl "," (repl_mem_param_over (lastN 3 b) (mk_mem_param_lst fs) ))
       ++"))"
-mk_mset_mem_bndg' fs ((a,b,c,d):xs)
-  = mk_mset_mem_bndg' fs [(a,b,c,d)]
+mk_mset_mem_bndg' fs (b:xs)
+  = mk_mset_mem_bndg' fs [b]
   ++mk_mset_mem_bndg' fs xs
 
 
@@ -1578,6 +1581,20 @@ mk_restrict_name n
 
 
 \begin{code}
+-- filter the Delta for the variables of a particular process procn
+-- (var name, U_TYP, TYP, Type)
+
+filter_universe_st :: String -> [(String, [Char], [Char], [Char])] -> [String]
+filter_universe_st procn [(a, b, c, d)]
+  | is_ZVar_st' a procn = [b]
+  | otherwise = []
+  
+filter_universe_st procn ((a, b, c, d):xs)
+  | is_ZVar_st' a procn= [b]++(filter_universe_st procn xs)
+  | otherwise = (filter_universe_st procn xs)
+
+\end{code}
+\begin{code}
 -- extract the delta variables and types in here'
 def_universe [(ZAbbreviation ("\\delta",[]) (ZSetDisplay xs))]
   = def_universe_aux xs
@@ -1590,6 +1607,7 @@ def_universe []
 \end{code}
 
 \begin{code}
+-- (var name, U_TYP, TYP, Type)
 def_universe_aux :: [ZExpr] -> [(String, [Char], [Char], [Char])]
 def_universe_aux [] = []
 def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "NAT", "NatValue")]
@@ -1603,9 +1621,14 @@ def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVa
 \end{code}
 
 \begin{code}
+-- (var name, U_TYP, TYP, Type)
 filter_types_universe [] = []
-filter_types_universe [(a,b,c,d)] = [(b,b,c,d)]
-filter_types_universe ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe xs))
+filter_types_universe [(_,b,_,_)] = [b]
+filter_types_universe ((_,b,_,_):xs) = (b:(filter_types_universe xs))
+
+filter_types_universe' [] = []
+filter_types_universe' [(a,b,c,d)] = [(b,b,c,d)]
+filter_types_universe' ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe' xs))
 \end{code}
 
 

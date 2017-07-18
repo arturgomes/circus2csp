@@ -80,7 +80,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
     True -> ""
   where
     univlst = (def_universe spec)
-    funivlst = remdups (filter_types_universe univlst)
+    funivlst = remdups (filter_types_universe' univlst)
     res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
 \end{code}
 \subsection{Mapping $mget$ and $mset$ for the $Memory$ approach}
@@ -593,11 +593,11 @@ mapping_CProc procn spec (ProcStalessMain al ma)
   | al == [] = "\n\t" ++ (mapping_CAction procn spec ma)
   | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec al)
     ++ memproc
-    ++ "within " ++ (mapping_CAction procn spec ma)
+    ++ "\twithin " ++ (mapping_CAction procn spec ma)
   where
     memproc = (case res of
                 False -> 
-                  "\n\t\t--------------------------------"++
+                  "--------------------------------"++
                   "\n\t\t-- MEMORY"++
                   "\n\t\t--------------------------------\n"++
                   "\t\tMemory("++mk_mem_param funivlst++") ="
@@ -608,10 +608,8 @@ mapping_CProc procn spec (ProcStalessMain al ma)
                   "\n\t\t    ((P; terminate -> SKIP) [| MEM_I |]"++
                   "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n" 
                 True -> "")
-
-    univlst = (def_universe spec)
-    funivlst = remdups (filter_types_universe univlst)
-    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
+    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec             
+    funivlst = remdups $ filter_universe_st procn (def_universe spec)
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
 mapping_CProc procn spec (CParamProc zn xl)
@@ -701,8 +699,8 @@ mapping_CAction procn spec (CSPUnfAction x (CActionName v))
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   = case np of
-    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
-    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names1 spec) p) ++ "} -> ("++ (mapping_CAction procn spec a)++")"
+    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} ->\n\t\t ("++ (mapping_CAction procn spec a)++")"
+    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names1 spec) p) ++ "} ->\n\t\t ("++ (mapping_CAction procn spec a)++")"
     where
       np = (mapping_predicate (get_delta_names1 spec) p)
 \end{code}
@@ -712,7 +710,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
   = (get_channel_name spec (ChanComm c [ChanInp x]))
-    ++ " -> "
+    ++ " ->\n\t\t "
     ++ mapping_CAction procn spec (a)
 \end{code}
 
@@ -722,12 +720,12 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[]))]) a)
   = (get_channel_name spec (ChanComm c [ChanOutExp (ZVar (x,[]))]))
-    ++ " -> "
+    ++ " ->\n\t\t "
     ++ mapping_CAction procn spec (a) ++ ""
 
 mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
   = (get_channel_name spec (ChanComm c lst))
-    ++ " -> "
+    ++ " ->\n\t\t "
     ++ mapping_CAction procn spec (a) ++ ""
 \end{code}
 
@@ -738,7 +736,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
 \begin{code}
 mapping_CAction procn spec (CSPCommAction c a)
   = (get_channel_name spec c)
-    ++ " -> "
+    ++ " ->\n\t\t "
     ++ mapping_CAction procn spec (a) ++ ""
 \end{code}
 
@@ -974,10 +972,10 @@ mapping_CCommand procn spec (CIf cga)
 
 mapping_CCommand procn spec (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check x] Nothing)] ca)
  = "let "++ restr
-    ++"\n\twithin"
-    ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++", "++restn++")\n"
+    ++"\n\t\twithin"
+    ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
     where
-      znames = (get_delta_names1 spec)
+      znames = (get_delta_names procn spec)
       ztypes = remdups $ map select_type_zname znames
       restr = mk_charll_to_charl "\n" $ map (mk_restrict spec znames) ztypes
       bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
@@ -997,7 +995,7 @@ mapping_CGActions :: ZName -> [ZPara] -> CGActions -> ZName
 mapping_CGActions procn spec (CircThenElse cga1 cga2)
   = (mapping_CGActions procn spec cga1) ++ " [] " ++ (mapping_CGActions procn spec cga2)
 mapping_CGActions procn spec (CircGAction zp ca)
-  = (mapping_predicate (get_delta_names1 spec) zp) ++ " & " ++ (mapping_CAction procn spec ca)
+  = (mapping_predicate (get_delta_names1 spec) zp) ++ " &\n\t\t\t " ++ (mapping_CAction procn spec ca)
 \end{code}
 
 \subsection{Mapping Channel Communication}
@@ -1141,9 +1139,9 @@ The mapping function for sequence expressions is defined as follows:
 get_channel_name :: [ZPara] -> Comm -> ZName
 
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[])),ChanInp v1])
-  = "\n\t\tmget."++x++"?"++v1++":(type"++(lastN 3 x)++"("++x++"))"
+  = "mget."++x++"?"++v1++":(type"++(lastN 3 x)++"("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[]))):xs))
-  = "\n\t\tmset."++x++".("++(lastN 3 x)++(get_channel_name_cont spec xs)++")"
+  = "mset."++x++".("++(lastN 3 x)++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
