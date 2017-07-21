@@ -36,6 +36,7 @@ invariant.
   free_var_ZExpr,
   free_var_ZGenFilt,
   free_var_ZPred,
+  free_var_CCommand,
   free_vars,    -- Hugs does not export this automatically
   fvars_expr,
   fvars_genfilt,
@@ -84,7 +85,6 @@ type Substitution = [(ZVar,ZExpr)]
 
 -- Optional Precondition checking
 -- Define pre f msg val = val to turn this off.
-pre f msg val = val
 pre False msg val = error ("Precondition Error: " ++ msg)
 pre True  msg val = val
 
@@ -99,8 +99,12 @@ instance SubsTerm ZExpr where
   free_vars  = fvars_expr
 
 instance SubsTerm ZPred where
-  substitute = presubstitute sub_pred
-  free_vars  = fvars_pred
+    substitute = presubstitute sub_pred
+    free_vars  = fvars_pred
+
+instance SubsTerm CAction where
+      substitute = presubstitute sub_CAction
+      free_vars  = free_var_CAction
 
 presubstitute f sub vs term =
     pre ((termvars `diff_varset` domvars) `subseteq_varset` vs)
@@ -159,14 +163,14 @@ show_varset     (VarSet vs) = show_zvars [v | ZVar v <- vs]
 \end{code}
 
 \subsection{$SubstitutionInfo$ ADT}
- 
+
 It is convenient to pass around more information than just the
 substitution, so we pass around this SubstitutionInfo type, which
 contains the substitution, plus the set of variables which must be
 avoided when choosing new local variables. This 'avoid' set must
 contain:
 
- \begin{itemize}   
+ \begin{itemize}
 
 \item  all free variables of the entire term that surrounds the term
 that substitute is being applied to (usually none, because most
@@ -180,7 +184,7 @@ variable names on any path into the term)
 
 \item  all free variables in the range of the substitution (because we must avoid capturing these)
 
-\end{itemize} 
+\end{itemize}
 \subsection{Substitution -- Manipulating sets}
 
 \begin{code}
@@ -323,56 +327,56 @@ sub_pred subs p = error ("substitute should not see: " ++ show p)
 \begin{code}
 sub_ParAction :: SubstitutionInfo -> ParAction -> ParAction
 sub_ParAction subs (CircusAction vCAction) = (CircusAction (sub_CAction subs vCAction))
-sub_ParAction subs (ParamActionDecl vZGenFilt_lst vParAction) 
+sub_ParAction subs (ParamActionDecl vZGenFilt_lst vParAction)
   = (ParamActionDecl vZGenFilt_lst2 vParAction2)
   where
     (vZGenFilt_lst2,vParAction2) = sub_genfilt sub_ParAction subs vZGenFilt_lst vParAction
 \end{code}
 \begin{code}
 sub_CAction :: SubstitutionInfo -> CAction -> CAction
-sub_CAction subs (CActionCommand c) 
+sub_CAction subs (CActionCommand c)
   = (CActionCommand (sub_CCommand subs c))
-sub_CAction subs (CSPCommAction cc c) 
+sub_CAction subs (CSPCommAction cc c)
   = (CSPCommAction (sub_Comm subs cc) (sub_CAction subs c))
-sub_CAction subs (CSPGuard p c) 
+sub_CAction subs (CSPGuard p c)
   = (CSPGuard (sub_pred subs p) (sub_CAction subs c))
-sub_CAction subs (CSPSeq ca cb) 
+sub_CAction subs (CSPSeq ca cb)
   = (CSPSeq (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPExtChoice ca cb) 
+sub_CAction subs (CSPExtChoice ca cb)
   = (CSPExtChoice (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPIntChoice ca cb) 
+sub_CAction subs (CSPIntChoice ca cb)
   = (CSPIntChoice (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPNSParal ns1 cs ns2 ca cb) 
+sub_CAction subs (CSPNSParal ns1 cs ns2 ca cb)
   = (CSPNSParal ns1 cs ns2 (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPParal cs ca cb) 
+sub_CAction subs (CSPParal cs ca cb)
   = (CSPParal cs (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPNSInter ns1 ns2 ca cb) 
+sub_CAction subs (CSPNSInter ns1 ns2 ca cb)
   = (CSPNSInter ns1 ns2 (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPInterleave ca cb) 
+sub_CAction subs (CSPInterleave ca cb)
   = (CSPInterleave (sub_CAction subs ca) (sub_CAction subs cb))
-sub_CAction subs (CSPHide c cs) 
+sub_CAction subs (CSPHide c cs)
   = (CSPHide (sub_CAction subs c) cs)
-sub_CAction subs (CSPParAction nm xp) 
+sub_CAction subs (CSPParAction nm xp)
   = (CSPParAction nm xp)
-sub_CAction subs (CSPRenAction nm cr) 
+sub_CAction subs (CSPRenAction nm cr)
   = (CSPRenAction nm cr)
-sub_CAction subs (CSPRecursion nm c) 
+sub_CAction subs (CSPRecursion nm c)
   = (CSPRecursion nm (sub_CAction subs c))
-sub_CAction subs (CSPUnParAction lst c nm) 
+sub_CAction subs (CSPUnParAction lst c nm)
   = (CSPUnParAction lst (sub_CAction subs c) nm)
-sub_CAction subs (CSPRepSeq lst c) 
+sub_CAction subs (CSPRepSeq lst c)
   = (CSPRepSeq lst (sub_CAction subs c))
-sub_CAction subs (CSPRepExtChoice lst c) 
+sub_CAction subs (CSPRepExtChoice lst c)
   = (CSPRepExtChoice lst (sub_CAction subs c))
-sub_CAction subs (CSPRepIntChoice lst c) 
+sub_CAction subs (CSPRepIntChoice lst c)
   = (CSPRepIntChoice lst (sub_CAction subs c))
-sub_CAction subs (CSPRepParalNS cs lst ns c) 
+sub_CAction subs (CSPRepParalNS cs lst ns c)
   = (CSPRepParalNS cs lst ns (sub_CAction subs c))
-sub_CAction subs (CSPRepParal cs lst c) 
+sub_CAction subs (CSPRepParal cs lst c)
   = (CSPRepParal cs lst (sub_CAction subs c))
-sub_CAction subs (CSPRepInterlNS lst ns c) 
+sub_CAction subs (CSPRepInterlNS lst ns c)
   = (CSPRepInterlNS lst ns (sub_CAction subs c))
-sub_CAction subs (CSPRepInterl lst c) 
+sub_CAction subs (CSPRepInterl lst c)
   = (CSPRepInterl lst (sub_CAction subs c))
 sub_CAction subs x = x
 
@@ -405,7 +409,7 @@ sub_CParameter subs (ChanDotExp vZExpr) = (ChanDotExp (sub_expr subs vZExpr))
 sub_CCommand :: SubstitutionInfo -> CCommand -> CCommand
 sub_CCommand subs (CAssign vZVar_lst vZExpr_lst) = (CAssign vZVar_lst (map (sub_expr subs) vZExpr_lst))
 sub_CCommand subs (CIf vCGActions) = (CIf (sub_CGActions subs vCGActions))
-sub_CCommand subs (CVarDecl vZGenFilt_lst vCAction) 
+sub_CCommand subs (CVarDecl vZGenFilt_lst vCAction)
   = (CVarDecl vZGenFilt_lst2 vCAction2)
   where
     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_CAction subs vZGenFilt_lst vCAction
@@ -415,24 +419,24 @@ sub_CCommand subs (CPrefix v1ZPred v2ZPred) = (CPrefix (sub_pred subs v1ZPred) (
 sub_CCommand subs (CPrefix1 vZPred) = (CPrefix1 (sub_pred subs vZPred))
 sub_CCommand subs (CommandBrace vZPred) = (CommandBrace (sub_pred subs vZPred))
 sub_CCommand subs (CommandBracket vZPred) = (CommandBracket (sub_pred subs vZPred))
-sub_CCommand subs (CValDecl vZGenFilt_lst vCAction) 
+sub_CCommand subs (CValDecl vZGenFilt_lst vCAction)
   = (CValDecl vZGenFilt_lst2 vCAction2)
   where
     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_CAction subs vZGenFilt_lst vCAction
-sub_CCommand subs (CResDecl vZGenFilt_lst vCAction) 
+sub_CCommand subs (CResDecl vZGenFilt_lst vCAction)
   = (CResDecl vZGenFilt_lst2 vCAction2)
   where
     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_CAction subs vZGenFilt_lst vCAction
-sub_CCommand subs (CVResDecl vZGenFilt_lst vCAction) 
+sub_CCommand subs (CVResDecl vZGenFilt_lst vCAction)
   = (CVResDecl vZGenFilt_lst2 vCAction2)
   where
     (vZGenFilt_lst2,vCAction2) = sub_genfilt sub_CAction subs vZGenFilt_lst vCAction
 \end{code}
 \begin{code}
 sub_CGActions :: SubstitutionInfo -> CGActions  -> CGActions
-sub_CGActions subs (CircGAction vZPred vCAction) 
+sub_CGActions subs (CircGAction vZPred vCAction)
   = (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction))
-sub_CGActions subs (CircThenElse (CircGAction vZPred vCAction) v2CGActions) 
+sub_CGActions subs (CircThenElse (CircGAction vZPred vCAction) v2CGActions)
   = (CircThenElse (CircGAction (sub_pred subs vZPred) (sub_CAction subs vCAction)) (sub_CGActions subs v2CGActions))
 -- sub_CGActions subs (CircElse vParAction) = (CircElse vParAction)
 \end{code}
@@ -572,8 +576,8 @@ rename_bndvars clash inuse (c@(Check _):gfs0)
 \subsection{Free Variables for $Expressions$}
 
 \begin{code}
-free_var_ZExpr :: ZExpr -> [ZVar]
-free_var_ZExpr x = varset_to_zvars $ free_vars x
+free_var_ZExpr :: ZExpr -> VarSet
+free_var_ZExpr = free_vars
 
 \end{code}
 \begin{code}
@@ -627,8 +631,8 @@ fvars_expr e  = error ("free_vars should not see: " ++ show e)
 \subsection{Free Variables for $Predicates$}
 
 \begin{code}
-free_var_ZPred :: ZPred -> [ZVar]
-free_var_ZPred x = varset_to_zvars $ free_vars x
+free_var_ZPred :: ZPred -> VarSet
+free_var_ZPred x = free_vars x
 \end{code}
 
 \begin{code}
@@ -656,9 +660,9 @@ fvars_pred p = error ("freevars should not see: " ++ show p)
 \end{code}
 
 \begin{code}
-free_var_ZGenFilt :: [ZGenFilt] -> (t -> [ZVar]) -> t -> [ZVar]
-
-free_var_ZGenFilt lst f e = varset_to_zvars $ (fvars_genfilt lst (varset_from_zvars $ f e))
+free_var_ZGenFilt =  fvars_genfilt
+-- free_var_ZGenFilt' :: [ZGenFilt] -> [ZVar]
+-- free_var_ZGenFilt' lst f e = varset_to_zvars $ (fvars_genfilt lst (varset_from_zvars $ f e))
 \end{code}
 
 \begin{code}
@@ -680,67 +684,73 @@ fvars_genfilt gfs inner = foldr adjust inner gfs
 
 \begin{code}
 
-free_var_CAction :: CAction -> [ZVar]
-free_var_CAction (CActionSchemaExpr x) = []
-free_var_CAction (CActionCommand c) 
-  = (free_var_CCommand c)
-free_var_CAction (CActionName nm) = []
-free_var_CAction (CSPSkip) = []
-free_var_CAction (CSPStop) = []
-free_var_CAction (CSPChaos) = []
-free_var_CAction (CSPCommAction (ChanComm com xs) c) 
-  = (free_var_CParameter xs)++(free_var_CAction c)
-free_var_CAction (CSPGuard p c) 
-  = (free_var_ZPred p)++(free_var_CAction c)
-free_var_CAction (CSPSeq ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPExtChoice ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPIntChoice ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSParal ns1 cs ns2 ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPParal cs ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPNSInter ns1 ns2 ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPInterleave ca cb) 
-  = (free_var_CAction ca)++(free_var_CAction cb)
-free_var_CAction (CSPHide c cs) 
+free_var_CAction :: CAction -> VarSet
+free_var_CAction (CActionSchemaExpr x) = empty_varset
+free_var_CAction (CActionCommand c)
+  =  (free_var_CCommand c)
+free_var_CAction (CActionName nm) = empty_varset
+free_var_CAction (CSPSkip) = empty_varset
+free_var_CAction (CSPStop) = empty_varset
+free_var_CAction (CSPChaos) = empty_varset
+free_var_CAction (CSPCommAction (ChanComm com xs) c)
+  = (free_var_CParameter xs) `union_varset` (free_var_CAction c)
+free_var_CAction (CSPGuard p c)
+  = (free_var_ZPred p) `union_varset` (free_var_CAction c)
+free_var_CAction (CSPSeq ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPExtChoice ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPIntChoice ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPNSParal ns1 cs ns2 ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPParal cs ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPNSInter ns1 ns2 ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPInterleave ca cb)
+  = (free_var_CAction ca) `union_varset` (free_var_CAction cb)
+free_var_CAction (CSPHide c cs)
   = (free_var_CAction c)
-free_var_CAction (CSPParAction nm xp) = []
-free_var_CAction (CSPRenAction nm cr) = []
-free_var_CAction (CSPRecursion nm c) 
+free_var_CAction (CSPParAction nm xp) = empty_varset
+free_var_CAction (CSPRenAction nm cr) = empty_varset
+free_var_CAction (CSPRecursion nm c)
   = (free_var_CAction c)
-free_var_CAction (CSPUnParAction lst c nm) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepSeq lst c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepExtChoice lst c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepIntChoice lst c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepParalNS cs lst ns c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepParal cs lst c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepInterlNS lst ns c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CAction (CSPRepInterl lst c) 
-  =  free_var_ZGenFilt lst free_var_CAction c
+free_var_CAction (CSPUnParAction lst c nm)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepSeq lst c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepExtChoice lst c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepIntChoice lst c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepParalNS cs lst ns c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepParal cs lst c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepInterlNS lst ns c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CAction (CSPRepInterl lst c)
+  = free_var_ZGenFilt lst (free_var_CAction c)
 \end{code}
 
 \subsection{Free variables - $CParameter$}
 \begin{code}
-free_var_CParameter :: [CParameter] -> [ZVar]
-free_var_CParameter [] = []
+free_var_CParameter :: [CParameter] -> VarSet
+free_var_CParameter [] = empty_varset
+free_var_CParameter [ChanInp x] = varset_from_zvars [(x,[])]
 free_var_CParameter [ChanDotExp x] = free_var_ZExpr x
 free_var_CParameter [ChanOutExp x] = free_var_ZExpr x
 free_var_CParameter [ChanInpPred _ x] = free_var_ZPred x
-free_var_CParameter [_] = []
-free_var_CParameter ((ChanDotExp x):xs) = (free_var_ZExpr x)++(free_var_CParameter xs)
-free_var_CParameter ((ChanOutExp x):xs) = (free_var_ZExpr x)++(free_var_CParameter xs)
-free_var_CParameter ((ChanInpPred _ x):xs) = (free_var_ZPred x)++(free_var_CParameter xs)
+free_var_CParameter [_] = empty_varset
+free_var_CParameter ((ChanInp x):xs)
+  = (varset_from_zvars [(x,[])]) `union_varset` (free_var_CParameter xs)
+free_var_CParameter ((ChanDotExp x):xs)
+  = (free_var_ZExpr x) `union_varset` (free_var_CParameter xs)
+free_var_CParameter ((ChanOutExp x):xs)
+  = (free_var_ZExpr x) `union_varset` (free_var_CParameter xs)
+free_var_CParameter ((ChanInpPred _ x):xs)
+  = (free_var_ZPred x) `union_varset` (free_var_CParameter xs)
 free_var_CParameter (_:xs) = (free_var_CParameter xs)
 \end{code}
 
@@ -748,38 +758,33 @@ free_var_CParameter (_:xs) = (free_var_CParameter xs)
 \subsection{Free Variables for \Circus\ commands -- $CCommand$}
 
 \begin{code}
+free_var_CCommand :: CCommand -> VarSet
 free_var_CCommand (CAssign v e)
- = v
-free_var_CCommand (CIf ga)
- = free_var_if ga
+  = (varset_from_zvars v) `union_varset` (union_varsets (map fvars_expr e))
+free_var_CCommand (CIf ga) = free_var_if ga
 free_var_CCommand (CVarDecl lst c)
- =  free_var_ZGenFilt lst free_var_CAction c
-free_var_CCommand (CAssumpt n p1 p2)
- = []
-free_var_CCommand (CAssumpt1 n p)
- = []
-free_var_CCommand (CPrefix p1 p2)
- = []
-free_var_CCommand (CPrefix1 p)
- = []
-free_var_CCommand (CommandBrace z)
- = (free_var_ZPred z)
-free_var_CCommand (CommandBracket z)
- = (free_var_ZPred z)
+ =  free_var_ZGenFilt lst (free_var_CAction c)
+free_var_CCommand (CAssumpt n p1 p2) = empty_varset
+free_var_CCommand (CAssumpt1 n p) = empty_varset
+free_var_CCommand (CPrefix p1 p2) = empty_varset
+free_var_CCommand (CPrefix1 p) = empty_varset
+free_var_CCommand (CommandBrace z) = (free_var_ZPred z)
+free_var_CCommand (CommandBracket z) = (free_var_ZPred z)
 free_var_CCommand (CValDecl lst c)
- =  free_var_ZGenFilt lst free_var_CAction c
+ =  free_var_ZGenFilt lst (free_var_CAction c)
 free_var_CCommand (CResDecl lst c)
- =  free_var_ZGenFilt lst free_var_CAction c
+ =  free_var_ZGenFilt lst (free_var_CAction c)
 free_var_CCommand (CVResDecl lst c)
- =  free_var_ZGenFilt lst free_var_CAction c
+ =  free_var_ZGenFilt lst (free_var_CAction c)
 \end{code}
 \subsection{Free Variables for \Circus\ Guards -- $CGActions$}
 
 \begin{code}
+free_var_if :: CGActions -> VarSet
 free_var_if (CircGAction p a)
- = (free_var_ZPred p)++(free_var_CAction a)
+ = (free_var_ZPred p) `union_varset` (free_var_CAction a)
 free_var_if (CircThenElse (CircGAction p a) gb)
- = (free_var_ZPred p)++(free_var_CAction a)++(free_var_if gb)
+ = ((free_var_ZPred p) `union_varset` (free_var_CAction a)) `union_varset` (free_var_if gb)
 -- free_var_if (CircElse (CircusAction a))
 --  = (free_var_CAction a)
 -- free_var_if (CircElse (ParamActionDecl x (CircusAction a)))
@@ -805,25 +810,25 @@ avoid_variables = varset_from_zvars . map fst . local_values
 \subsection{New features for \Circus}
 Renaming local variables of an action
 \begin{code}
-rename_ZGenFilt_loc_var (Choose (va,x) e) 
+rename_ZGenFilt_loc_var (Choose (va,x) e)
   = (Choose ((join_name (join_name "lv" va) newt),x) e)
-  where 
+  where
         newt = (def_U_NAME $ get_vars_ZExpr e)
 rename_ZGenFilt_loc_var _ = error "local var translation not defined for this"
 \end{code}
 Then we also make a function that returns all the local variable definitions
 \begin{code}
-list_ZGenFilt_loc_var (Choose (va,x) e) 
+list_ZGenFilt_loc_var (Choose (va,x) e)
   = [((va,x),e)]
 list_ZGenFilt_loc_var _ = []
-list_ZGenFilt_loc_var' (Choose (va,x) e) 
+list_ZGenFilt_loc_var' (Choose (va,x) e)
   = [ZVar (va,x)]
 list_ZGenFilt_loc_var' _ = []
 \end{code}
 \begin{code}
 -- rename_actions_loc_var (CParAction a (ParamActionDecl vZGenFilt_lst vCAction))
 --   = (CParAction a (ParamActionDecl vZGenFilt_lst2 vCAction2))
---   where 
+--   where
 --     locVar = map list_ZGenFilt_loc_var vZGenFilt_lst
 --     renLocVar = map rename_ZGenFilt_loc_var vZGenFilt_lst
 --     newLocVar = map list_ZGenFilt_loc_var' renLocVar
@@ -834,7 +839,7 @@ list_ZGenFilt_loc_var' _ = []
 mergeTwoLists [] [] = []
 mergeTwoLists [x] [y] = [(x,y)]
 mergeTwoLists (x:xs) (y:ys) = [(x,y)] ++ (mergeTwoLists xs ys)
-mergeTwoLists _ _ = error "Error whilst mergin two lists" 
+mergeTwoLists _ _ = error "Error whilst mergin two lists"
 
 
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
@@ -844,9 +849,9 @@ def_U_prefix x = (map toUpper (take 3 x))
 \begin{code}
 get_vars_ZExpr :: ZExpr -> ZName
 -- get_vars_ZExpr (ZVar (('\\':'\\':xs),x)) = (map toUpper (take 1 xs)) ++ (drop 1 xs)
-get_vars_ZExpr (ZVar (a,x)) 
+get_vars_ZExpr (ZVar (a,x))
   = strip a "\92"
-get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[]))) 
+get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[])))
   = "P"++get_vars_ZExpr (ZVar (c,[]))
 get_vars_ZExpr x
   = "unknown"

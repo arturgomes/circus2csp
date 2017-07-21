@@ -278,8 +278,10 @@ splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
 \subsection{$get\_ZVar\_st$}
 This function extracts those variables $ZVar$ that are a state variable member.
 \begin{code}
+get_ZVar_st ((('l':'v':'_':xs),x))
+ = [('l':'v':'_':xs)]
 get_ZVar_st ((('s':'v':'_':xs),x))
- = [('s':'v':'_':xs)]
+  = [('s':'v':'_':xs)]
 get_ZVar_st x
  = []
 \end{code}
@@ -1588,7 +1590,7 @@ filter_universe_st :: String -> [(String, [Char], [Char], [Char])] -> [String]
 filter_universe_st procn [(a, b, c, d)]
   | is_ZVar_st' a procn = [b]
   | otherwise = []
-  
+
 filter_universe_st procn ((a, b, c, d):xs)
   | is_ZVar_st' a procn= [b]++(filter_universe_st procn xs)
   | otherwise = (filter_universe_st procn xs)
@@ -1636,27 +1638,21 @@ Pieces from MappingFunStatelessCircus file
 
 
 \begin{code}
-
-def_delta_mapping :: [(ZName, ZVar, ZExpr)] -> [ZExpr]
-def_delta_mapping [(n,(v,[]),t)]
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
-    where newt = (def_U_NAME $ get_vars_ZExpr t)
-def_delta_mapping ((n,(v,[]),t):xs)
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ((join_name (join_name (join_name "sv" n) v) newt),[]),t])]
+def_delta_mapping :: [ZGenFilt] -> [ZExpr]
+def_delta_mapping [(Choose (v,[]) t)]
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (v,[]),t])]
+def_delta_mapping ((Choose (v,[]) t):xs)
+  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (v,[]),t])]
     ++ (def_delta_mapping xs)
-    where newt = (def_U_NAME $ get_vars_ZExpr t)
 def_delta_mapping [] = []
 \end{code}
 
 \begin{code}
-def_delta_name :: [(ZName, ZVar, ZExpr)] -> [ZBranch]
-def_delta_name [(n,(v,[]),t)]
-  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])]
-    where newt = (def_U_NAME $ get_vars_ZExpr t)
-def_delta_name ((n,(v,[]),t):xs)
-  = [ZBranch0 ((join_name (join_name (join_name "sv" n) v) newt),[])]
-    ++ (def_delta_name xs)
-    where newt = (def_U_NAME $ get_vars_ZExpr t)
+def_delta_name :: [ZGenFilt] -> [ZBranch]
+def_delta_name [(Choose (v,[]) t)]
+  = [ZBranch0 (v,[])]
+def_delta_name ((Choose (v,[]) t):xs)
+  = [ZBranch0 (v,[])] ++ (def_delta_name xs)
 def_delta_name [] = []
 
 \end{code}
@@ -1672,10 +1668,8 @@ get_pre_Circ_proc []
 \subsection{Creating the Memory process}
 \begin{code}
 def_mem_st_Circus_aux :: [ZPara] -> [ZPara] -> [(ZName, ZVar, ZExpr)]
-def_mem_st_Circus_aux spec []
-  = []
-def_mem_st_Circus_aux spec [x]
-  = def_mem_st_CircParagraphs spec x
+def_mem_st_Circus_aux spec [] = []
+def_mem_st_Circus_aux spec [x] = def_mem_st_CircParagraphs spec x
 def_mem_st_Circus_aux spec (x:xs)
   = (def_mem_st_CircParagraphs spec x)++(def_mem_st_Circus_aux spec xs)
 \end{code}
@@ -1863,4 +1857,38 @@ check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay [])):xs) = True
 check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay _)):xs) = False
 check_empty_delta (_:xs) = check_empty_delta xs
 
+\end{code}
+
+this makes a list of local variables to be renamed
+\begin{code}
+\end{code}
+\begin{code}
+vars_to_name :: ZVar -> ZName
+vars_to_name (v,x) = v
+\end{code}
+\begin{code}
+rename_list_lv p ys vs
+  = ren p ys vs
+    where
+      ren' pn (v,[]) [Choose (v1,[]) t] =
+        case v == v1 of
+            True -> [((v,[]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[]))]
+            False -> []
+        where newt = (def_U_NAME $ get_vars_ZExpr t)
+      ren' pn (v,[]) ((Choose (v1,[]) t):xs) =
+        case v == v1 of
+            True -> [((v,[]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[]))]
+            False -> ren' pn (v,[]) xs
+        where newt = (def_U_NAME $ get_vars_ZExpr t)
+      ren pn [x] as = ren' pn x as
+      ren pn (x:xs) as = (ren' pn x as)++(ren pn xs as)
+
+rename_genfilt_lv pn [Choose (v,[]) t]
+  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[]) t]
+  where newt = (def_U_NAME $ get_vars_ZExpr t)
+rename_genfilt_lv pn x = x
+rename_genfilt_lv pn ((Choose (v,[]) t):xs)
+  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[]) t]
+  where newt = (def_U_NAME $ get_vars_ZExpr t)
+rename_genfilt_lv pn (x:xs) = (x:(rename_genfilt_lv pn xs))
 \end{code}

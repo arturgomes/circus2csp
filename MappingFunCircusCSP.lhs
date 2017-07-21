@@ -76,7 +76,7 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
             (mk_subtype funivlst)++
             "\n\n"++(mk_value funivlst)++
             "\n\n"++(mk_type funivlst)++
-            "\n\n"++(mk_tag funivlst)) 
+            "\n\n"++(mk_tag funivlst))
     True -> ""
   where
     univlst = (def_universe spec)
@@ -94,9 +94,9 @@ mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[]))
 \begin{code}
 mapping_CircParagraphs spec (CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])])
   = case res of
-    False -> "\n\n--------------------------------" 
+    False -> "\n\n--------------------------------"
             ++ "\n -- mget, mset and terminate -- "
-            ++ "\n--------------------------------\n" 
+            ++ "\n--------------------------------\n"
             ++ mapping_CDecl spec [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]),CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])]
     True -> ""
     where
@@ -130,9 +130,9 @@ mapping_CircParagraphs spec (CircChannel [CChan "terminate"])
 \begin{code}
 mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"]))
   = case res of
-    False -> "\n\n--------------------------------" 
+    False -> "\n\n--------------------------------"
             ++ "\n -- MEM_I -- "
-            ++ "\n--------------------------------\n" 
+            ++ "\n--------------------------------\n"
             ++ "MEM_I" ++ " = " ++ (mapping_CSExp (CChanSet ["mset","mget","terminate"]))
     True -> ""
     where
@@ -143,7 +143,7 @@ mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","termi
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(BINDING \defs NAME \cross \mathbb{U})
-  \defs\\\qquad 
+  \defs\\\qquad
   \tco{BINDINGS\_}
   T_1
   \tco{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\tco{))\}}\\
@@ -157,13 +157,13 @@ mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","termi
 \begin{code}
 mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
   = case res of
-    False -> ("\n--------------------------------" 
+    False -> ("\n--------------------------------"
             ++ "\n -- BINDINGS -- "
-            ++ "\n--------------------------------\n" 
-            ++ bindingsval ++ "\n") 
+            ++ "\n--------------------------------\n"
+            ++ bindingsval ++ "\n")
     True -> ""
     where
-      zn = get_znames_from_NAME spec 
+      zn = get_znames_from_NAME spec
       znames = remdups $ map select_zname_f_zbr zn
       ztypes = remdups $ map select_type_zname znames
       bindingsval = mk_charll_to_charl "\n" $ map mk_BINDINGS_TYPE ztypes
@@ -174,7 +174,7 @@ mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(NAME ::= \{\ldots\})
-  \defs\\\qquad 
+  \defs\\\qquad
   \tco{BINDINGS\_}
   T_1
   \tco{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\tco{))\}}\\
@@ -188,13 +188,13 @@ mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b) zbs)
 \begin{code}
 mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b) zbs)
   = case res of
-    False -> ("\n--------------------------------" 
+    False -> ("\n--------------------------------"
             ++ "\n -- NAME -- "
-            ++ "\n--------------------------------" 
-            ++ "\ndatatype NAME = " ++ (mapping_ZBranch_list zbs) 
-            ++ "\n" ++ make_subtype_NAME zbs 
+            ++ "\n--------------------------------"
+            ++ "\ndatatype NAME = " ++ (mapping_ZBranch_list zbs)
+            ++ "\n" ++ make_subtype_NAME zbs
             ++ "\n\n" ++ nameval
-            ++ "\n") 
+            ++ "\n")
     True -> ""
     where
       znames = remdups $ map select_zname_f_zbr zbs
@@ -207,7 +207,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b) zbs)
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(N == \{a | b\})
-  \defs\\\qquad 
+  \defs\\\qquad
   \tco{N = }\Upsilon_{ZTuple}(\{a | b\})
 \end{circus}
 \begin{code}
@@ -222,7 +222,7 @@ mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetComp xl (Just (ZTuple ztp
 \end{circus}
 \begin{code}
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b) zbs)
-  = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list zbs) 
+  = "\ndatatype " ++ a ++ " = " ++ (mapping_ZBranch_list zbs)
 
 \end{code}
 \subsection{Mapping \Circus\ process -- $ProcDecl$}
@@ -278,7 +278,7 @@ mapping_CircParagraphs spec (CircChanSet cn c2)
 
 The definition of the $\delta$ is not directly translated into CSP. Instead, we define in the $UNIVERSE$ translation rules, the equivalent notation, the $typeXYZ$ function.
 \begin{code}
-mapping_CircParagraphs spec (ZAbbreviation ("\\delta",[]) (ZSetDisplay ls)) 
+mapping_CircParagraphs spec (ZAbbreviation ("\\delta",[]) (ZSetDisplay ls))
   = ""
 \end{code}
 \subsection{Mapping Z abbreviation}
@@ -290,9 +290,9 @@ mapping_CircParagraphs spec (ZAbbreviation ("\\delta",[]) (ZSetDisplay ls))
       \item $expr$ is a Z expression.
     \end{provs}
 \begin{code}
-mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetDisplay ls)) 
+mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetDisplay ls))
   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
-mapping_CircParagraphs spec (ZAbbreviation (n,[]) expr) 
+mapping_CircParagraphs spec (ZAbbreviation (n,[]) expr)
   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
 \end{code}
 \ignore{
@@ -378,9 +378,9 @@ display_chann_CChanDecl :: [(String, ZExpr)] -> String
 display_chann_CChanDecl [] = ""
 display_chann_CChanDecl [(a,b)]
   = "channel " ++ a
-    ++ " : " ++ (get_channel_type b) 
+    ++ " : " ++ (get_channel_type b)
 display_chann_CChanDecl (x:xs)
-  = "channel " ++ display_chann_CChan' (map fst (x:xs)) 
+  = "channel " ++ display_chann_CChan' (map fst (x:xs))
     ++ " : " ++ (get_channel_type (snd x))
 \end{code}
 Function $get_channel_type$ translates the AST syntax for type expressions into \CSPM.
@@ -393,8 +393,8 @@ get_channel_type (ZCall (ZVar ("\\power",[])) (ZVar (v,[]))) = "Set("++v++")"
 get_channel_type (ZCross xs) = (get_channel_type_list xs)
 get_channel_type (ZTuple xls) = "(" ++ get_channel_type_tuple xls ++ ")"
 get_channel_type (ZSetComp [Choose (a,[]) (ZVar (at,[])),
-              Choose (b,[]) (ZVar (bt,[]))] 
-                (Just (ZTuple [ZVar (a1,[]),ZVar (b1,[])]))) 
+              Choose (b,[]) (ZVar (bt,[]))]
+                (Just (ZTuple [ZVar (a1,[]),ZVar (b1,[])])))
   = "(" ++ get_channel_type_tuple [(ZVar (at,[])),(ZVar (bt,[]))] ++ ")"
 get_channel_type _ = ""
 
@@ -411,11 +411,11 @@ get_channel_type_list (x:xs) = (get_channel_type x) ++ "." ++ (get_channel_type_
 
 \begin{circus}
   \Upsilon_{CSExp}(\lchanset xs \rchanset) \defs \tco{\{| } \Upsilon_{CSExp\_get\_cs}(xs) \tco{ |\}}\\
-  \Upsilon_{CSExp}(CS1 \setminus CS2) \defs 
+  \Upsilon_{CSExp}(CS1 \setminus CS2) \defs
     \tco{diff(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
-  \Upsilon_{CSExp}(CS1 \cup CS2) \defs 
+  \Upsilon_{CSExp}(CS1 \cup CS2) \defs
     \tco{union(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
-  \Upsilon_{CSExp}(CS1 \cap CS2) \defs 
+  \Upsilon_{CSExp}(CS1 \cap CS2) \defs
     \tco{inter(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
   \Upsilon_{CSExp}(\lchanset \rchanset) \defs \tco{\{\}}\\
   \Upsilon_{CSExp}(CS) \defs \tco{CS}
@@ -596,19 +596,19 @@ mapping_CProc procn spec (ProcStalessMain al ma)
     ++ "\twithin " ++ (mapping_CAction procn spec ma)
   where
     memproc = (case res of
-                False -> 
+                False ->
                   "--------------------------------"++
                   "\n\t\t-- MEMORY"++
                   "\n\t\t--------------------------------\n"++
                   "\t\tMemory("++mk_mem_param funivlst++") ="
                   ++ mk_mget_mem_bndg funivlst
-                  ++ mk_mset_mem_bndg funivlst ++ 
+                  ++ mk_mset_mem_bndg funivlst ++
                   "\n\t\t    [] terminate -> SKIP\n\n"++
-                  "\t\tMemorise(P,"++mk_mem_param funivlst++") ="++ 
+                  "\t\tMemorise(P,"++mk_mem_param funivlst++") ="++
                   "\n\t\t    ((P; terminate -> SKIP) [| MEM_I |]"++
-                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n" 
+                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n"
                 True -> "")
-    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec             
+    res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
     funivlst = remdups $ filter_universe_st procn (def_universe spec)
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
@@ -855,13 +855,20 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
 \Upsilon_A(\Intchoice x : S \circspot A)\circdef~\tco{|\textasciitilde| x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
+mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) (ZVar (t,_)))] a)
   = "( " ++ "|~| "
     ++  x
     ++ " : "
-    ++ (mapping_ZExpr (get_delta_names1 spec) s)
+    ++ t
     ++ " @\n\t\t\t "
     ++ mapping_CAction procn spec (a) ++ " )"
+mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[]) s)] a)
+      = "( " ++ "|~| "
+        ++  x
+        ++ " : "
+        ++ (mapping_ZExpr (get_delta_names1 spec) s)
+        ++ " @\n\t\t\t "
+        ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
 % \begin{code}
@@ -1083,7 +1090,7 @@ mapping_predicate lst (ZTrue{reason=[]})
 mapping_predicate lst (ZFalse{reason=[]})
   = "false"
 mapping_predicate lst (ZMember (ZVar (x,[])) (ZCall (ZVar ("\\delta",[])) (ZVar (n,[]))))
-  = "type"++(lastN 3 x)++"("++n++")"  
+  = "type"++(lastN 3 x)++"("++n++")"
 mapping_predicate lst (ZMember a b)
   = "member("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_predicate lst x
@@ -1096,7 +1103,7 @@ mapping_predicate lst x
 mapping_predicate_cs :: CSExp -> String
 {-
 The following one is not very well accepted by FDR as it may introduce differente type channels and therefore, it is incompatible.
-For instance, 
+For instance,
 
 Couldn't match expected type Event with actual type Int=>Event
     In the expression: getCurrentTime
@@ -1113,11 +1120,11 @@ I think it would be rather correct if we define it as {| x,y,z|}
 -}
 mapping_predicate_cs (cs)
   -- = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
-  = (mapping_set_cs_exp cs) 
+  = (mapping_set_cs_exp cs)
 mapping_set_cs_exp (CSEmpty) = "{}"
 mapping_set_cs_exp (CChanSet x)
   = "{| "++(mapping_ZExpr_def x)++" |}"
-mapping_set_cs_exp (CSExpr x) 
+mapping_set_cs_exp (CSExpr x)
   = x
 mapping_set_cs_exp (ChanSetUnion a b)
   = "union("++ (mapping_set_cs_exp a)++","++ (mapping_set_cs_exp b) ++")"
@@ -1150,21 +1157,21 @@ get_channel_name spec (ChanGenComm _ _ _)
 
 \begin{code}
 get_channel_name_cont spec [] = ""
-get_channel_name_cont spec [(ChanOutExp v)] 
+get_channel_name_cont spec [(ChanOutExp v)]
   = get_channel_name_cont spec [(ChanDotExp v)]
-get_channel_name_cont spec [(ChanDotExp v)] 
+get_channel_name_cont spec [(ChanDotExp v)]
   = "."++(mapping_ZExpr (get_delta_names1 spec) v)
-get_channel_name_cont spec [(ChanInp v)] 
+get_channel_name_cont spec [(ChanInp v)]
   = "?"++v
-get_channel_name_cont spec [(ChanInpPred v x)] 
+get_channel_name_cont spec [(ChanInpPred v x)]
   = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)
-get_channel_name_cont spec ((ChanOutExp v) : xs) 
-  = get_channel_name_cont spec ((ChanDotExp v) : xs) 
-get_channel_name_cont spec ((ChanDotExp v) : xs) 
+get_channel_name_cont spec ((ChanOutExp v) : xs)
+  = get_channel_name_cont spec ((ChanDotExp v) : xs)
+get_channel_name_cont spec ((ChanDotExp v) : xs)
   = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
-get_channel_name_cont spec ((ChanInp v) : xs) 
+get_channel_name_cont spec ((ChanInp v) : xs)
   = "?"++v++(get_channel_name_cont spec xs)
-get_channel_name_cont spec ((ChanInpPred v x) : xs) 
+get_channel_name_cont spec ((ChanInpPred v x) : xs)
   = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)++(get_channel_name_cont spec xs)
 \end{code}
 \begin{code}
@@ -1231,7 +1238,7 @@ mapping_ZExpr lst (ZVar ("\\emptyset",[])) = "{}"
 mapping_ZExpr lst (ZVar ("\\int",[])) = "Int"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
-mapping_ZExpr lst (ZVar (a,_)) 
+mapping_ZExpr lst (ZVar (a,_))
   | (inListVar a lst) = "value"++(lastN 3 a)++"(v_"++a++")"
   | (is_ZVar_v_st a) = "value"++(lastN 3 a)++"("++a++")"
   | otherwise = a
@@ -1260,7 +1267,7 @@ mapping_ZExpr lst (ZCall (ZVar ("\\setminus",[])) (ZTuple [a,b])) = "diff("++(ma
 mapping_ZExpr lst (ZCall (ZVar ("head",[])) s) = "head("++mapping_ZExpr lst (s)++")"
 mapping_ZExpr lst (ZCall (ZVar ("tail",[])) s) = "tail("++mapping_ZExpr lst (s)++")"
 mapping_ZExpr lst (ZCall (ZVar (b,[])) (ZVar (n,[]))) = "apply("++b++","++n++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])) 
+mapping_ZExpr lst (ZCall (ZVar ("\\upto",[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
 mapping_ZExpr lst (ZSetDisplay x) = "{"++(mk_charll_to_charl ", " $ (map (mapping_ZExpr lst) x))++"}"

@@ -68,6 +68,7 @@ test_subs es sub es2
   actual = substitute sub (free_vars (fromOk e)) (fromOk e)
   expected = fromOk e2
 
+type_test_subs es = parseZexpr es >>= unfoldexpr testenv :: ErrorOr ZExpr
 
 test_uniquify :: ZExpr -> ZExpr -> IO ()
 test_uniquify e expected
