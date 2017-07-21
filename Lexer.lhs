@@ -46,8 +46,10 @@ data ZToken
   | L_END_CIRCUS           -- '\end{circus}'
   | L_BEGIN_CIRCUSACTION   -- '\begin{circusaction}'
   | L_END_CIRCUSACTION     -- '\end{circusaction}'
-
-
+  -- assertions for CSP
+  | L_BEGIN_ASSERT         -- '\begin{assert}'
+  | L_END_ASSERT         -- '\begin{assert}'
+  | L_ASSERT
   -- Begin Circus Tokens
   | L_REPEXTCHOICE
   | L_REPINTCHOICE
@@ -252,6 +254,7 @@ zlexc ls s
   lexcmd "schema" = Token L_BEGIN_SCHEMA (line ls) pos : rest
   lexcmd "gendef" = Token L_BEGIN_GENDEF (line ls) pos : rest
   lexcmd "machine"= Token L_BEGIN_MACHINE (line ls) pos : rest
+  lexcmd "assert"= Token L_BEGIN_ASSERT (line ls) pos : rest
   lexcmd "circus"= Token L_BEGIN_CIRCUS (line ls) pos : rest
   lexcmd "circusaction"= Token L_BEGIN_CIRCUSACTION (line ls) pos : rest
   lexcmd _ = zskipline ls s
@@ -479,6 +482,7 @@ zlexz c ls ('\\':s)
   | cmd=="rcircguard"           = tok L_RCIRCGUARD
   | cmd=="lschexpract"          = tok L_LSCHEXPRACT
   | cmd=="rschexpract"          = tok L_RSCHEXPRACT
+  | cmd=="assert"               = tok L_ASSERT  -- CSP ASSERTION
   -- end Circus Commands
   | cmd=="end" && arg=="{zed}"          = tokarg L_END_ZED
   | cmd=="end" && arg=="{syntax}"       = tokarg L_END_ZED
@@ -487,6 +491,7 @@ zlexz c ls ('\\':s)
   | cmd=="end" && arg=="{gendef}"       = tokarg L_END_GENDEF
   | cmd=="end" && arg=="{machine}"      = tokarg L_END_MACHINE
   -- Circus paragraphs - end
+  | cmd=="end" && arg=="{assert}"       = tokarg L_END_ASSERT  -- CSP ASSERTION
   | cmd=="end" && arg=="{circus}"       = tokarg L_END_CIRCUS
   | cmd=="end" && arg=="{circusaction}" = tokarg L_END_CIRCUSACTION
 

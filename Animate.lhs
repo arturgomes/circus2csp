@@ -50,6 +50,7 @@ data ZParaInfo
   | CircusChannel{origpara::ZPara, chanunfolded::[CDecl]}
   | CircusChanSet{origpara::ZPara, defcname::ZName, chansetunfolded::CSExp}
   | CircusProcess{origpara::ZPara,procunfolded::ProcDecl}
+  | CircusAssert{origpara::ZPara,assertunfolded::String}
   | ZParaMachine{origpara::ZPara,
      defname::ZVar
       -- umachState::[ZGenFilt],
@@ -276,7 +277,11 @@ process_paras spec (p@(Process s) : ps)
            procunfolded=s}
        let newspec = newp:spec
        process_paras newspec ps
-
+process_paras spec (p@(Assert s) : ps)
+ = do let newp = CircusAssert{origpara=p,
+          assertunfolded=s}
+      let newspec = newp:spec
+      process_paras newspec ps
 process_paras spec (para : ps)
   = fail ("Not implemented yet: " ++ show para)
 
@@ -350,11 +355,11 @@ remove_proc_para [CircusProcess{origpara=x, procunfolded=pd1}] cp
       _ -> [CircusProcess{origpara=x,procunfolded=pd1}]
 remove_proc_para [x] cp
   = [x]
-remove_proc_para ((CircusProcess{origpara=x, procunfolded=pd1}):xs) cp 
+remove_proc_para ((CircusProcess{origpara=x, procunfolded=pd1}):xs) cp
   = case (compare_proc pd1 cp) of
       True -> xs
       _ -> ((CircusProcess{origpara=x,procunfolded=pd1}):(remove_proc_para xs cp))
-remove_proc_para (x:xs) cp 
+remove_proc_para (x:xs) cp
   = x:(remove_proc_para xs cp)
 
 \end{code}
@@ -369,28 +374,28 @@ remove_chan_para [CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}] (C
       _ -> [CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}]
 remove_chan_para [x] cp
   = [x]
-remove_chan_para ((CircusChannel{origpara=x, chanunfolded=pd1}):xs) (CircChannel cp) 
+remove_chan_para ((CircusChannel{origpara=x, chanunfolded=pd1}):xs) (CircChannel cp)
   = case pd1 == cp of
       True -> xs
       _ -> ((CircusChannel{origpara=x, chanunfolded=pd1}):(remove_chan_para xs (CircChannel cp)))
-remove_chan_para ((CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}):xs) (CircChanSet v cp) 
+remove_chan_para ((CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}):xs) (CircChanSet v cp)
   = case v == n of
       True -> xs
       _ -> ((CircusChanSet{origpara=x, defcname=n, chansetunfolded=pd1}):(remove_chan_para xs (CircChanSet v cp)))
-remove_chan_para (x:xs) cp 
+remove_chan_para (x:xs) cp
   = x:(remove_chan_para xs cp)
 \end{code}
 \begin{code}
 compare_proc (CProcess zn1 pd1) (CProcess zn2 pd2)
-  = case (zn1 == zn2) of 
+  = case (zn1 == zn2) of
       True -> True
       _ -> False
 compare_proc (CParamProcess zn1 znls1 pd1) (CParamProcess zn2 znls2 pd2)
-  = case (zn1 == zn2) of 
+  = case (zn1 == zn2) of
       True -> True
       _ -> False
 compare_proc (CGenProcess zn1 znls1 pd1) (CGenProcess zn2 znls2 pd2)
-  = case (zn1 == zn2) of 
+  = case (zn1 == zn2) of
       True -> True
       _ -> False
 \end{code}

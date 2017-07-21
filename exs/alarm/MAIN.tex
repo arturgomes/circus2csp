@@ -5,7 +5,9 @@
 \usepackage{hyperref}
 \usepackage[color]{circus}
 \usepackage{listings}
-\usepackage{lstlhs}
+\usepackage{verbatim}
+
+% \usepackage{lstlhs}
 \long\def\ignore#1{}
 \parindent=0pt % I hate first line indentation
 \parskip=3pt   % I like a visual white gap between paragraphs
@@ -33,6 +35,9 @@
   {\newline\noindent\ provided\begin{itemize}}
   {\end{itemize}}
 
+\newenvironment{assert}
+{\endgraf\verbatim}%
+{\endverbatim}
 
 
 \def\Circus{{\sf\slshape{Circus}}}

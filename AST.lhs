@@ -958,7 +958,7 @@ data ZPara
 \end{code}
 
 \section{Circus Abstract Syntax}
-A \Circus\ specification is a list of paragraphs, $ZPara$. They can be either a channel declaration, a channel set declaration or a process declaration. 
+A \Circus\ specification is a list of paragraphs, $ZPara$. They can be either a channel declaration, a channel set declaration or a process declaration.
 \begin{code}
 --------------------------------------
 -------------   Circus   -------------
@@ -968,6 +968,7 @@ A \Circus\ specification is a list of paragraphs, $ZPara$. They can be either a 
   | CircChannel [CDecl]         -- \circchannel CDecl
   | CircChanSet ZName CSExp     -- \circchanset N == CSExp
   | Process ProcDecl            -- ProcDecl
+  | Assert String            -- CSP Assertion text
   deriving (Eq,Ord,Show)
 
 type CProgram = [ZPara]

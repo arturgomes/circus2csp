@@ -33,7 +33,8 @@ Run \circdef \\
 \also \circchannel ans : RANGE
 \also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
 \also \circprocess Chrono \circdef\ \circbegin\\
-\circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\
+\circstate State \defs [ sec : RANGE; min : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ need to fix this in the tool
 SecInit \circdef (sec:=0)\\
 IncSec \circdef (sec:=(sec+1)\mod 3)\\
 RunSec \circdef \t1
@@ -78,8 +79,18 @@ WRun \circdef \\
 \circend
 \end{circus}
 
+\begin{assert}
+"assert AChrono :[deterministic [FD]]"\\
+\also"assert Chrono :[deterministic [FD]]"\\
+\also"assert AChrono [FD= Chrono"\\
+\also"assert Chrono [FD= AChrono"\\
 
-MyWakeUp = (let X = WakeUpN; X within X)
-assert MyWakeUp :[ deadlock free [FD] ]
-assert WakeUpN :[ livelock free ]
-assert WakeUpN :[ deterministic [FD] ]
+\also"assert WakeUp :[deterministic [FD]]"\\
+
+\also"HWakeUp = WakeUp \ {| snooze, radioOn |}"\\
+
+\also"assert HWakeUp :[deterministic [FD]]"\\
+
+\also"assert AChrono [FD= HWakeUp"\\
+\also"assert HWakeUp [FD= AChrono"\\
+\end{assert}

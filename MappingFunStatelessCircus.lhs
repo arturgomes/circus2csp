@@ -51,29 +51,31 @@ omega_Circus_aux' spec
     zb = concat (map fst res)
     para = (map snd res)
 omega_Circus_aux :: [ZPara] -> [ZPara] -> [([ZGenFilt],ZPara)]
-omega_Circus_aux spec [e@(Process (CProcess p (ProcDef (ProcMain st aclst ma))))] = [(zb,res)]
+omega_Circus_aux spec
+  [e@(Process (CProcess p (ProcDef (ProcMain _ _ _))))]
+  = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec [e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))] = [(zb,res)]
+omega_Circus_aux spec
+  [e@(Process (CProcess p (ProcDef (ProcStalessMain _ _))))]
+  = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
 omega_Circus_aux spec [(Process cp)]
   = [([],(Process (omega_ProcDecl spec cp)))]
-  -- where
-  --   ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
 omega_Circus_aux spec [x] = [([],x)]
-omega_Circus_aux spec (e@(Process (CProcess p (ProcDef (ProcMain st aclst ma)))):xs)
+omega_Circus_aux spec
+  (e@(Process (CProcess p (ProcDef (ProcMain _ _ _)))):xs)
   = [(zb,res)]++(omega_Circus_aux spec xs)
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec ((e@(Process (CProcess p (ProcDef (ProcStalessMain  aclst ma))))):xs)
+omega_Circus_aux spec
+  ((e@(Process (CProcess p (ProcDef (ProcStalessMain _ _))))):xs)
   = [(zb,res)]++(omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
 omega_Circus_aux spec ((Process cp):xs)
   = [([],(Process (omega_ProcDecl spec cp)))]++(omega_Circus_aux spec xs)
-  -- where
-  -- ncp = (rename_vars_ProcDecl1 (def_mem_st_Circus_aux spec) cp)
 omega_Circus_aux spec (x:xs)
   = [([],x)]++(omega_Circus_aux spec xs)
 \end{code}
@@ -169,6 +171,12 @@ proc_ref2 e@(Process (CProcess p (ProcDef
       Just xe@(Process (CProcess pq (ProcDef (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) -> (xzs,(proc_ref3 xe))
       Nothing ->(zs,(proc_ref3 e))
   where ref = runRefinementZp e
+proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
+    = case ref of
+        Just xe@(Process (CProcess pq (ProcDef (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) -> (xzs,(proc_ref3 xe))
+        Nothing ->([],(proc_ref3 e))
+    where ref = runRefinementZp e
+proc_ref2 x = error ("can not show this" ++ show x)
 \end{code}
 \begin{argue}
 	\\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
@@ -229,7 +237,7 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
   = proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[]) (ZVar ("BINDING",[]))] (CSPExtChoice
   (CSPExtChoice
     (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[])),ChanOutExp (ZCall (ZVar ("b",[])) (ZVar ("n",[])))]) (CSPParAction "Memory" [ZVar ("b",[])])))
-		(CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CVarDecl [Choose ("b",[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult ["b"]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[])])) (CSExpr "MEMI"))))))))
+		(CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CVarDecl [Choose ("b",[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEM_I") (NSExprMult ["b"]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[])])) (CSExpr "MEM_I"))))))))
   where
     nma = omega_CAction ma
     ne = sub_pred (make_subinfo [(("b",[]),ZVar ("x",[]))] (varset_from_zvars [("x",[])])) e
@@ -280,6 +288,7 @@ proc_ref4 x = proc_ref5 x
 \begin{code}
 proc_ref5 (Process (CProcess p (ProcDef (ProcMain x as ma)))) =
   proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain as ma))))
+proc_ref5 x = proc_ref6 x
 \end{code}
 \begin{argue}
 	\\= & Process Refinement\\
@@ -326,6 +335,7 @@ proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CV
 	= (Process (CProcess p (ProcDef (ProcStalessMain mem (CSPRepIntChoice [Choose x bi] ma)))))
 proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem x))))
   	= (Process (CProcess p (ProcDef (ProcStalessMain mem x))))
+proc_ref6 x = x
 \end{code}
 \begin{argue}
 	\\= & Action Refinement\\

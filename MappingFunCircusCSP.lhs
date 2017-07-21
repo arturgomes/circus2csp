@@ -294,6 +294,8 @@ mapping_CircParagraphs spec (ZAbbreviation (n,[]) (ZSetDisplay ls))
   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
 mapping_CircParagraphs spec (ZAbbreviation (n,[]) expr)
   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
+mapping_CircParagraphs spec (Assert x)
+    = "\n" ++ x
 \end{code}
 \ignore{
 \begin{code}

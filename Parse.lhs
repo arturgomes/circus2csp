@@ -109,8 +109,21 @@ zparagraph
   = zunboxed_para +++
     zaxiomatic_box +++ -- \begin{axdef}...\end{axdef}
     zschema_box +++
-    zmachine_box   -- an extension for defining state machines.
+    zmachine_box +++  -- an extension for defining state machines.
+    csp_asert
 
+-- Assertions in CSP
+csp_asert :: EParser ZToken [ZPara]
+csp_asert
+    = do  {tok L_BEGIN_ASSERT;
+  	cut;
+  	s <- csp_assert_u `sepby1` zsep;
+  	optnls;
+  	tok L_END_ASSERT;
+    return (concat s)}
+csp_assert_u :: EParser ZToken [ZPara]
+csp_assert_u =
+  do {s <- zgivenval; optnls; return [Assert s]}
 
 zunboxed_para :: EParser ZToken [ZPara]
 zunboxed_para
@@ -415,7 +428,7 @@ zbasic_decl
 	 tok L_COLON;
 	 optnls;
 	 e <- zexpression;
-	 return [Choose (make_zvar w d) e | (w,d) <- ws]} 
+	 return [Choose (make_zvar w d) e | (w,d) <- ws]}
 	 -- +++ do  {sr <- zschema_ref;
 	 -- return [Include sr]}
 
@@ -919,6 +932,7 @@ circus_par
 	-- ProcDecl
 	+++ circus_proc
 
+
 -- Z Paragraphs within Circus environment
 circus_zitem :: EParser ZToken [ZPara]
 circus_zitem =
@@ -1314,7 +1328,7 @@ circus_proc_stateless_main
       tok L_CIRCUSEND;
       return (ProcStalessMain (concat pp3) main2)
       }+++
-    do {tok L_CIRCUSBEGIN; 
+    do {tok L_CIRCUSBEGIN;
       optnls;
       tok L_CIRCSPOT;
       main2 <- circus_action;
@@ -1538,7 +1552,7 @@ par_action
 -- |\lpar CS \rpar x: T \circspot A
 
 circus_action :: EParser ZToken CAction
-circus_action 
+circus_action
 	= circus_action_ns_interleave
 
 -- recursive circus processes functions
@@ -1808,7 +1822,7 @@ circus_action_u
 			cac <- circus_action;
 			return (CSPRecursion cc cac)}
 	-- Here an action can carry another action as parenthesis
-	-- This is used for recursion unfold 
+	-- This is used for recursion unfold
 
 	-- (Action)
 	+++ do {tok L_OPENPAREN;
@@ -1820,7 +1834,7 @@ circus_action_u
 	-- | Action \circhide CSExp
 	+++ circus_action_hide
 
-	
+
 -- | Action \circhide CSExp
 circus_action_hide :: EParser ZToken CAction
 circus_action_hide
@@ -1965,7 +1979,7 @@ circus_command_var
 			optnls;
 	  		prc <- circus_action;
 			return (CVarDecl (concat decls) prc)}
-			
+
 circus_command_bracket :: EParser ZToken CCommand
 circus_command_bracket
 	= do {tok L_OPENBRACKET;
@@ -2072,12 +2086,12 @@ circus_command_if
 -- 				| Pred \circthen Action \circelse CGActions
 circus_guarded_commands :: EParser ZToken CGActions
 circus_guarded_commands
-	= 
+	=
     --  do {tok L_CIRCELSE;
 	  --      optnls;
 	  -- 		  cgc <- par_action;
 	  -- 		  return (CircElse cgc)}
-	  -- +++ 
+	  -- +++
     do {gcs <- circus_guarded_command;
 			optnls;
 			tok L_CIRCELSE;
@@ -2098,19 +2112,19 @@ circus_replace =
 			optnls;
 			tok L_ASSIGN;
 			optnls;
-			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});	
+			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
 			return (CRenameAssign ws zxprs)}
 	+++ do {ws <- zdef_lhs;
 			optnls;
 			tok L_ASSIGN;
 			optnls;
-			zxprs <- zdef_lhs;	
+			zxprs <- zdef_lhs;
 			return (CRenameAssign [ws] [zxprs])}
 	+++ do {ws <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
 			optnls;
 			tok L_SLASH;
 			optnls;
-			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});	
+			zxprs <- opt [] (zdef_lhs `sepby1` do {optnls; tok L_COMMA; optnls});
 			return (CRename ws zxprs)}
 	+++ do {ws <- zdef_lhs;
 			optnls;
