@@ -34,7 +34,7 @@ Run \circdef \\
 \also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
 \also \circprocess Chrono \circdef\ \circbegin\\
 \circstate State \defs [ sec : RANGE; min : RANGE ]\\
-% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ need to fix this in the tool
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
 SecInit \circdef (sec:=0)\\
 IncSec \circdef (sec:=(sec+1)\mod 3)\\
 RunSec \circdef \t1
@@ -78,7 +78,25 @@ WRun \circdef \\
 \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
 \circend
 \end{circus}
+\begin{circus}
 
+  \circprocess\ WakeUpOK \circdef\\
+  \circbegin\\
+  \circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
+  WInit \circdef (sec,min,buzz:=0,0,OFF)\\
+  WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+  WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+  WRun \circdef \\
+  ((tick \then WIncSec \circseq \\
+  		( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
+  		\extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip))\\
+  		\extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
+  		\extchoice (time \then out!(min, sec) \then \Skip)\\
+  		\extchoice (snooze \then (buzz:=OFF)) \circhide \lchanset tick \rchanset)
+  \\
+  \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
+  \circend
+\end{circus}
 \begin{assert}
 "assert AChrono :[deterministic [FD]]"\\
 \also"assert Chrono :[deterministic [FD]]"\\
@@ -93,4 +111,8 @@ WRun \circdef \\
 
 \also"assert AChrono [FD= HWakeUp"\\
 \also"assert HWakeUp [FD= AChrono"\\
-\end{assert}
+
+\also"assert WakeUpOK :[deterministic [FD]]"\\
+
+\also"assert AChrono [FD= WakeUpOK"\\
+\also"assert WakeUpOK [FD= AChrono"\\\end{assert}
