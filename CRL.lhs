@@ -38,7 +38,7 @@ support schemas as actions in our tool, and as we expand the definition of all
 actions to the main action $MA$, we'll have the following implementation.
 \begin{code}
 crl_prom_var_state :: ZPara -> Refinement ZPara
-crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) zs) aclst (CActionCommand (CVarDecl va2 ma2))))))
+crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
         ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs))))
