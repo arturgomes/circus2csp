@@ -6,6 +6,8 @@ The tool is implemented in Haskell, on top of Mark Utting's JAZA (Just Another Z
 
 In our testings we use GHC version 7.8.4
 
+If stack is to be used, then the latest Haskell LTS that uses GHC 7.8.4 is 2.22
+
 
 # How to install
 
