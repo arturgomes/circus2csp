@@ -31,33 +31,14 @@ showexpr = zexpr_string (pinfo_extz 80)
 The following functions are used to map Circus Channels into CSP. However, generic circus channels are not yet captured by the tool.
 \begin{code}
 mapping_Circus :: [ZPara] -> [ZPara] -> String
-mapping_Circus s s1
-  = sort_mappings s
+mapping_Circus spec []
+  = ""
+mapping_Circus spec [x]
+  = mapping_CircParagraphs spec x
+mapping_Circus spec (x:xs)
+  = mapping_CircParagraphs spec x ++ (mapping_Circus spec xs)
 
-mapping_Circus_aux :: [ZPara] -> [ZPara] -> String
-mapping_Circus_aux spec [] = ""
-mapping_Circus_aux spec [x] = mapping_CircParagraphs spec x
-mapping_Circus_aux spec (x:xs)
-  = mapping_CircParagraphs spec x ++ (mapping_Circus_aux spec xs)
-
-filter_spec ([],cc,ccs,pd,csp,z) = (cc,ccs,pd,csp,z)
-filter_spec ((x:xs),cc,ccs,pd,csp,z)
-  = case x of
-      e@(CircChannel _) -> filter_spec (xs,[e]++cc,ccs,pd,csp,z)
-      e@(CircChanSet _ _) -> filter_spec (xs,cc,[e]++ccs,pd,csp,z)
-      e@(Process _) -> filter_spec (xs,cc,ccs,[e]++pd,csp,z)
-      e@(Assert _) -> filter_spec (xs,cc,ccs,pd,[e]++csp,z)
-      _ -> filter_spec (xs,cc,ccs,pd,csp,[x]++z)
-
-sort_mappings :: [ZPara] -> String
-sort_mappings spec =
-  mapping_Circus_aux spec z ++
-  mapping_Circus_aux spec cc ++
-  mapping_Circus_aux spec ccs ++
-  mapping_Circus_aux spec pd ++
-  mapping_Circus_aux spec csp
-  where
-    (cc,ccs,pd,csp,z) = filter_spec (spec,[],[],[],[],[])
+filter_spec (e(CircChannel a):xs) 
 \end{code}
 \subsection{Mapping the UNIVERSE type}
 \begin{circus}
@@ -141,19 +122,19 @@ mapping_CircParagraphs spec (CircChannel [CChan "terminate"])
 \subsection{Mapping $MEM_I$ channel set for the $Memory$ approach}
 
 \begin{circus}
-  \Upsilon_{CircParagraphs}(\circchannelset MEMI == \lchanset mget, mset, terminate \rchanset)
+  \Upsilon_{CircParagraphs}(\circchannelset MEM_I == \lchanset mget, mset, terminate \rchanset)
   \defs\\\qquad \tco{MEM\_I =}\Upsilon_{CSExp}(\lchanset mget, mset, terminate \rchanset)
 \end{circus}
     \begin{provs}
       \item $\delta(\emptyset) \notin spec$ -- There is at least one element in the $\delta$ mapping.
     \end{provs}
 \begin{code}
-mapping_CircParagraphs spec (CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"]))
+mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","terminate"]))
   = case res of
     False -> "\n\n--------------------------------"
-            ++ "\n -- MEMI -- "
+            ++ "\n -- MEM_I -- "
             ++ "\n--------------------------------\n"
-            ++ "MEMI" ++ " = " ++ (mapping_CSExp (CChanSet ["mset","mget","terminate"]))
+            ++ "MEM_I" ++ " = " ++ (mapping_CSExp (CChanSet ["mset","mget","terminate"]))
     True -> ""
     where
       res =  member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
@@ -627,8 +608,8 @@ mapping_CProc procn spec (ProcStalessMain al ma)
                   ++ mk_mset_mem_bndg funivlst ++
                   "\n\t\t    [] terminate -> SKIP\n\n"++
                   "\t\tMemorise(P,"++mk_mem_param funivlst++") ="++
-                  "\n\t\t    ((P; terminate -> SKIP) [| MEMI |]"++
-                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEMI\n"
+                  "\n\t\t    ((P; terminate -> SKIP) [| MEM_I |]"++
+                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n"
                 True -> "")
     res = member (ZAbbreviation ("\\delta",[]) (ZSetDisplay [])) spec
     funivlst = remdups $ filter_universe_st procn (def_universe spec)
@@ -880,7 +861,7 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[]) s)] a)
 
 
 -- first case is for the BINDING
-mapping_CAction procn spec (CSPRepIntChoice [Choose ("x",[]) (ZVar ("BINDING",[]))] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult ["b"]) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[])])) (CSExpr "MEMI")))
+mapping_CAction procn spec (CSPRepIntChoice [Choose ("x",[]) (ZVar ("BINDING",[]))] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEM_I") (NSExprMult ["b"]) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[])])) (CSExpr "MEM_I")))
     = "let "++ restr
        ++"\n\t\twithin"
        ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"

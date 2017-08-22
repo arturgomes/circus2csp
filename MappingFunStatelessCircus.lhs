@@ -600,28 +600,28 @@ omega_CAction (CSPExtChoice ca cb)
 \end{circus}
 
 \begin{code}
--- omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
---   = make_get_com lsx (rename_vars_CAction (CSPHide
---    (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
---      (CSPNSParal NSExpEmpty cs NSExpEmpty
---       (CSPHide
---        (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
---         (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
---         (CSPParAction "MemoryMerge"
---          [ZSetDisplay [],
---                 ZVar ("LEFT",[])]))
---        (CSExpr "MEMi"))
---       (CSPHide
---        (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
---         (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
---         (CSPParAction "MemoryMerge"
---          [ZSetDisplay [],
---                 ZVar ("RIGHT",[])]))
---        (CSExpr "MEMi")))
---       (CActionName "Merge"))
---       (CChanSet ["mleft","mright"])))
---    where
---     lsx = union (map fst (remdups (free_var_CAction a1))) (map fst (remdups (free_var_CAction a2)))
+omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
+  = make_get_com lsx (rename_vars_CAction (CSPHide
+   (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
+     (CSPNSParal NSExpEmpty cs NSExpEmpty
+      (CSPHide
+       (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
+        (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay [],
+                ZVar ("LEFT",[])]))
+       (CSExpr "MEMi"))
+      (CSPHide
+       (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
+        (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay [],
+                ZVar ("RIGHT",[])]))
+       (CSExpr "MEMi")))
+      (CActionName "Merge"))
+      (CChanSet ["mleft","mright"])))
+   where
+    lsx = union (map fst (remdups (free_var_CAction a1))) (map fst (remdups (free_var_CAction a2)))
 \end{code}
 
 \begin{circus}
