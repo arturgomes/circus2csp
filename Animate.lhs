@@ -318,30 +318,30 @@ process_paras_omega spec (p@(CircChanSet v s) : ps)
            chansetunfolded=s}
        let newspec = newp:(remove_chan_para spec (CircChanSet v s))
        process_paras_omega newspec ps
-process_paras_omega spec (p@(ZGivenSetDecl ("UNIVERSE",[])) : ps)
+process_paras_omega spec (p@(ZGivenSetDecl ("UNIVERSE",[],[])) : ps)
   = do let newp = ZParaDefn{origpara=p,
-           defname=("UNIVERSE",[]),
-           defunfolded=ZGivenSet ("UNIVERSE",[])}
+           defname=("UNIVERSE",[],[]),
+           defunfolded=ZGivenSet ("UNIVERSE",[],[])}
        newspec <- adddefn newp spec
        process_paras_omega newspec ps
-process_paras_omega spec (p@(ZAbbreviation ("BINDINGS",[]) e) : ps)
+process_paras_omega spec (p@(ZAbbreviation ("BINDINGS",[],[]) e) : ps)
   = do ue <- unfoldexpr (uenv spec) e
        let newp = ZParaDefn{origpara=p,
-           defname=("BINDING",[]),
+           defname=("BINDING",[],[]),
            defunfolded=ue}
        newspec <- adddefn newp spec
        process_paras_omega newspec ps
-process_paras_omega spec (p@(ZAbbreviation ("\\delta",[]) e) : ps)
+process_paras_omega spec (p@(ZAbbreviation ("\\delta",[],[]) e) : ps)
   = do ue <- unfoldexpr (uenv spec) e
        let newp = ZParaDefn{origpara=p,
-           defname=("\\delta",[]),
+           defname=("\\delta",[],[]),
            defunfolded=ue}
        newspec <- adddefn newp spec
        process_paras_omega newspec ps
-process_paras_omega spec (p@(ZFreeTypeDef ("NAME",[]) bs) : ps)
-  = do  ue <- unfoldexpr (uenv spec) (ZFreeType ("NAME",[]) bs)
+process_paras_omega spec (p@(ZFreeTypeDef ("NAME",[],[]) bs) : ps)
+  = do  ue <- unfoldexpr (uenv spec) (ZFreeType ("NAME",[],[]) bs)
         let newp = ZParaDefn{origpara=p,
-           defname=("NAME",[]),
+           defname=("NAME",[],[]),
            defunfolded=ue}
         newspec <- adddefn newp spec
         process_paras_omega newspec ps

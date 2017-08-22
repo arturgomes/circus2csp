@@ -29,7 +29,9 @@ invariant.
   avoid_variables,
   choose_fresh_var,
   def_U_NAME,
+  def_U_NAME',
   def_U_prefix,
+  def_U_prefix',
   diff_varset,
   empty_varset,
   free_var_CAction,
@@ -738,13 +740,13 @@ free_var_CAction (CSPRepInterl lst c)
 \begin{code}
 free_var_CParameter :: [CParameter] -> VarSet
 free_var_CParameter [] = empty_varset
-free_var_CParameter [ChanInp x] = varset_from_zvars [(x,[])]
+free_var_CParameter [ChanInp x] = varset_from_zvars [(x,[],[])]
 free_var_CParameter [ChanDotExp x] = free_var_ZExpr x
 free_var_CParameter [ChanOutExp x] = free_var_ZExpr x
 free_var_CParameter [ChanInpPred _ x] = free_var_ZPred x
 free_var_CParameter [_] = empty_varset
 free_var_CParameter ((ChanInp x):xs)
-  = (varset_from_zvars [(x,[])]) `union_varset` (free_var_CParameter xs)
+  = (varset_from_zvars [(x,[],[])]) `union_varset` (free_var_CParameter xs)
 free_var_CParameter ((ChanDotExp x):xs)
   = (free_var_ZExpr x) `union_varset` (free_var_CParameter xs)
 free_var_CParameter ((ChanOutExp x):xs)
@@ -810,19 +812,19 @@ avoid_variables = varset_from_zvars . map fst . local_values
 \subsection{New features for \Circus}
 Renaming local variables of an action
 \begin{code}
-rename_ZGenFilt_loc_var (Choose (va,x) e)
-  = (Choose ((join_name (join_name "lv" va) newt),x) e)
+rename_ZGenFilt_loc_var (Choose (va,x,y) e)
+  = (Choose ((join_name (join_name "lv" va) newt),x,y) e)
   where
         newt = (def_U_NAME $ get_vars_ZExpr e)
 rename_ZGenFilt_loc_var _ = error "local var translation not defined for this"
 \end{code}
 Then we also make a function that returns all the local variable definitions
 \begin{code}
-list_ZGenFilt_loc_var (Choose (va,x) e)
-  = [((va,x),e)]
+list_ZGenFilt_loc_var (Choose (va,x,y) e)
+  = [((va,x,[e]),e)]
 list_ZGenFilt_loc_var _ = []
-list_ZGenFilt_loc_var' (Choose (va,x) e)
-  = [ZVar (va,x)]
+list_ZGenFilt_loc_var' (Choose (va,x,y) e)
+  = [ZVar (va,x,[e])]
 list_ZGenFilt_loc_var' _ = []
 \end{code}
 \begin{code}
@@ -844,15 +846,25 @@ mergeTwoLists _ _ = error "Error whilst mergin two lists"
 
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
 def_U_prefix x = (map toUpper (take 3 x))
+
+def_U_NAME' (ZVar ("\\nat",[],_)) = "U_NAT"
+def_U_NAME' (ZVar (c,[],_)) = (def_U_NAME c)
+def_U_NAME' (ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_)))
+  = (def_U_NAME ("P"++c))
+
+def_U_prefix' (ZVar ("\\nat",[],_)) = "U_NAT"
+def_U_prefix' (ZVar (c,[],_)) = (def_U_prefix c)
+def_U_prefix' (ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_)))
+  = (def_U_prefix ("P"++c))
 \end{code}
 
 \begin{code}
 get_vars_ZExpr :: ZExpr -> ZName
 -- get_vars_ZExpr (ZVar (('\\':'\\':xs),x)) = (map toUpper (take 1 xs)) ++ (drop 1 xs)
-get_vars_ZExpr (ZVar (a,x))
+get_vars_ZExpr (ZVar (a,x,y))
   = strip a "\92"
-get_vars_ZExpr (ZCall (ZVar ("\\power",[])) (ZVar (c,[])))
-  = "P"++get_vars_ZExpr (ZVar (c,[]))
+get_vars_ZExpr (ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_)))
+  = "P"++get_vars_ZExpr (ZVar (c,[],[]))
 get_vars_ZExpr x
   = "unknown"
 \end{code}

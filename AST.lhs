@@ -119,53 +119,63 @@ TODO: Make this a separate module, perhaps combined with \texttt{VarSet}.
 \subsection{Z Names and Decorations}
 \begin{code}
 type ZDecor = String      -- a decoration: ''', '!', '?' or '_N'
-type ZVar = (String, [ZDecor]) -- all kinds of Z names
+type ZVar = (String, [ZDecor], [ZExpr]) -- all kinds of Z names
 type ZName = String
 \end{code}
 
 \begin{code}
 
 make_zvar :: String -> [ZDecor] -> ZVar
-make_zvar s dl = (s,dl)
+make_zvar s dl = (s,dl,[])
+
+make_ztvar :: String -> [ZDecor] -> ZExpr -> ZVar
+make_ztvar s dl t = (s,dl,[t])
 
 decorate_zvar :: ZVar -> [ZDecor] -> ZVar
-decorate_zvar (s,dl) d = (s,dl++d)
+decorate_zvar (s,dl,t) d = (s,dl++d,t)
 
 prime_zvar :: ZVar -> ZVar
 prime_zvar v = decorate_zvar v ["'"]
 
 unprime_zvar :: ZVar -> ZVar
 -- Pre: is_primed_zvar v
-unprime_zvar (n,["'"]) = (n,[])
+unprime_zvar (n,["'"],t) = (n,[],t)
 
 string_to_zvar :: String -> ZVar
 string_to_zvar s = make_zvar s []
+nfst :: ZVar -> String
+nfst (a,b,c) = a
+nsnd :: ZVar -> [ZDecor]
+nsnd (a,b,c) = b
+
+ntrd :: ZVar -> [ZExpr]
+ntrd (a,b,c) = c
 
 get_zvar_name :: ZVar -> String
-get_zvar_name = fst
+get_zvar_name = nfst
 
 get_zvar_decor :: ZVar -> [ZDecor]
-get_zvar_decor = snd
+get_zvar_decor = nsnd
 
 is_unprimed_zvar :: ZVar -> Bool
-is_unprimed_zvar (_,[])  = True
+is_unprimed_zvar (_,[],_)  = True
 is_unprimed_zvar _       = False
 
 is_primed_zvar :: ZVar -> Bool
-is_primed_zvar (_,["'"]) = True
+is_primed_zvar (_,["'"],_) = True
 is_primed_zvar _         = False
 
 is_input_zvar :: ZVar -> Bool
-is_input_zvar (_,["?"])  = True
+is_input_zvar (_,["?"],_)  = True
 is_input_zvar _          = False
 
 is_output_zvar :: ZVar -> Bool
-is_output_zvar (_,["!"]) = True
+is_output_zvar (_,["!"],_) = True
 is_output_zvar _         = False
 
 
 show_zvar :: ZVar -> String
-show_zvar (s,dl) = s ++ concat dl
+show_zvar (s,dl,t) = s ++ concat dl
 
 show_zvars :: [ZVar] -> String
 show_zvars = concatMap ((' ':) . show_zvar)

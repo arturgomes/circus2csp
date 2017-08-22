@@ -297,11 +297,11 @@ clps_const :: ZVar -> ErrorOr CLPSTerm
 clps_const name = return (safe_zvar name)
 
 clps_var :: ZVar -> ErrorOr CLPSTerm
-clps_var (n,["'"]) = return ("prime(" ++ safe_zvar (n,[]) ++ ")")
+clps_var (n,["'"],t) = return ("prime(" ++ safe_zvar (n,[],t) ++ ")")
 clps_var name = return (safe_zvar name)
 
 safe_zvar :: ZVar -> String
-safe_zvar (v,ds) = "b_" ++ (filter safechar v) ++ concatMap safedecor ds
+safe_zvar (v,ds,t) = "b_" ++ (filter safechar v) ++ concatMap safedecor ds
     where
     safechar ch  = isAlphaNum ch || ch == '_'
     safedecor "'" = "__prime"   -- NB. single prime case is handled above.

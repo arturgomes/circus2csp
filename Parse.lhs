@@ -428,7 +428,7 @@ zbasic_decl
 	 tok L_COLON;
 	 optnls;
 	 e <- zexpression;
-	 return [Choose (make_zvar w d) e | (w,d) <- ws]}
+	 return [Choose (make_ztvar w d e) e | (w,d,_) <- ws]}
 	 -- +++ do  {sr <- zschema_ref;
 	 -- return [Include sr]}
 

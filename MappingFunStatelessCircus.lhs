@@ -25,11 +25,11 @@ import CRL
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec =
-   [ZGivenSetDecl ("UNIVERSE",[]),
-      ZFreeTypeDef ("NAME",[]) names,
-      ZAbbreviation ("BINDINGS",[]) (ZCall (ZVar ("\\fun",[])) (ZTuple [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])),
-      ZAbbreviation ("\\delta",[]) (ZSetDisplay deltamap),
-      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[]),ZVar ("UNIVERSE",[])])],
+   [ZGivenSetDecl ("UNIVERSE",[],[]),
+      ZFreeTypeDef ("NAME",[],[]) names,
+      ZAbbreviation ("BINDINGS",[],[]) (ZCall (ZVar ("\\fun",[],[])) (ZTuple [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])])),
+      ZAbbreviation ("\\delta",[],[]) (ZSetDisplay deltamap),
+      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])])],
       CircChannel [CChan "terminate"],
       CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"])]
     ++ para
@@ -198,9 +198,9 @@ proc_ref2 x = error ("can not show this" ++ show x)
 \end{argue}
 \begin{code}
 data_refinement stv
-  = [Choose ("x",[]) (ZVar ("BINDING",[]))]++[Check (data_refinement' stv)]
+  = [Choose ("x",[],[]) (ZVar ("BINDING",[],[]))]++[Check (data_refinement' stv)]
 data_refinement' [Choose v t]
-  = (ZMember (ZCall (ZVar ("x",[])) (ZVar v)) t)
+  = (ZMember (ZCall (ZVar ("x",[],[])) (ZVar v)) t)
 data_refinement' [Check x] = x
 data_refinement' (x:xs)
   =  (ZAnd (data_refinement' [x]) (data_refinement' xs))
@@ -233,15 +233,15 @@ proc_ref3 x = proc_ref4 x
 	\\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst@([Choose ("x",[]) (ZVar ("BINDING",[])), Check e]))) aclst ma))))
-  = proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[]) (ZVar ("BINDING",[]))] (CSPExtChoice
+proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst@([Choose ("x",[],tx) (ZVar ("BINDING",[],[])), Check e]))) aclst ma))))
+  = proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[],[]) (ZVar ("BINDING",[],[]))] (CSPExtChoice
   (CSPExtChoice
-    (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[])),ChanOutExp (ZCall (ZVar ("b",[])) (ZVar ("n",[])))]) (CSPParAction "Memory" [ZVar ("b",[])])))
-		(CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CVarDecl [Choose ("b",[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult ["b"]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[])])) (CSExpr "MEMI"))))))))
+    (CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],[])),ChanOutExp (ZCall (ZVar ("b",[],[])) (ZVar ("n",[],[])))]) (CSPParAction "Memory" [ZVar ("b",[],[])])))
+		(CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[],[])) (ZCall (ZVar ("\\delta",[],[])) (ZVar ("n",[],[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar ("b",[],[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar ("n",[],[]),ZVar ("nv",[],[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult ["b"]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[],[])])) (CSExpr "MEMI"))))))))
   where
     nma = omega_CAction ma
-    ne = sub_pred (make_subinfo [(("b",[]),ZVar ("x",[]))] (varset_from_zvars [("x",[])])) e
-    nbd = ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])), Check ne] Nothing
+    ne = sub_pred (make_subinfo [(("b",[],[]),ZVar ("x",[],[]))] (varset_from_zvars [("x",[],[])])) e
+    nbd = ZSetComp [Choose ("x",[],[(ZVar ("BINDING",[],[]))]) (ZVar ("BINDING",[],[])), Check ne] Nothing
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
@@ -609,19 +609,19 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
         (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay [],
-                ZVar ("LEFT",[])]))
+                ZVar ("LEFT",[],[])]))
        (CSExpr "MEMi"))
       (CSPHide
        (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
         (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay [],
-                ZVar ("RIGHT",[])]))
+                ZVar ("RIGHT",[],[])]))
        (CSExpr "MEMi")))
       (CActionName "Merge"))
       (CChanSet ["mleft","mright"])))
    where
-    lsx = union (map fst (remdups (free_var_CAction a1))) (map fst (remdups (free_var_CAction a2)))
+    lsx = map nfst (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2))))
 \end{code}
 
 \begin{circus}
@@ -629,13 +629,13 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_CAction (rep_CSPRepSeq act xs)
-    _  -> (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_CAction (CSPRepSeq [Choose (x,[]) v] act)
-  = (CSPRepSeq [Choose (x,[]) v] (omega_CAction act))
+    _  -> (CSPRepSeq [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
+  = (CSPRepSeq [Choose (x,[],[v]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -643,13 +643,13 @@ omega_CAction (CSPRepSeq [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_CAction (rep_CSPRepExtChoice act xs)
-    _  -> (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
-  = (CSPRepExtChoice [Choose (x,[]) v] (omega_CAction act))
+    _  -> (CSPRepExtChoice [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_CAction (CSPRepExtChoice [Choose (x,[],tx) v] act)
+  = (CSPRepExtChoice [Choose (x,[],[v]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -657,14 +657,14 @@ omega_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
+omega_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_CAction(rep_CSPRepIntChoice act xs)
-    _  -> (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
-  = (CSPRepIntChoice [Choose (x,[]) v] (omega_CAction act))
+    _  -> (CSPRepIntChoice [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
+  = (CSPRepIntChoice [Choose (x,[],[v]) v] (omega_CAction act))
 \end{code}
 
 \begin{circus}
@@ -682,16 +682,16 @@ omega_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
+omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
+          (CSPParAction a [ZVar (x2,[],tx2)]))
   = case (x == x1) && (x == x2) of
     True -> omega_CAction (rep_CSPRepParalNS a cs ns x lsx)
-    _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
-omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) act)
-  = (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) (omega_CAction act))
+    _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+omega_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[],tx1)]) act)
+  = (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[],tx1)]) (omega_CAction act))
 \end{code}
 \begin{circus}
 \Omega_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Omega_A (P)
@@ -794,19 +794,19 @@ omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
 is written in Haskell as:
 
 \begin{code}
-omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
+omega_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
+          (CSPParAction a [ZVar (x2,[],tx2)]))
   = case (x == x1) && (x == x2) of
     True -> omega_CAction (rep_CSPRepInterlNS a ns x lsx)
-    _  ->  (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
-omega_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
+    _  ->  (CSPRepInterlNS [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+omega_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
           act)
-  = (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
+  = (CSPRepInterlNS [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx1)])
           (omega_CAction act))
 \end{code}
 
@@ -1041,13 +1041,13 @@ omega_prime_CAction (CSPExtChoice ca cb)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+omega_prime_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_prime_CAction (rep_CSPRepSeq act xs)
-    _  -> (CSPRepSeq [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_prime_CAction (CSPRepSeq [Choose (x,[]) v] act)
-  = (CSPRepSeq [Choose (x,[]) v] (omega_prime_CAction act))
+    _  -> (CSPRepSeq [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_prime_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
+  = (CSPRepSeq [Choose (x,[],tx) v] (omega_prime_CAction act))
 \end{code}
 
 \begin{circus}
@@ -1055,13 +1055,13 @@ omega_prime_CAction (CSPRepSeq [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[])]))
+omega_prime_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_prime_CAction (rep_CSPRepExtChoice act xs)
-    _  -> (CSPRepExtChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_prime_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
-  = (CSPRepExtChoice [Choose (x,[]) v] (omega_prime_CAction act))
+    _  -> (CSPRepExtChoice [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_prime_CAction (CSPRepExtChoice [Choose (x,[],s) v] act)
+  = (CSPRepExtChoice [Choose (x,[],[v]) v] (omega_prime_CAction act))
 \end{code}
 
 \begin{circus}
@@ -1069,14 +1069,14 @@ omega_prime_CAction (CSPRepExtChoice [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
+omega_prime_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
     True -> omega_prime_CAction(rep_CSPRepIntChoice act xs)
-    _  -> (CSPRepIntChoice [Choose (x,[]) (ZSeqDisplay xs)]
-          (CSPParAction act [ZVar (x1,[])]))
-omega_prime_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
-  = (CSPRepIntChoice [Choose (x,[]) v] (omega_prime_CAction act))
+    _  -> (CSPRepIntChoice [Choose (x,[],[(ZSeqDisplay xs)]) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+omega_prime_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
+  = (CSPRepIntChoice [Choose (x,[],[v]) v] (omega_prime_CAction act))
 \end{code}
 
 \begin{circus}
@@ -1094,16 +1094,16 @@ omega_prime_CAction (CSPRepIntChoice [Choose (x,[]) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
+omega_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx1) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx2)])
+          (CSPParAction a [ZVar (x2,[],tx3)]))
   = case (x == x1) && (x == x2) of
     True -> omega_prime_CAction (rep_CSPRepParalNS a cs ns x lsx)
-    _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
-omega_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) act)
-  = (CSPRepParalNS (CSExpr cs) [Choose (x,[]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[])]) (omega_prime_CAction act))
+    _  -> (CSPRepParalNS (CSExpr cs) [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],tx2)])
+          (CSPParAction a [ZVar (x2,[],tx3)]))
+omega_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[],tx1)]) act)
+  = (CSPRepParalNS (CSExpr cs) [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)] (NSExprParam ns [ZVar (x1,[],tx1)]) (omega_prime_CAction act))
 \end{code}
 \begin{circus}
 \Omega'_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Omega'_A (P)
@@ -1192,19 +1192,19 @@ omega_prime_CAction (CSPRecursion x c) = (CSPRecursion x (omega_prime_CAction c)
 is written in Haskell as:
 
 \begin{code}
-omega_prime_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
+omega_prime_CAction (CSPRepInterlNS [Choose (x,[],t1) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],t2)])
+          (CSPParAction a [ZVar (x2,[],t3)]))
   = case (x == x1) && (x == x2) of
     True -> omega_prime_CAction (rep_CSPRepInterlNS a ns x lsx)
-    _  ->  (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
-          (CSPParAction a [ZVar (x2,[])]))
-omega_prime_CAction (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
+    _  ->  (CSPRepInterlNS [Choose (x,[], [(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],t2)])
+          (CSPParAction a [ZVar (x2,[],t3)]))
+omega_prime_CAction (CSPRepInterlNS [Choose (x,[],t1) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],t2)])
           act)
-  = (CSPRepInterlNS [Choose (x,[]) (ZSetDisplay lsx)]
-          (NSExprParam ns [ZVar (x1,[])])
+  = (CSPRepInterlNS [Choose (x,[],[(ZSetDisplay lsx)]) (ZSetDisplay lsx)]
+          (NSExprParam ns [ZVar (x1,[],t2)])
           (omega_prime_CAction act))
 \end{code}
 

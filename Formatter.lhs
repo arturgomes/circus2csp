@@ -682,32 +682,32 @@ reln_op ro =
     ++ [error ("reln_op " ++ show ro)])
 
 reln_op_list =
-    [OpReln{rop=ZLessThan,   lstr=("<",[]),
+    [OpReln{rop=ZLessThan,   lstr=("<",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZLessThanEq, lstr=("\\leq",[]),
+     OpReln{rop=ZLessThanEq, lstr=("\\leq",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZGreaterThan,lstr=(">",[]),
+     OpReln{rop=ZGreaterThan,lstr=(">",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZGreaterThanEq, lstr=("\\geq",[]),
+     OpReln{rop=ZGreaterThanEq, lstr=("\\geq",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZSubset, lstr=("\\subset",[]),
+     OpReln{rop=ZSubset, lstr=("\\subset",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZSubsetEq, lstr=("\\subseteq",[]),
+     OpReln{rop=ZSubsetEq, lstr=("\\subseteq",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZPartition,lstr=("\\partition",[]),
+     OpReln{rop=ZPartition,lstr=("\\partition",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZPrefix, lstr=("\\prefix",[]),
+     OpReln{rop=ZPrefix, lstr=("\\prefix",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZSuffix, lstr=("\\suffix",[]),
+     OpReln{rop=ZSuffix, lstr=("\\suffix",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZInSeq,  lstr=("\\inseq",[]),
+     OpReln{rop=ZInSeq,  lstr=("\\inseq",[],[]),
 	    prec=Predu,optype=Infix, assoc=N},
-     OpReln{rop=ZNeq,    lstr=("\\neq",[]),
+     OpReln{rop=ZNeq,    lstr=("\\neq",[],[]),
 	    prec=Predu,optype=Infix,assoc=N},
-     OpReln{rop=ZNotin,  lstr=("\\notin",[]),
+     OpReln{rop=ZNotin,  lstr=("\\notin",[],[]),
 	    prec=Predu,optype=Infix, assoc=N},
      OpReln{rop=error "\\disjoint has no rop",
-	    lstr=("\\disjoint",[]), prec=Predu,
+	    lstr=("\\disjoint",[],[]), prec=Predu,
 	    optype=PreRel, assoc=N}
      ]
 
@@ -718,28 +718,28 @@ unary_op uo =
 	  ++ [error ("unary_op " ++ show uo)])
 
 unary_op_list =
-    [OpUnary{uop=ZDom,    lstr=("\\dom",[]),     prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZRan,    lstr=("\\ran",[]),     prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZSizeof, lstr=("\\\35",[]),       prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZBigCup, lstr=("\\bigcup",[]),  prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZBigCap, lstr=("\\bigcap",[]),  prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZId,     lstr=("\\id",[]),      prec=Expr2a, optype=Prefix},
-     OpUnary{uop=ZRev,    lstr=("rev",[]),       prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZHead,   lstr=("head",[]),      prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZLast,   lstr=("last",[]),      prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZTail,   lstr=("tail",[]),      prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZFront,  lstr=("front",[]),     prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZSquash, lstr=("squash",[]),    prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZDCat,   lstr=("\\dcat",[]),    prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZSucc,   lstr=("succ",[]),      prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZNegate, lstr=("\\negate",[]),  prec=Expr2a, optype=Negation},
-     OpUnary{uop=ZMax,    lstr=("max",[]),       prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZMin,    lstr=("min",[]),       prec=Expr3,  optype=Prefix},
-     OpUnary{uop=ZInv,    lstr=("\\inv",[]),     prec=Expr4,  optype=Postfix},
-     OpUnary{uop=ZStar,   lstr=("\\star",[]),    prec=Expr4,  optype=Postfix},
-     OpUnary{uop=ZClosure,lstr=("\\plus",[]),    prec=Expr4,  optype=Postfix},
+    [OpUnary{uop=ZDom,    lstr=("\\dom",[],[]),     prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZRan,    lstr=("\\ran",[],[]),     prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZSizeof, lstr=("\\\35",[],[]),       prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZBigCup, lstr=("\\bigcup",[],[]),  prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZBigCap, lstr=("\\bigcap",[],[]),  prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZId,     lstr=("\\id",[],[]),      prec=Expr2a, optype=Prefix},
+     OpUnary{uop=ZRev,    lstr=("rev",[],[]),       prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZHead,   lstr=("head",[],[]),      prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZLast,   lstr=("last",[],[]),      prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZTail,   lstr=("tail",[],[]),      prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZFront,  lstr=("front",[],[]),     prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZSquash, lstr=("squash",[],[]),    prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZDCat,   lstr=("\\dcat",[],[]),    prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZSucc,   lstr=("succ",[],[]),      prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZNegate, lstr=("\\negate",[],[]),  prec=Expr2a, optype=Negation},
+     OpUnary{uop=ZMax,    lstr=("max",[],[]),       prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZMin,    lstr=("min",[],[]),       prec=Expr3,  optype=Prefix},
+     OpUnary{uop=ZInv,    lstr=("\\inv",[],[]),     prec=Expr4,  optype=Postfix},
+     OpUnary{uop=ZStar,   lstr=("\\star",[],[]),    prec=Expr4,  optype=Postfix},
+     OpUnary{uop=ZClosure,lstr=("\\plus",[],[]),    prec=Expr4,  optype=Postfix},
      -- This is a Jaza extension.
-     OpUnary{uop=ZSum,    lstr=("sum",[]),       prec=Expr3,  optype=Prefix}
+     OpUnary{uop=ZSum,    lstr=("sum",[],[]),       prec=Expr3,  optype=Prefix}
     ]
 
 
@@ -749,34 +749,34 @@ binary_op bo =
 	  ++ [error ("binary_op " ++ show bo)])
 
 binary_op_list =
-    [OpBinary{bop=ZMapsto,lstr=("\\mapsto",[]),prec=Op1,assoc=L,optype=Infix},
+    [OpBinary{bop=ZMapsto,lstr=("\\mapsto",[],[]),prec=Op1,assoc=L,optype=Infix},
   -- Integer operations
-     OpBinary{bop=ZUpto, lstr=("\\upto",[]), prec=Op1, assoc=L, optype=Infix},
-     OpBinary{bop=ZPlus, lstr=("+",[]),      prec=Op1, assoc=L, optype=Infix},
-     OpBinary{bop=ZMinus,lstr=("-",[]),      prec=Op1, assoc=L, optype=Infix},
-     OpBinary{bop=ZTimes,lstr=("*",[]),      prec=Op1, assoc=L, optype=Infix},
-     OpBinary{bop=ZDiv,  lstr=("\\div",[]),  prec=Op1, assoc=L, optype=Infix},
-     OpBinary{bop=ZMod,  lstr=("\\mod",[]),  prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZUpto, lstr=("\\upto",[],[]), prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZPlus, lstr=("+",[],[]),      prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZMinus,lstr=("-",[],[]),      prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZTimes,lstr=("*",[],[]),      prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZDiv,  lstr=("\\div",[],[]),  prec=Op1, assoc=L, optype=Infix},
+     OpBinary{bop=ZMod,  lstr=("\\mod",[],[]),  prec=Op1, assoc=L, optype=Infix},
   -- Set operations
-     OpBinary{bop=ZUnion,   lstr=("\\cup",[]),prec=Op1,assoc=L,optype=Infix},
-     OpBinary{bop=ZInter,   lstr=("\\cap",[]),prec=Op1,assoc=L,optype=Infix},
-     OpBinary{bop=ZSetMinus,lstr=("\\setminus",[]),prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZUnion,   lstr=("\\cup",[],[]),prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZInter,   lstr=("\\cap",[],[]),prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZSetMinus,lstr=("\\setminus",[],[]),prec=Op1,assoc=L,optype=Infix},
   -- Relation/Function operations
-     OpBinary{bop=ZComp, lstr=("\\comp",[]), prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZCirc, lstr=("\\circ",[]), prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZOPlus, lstr=("\\oplus",[]),prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZDRes,  lstr=("\\dres",[]), prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZRRes,  lstr=("\\rres",[]), prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZNDRes, lstr=("\\ndres",[]),prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZNRRes, lstr=("\\nrres",[]),prec=Op1,assoc=L, optype=Infix},
-     OpBinary{bop=ZRelImg,lstr=("\\relimg",[]),prec=Op1,assoc=L,optype=RelImg},
+     OpBinary{bop=ZComp, lstr=("\\comp",[],[]), prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZCirc, lstr=("\\circ",[],[]), prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZOPlus, lstr=("\\oplus",[],[]),prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZDRes,  lstr=("\\dres",[],[]), prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZRRes,  lstr=("\\rres",[],[]), prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZNDRes, lstr=("\\ndres",[],[]),prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZNRRes, lstr=("\\nrres",[],[]),prec=Op1,assoc=L, optype=Infix},
+     OpBinary{bop=ZRelImg,lstr=("\\relimg",[],[]),prec=Op1,assoc=L,optype=RelImg},
   -- Sequence operations
-     OpBinary{bop=ZCat,    lstr=("\\cat",[]),  prec=Op1,assoc=L,optype=Infix},
-     OpBinary{bop=ZExtract,lstr=("\\extract",[]),prec=Op1,assoc=L,optype=Infix},
-     OpBinary{bop=ZFilter, lstr=("\\filter",[]),prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZCat,    lstr=("\\cat",[],[]),  prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZExtract,lstr=("\\extract",[],[]),prec=Op1,assoc=L,optype=Infix},
+     OpBinary{bop=ZFilter, lstr=("\\filter",[],[]),prec=Op1,assoc=L,optype=Infix},
   -- Special case of first/second
-     OpBinary{bop=ZFirst,lstr=("first",[]),prec=Expr3,assoc=L,optype=Prefix},
-     OpBinary{bop=ZSecond,lstr=("second",[]),prec=Expr3,assoc=L,optype=Prefix}]
+     OpBinary{bop=ZFirst,lstr=("first",[],[]),prec=Expr3,assoc=L,optype=Prefix},
+     OpBinary{bop=ZSecond,lstr=("second",[],[]),prec=Expr3,assoc=L,optype=Prefix}]
 
 
 fset_op :: ZExpr -> [OpInfo]
@@ -790,25 +790,25 @@ fset_seq_op igo = [psoi | psoi <- preseq_op_list, (fset psoi) == cond]
   cond = igo{domset=badset,ranset=badset}
 
 ingen_op_list =
-    [OpInGen{lstr=("\\rel",[]),  prec=Op1, assoc=L, optype=Infix,
+    [OpInGen{lstr=("\\rel",[],[]),  prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_function=False}},
-     OpInGen{lstr=("\\pfun",[]), prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\pfun",[],[]), prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc},
-     OpInGen{lstr=("\\fun",[]),  prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\fun",[],[]),  prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_total=True}},
-     OpInGen{lstr=("\\pinj",[]), prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\pinj",[],[]), prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_one2one=True}},
-     OpInGen{lstr=("\\inj",[]),  prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\inj",[],[]),  prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_total=True,is_one2one=True}},
-     OpInGen{lstr=("\\psurj",[]),prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\psurj",[],[]),prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_onto=True}},
-     OpInGen{lstr=("\\surj",[]), prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\surj",[],[]), prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_total=True,is_onto=True}},
-     OpInGen{lstr=("\\bij",[]),  prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\bij",[],[]),  prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_total=True,is_one2one=True,is_onto=True}},
-     OpInGen{lstr=("\\ffun",[]), prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\ffun",[],[]), prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_finite=True}},
-     OpInGen{lstr=("\\finj",[]), prec=Op1, assoc=L, optype=Infix,
+     OpInGen{lstr=("\\finj",[],[]), prec=Op1, assoc=L, optype=Infix,
 	    fset=zfunc{is_finite=True,is_one2one=True}}]
 
 
@@ -837,13 +837,13 @@ pregen_op pgop = head [pgoi | pgoi <- pregen_op_list, (pset pgoi) == cond]
 
 -- prefix generics minus `id`
 pregen_op_list =
-    [OpPreGen{lstr=("\\power",[]),   prec=Expr2a, optype=Prefix,
+    [OpPreGen{lstr=("\\power",[],[]),   prec=Expr2a, optype=Prefix,
 	    pset=zset},
-     OpPreGen{lstr=("\\power_1",[]), prec=Expr2a, optype=Prefix,
+     OpPreGen{lstr=("\\power_1",[],[]), prec=Expr2a, optype=Prefix,
 	    pset=zset{is_non_empty=True}},
-     OpPreGen{lstr=("\\finset",[]),  prec=Expr2a, optype=Prefix,
+     OpPreGen{lstr=("\\finset",[],[]),  prec=Expr2a, optype=Prefix,
 	    pset=zset{is_finite=True}},
-     OpPreGen{lstr=("\\finset_1",[]),prec=Expr2a, optype=Prefix,
+     OpPreGen{lstr=("\\finset_1",[],[]),prec=Expr2a, optype=Prefix,
 	    pset=zset{is_finite=True,is_non_empty=True}}]
 
 zset = ZPowerSet{ baseset=badset,
@@ -852,13 +852,13 @@ zset = ZPowerSet{ baseset=badset,
 
 
 preseq_op_list =
-    [OpPreSeq{lstr=("\\seq",[]),     prec=Expr2a, optype=Prefix,
+    [OpPreSeq{lstr=("\\seq",[],[]),     prec=Expr2a, optype=Prefix,
 	    fset=zseq},
-     OpPreSeq{lstr=("\\seq_1",[]),   prec=Expr2a, optype=Prefix,
+     OpPreSeq{lstr=("\\seq_1",[],[]),   prec=Expr2a, optype=Prefix,
 	    fset=zseq{is_non_empty=True}},
-     OpPreSeq{lstr=("\\iseq",[]),    prec=Expr2a, optype=Prefix,
+     OpPreSeq{lstr=("\\iseq",[],[]),    prec=Expr2a, optype=Prefix,
 	    fset=zseq{is_one2one=True}},
-     OpPreSeq{lstr=("\\bag",[]),     prec=Expr2a, optype=Prefix,
+     OpPreSeq{lstr=("\\bag",[],[]),     prec=Expr2a, optype=Prefix,
 	    fset=zfunc{ranset=ZIntSet (Just 1) Nothing}}]  -- nat_1
 
 
@@ -866,20 +866,20 @@ s1_op :: ZS1 -> OpInfo
 s1_op s1o = head [op | op <- s1_op_list, (usop op) == s1o]
 
 s1_op_list =
-    [OpSchema1{usop=ZSPre, lstr=("\\pre",[]),  prec=SExpru},
-     OpSchema1{usop=ZSNot, lstr=("\\lnot",[]), prec=SExpru}]
+    [OpSchema1{usop=ZSPre, lstr=("\\pre",[],[]),  prec=SExpru},
+     OpSchema1{usop=ZSNot, lstr=("\\lnot",[],[]), prec=SExpru}]
 
 s2_op :: ZS2 -> OpInfo
 s2_op s2o = head [op | op <- s2_op_list, (bsop op) == s2o]
 
 s2_op_list =
-    [OpSchema2{bsop=ZSAnd,    lstr=("\\land",[]),   prec=SExpr1f, assoc=L},
-     OpSchema2{bsop=ZSOr,     lstr=("\\lor",[]),    prec=SExpr1e, assoc=L},
-     OpSchema2{bsop=ZSImplies,lstr=("\\implies",[]),prec=SExpr1d, assoc=R},
-     OpSchema2{bsop=ZSIff,    lstr=("\\iff",[]),    prec=SExpr1c, assoc=L},
-     OpSchema2{bsop=ZSProject,lstr=("\\project",[]),prec=SExpr1b, assoc=L},
-     OpSchema2{bsop=ZSSemi,   lstr=("\\semi",[]),   prec=SExpr1a, assoc=L},
-     OpSchema2{bsop=ZSPipe,   lstr=("\\pipe",[]),   prec=SExpr1, assoc=L}]
+    [OpSchema2{bsop=ZSAnd,    lstr=("\\land",[],[]),   prec=SExpr1f, assoc=L},
+     OpSchema2{bsop=ZSOr,     lstr=("\\lor",[],[]),    prec=SExpr1e, assoc=L},
+     OpSchema2{bsop=ZSImplies,lstr=("\\implies",[],[]),prec=SExpr1d, assoc=R},
+     OpSchema2{bsop=ZSIff,    lstr=("\\iff",[],[]),    prec=SExpr1c, assoc=L},
+     OpSchema2{bsop=ZSProject,lstr=("\\project",[],[]),prec=SExpr1b, assoc=L},
+     OpSchema2{bsop=ZSSemi,   lstr=("\\semi",[],[]),   prec=SExpr1a, assoc=L},
+     OpSchema2{bsop=ZSPipe,   lstr=("\\pipe",[],[]),   prec=SExpr1, assoc=L}]
 
 all_by_lstr :: ZVar -> [OpInfo]
 all_by_lstr v = [op | op <- all_op_list, (lstr op) == v]

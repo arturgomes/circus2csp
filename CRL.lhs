@@ -152,16 +152,16 @@ get_provisoZp (Done{orig=_,refined=_,proviso=c}) = c
 \subsection{Testing the tool}
 \begin{code}
 testproc1 :: ZPara
-testproc1 = (Process (CProcess "P" (ProcDef (ProcStalessMain [CParAction "L" (CircusAction (CActionCommand (CVarDecl [Choose ("x",[]) (ZVar ("T",[]))] CSPSkip)))] (CActionCommand (CVarDecl [Choose ("x",[]) (ZVar ("T",[]))] CSPSkip))))))
+testproc1 = (Process (CProcess "P" (ProcDef (ProcStalessMain [CParAction "L" (CircusAction (CActionCommand (CVarDecl [Choose ("x",[],[]) (ZVar ("T",[],[]))] CSPSkip)))] (CActionCommand (CVarDecl [Choose ("x",[],[]) (ZVar ("T",[],[]))] CSPSkip))))))
 testproc2 :: ZPara
-testproc2 = (Process (CProcess "AChrono" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("sec",[]) (ZVar ("RANGE",[])),Choose ("min",[]) (ZVar ("RANGE",[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[]) (ZVar ("RANGE",[]))] (CActionCommand (CAssign [("sec",[]),("min",[])] [ZVar ("ms",[]),ZInt 0]))))))))
+testproc2 = (Process (CProcess "AChrono" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CActionCommand (CAssign [("sec",[],[]),("min",[],[])] [ZVar ("ms",[],[]),ZInt 0]))))))))
 
-testcac0 = (Process (CProcess "LocWakeUp" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "WState") (ZSchema [Choose ("sec",[]) (ZVar ("RANGE",[])),Choose ("min",[]) (ZVar ("RANGE",[])),Choose ("buzz",[]) (ZVar ("ALARM",[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[]) (ZVar ("RANGE",[]))] (CSPSeq (CActionCommand (CAssign [("sec",[])] [ZVar ("ms",[])])) (CSPSeq (CActionCommand (CAssign [("sec",[]),("min",[]),("buzz",[])] [ZInt 0,ZInt 0,ZVar ("OFF",[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("ON",[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[]),ZVar ("sec",[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("OFF",[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))))) )
-testcac2 = (CActionCommand (CVarDecl [Choose ("ms",[]) (ZVar ("RANGE",[]))] (CSPSeq (CActionCommand (CAssign [("sec",[])] [ZVar ("ms",[])])) (CSPSeq (CActionCommand (CAssign [("sec",[]),("min",[]),("buzz",[])] [ZInt 0,ZInt 0,ZVar ("OFF",[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("ON",[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[]),ZVar ("sec",[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("OFF",[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))
-testvac1 = [Choose ("ms",[]) (ZVar ("RANGE",[]))]
-testcac1 =  (CSPSeq (CActionCommand (CAssign [("sec",[])] [ZVar ("ms",[])])) (CSPSeq (CActionCommand (CAssign [("sec",[]),("min",[]),("buzz",[])] [ZInt 0,ZInt 0,ZVar ("OFF",[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("ON",[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[]),ZVar ("sec",[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[])] [ZVar ("OFF",[])])))))) (CChanSet ["tick"])) (CActionName "X")))))
+testcac0 = (Process (CProcess "LocWakeUp" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "WState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[])),Choose ("buzz",[],[]) (ZVar ("ALARM",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))))) )
+testcac2 = (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))
+testvac1 = [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))]
+testcac1 =  (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))
 
-test2 = (ZAnd (ZAnd (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_buzz_U_ALA_U_ALA",[])) (ZVar ("ALARM",[]))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_min_U_RAN_U_RAN",[])) (ZVar ("RANGE",[])))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_sec_U_RAN_U_RAN",[])) (ZVar ("RANGE",[]))))
+test2 = (ZAnd (ZAnd (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_buzz_U_ALA_U_ALA",[],[])) (ZVar ("ALARM",[],[]))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_min_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[])))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_sec_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[]))))
 \end{code}
 
 \section{Action Refinement}
@@ -181,11 +181,11 @@ test2 = (ZAnd (ZAnd (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_buzz_U_ALA_U_ALA"
 \end{lawn}
 \begin{code}
 crl_var_exp_par :: CAction -> Refinement CAction
-crl_var_exp_par e@(CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[]) t)] a1)) a2)
+crl_var_exp_par e@(CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[],tx) t)] a1)) a2)
   = Done{orig = Just e, refined = Just ref, proviso = [p1]}
     where
-      ref = (CActionCommand (CVarDecl [(Choose (d,[]) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
-      p1 = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay [ZVar (d,[]),ZVar (d,["'"])],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[])))
+      ref = (CActionCommand (CVarDecl [(Choose (d,[],[t]) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
+      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay [ZVar (d,[],[t]),ZVar (d,["'"],[t])],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[],[])))
 crl_var_exp_par _ = None
 \end{code}
 % law 2
@@ -224,9 +224,9 @@ crl_var_exp_par2 _ = None
 \end{lawn}
 \begin{code}
 crl_var_exp_rec :: CAction -> Refinement CAction
-crl_var_exp_rec e@(CSPRecursion mX (CActionCommand (CValDecl [Choose (x,[]) (ZVar (t,[]))] (CSPUnfAction f (CActionName mX1)))))
+crl_var_exp_rec e@(CSPRecursion mX (CActionCommand (CValDecl [Choose (x,[],tx) (ZVar (t,[],s))] (CSPUnfAction f (CActionName mX1)))))
   = case (mX == mX1) of
-      True -> Done{orig = Just e, refined = Just (CActionCommand (CValDecl [Choose (x,[]) (ZVar (t,[]))] (CSPRecursion mX (CSPUnfAction f (CActionName mX))))), proviso=[]}
+      True -> Done{orig = Just e, refined = Just (CActionCommand (CValDecl [Choose (x,[],tx) (ZVar (t,[],s))] (CSPRecursion mX (CSPUnfAction f (CActionName mX))))), proviso=[]}
       False -> None
 crl_var_exp_rec _ = None
 \end{code}
@@ -249,13 +249,13 @@ crl_variableBlockSequenceExtension
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
   where
     ref = (CActionCommand (CVarDecl [(Choose x t)] (CSPSeq a1 (CSPSeq a2 a3))))
-    prov = (ZMember (ZSetDisplay [ZVar x]) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a3)])))
+    prov = (ZMember (ZSetDisplay [ZVar x]) (ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a3)])))
 crl_variableBlockSequenceExtension
         e@(CSPSeq a1 (CSPSeq a3 (CActionCommand (CVarDecl [(Choose x t)] a2))))
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
   where
     ref = (CActionCommand (CVarDecl [(Choose x t)] (CSPSeq a1 (CSPSeq a2 a3))))
-    prov = (ZMember (ZSetDisplay [ZVar x]) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a3)])))
+    prov = (ZMember (ZSetDisplay [ZVar x]) (ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay  $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a3)])))
 crl_variableBlockSequenceExtension
         e@(CSPSeq a1 (CActionCommand (CVarDecl [(Choose x t)] a2)))
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
@@ -308,16 +308,16 @@ crl_variableBlockIntroduction _ _ _ = None
 \end{code}
 \begin{code}
 crl_variableBlockIntroduction_backwards :: CAction -> Refinement CAction
-crl_variableBlockIntroduction_backwards e@(CActionCommand (CVarDecl [(Choose (x,[]) _)] a))
+crl_variableBlockIntroduction_backwards e@(CActionCommand (CVarDecl [(Choose (x,[],tx1) _)] a))
   =  Done{orig = Just e, refined = Just a, proviso = [prov]}
   where
-  prov = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a))))
+  prov = (ZNot (ZMember (ZVar (x,[],tx1)) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a))))
 
-crl_variableBlockIntroduction_backwards e@(CSPCommAction (ChanComm x f) (CActionCommand (CValDecl [Choose (y,[]) (ZVar (t,[]))] a)))
+crl_variableBlockIntroduction_backwards e@(CSPCommAction (ChanComm x f) (CActionCommand (CValDecl [Choose (y,[],tx1) (ZVar (t,[],tx2))] a)))
   =  Done{orig = Just e, refined = Just ref, proviso = [prov]}
   where
-    ref = (CActionCommand (CValDecl [Choose (y,[]) (ZVar (t,[]))] (CSPCommAction (ChanComm x f) a)))
-    prov = (ZNot (ZMember (ZVar (y,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction (CSPCommAction (ChanComm x f) a)))))
+    ref = (CActionCommand (CValDecl [Choose (y,[],tx1) (ZVar (t,[],tx2))] (CSPCommAction (ChanComm x f) a)))
+    prov = (ZNot (ZMember (ZVar (y,[],tx1)) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction (CSPCommAction (ChanComm x f) a)))))
 crl_variableBlockIntroduction_backwards _ = None
 \end{code}
 % law 6
@@ -332,10 +332,10 @@ crl_variableBlockIntroduction_backwards _ = None
 \end{lawn}
 \begin{code}
 crl_variableBlockIntroduction2_backwards :: CAction -> Refinement CAction
-crl_variableBlockIntroduction2_backwards e@(CActionCommand (CVarDecl ((Choose (x,[]) _):xs) a))
+crl_variableBlockIntroduction2_backwards e@(CActionCommand (CVarDecl ((Choose (x,[],tx) _):xs) a))
   =  Done{orig = Just e, refined = Just (CActionCommand (CVarDecl xs a)), proviso = [prov]}
   where
-    prov = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a))))
+    prov = (ZNot (ZMember (ZVar (x,[],tx)) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a))))
 crl_variableBlockIntroduction2_backwards _ = None
 \end{code}
 % law 7
@@ -448,8 +448,8 @@ crl_parallelismIntroduction1b
                 (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip)),
           proviso=[p1,p2]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[])))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZTuple [ZSetDisplay (usedC a)])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1b _ _ _ _ = None
 
 crl_parallelismIntroduction1a :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
@@ -460,8 +460,8 @@ crl_parallelismIntroduction1a
                   (CSPCommAction (ChanComm c e) a)
                   (CSPCommAction (ChanComm c e) CSPSkip)),proviso=[p1,p2]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[]))  (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[])))
+      p1 = (ZNot (ZMember (ZVar (c,[],[]))  (ZTuple [ZSetDisplay (usedC a)])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1a _ _ _ _ = None
 \end{code}
 % \begin{code}
@@ -476,7 +476,7 @@ crl_parallelismIntroduction1a _ _ _ _ = None
 %       False -> None
 %     where
 %       p1 = (ZNot (ZMember (ZVar (c1,[])) (ZTuple [ZSetDisplay (usedC a)])))
-%       p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[])))
+%       p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 % crl_parallelismIntroduction1b_backwards _ = None
 
 % crl_parallelismIntroduction1a_backwards :: CAction -> Refinement CAction
@@ -490,7 +490,7 @@ crl_parallelismIntroduction1a _ _ _ _ = None
 %       False -> None
 %     where
 %       p1 = (ZNot (ZMember (ZVar (c1,[])) (ZTuple [ZSetDisplay (usedC a)])))
-%       p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[])))
+%       p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 % crl_parallelismIntroduction1a_backwards _ = None
 % \end{code}
 \begin{lawn}[Channel extension 1]\sl\label{law:chanExt1}
@@ -510,7 +510,7 @@ crl_chanExt1 e@(CSPNSParal ns1 (CChanSet cs) ns2 a1 a2) c
                     (CChanSet cs) (CChanSet [c])) ns2 a1 a2),
                     proviso=[p1]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay (usedC a1),ZSetDisplay (usedC a2)]))))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay (usedC a1),ZSetDisplay (usedC a2)]))))
 crl_chanExt1 _ _ = None
 \end{code}
 % Law 13 (Hiding expansion 2$^*$)
@@ -529,7 +529,7 @@ crl_hidingExpansion2 e@(CSPHide a (CChanSet cs)) c
   = Done{orig = Just e, refined = Just (CSPHide a (ChanSetUnion (CChanSet cs) (CChanSet [c]))),
                     proviso=[p1]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay (usedC a))))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay (usedC a))))
 crl_hidingExpansion2 _ _ = None
 \end{code}
 % Law 14 (Prefix/Hiding$^*$)
@@ -565,7 +565,7 @@ crl_hidingIdentity :: CAction -> Refinement CAction
 crl_hidingIdentity e@(CSPHide a (CChanSet cs))
   = Done{orig = Just e, refined = Just a, proviso=[p1]}
     where
-      p1 = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay $zname_to_zexpr cs,ZSetDisplay (usedC a)])) (ZVar ("\\emptyset",[])))
+      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay $zname_to_zexpr cs,ZSetDisplay (usedC a)])) (ZVar ("\\emptyset",[],[])))
 crl_hidingIdentity _ = None
 \end{code}
 % Law 16 (Parallelism composition/External choice---exchange)
@@ -673,7 +673,7 @@ crl_hidingExternalChoiceDistribution
     e@(CSPHide (CSPExtChoice a1 a2) (CChanSet cs))
   = Done{orig = Just e, refined = Just ref, proviso=[p1]}
     where
-      p1 = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay (initials a1),ZSetDisplay (initials a1)]),ZSetDisplay (zname_to_zexpr cs)])) (ZVar ("\\emptyset",[])))
+      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay (initials a1),ZSetDisplay (initials a1)]),ZSetDisplay (zname_to_zexpr cs)])) (ZVar ("\\emptyset",[],[])))
       ref = (CSPExtChoice
               (CSPHide a1 (CChanSet cs))
               (CSPHide a2 (CChanSet cs)))
@@ -705,8 +705,8 @@ crl_parallelismDeadlocked1
           (CSPCommAction (ChanComm c2 y) a2))
   =  Done{orig = Just e, refined = Just ref, proviso=[p1,p2]}
     where
-      p1 = ZNot (ZEqual (ZVar (c1,[])) (ZVar (c2,[])))
-      p2 = (ZMember (ZTuple [ZSetDisplay [ZVar (c1,[]),ZVar (c2,[])],ZSetDisplay $ zname_to_zexpr cs]) (ZVar ("\\subseteq",[])))
+      p1 = ZNot (ZEqual (ZVar (c1,[],[])) (ZVar (c2,[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay [ZVar (c1,[],[]),ZVar (c2,[],[])],ZSetDisplay $ zname_to_zexpr cs]) (ZVar ("\\subseteq",[],[])))
       ref = (CSPNSParal ns1 (CChanSet cs) ns2
               CSPStop
               (CSPCommAction (ChanComm c2 y) a2))
@@ -752,13 +752,13 @@ crl_communicationParallelismDistribution
     ei@(CSPNSParal ns1 (CChanSet cs) ns2
         (CSPCommAction (ChanComm c [ChanOutExp e]) a1)
         (CSPCommAction (ChanComm c1 [ChanInp x1])
-          (CSPParAction a2 [ZVar (x,[])])))
+          (CSPParAction a2 [ZVar (x,[],tx1)])))
   = case pred of
       True  -> Done{orig = Just ei, refined = Just ref, proviso=[p1,p2]}
       False -> None
     where
-       p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs)))
-       p2 = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [ZVar (x,[])])))))
+       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs)))
+       p2 = (ZNot (ZMember (ZVar (x,[],tx1)) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [ZVar (x,[],tx1)])))))
        ref = (CSPCommAction (ChanComm c [ChanDotExp e])
                     (CSPNSParal ns1 (CChanSet cs) ns2 a1 (CSPParAction a2 [e])))
        pred = (c == c1 && x == x1)
@@ -781,29 +781,29 @@ TODO: implement proviso
 \end{lawn}
 \begin{code}
 crl_channelExtension3 ei@(CSPHide
-          (CSPNSParal ns1 (CChanSet cs1) ns2 a1 (CActionCommand (CVarDecl [Choose (e,[]) t1] mact))) (CChanSet cs2)) c x
+          (CSPNSParal ns1 (CChanSet cs1) ns2 a1 (CActionCommand (CVarDecl [Choose (e,[],tx1) t1] mact))) (CChanSet cs2)) c x
   =  Done{orig = Just ei, refined = Just ref, proviso=[p1,p2,p3]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs1)))
-      p2 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs2)))
-      p3 = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CActionCommand (CVarDecl [Choose (e,[]) t1] mact))))))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
+      p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
+      p3 = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CActionCommand (CVarDecl [Choose (e,[],[t1]) t1] mact))))))
       ref = (CSPHide
                 (CSPNSParal ns1 (CChanSet cs1) ns2
-                    (CSPCommAction (ChanComm c [ChanOutExp (ZVar (e,[]))]) a1)
+                    (CSPCommAction (ChanComm c [ChanOutExp (ZVar (e,[],tx1))]) a1)
                     (CSPCommAction (ChanComm c [ChanInp x])
-                        (CActionCommand (CVarDecl [Choose (x,[]) t1] mact))))
+                        (CActionCommand (CVarDecl [Choose (x,[],[t1]) t1] mact))))
                 (CChanSet cs2))
 crl_channelExtension3 _ _ _= None
 \end{code}
 \begin{code}
-crl_channelExtension3_backwards ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c2 [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c1 [ChanInp x]) (CSPParAction a2 [ZVar (x1,[])]))) (CChanSet cs2))
+crl_channelExtension3_backwards ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c2 [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c1 [ChanInp x]) (CSPParAction a2 [ZVar (x1,[],t1)]))) (CChanSet cs2))
   = case pred of
       True -> Done{orig = Just ei, refined = Just ref, proviso=[p1,p2,p3]}
       False -> None
     where
-       p1 = (ZNot (ZMember (ZVar (c1,[])) (ZSetDisplay $ zname_to_zexpr cs1)))
-       p2 = (ZNot (ZMember (ZVar (c2,[])) (ZSetDisplay $ zname_to_zexpr cs2)))
-       p3 = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [e])))))
+       p1 = (ZNot (ZMember (ZVar (c1,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
+       p2 = (ZNot (ZMember (ZVar (c2,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
+       p3 = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [e])))))
        pred = (c1 == c2) && (x == x1)
        ref = (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 (CSPParAction a2 [e])) (CChanSet cs2))
 crl_channelExtension3_backwards _ = None
@@ -829,15 +829,15 @@ crl_channelExtension3_backwards _ = None
 crl_channelExtension4 ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2)) (ChanComm c [ChanOutExp (e)])
   =  Done{orig = Just ei, refined = Just ref, proviso=[p1,p2]}
     where
-       p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs1)))
-       p2 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs2)))
+       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
+       p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
        ref = (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c [ChanOutExp (e)]) a2)) (CChanSet cs2))
 crl_channelExtension4 ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2)
                                 (CChanSet cs2)) (ChanComm c e)
   = Done{orig = Just ei, refined = Just ref, proviso=[p1,p2]}
     where
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs1)))
-      p2 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs2)))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
+      p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
       ref = (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2
                           (CSPCommAction (ChanComm c e) a1)
                            (CSPCommAction (ChanComm c e) a2))
@@ -850,14 +850,14 @@ crl_promVarState :: CProc -> Refinement CProc
 crl_promVarState
   e@(ProcMain
       (ZSchemaDef (ZSPlain st) s)
-      [CParAction l (CircusAction (CActionCommand (CValDecl [Choose (x,[]) (ZVar (t,[]))] a)))]
-      (CActionCommand (CValDecl [Choose (x1,[]) (ZVar (t1,[]))] ma)))
+      [CParAction l (CircusAction (CActionCommand (CValDecl [Choose (x,[],tx1) (ZVar (t,[],tx2))] a)))]
+      (CActionCommand (CValDecl [Choose (x1,[],tx3) (ZVar (t1,[],tx4))] ma)))
   = case (x==x1 && t == t1) of
         True -> Done{orig = Just e, refined = Just ref, proviso=[]}
         False -> None
     where
       ref = (ProcMain
-                  (ZSchemaDef (ZSPlain st) (ZS2 ZSAnd s (ZSchema [Choose (x,[]) (ZVar (t,[]))])))
+                  (ZSchemaDef (ZSPlain st) (ZS2 ZSAnd s (ZSchema [Choose (x,[],tx1) (ZVar (t,[],tx2))])))
                   [CParAction l (CircusAction a)] ma)
 
 crl_promVarState _ = None
@@ -1013,9 +1013,9 @@ crl_inputPrefixParallelismDistribution2
   = Done{orig = Just e, refined = Just ref, proviso=[p1,p2,p3]}
     where
       ref = (CSPNSParal ns1 (CChanSet cs) ns2 (CSPCommAction (ChanComm c [ChanInp x]) a1) a2)
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs)))
-      p2 = (ZNot (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr(usedV a2))))
-      p3 = (ZMember (ZTuple [ZSetDisplay (initials a2),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[])))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs)))
+      p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr(usedV a2))))
+      p3 = (ZMember (ZTuple [ZSetDisplay (initials a2),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[],[])))
       p4 = "a2 is deterministic"
 crl_inputPrefixParallelismDistribution2 _ = None
 \end{code}
@@ -1093,8 +1093,8 @@ crl_prefixParDist e@(CSPCommAction (ChanComm c [])
                     ns1 (ChanSetUnion (CChanSet cs) (CChanSet [c])) ns2
                     (CSPCommAction (ChanComm c []) a1)
                     (CSPCommAction (ChanComm c []) a2))
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)]))))
-      p2 = (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)]))))
+      p2 = (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs))
 crl_prefixParDist ei@(CSPCommAction (ChanComm c [ChanDotExp e])
                     (CSPNSParal ns1 (CChanSet cs) ns2 a1 a2))
  = Done{orig = Just ei, refined = Just ref, proviso=[ZAnd p1 p2]}
@@ -1102,8 +1102,8 @@ crl_prefixParDist ei@(CSPCommAction (ChanComm c [ChanDotExp e])
       ref = (CSPNSParal ns1 (ChanSetUnion (CChanSet cs) (CChanSet [c])) ns2
                     (CSPCommAction (ChanComm c [ChanDotExp e]) a1)
                     (CSPCommAction (ChanComm c [ChanDotExp e]) a2))
-      p1 = (ZNot (ZMember (ZVar (c,[])) (ZCall (ZVar ("\\cup",[])) (ZTuple [ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a2)]))))
-      p2 = (ZMember (ZVar (c,[])) (ZSetDisplay $ zname_to_zexpr cs))
+      p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZCall (ZVar ("\\cup",[],[])) (ZTuple [ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a1),ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction a2)]))))
+      p2 = (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs))
 crl_prefixParDist _ = None
 \end{code}
 % Law 36 (External choice/Sequence---distribution 2$^*$)
@@ -1251,7 +1251,7 @@ crl_hidingParallelismDistribution
   = Done{orig = Just e, refined = Just ref, proviso=[prov]}
     where
       ref = (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPHide a1 (CChanSet cs1)) (CSPHide a2 (CChanSet cs2)))
-      prov = (ZEqual (ZCall (ZVar ("\\cap",[])) (ZTuple [ZSetDisplay $ zname_to_zexpr cs1,ZSetDisplay $ zname_to_zexpr cs2])) (ZVar ("\\emptyset",[])))
+      prov = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay $ zname_to_zexpr cs1,ZSetDisplay $ zname_to_zexpr cs2])) (ZVar ("\\emptyset",[],[])))
 crl_hidingParallelismDistribution _ = None
 \end{code}
 % Law 45 (Hiding combination)
@@ -1314,14 +1314,14 @@ crl_hidingCombination _ = None
 
 crl_assignmentRemoval :: CAction -> Refinement CAction
 crl_assignmentRemoval ei@(CSPSeq
-                            (CActionCommand (CAssign [(x,[])] [ZVar (e,[])]))
-                            (CActionCommand (CValDecl [Choose (x1,[]) (ZVar (t,[]))] a)))
+                            (CActionCommand (CAssign [(x,[],t1)] [ZVar (e,[],t2)]))
+                            (CActionCommand (CValDecl [Choose (x1,[],t3) (ZVar (t,[],t4))] a)))
   = case x == x1 of
       True -> Done{orig = Just ei, refined = Just ref, proviso=[prov]}
       _ -> None
     where
-      ref = (CActionCommand (CValDecl [Choose (e,[]) (ZVar (t,[]))] a))
-      prov = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction ref))))
+      ref = (CActionCommand (CValDecl [Choose (e,[],t2) (ZVar (t,[],t4))] a))
+      prov = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction ref))))
 crl_assignmentRemoval _ = None
 \end{code}
 % Law 48 (Innocuous Assignment$^*$)
@@ -1338,7 +1338,7 @@ crl_assignmentRemoval _ = None
 TODO: implement proviso
 \begin{code}
 crl_innocuousAssignment :: CAction -> Refinement CAction
-crl_innocuousAssignment e@(CActionCommand (CAssign [(x1,[])] [ZVar (x2,[])]))
+crl_innocuousAssignment e@(CActionCommand (CAssign [(x1,[],_)] [ZVar (x2,[],_)]))
   = case (x1 == x2) of
       True -> Done{orig = Just e, refined = Just ref, proviso=[]}
       False -> None
@@ -1364,11 +1364,11 @@ TODO: implement proviso
 crl_variableSubstitution2 :: CAction -> ZName -> Refinement CAction
 crl_variableSubstitution2
     e@(CActionCommand (CVarDecl [Include (ZSRef (ZSPlain x) [] [])]
-             (CSPParAction a [ZVar (x1,[])]))) y
+             (CSPParAction a [ZVar (x1,[],t)]))) y
   =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
       ref = (CActionCommand (CVarDecl [Include (ZSRef (ZSPlain y) [] [])]
-        (CSPParAction a [ZVar (y,[])])))
+        (CSPParAction a [ZVar (y,[],[])])))
 crl_variableSubstitution2 _ _ = None
 \end{code}
 % Law 50 (Input Prefix/Sequence Distribution$^*$)
@@ -1415,7 +1415,7 @@ crl_inputPrefixHidIdentity
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
     where
       ref = (CSPCommAction (ChanComm c [ChanInp x]) (CSPHide a1 (CChanSet cs)))
-      prov = (ZNot (ZMember (ZVar (x,[])) (ZSetDisplay (zname_to_zexpr cs))))
+      prov = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay (zname_to_zexpr cs))))
 crl_inputPrefixHidIdentity _ = None
 \end{code}
 % Law 52 (Guard/Parallelism composition---distribution$^*$)
@@ -1437,13 +1437,13 @@ crl_guardParDist
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
     where
       ref = (CSPGuard g (CSPNSParal ns1 (CChanSet cs) ns2 a1 a2))
-      prov = (ZMember (ZTuple [ZSetDisplay (initials a2),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[])))
+      prov = (ZMember (ZTuple [ZSetDisplay (initials a2),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[],[])))
 crl_guardParDist
     e@(CSPNSParal ns1 (CChanSet cs) ns2 a1 (CSPGuard g a2))
   =  Done{orig = Just e, refined = Just ref, proviso=[prov]}
     where
       ref = (CSPGuard g (CSPNSParal ns1 (CChanSet cs) ns2 a1 a2))
-      prov = (ZMember (ZTuple [ZSetDisplay (initials a1),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[])))
+      prov = (ZMember (ZTuple [ZSetDisplay (initials a1),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[],[])))
 crl_guardParDist _ = None
 
 \end{code}
@@ -1517,7 +1517,7 @@ crl_assignmentSkip :: CAction -> Refinement CAction
 crl_assignmentSkip
     ei@(CActionCommand (CValDecl
         [Include (ZSRef (ZSPlain x) [] [])]
-        (CActionCommand (CAssign [(x1,[])] [ZVar (e,[])]))))
+        (CActionCommand (CAssign [(x1,[],t2)] [ZVar (e,[],t)]))))
   =  Done{orig = Just ei, refined = Just ref, proviso=[]}
     where
       ref = (CActionCommand (CValDecl
@@ -1590,8 +1590,8 @@ usedV _ = []
 \end{code}
 \begin{code}
 getCommName :: Comm -> ZExpr
-getCommName (ChanComm n _) = ZVar (n,[])
-getCommName (ChanGenComm n _ _) = ZVar (n,[])
+getCommName (ChanComm n _) = ZVar (n,[],[])
+getCommName (ChanGenComm n _ _) = ZVar (n,[],[])
 
 \end{code}
 Function used for $initials$
@@ -1615,7 +1615,7 @@ initials (CSPRepParalNS _ _ _ c) = initials c
 initials (CSPRepParal _ _ c) = initials c
 initials (CSPRepInterlNS _ _ c) = initials c
 initials (CSPRepInterl _ c) = initials c
-initials CSPSkip = [ZVar ("tick",[])]
+initials CSPSkip = [ZVar ("tick",[],[])]
 initials _ = []
 \end{code}
 \begin{code}
@@ -2207,16 +2207,16 @@ Testing area
 -- $ print_file_ref "ref_steps.txt" cexample2
 -- And it will write the refinement of cexample2 into the ref_steps.txt file.
 cexample :: CAction
-cexample = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2"))
+cexample = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2"))
 cexample2 :: CAction
-cexample2 = (CSPGuard (ZMember (ZTuple [ZVar ("v1",[]),ZInt 0]) (ZVar (">",[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v2",[]),ZInt 0]) (ZVar (">",[])))  (CActionName "a1")) (CActionName "a2")))
+cexample2 = (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v2",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2")))
 cexample3 :: CAction
-cexample3 = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (ZAnd (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))) (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 2]) (ZVar (">",[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))) (CActionName "X"))))))
+cexample3 = (CActionCommand (CValDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x",[],[]) (ZVar ("BINDING",[],[])),Check (ZAnd (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))) (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 2]) (ZVar (">",[],[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[],[]))]) CSPSkip))) (CActionName "X"))))))
 cexample4 :: CAction
-cexample4 = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (ZAnd (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))) (ZMember (ZVar ("time",[])) (ZVar ("\\nat",[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 2]) (ZVar (">",[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))) (CActionName "X"))))))
+cexample4 = (CActionCommand (CValDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x",[],[]) (ZVar ("BINDING",[],[])),Check (ZAnd (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))) (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 2]) (ZVar (">",[],[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[],[]))]) CSPSkip))) (CActionName "X"))))))
 cexample5 :: CAction
-cexample5= (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[])] [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_SysClock2_time",[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[]))]) CSPSkip))
+cexample5= (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[],[]))]) CSPSkip))
 cexample6 :: CAction
-cexample6 = (CSPSeq (CActionCommand (CVarDecl [Choose ("ms",[]) (ZVar ("RANGE",[]))] (CSPSeq (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[])] [ZVar ("ms",[])])) (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[]),("sv_LocWakeUp_min_U_RAN",[]),("sv_LocWakeUp_buzz_U_ALA",[])] [ZInt 0,ZInt 0,ZVar ("OFF",[])]))))) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[]),("sv_LocWakeUp_min_U_RAN",[])] [ZCall (ZVar ("\\mod",[])) (ZTuple [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_LocWakeUp_sec_U_RAN",[]),ZInt 1]),ZInt 3]),ZVar ("sv_LocWakeUp_min_U_RAN",[])])) (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sv_LocWakeUp_sec_U_RAN",[])) (ZInt 0)) (CActionCommand (CAssign [("sv_LocWakeUp_min_U_RAN",[]),("sv_LocWakeUp_sec_U_RAN",[])] [ZCall (ZVar ("\\mod",[])) (ZTuple [ZCall (ZVar ("+",[])) (ZTuple [ZVar ("sv_LocWakeUp_min_U_RAN",[]),ZInt 1]),ZInt 3]),ZVar ("sv_LocWakeUp_sec_U_RAN",[])]))) (CSPGuard (ZNot (ZEqual (ZVar ("sv_LocWakeUp_sec_U_RAN",[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("sv_LocWakeUp_min_U_RAN",[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("sv_LocWakeUp_buzz_U_ALA",[])] [ZVar ("ON",[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("sv_LocWakeUp_min_U_RAN",[]),ZVar ("sv_LocWakeUp_sec_U_RAN",[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("sv_LocWakeUp_buzz_U_ALA",[])] [ZVar ("OFF",[])])))))) (CChanSet ["tick"])) (CActionName "X"))))
+cexample6 = (CSPSeq (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[],[])] [ZVar ("ms",[],[])])) (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[],[]),("sv_LocWakeUp_min_U_RAN",[],[]),("sv_LocWakeUp_buzz_U_ALA",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])]))))) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionCommand (CAssign [("sv_LocWakeUp_sec_U_RAN",[],[]),("sv_LocWakeUp_min_U_RAN",[],[])] [ZCall (ZVar ("\\mod",[],[])) (ZTuple [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_LocWakeUp_sec_U_RAN",[],[]),ZInt 1]),ZInt 3]),ZVar ("sv_LocWakeUp_min_U_RAN",[],[])])) (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sv_LocWakeUp_sec_U_RAN",[],[])) (ZInt 0)) (CActionCommand (CAssign [("sv_LocWakeUp_min_U_RAN",[],[]),("sv_LocWakeUp_sec_U_RAN",[],[])] [ZCall (ZVar ("\\mod",[],[])) (ZTuple [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_LocWakeUp_min_U_RAN",[],[]),ZInt 1]),ZInt 3]),ZVar ("sv_LocWakeUp_sec_U_RAN",[],[])]))) (CSPGuard (ZNot (ZEqual (ZVar ("sv_LocWakeUp_sec_U_RAN",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("sv_LocWakeUp_min_U_RAN",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("sv_LocWakeUp_buzz_U_ALA",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("sv_LocWakeUp_min_U_RAN",[],[]),ZVar ("sv_LocWakeUp_sec_U_RAN",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("sv_LocWakeUp_buzz_U_ALA",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X"))))
 
 \end{code}}

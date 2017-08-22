@@ -23,22 +23,22 @@ make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 make_get_com :: [ZName] -> CAction -> CAction
 make_get_com [x] c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[])),ChanInp ("v_"++x)]) c)
+    [ChanDotExp (ZVar (x,[],[])),ChanInp ("v_"++x)]) c)
 make_get_com (x:xs) c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[])),ChanInp ("v_"++x)]) (make_get_com xs c))
+    [ChanDotExp (ZVar (x,[],[])),ChanInp ("v_"++x)]) (make_get_com xs c))
 make_get_com x c = c
 \end{code}
 \subsection{$make\_set\_com$}
 This function updates the values of the $Memory$ process by generating a sequence of $mset$ communications and then it behaves like $f~c$, where $f$ may be the $omega\_CAction$ or $omega\_prime\_CAction$.
 \begin{code}
 make_set_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
-make_set_com f [(x,_)] [y] c
+make_set_com f [(x,_,t)] [y] c
   = (CSPCommAction (ChanComm "mset"
-    [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (f c))
-make_set_com f ((x,_):xs) (y:ys) c
+    [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (f c))
+make_set_com f ((x,_,t):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
-     [ChanDotExp (ZVar (x,[])),ChanDotExp y]) (make_set_com f xs ys c))
+     [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
 \subsection{$get\_guard\_pair$}
 
@@ -72,10 +72,10 @@ mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair 
 
 The function $mk\_sub\_list$ will make a list of substitution variables to $v\_$ prefix.
 \begin{code}
-mk_sub_list :: [ZName] -> [((ZName,[t0]),ZExpr)]
+mk_sub_list :: [ZName] -> [((ZName,[t0],[ZExpr]),ZExpr)]
 mk_sub_list [] = []
-mk_sub_list [x] = [((x,[]),(ZVar ("v_"++x,[])))]
-mk_sub_list (x:xs) = [((x,[]),(ZVar ("v_"++x,[])))]++(mk_sub_list xs)
+mk_sub_list [x] = [((x,[],[]),(ZVar ("v_"++x,[],[])))]
+mk_sub_list (x:xs) = [((x,[],[]),(ZVar ("v_"++x,[],[])))]++(mk_sub_list xs)
 \end{code}
 \subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
@@ -187,8 +187,8 @@ rep_CSPRepParalNS a _ _ _ [x]
 rep_CSPRepParalNS a cs ns y (x:xs)
   = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs)
     (NSBigUnion (ZSetComp
-           [Choose (y,[]) (ZSetDisplay xs)]
-           (Just (ZCall (ZVar (ns,[])) (ZVar (y,[])))) ) )
+           [Choose (y,[],[]) (ZSetDisplay xs)]
+           (Just (ZCall (ZVar (ns,[],[])) (ZVar (y,[],[])))) ) )
      (CSPParAction a [x]) (rep_CSPRepParalNS a cs ns y xs) )
 \end{code}
 
@@ -201,8 +201,8 @@ rep_CSPRepInterlNS a _ _ [x]
 rep_CSPRepInterlNS a ns y (x:xs)
   = (CSPNSInter (NSExprParam ns [x])
     (NSBigUnion (ZSetComp
-           [Choose (y,[]) (ZSetDisplay xs)]
-           (Just (ZCall (ZVar (ns,[])) (ZVar (y,[])))) ) )
+           [Choose (y,[],[]) (ZSetDisplay xs)]
+           (Just (ZCall (ZVar (ns,[],[])) (ZVar (y,[],[])))) ) )
      (CSPParAction a [x]) (rep_CSPRepInterlNS a ns y xs) )
 \end{code}
 \subsection{Functions imported from $Data.List$}
@@ -278,9 +278,9 @@ splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
 \subsection{$get\_ZVar\_st$}
 This function extracts those variables $ZVar$ that are a state variable member.
 \begin{code}
-get_ZVar_st ((('l':'v':'_':xs),x))
+get_ZVar_st ((('l':'v':'_':xs),x,t))
  = [('l':'v':'_':xs)]
-get_ZVar_st ((('s':'v':'_':xs),x))
+get_ZVar_st ((('s':'v':'_':xs),x,t))
   = [('s':'v':'_':xs)]
 get_ZVar_st x
  = []
@@ -305,11 +305,11 @@ is_ZVar_v_st' a procn = isPrefixOf (join_name "v_sv" procn)  a
 Renames a $ZVar$ that is a state variable.
 
 \begin{code}
-rename_ZVar :: ([Char], t) -> ([Char], t)
-rename_ZVar (va,x)
+rename_ZVar :: ([Char], t,t2) -> ([Char], t,t2)
+rename_ZVar (va,x,y)
   = case (is_st_var va) of
-     True -> ("v_"++va,x)
-     False -> (va,x)
+     True -> ("v_"++va,x,y)
+     False -> (va,x,y)
 \end{code}
 
 \subsection{$rename\_ZExpr$}
@@ -317,8 +317,8 @@ Renames a $ZExpr$ where any $ZVar$ belonging to the state variable set will then
 
 \begin{code}
 rename_ZExpr :: ZExpr -> ZExpr
-rename_ZExpr (ZVar (va,x))
- = (ZVar (rename_ZVar (va,x)))
+rename_ZExpr (ZVar (va,x,t))
+ = (ZVar (rename_ZVar (va,x,t)))
 rename_ZExpr (ZInt zi)
  = (ZInt zi)
 rename_ZExpr (ZGiven gv)
@@ -390,14 +390,14 @@ Auxiliary function for renaming, where any binding is renamed as well as its rel
 bindingsVar :: [(ZVar, ZExpr)] -> [(ZVar, ZExpr)]
 
 bindingsVar [] = []
-bindingsVar [((va,x),b)]
+bindingsVar [((va,x,t),b)]
  = case (is_st_var va) of
-   True -> [(("v_"++va,x),(rename_ZExpr b))]
-   False -> [((va,x),(rename_ZExpr b))]
-bindingsVar (((va,x),b):xs)
+   True -> [(("v_"++va,x,t),(rename_ZExpr b))]
+   False -> [((va,x,t),(rename_ZExpr b))]
+bindingsVar (((va,x,t),b):xs)
  = case (is_st_var va) of
-   True -> [(("v_"++va,x),(rename_ZExpr b))]++(bindingsVar xs)
-   False -> [((va,x),(rename_ZExpr b))]++(bindingsVar xs)
+   True -> [(("v_"++va,x,t),(rename_ZExpr b))]++(bindingsVar xs)
+   False -> [((va,x,t),(rename_ZExpr b))]++(bindingsVar xs)
 \end{code}
 
 \subsection{$rename\_vars\_CParameter$}
@@ -894,16 +894,16 @@ get_action name lst (_:xs)
 \begin{code}
 get_chan_param :: [CParameter] -> [ZExpr]
 get_chan_param [] = []
-get_chan_param [ChanDotExp (ZVar (x,_))]
- = [ZVar (x,[])]
-get_chan_param [ChanOutExp (ZVar (x,_))]
- = [ZVar (x,[])]
+get_chan_param [ChanDotExp (ZVar (x,_,t))]
+ = [ZVar (x,[],t)]
+get_chan_param [ChanOutExp (ZVar (x,_,t))]
+ = [ZVar (x,[],t)]
 get_chan_param [_]
  = []
-get_chan_param ((ChanDotExp (ZVar (x,_))):xs)
- = [ZVar (x,[])]++(get_chan_param xs)
-get_chan_param ((ChanOutExp (ZVar (x,_))):xs)
- = [ZVar (x,[])]++(get_chan_param xs)
+get_chan_param ((ChanDotExp (ZVar (x,_,t))):xs)
+ = [ZVar (x,[],t)]++(get_chan_param xs)
+get_chan_param ((ChanOutExp (ZVar (x,_,t))):xs)
+ = [ZVar (x,[],t)]++(get_chan_param xs)
 get_chan_param (_:xs) = (get_chan_param xs)
 \end{code}
 
@@ -935,24 +935,26 @@ rename_vars_ParAction (ParamActionDecl zglst pa)
   = (ParamActionDecl zglst (rename_vars_ParAction pa))
 \end{code}
 
-\subsection{$[ZName]$ to $[ZExpr]$ - mainly converting to $ZVar (x,[])$}
+\subsection{$[ZName]$ to $[ZExpr]$ - mainly converting to $ZVar (x,[],[])$}
 \begin{code}
 zname_to_zexpr [] = []
-zname_to_zexpr [a] = [ZVar (a,[])]
-zname_to_zexpr (a:as) = [ZVar (a,[])]++(zname_to_zexpr as)
+zname_to_zexpr [a] = [ZVar (a,[],[])]
+zname_to_zexpr (a:as) = [ZVar (a,[],[])]++(zname_to_zexpr as)
 \end{code}
 \subsection{$[ZVar]$ to $[ZExpr]$}
 \begin{code}
 zvar_to_zexpr [] = []
-zvar_to_zexpr [(a,[])] = [ZVar (a,[])]
-zvar_to_zexpr ((a,[]):as) = [ZVar (a,[])]++(zvar_to_zexpr as)
+zvar_to_zexpr [(a,[],t)] = [ZVar (a,[],t)]
+zvar_to_zexpr ((a,[],t):as) = [ZVar (a,[],t)]++(zvar_to_zexpr as)
 \end{code}
 \subsection{$[ZGenFilt]$ to $[ZExpr]$}
 \begin{code}
 
 zgenfilt_to_zexpr [] = []
-zgenfilt_to_zexpr [(Choose (a,[]) t)] = [ZVar (a,[])]
-zgenfilt_to_zexpr ((Choose (a,[]) t):as) = [ZVar (a,[])]++(zgenfilt_to_zexpr as)
+zgenfilt_to_zexpr [(Choose (a,[],_) t)]
+  = [ZVar (a,[],[t])]
+zgenfilt_to_zexpr ((Choose (a,[],_) t):as)
+  = [ZVar (a,[],[t])]++(zgenfilt_to_zexpr as)
 zgenfilt_to_zexpr (_:as) = []++(zgenfilt_to_zexpr as)
 \end{code}
 \subsubsection{rename vars}
@@ -1197,10 +1199,10 @@ rename_vars_CReplace1 pn lst (CRenameAssign zvarls1 zvarls)
 \begin{code}
 bindingsVar1 pn lst []
  = []
-bindingsVar1 pn lst [((va,x),b)]
- = [(((join_name pn va),x),(rename_vars_ZExpr1 pn lst b))]
-bindingsVar1 pn lst (((va,x),b):xs)
- = [(((join_name pn va),x),(rename_vars_ZExpr1 pn lst b))]++(bindingsVar1 pn lst xs)
+bindingsVar1 pn lst [((va,x,t),b)]
+ = [(((join_name pn va),x,t),(rename_vars_ZExpr1 pn lst b))]
+bindingsVar1 pn lst (((va,x,t),b):xs)
+ = [(((join_name pn va),x,t),(rename_vars_ZExpr1 pn lst b))]++(bindingsVar1 pn lst xs)
 \end{code}
 \begin{code}
 get_bindings_var []
@@ -1214,11 +1216,11 @@ get_bindings_var (((va,x),b):xs)
 inListVar1 :: ZName -> [(ZName, ZVar, ZExpr)] -> Bool
 inListVar1 x []
  = False
-inListVar1 x [(a,(va,x1),b)]
+inListVar1 x [(a,(va,x1,_),b)]
  = case x == va of
   True -> True
   _ -> False
-inListVar1 x ((a,(va,x1),b):vst)
+inListVar1 x ((a,(va,x1,_),b):vst)
  = case x == va of
   True -> True
   _ -> inListVar1 x vst
@@ -1226,21 +1228,21 @@ inListVar1 x ((a,(va,x1),b):vst)
 
 \begin{code}
 get_proc_name :: ZName -> [(ZName, ZVar, ZExpr)] -> ZName
-get_proc_name x [(a,(va,x1),b)]
+get_proc_name x [(a,(va,x1,_),b)]
  = case x == va of
   True -> a
   _ -> ""
-get_proc_name x ((a,(va,x1),b):vst)
+get_proc_name x ((a,(va,x1,_),b):vst)
  = case x == va of
   True -> a
   _ -> get_proc_name x vst
 
 get_var_type :: ZName -> [(ZName, ZVar, ZExpr)] -> ZExpr
-get_var_type x [(a,(va,x1),b)]
+get_var_type x [(a,(va,x1,_),b)]
  = case x == va of
   True -> b
   _ -> error "type not found whilst get_var_type"
-get_var_type x ((a,(va,x1),b):vst)
+get_var_type x ((a,(va,x1,_),b):vst)
  = case x == va of
   True -> b
   _ -> get_var_type x vst
@@ -1250,27 +1252,27 @@ get_var_type x ((a,(va,x1),b):vst)
 
 \begin{code}
 rename_ZGenFilt1 pn  lst (Include s) = (Include s)
-rename_ZGenFilt1 pn  lst (Choose (va,x) e)
-  = (Choose ((join_name (join_name (join_name "sv" pn) va) newt),x) (rename_vars_ZExpr1 pn lst e))
+rename_ZGenFilt1 pn  lst (Choose (va,x,t) e)
+  = (Choose ((join_name (join_name (join_name "sv" pn) va) newt),x,t) (rename_vars_ZExpr1 pn lst e))
     where newt = (def_U_NAME $ get_vars_ZExpr e)
 rename_ZGenFilt1 pn  lst (Check p) = (Check (rename_vars_ZPred1 pn lst p))
 rename_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn lst e1) (rename_vars_ZExpr1 pn lst e2))
 \end{code}
 \begin{code}
 rename_vars_ZVar1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
-rename_vars_ZVar1 pn lst (va,x)
+rename_vars_ZVar1 pn lst (va,x,t)
  = case (inListVar1 va lst) of
-    True -> ((join_name (join_name (join_name "sv" pn) va) newt),x)
-    _ -> (va,x)
+    True -> ((join_name (join_name (join_name "sv" pn) va) newt),x,t)
+    _ -> (va,x,t)
     where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
 \end{code}
 \begin{code}
 rename_vars_ZExpr1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
-rename_vars_ZExpr1 pn lst (ZVar (va,x))
+rename_vars_ZExpr1 pn lst (ZVar (va,x,t))
  = case (inListVar1 va lst) of
     True -> (ZVar
-              ((join_name (join_name (join_name "sv" pn) va) newt),x))
-    _ -> (ZVar (va,x))
+              ((join_name (join_name (join_name "sv" pn) va) newt),x,t))
+    _ -> (ZVar (va,x,t))
   where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
 rename_vars_ZExpr1 pn lst (ZInt zi)
  = (ZInt zi)
@@ -1375,9 +1377,9 @@ rename_vars_ZPred1 pn lst (ZPSchema sp)
 \begin{code}
 -- extract the delta variables in here'
 get_delta_names1 :: [ZPara] -> [String]
-get_delta_names1 [(ZFreeTypeDef ("NAME",[]) xs)]
+get_delta_names1 [(ZFreeTypeDef ("NAME",[],_) xs)]
   = get_delta_names_aux1 xs
-get_delta_names1 ((ZFreeTypeDef ("NAME",[]) xs):xss)
+get_delta_names1 ((ZFreeTypeDef ("NAME",[],_) xs):xss)
   = (get_delta_names_aux1 xs)++(get_delta_names1 xss)
 get_delta_names1 (_:xs)
   = (get_delta_names1 xs)
@@ -1388,16 +1390,16 @@ get_delta_names1 []
 \begin{code}
 get_delta_names_aux1 :: [ZBranch] -> [String]
 get_delta_names_aux1 [] = []
-get_delta_names_aux1 [(ZBranch0 (a,_))] = [a]
+get_delta_names_aux1 [(ZBranch0 (a,[],_))] = [a]
 get_delta_names_aux1 [_] = []
-get_delta_names_aux1 ((ZBranch0 (a,_)):xs) = [a]++(get_delta_names_aux1 xs)
+get_delta_names_aux1 ((ZBranch0 (a,[],_)):xs) = [a]++(get_delta_names_aux1 xs)
 get_delta_names_aux1 (_:xs) = (get_delta_names_aux1 xs)
 \end{code}
 \begin{code}
 -- extract the delta variables in here' from the same state
-get_delta_names zn [(ZFreeTypeDef ("NAME",[]) xs)]
+get_delta_names zn [(ZFreeTypeDef ("NAME",[],_) xs)]
   = get_delta_names_aux zn xs
-get_delta_names zn ((ZFreeTypeDef ("NAME",[]) xs):xss)
+get_delta_names zn ((ZFreeTypeDef ("NAME",[],_) xs):xss)
   = (get_delta_names_aux zn xs)++(get_delta_names zn xss)
 get_delta_names zn (_:xs)
   = (get_delta_names zn xs)
@@ -1406,10 +1408,10 @@ get_delta_names _ []
 \end{code}
 
 \begin{code}
-get_delta_names_aux procn [(ZBranch0 (a,[]))]
+get_delta_names_aux procn [(ZBranch0 (a,[],_))]
   | is_ZVar_st' a procn = [a]
   | otherwise = []
-get_delta_names_aux procn ((ZBranch0 (a,[])):xs)
+get_delta_names_aux procn ((ZBranch0 (a,[],_)):xs)
   | is_ZVar_st' a procn = [a]++(get_delta_names_aux procn xs)
   | otherwise = (get_delta_names_aux procn xs)
 \end{code}
@@ -1522,15 +1524,15 @@ mk_mset_mem_bndg' fs (b:xs)
 -- make subtype NAME_TYPE1, subtype...
 
 -- this function returns the entire set of NAME
-get_znames_from_NAME [(ZFreeTypeDef ("NAME",[]) xs)] = xs
+get_znames_from_NAME [(ZFreeTypeDef ("NAME",[],_) xs)] = xs
 get_znames_from_NAME [_] = []
 
 
-get_znames_from_NAME ((ZFreeTypeDef ("NAME",[]) xs):axs) = xs
+get_znames_from_NAME ((ZFreeTypeDef ("NAME",[],_) xs):axs) = xs
 get_znames_from_NAME (_:axs) = get_znames_from_NAME axs
 
 -- first we get the names from NAME datatype
-select_zname_f_zbr (ZBranch0 (n,[])) = n
+select_zname_f_zbr (ZBranch0 (n,[],_)) = n
 select_zname_f_zbr _ = ""
 
 --then we get the type of some name
@@ -1598,9 +1600,9 @@ filter_universe_st procn ((a, b, c, d):xs)
 \end{code}
 \begin{code}
 -- extract the delta variables and types in here'
-def_universe [(ZAbbreviation ("\\delta",[]) (ZSetDisplay xs))]
+def_universe [(ZAbbreviation ("\\delta",[],_) (ZSetDisplay xs))]
   = def_universe_aux xs
-def_universe ((ZAbbreviation ("\\delta",[]) (ZSetDisplay xs)):xss)
+def_universe ((ZAbbreviation ("\\delta",[],_) (ZSetDisplay xs)):xss)
   = (def_universe_aux xs)++(def_universe xss)
 def_universe (_:xs)
   = (def_universe xs)
@@ -1612,13 +1614,13 @@ def_universe []
 -- (var name, U_TYP, TYP, Type)
 def_universe_aux :: [ZExpr] -> [(String, [Char], [Char], [Char])]
 def_universe_aux [] = []
-def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])] = [(b,"U_NAT", "NAT", "NatValue")]
-def_universe_aux [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])]= [(b,(def_U_NAME c), (def_U_prefix c), c)]
-def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar ("\\nat",[])])):xs) = ((b,"U_NAT", "NAT", "NatValue"):(def_universe_aux xs))
-def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]),ZVar (c,[])])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
-def_universe_aux [(ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))]))]
+def_universe_aux [ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar ("\\nat",[],_)])] = [(b,"U_NAT", "NAT", "NatValue")]
+def_universe_aux [ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar (c,[],_)])]= [(b,(def_U_NAME c), (def_U_prefix c), c)]
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar ("\\nat",[],_)])):xs) = ((b,"U_NAT", "NAT", "NatValue"):(def_universe_aux xs))
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar (c,[],_)])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
+def_universe_aux [(ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_), ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_))]))]
   = [(b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")"))]
-def_universe_aux ((ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (b,[]), ZCall (ZVar ("\\power",[])) (ZVar (c,[]))])):xs)
+def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_), ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_))])):xs)
   = ((b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")")):(def_universe_aux xs))
 \end{code}
 
@@ -1639,20 +1641,20 @@ Pieces from MappingFunStatelessCircus file
 
 \begin{code}
 def_delta_mapping :: [ZGenFilt] -> [ZExpr]
-def_delta_mapping [(Choose (v,[]) t)]
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (v,[]),t])]
-def_delta_mapping ((Choose (v,[]) t):xs)
-  = [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar (v,[]),t])]
+def_delta_mapping [(Choose (v,[],_) t)]
+  = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],[t]),t])]
+def_delta_mapping ((Choose (v,[],_) t):xs)
+  = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],[t]),t])]
     ++ (def_delta_mapping xs)
 def_delta_mapping [] = []
 \end{code}
 
 \begin{code}
 def_delta_name :: [ZGenFilt] -> [ZBranch]
-def_delta_name [(Choose (v,[]) t)]
-  = [ZBranch0 (v,[])]
-def_delta_name ((Choose (v,[]) t):xs)
-  = [ZBranch0 (v,[])] ++ (def_delta_name xs)
+def_delta_name [(Choose (v,[],_) t)]
+  = [ZBranch0 (v,[],[t])]
+def_delta_name ((Choose (v,[],_) t):xs)
+  = [ZBranch0 (v,[],[t])] ++ (def_delta_name xs)
 def_delta_name [] = []
 
 \end{code}
@@ -1780,13 +1782,13 @@ filter_main_action_bind zn ((a,b,c):ls)
 
 mk_main_action_bind :: [(ZName, ZVar, ZExpr)] -> CAction -> CAction
 mk_main_action_bind lst ca
-  | null lst = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])) ] Nothing)] ca))
-  | otherwise = (CActionCommand (CValDecl [Choose ("b",[]) (ZSetComp [Choose ("x",[]) (ZVar ("BINDING",[])),Check (mk_inv lst lst) ] Nothing)] ca))
+  | null lst = (CActionCommand (CValDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x",[],[]) (ZVar ("BINDING",[],[])) ] Nothing)] ca))
+  | otherwise = (CActionCommand (CValDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x",[],[]) (ZVar ("BINDING",[],[])),Check (mk_inv lst lst) ] Nothing)] ca))
 \end{code}
 \begin{code}
 mk_inv :: [(ZName, ZVar, ZExpr)] -> [(ZName, ZVar, ZExpr)] -> ZPred
-mk_inv lst [(a,(va,x),c)]
-  = (ZMember (ZVar ((join_name (join_name (join_name "sv" a) va) newt),x)) (rename_vars_ZExpr1 a lst c))
+mk_inv lst [(a,(va,x,t),c)]
+  = (ZMember (ZVar ((join_name (join_name (join_name "sv" a) va) newt),x,t)) (rename_vars_ZExpr1 a lst c))
     where newt = (def_U_NAME $ get_vars_ZExpr c)
 mk_inv lst ((a,b,c):xs)
   = (ZAnd (mk_inv lst xs) (mk_inv lst [(a,b,c)]))
@@ -1797,12 +1799,12 @@ mk_inv lst ((a,b,c):xs)
 Given $\{v_0,\ldots,v_n\}$, the function $make\_maps\_to$ returns $\{v_0 \mapsto vv_o, \ldots, v_n \mapsto vv_n\}$.
 \begin{code}
 make_maps_to :: [ZVar] -> [ZExpr]
-make_maps_to [(x,[])]
-  = [ZCall (ZVar ("\\mapsto",[]))
-    (ZTuple [ZVar (x,[]),ZVar ("val"++x,[])])]
-make_maps_to ((x,[]):xs)
-  = [ZCall (ZVar ("\\mapsto",[]))
-    (ZTuple [ZVar (x,[]),ZVar ("val"++x,[])])]++(make_maps_to xs)
+make_maps_to [(x,[],t)]
+  = [ZCall (ZVar ("\\mapsto",[],[]))
+    (ZTuple [ZVar (x,[],t),ZVar ("val"++x,[],t)])]
+make_maps_to ((x,[],t):xs)
+  = [ZCall (ZVar ("\\mapsto",[],[]))
+    (ZTuple [ZVar (x,[],t),ZVar ("val"++x,[],t)])]++(make_maps_to xs)
 \end{code}
 
 
@@ -1846,15 +1848,15 @@ propagate_CSPRep (CSPRepInterl ls a) = (CSPRepInterl ls (propagate_CSPRep a))
 
 \begin{code}
 make_memory_proc =
-  CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[]) (ZVar ("BINDING",[]))] (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[])),ChanOutExp (ZCall (ZVar ("b",[])) (ZVar ("n",[])))]) (CSPParAction "Memory" [ZVar ("b",[])]))) (CSPRepExtChoice [Choose ("n",[]) (ZCall (ZVar ("\\dom",[])) (ZVar ("b",[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[])) (ZCall (ZVar ("\\delta",[])) (ZVar ("n",[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[])) (ZTuple [ZVar ("b",[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[])) (ZTuple [ZVar ("n",[]),ZVar ("nv",[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))
+  CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[],[]) (ZVar ("BINDING",[],[]))] (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],[])),ChanOutExp (ZCall (ZVar ("b",[],[])) (ZVar ("n",[],[])))]) (CSPParAction "Memory" [ZVar ("b",[],[])]))) (CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[],[])) (ZCall (ZVar ("\\delta",[],[])) (ZVar ("n",[],[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar ("b",[],[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar ("n",[],[]),ZVar ("nv",[],[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))
 \end{code}
 Checking if the Delta is empty. That means that there's no state in any process in the specification.
 \begin{code}
-check_empty_delta [ZAbbreviation ("\\delta",_) (ZSetDisplay [])] = True
-check_empty_delta [ZAbbreviation ("\\delta",_) (ZSetDisplay _)] = False
+check_empty_delta [ZAbbreviation ("\\delta",_,_) (ZSetDisplay [])] = True
+check_empty_delta [ZAbbreviation ("\\delta",_,_) (ZSetDisplay _)] = False
 check_empty_delta [_] = False
-check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay [])):xs) = True
-check_empty_delta ((ZAbbreviation ("\\delta",_) (ZSetDisplay _)):xs) = False
+check_empty_delta ((ZAbbreviation ("\\delta",_,_) (ZSetDisplay [])):xs) = True
+check_empty_delta ((ZAbbreviation ("\\delta",_,_) (ZSetDisplay _)):xs) = False
 check_empty_delta (_:xs) = check_empty_delta xs
 
 \end{code}
@@ -1864,31 +1866,31 @@ this makes a list of local variables to be renamed
 \end{code}
 \begin{code}
 vars_to_name :: ZVar -> ZName
-vars_to_name (v,x) = v
+vars_to_name (v,x,t) = v
 \end{code}
 \begin{code}
 rename_list_lv p ys vs
   = ren p ys vs
     where
-      ren' pn (v,[]) [Choose (v1,[]) t] =
+      ren' pn (v,[],t1) [Choose (v1,[],t2) t] =
         case v == v1 of
-            True -> [((v,[]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[]))]
+            True -> [((v,[],[t]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]))]
             False -> []
         where newt = (def_U_NAME $ get_vars_ZExpr t)
-      ren' pn (v,[]) ((Choose (v1,[]) t):xs) =
+      ren' pn (v,[],t1) ((Choose (v1,[],t2) t):xs) =
         case v == v1 of
-            True -> [((v,[]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[]))]
-            False -> ren' pn (v,[]) xs
+            True -> [((v,[],[t]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]))]
+            False -> ren' pn (v,[],[t]) xs
         where newt = (def_U_NAME $ get_vars_ZExpr t)
       ren pn [x] as = ren' pn x as
       ren pn (x:xs) as = (ren' pn x as)++(ren pn xs as)
 
-rename_genfilt_lv pn [Choose (v,[]) t]
-  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[]) t]
+rename_genfilt_lv pn [Choose (v,[],_) t]
+  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]) t]
   where newt = (def_U_NAME $ get_vars_ZExpr t)
 rename_genfilt_lv pn x = x
-rename_genfilt_lv pn ((Choose (v,[]) t):xs)
-  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[]) t]
+rename_genfilt_lv pn ((Choose (v,[],_) t):xs)
+  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]) t]
   where newt = (def_U_NAME $ get_vars_ZExpr t)
 rename_genfilt_lv pn (x:xs) = (x:(rename_genfilt_lv pn xs))
 \end{code}
