@@ -45,8 +45,8 @@ crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlai
         fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
         fvs2 = free_var_CAction ma2
         ffvs = diff_varset fvs2 fvs1
-        nl = rename_list_lv p (varset_to_zvars ffvs) va2
         gfs = rename_genfilt_lv p va2
+        nl = rename_list_lv p (varset_to_zvars ffvs) va2
         subs = make_subinfo nl fvs2
         finalsubs = sub_CAction subs ma2
 crl_prom_var_state _ = None
@@ -184,8 +184,8 @@ crl_var_exp_par :: CAction -> Refinement CAction
 crl_var_exp_par e@(CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[],tx) t)] a1)) a2)
   = Done{orig = Just e, refined = Just ref, proviso = [p1]}
     where
-      ref = (CActionCommand (CVarDecl [(Choose (d,[],[t]) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
-      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay [ZVar (d,[],[t]),ZVar (d,["'"],[t])],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[],[])))
+      ref = (CActionCommand (CVarDecl [(Choose (d,[],tx) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
+      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay [ZVar (d,[],tx),ZVar (d,["'"],tx)],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[],[])))
 crl_var_exp_par _ = None
 \end{code}
 % law 2
@@ -786,12 +786,12 @@ crl_channelExtension3 ei@(CSPHide
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
       p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
-      p3 = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CActionCommand (CVarDecl [Choose (e,[],[t1]) t1] mact))))))
+      p3 = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CActionCommand (CVarDecl [Choose (e,[],tx1) t1] mact))))))
       ref = (CSPHide
                 (CSPNSParal ns1 (CChanSet cs1) ns2
                     (CSPCommAction (ChanComm c [ChanOutExp (ZVar (e,[],tx1))]) a1)
                     (CSPCommAction (ChanComm c [ChanInp x])
-                        (CActionCommand (CVarDecl [Choose (x,[],[t1]) t1] mact))))
+                        (CActionCommand (CVarDecl [Choose (x,[],"") t1] mact))))
                 (CChanSet cs2))
 crl_channelExtension3 _ _ _= None
 \end{code}

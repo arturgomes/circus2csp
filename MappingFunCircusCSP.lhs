@@ -165,8 +165,8 @@ mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b,[]) zbs)
     True -> ""
     where
       zn = get_znames_from_NAME spec
-      znames = remdups $ map select_zname_f_zbr zn
-      ztypes = remdups $ map select_type_zname znames
+      znames = remdups $ map nfst (select_f_zbr zn)
+      ztypes = remdups $ map ntrd (select_f_zbr zn)
       bindingsval = mk_charll_to_charl "\n" $ map mk_BINDINGS_TYPE ztypes
       res =  member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
 
@@ -198,8 +198,8 @@ mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b,[]) zbs)
             ++ "\n")
     True -> ""
     where
-      znames = remdups $ map select_zname_f_zbr zbs
-      ztypes = remdups $ map select_type_zname znames
+      znames = remdups $ map nfst (select_f_zbr zbs)
+      ztypes = remdups $ map ntrd (select_f_zbr zbs)
       nameval = mk_charll_to_charl "\n" $ map mk_NAME_VALUES_TYPE ztypes
       res =  member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
 
@@ -866,9 +866,10 @@ mapping_CAction procn spec (CSPRepIntChoice [Choose ("x",[],[]) (ZVar ("BINDING"
        ++"\n\t\twithin"
        ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
        where
-         znames = (get_delta_names procn spec)
-         ztypes = remdups $ map select_type_zname znames
-         restr = mk_charll_to_charl "\n" $ map (mk_restrict spec znames) ztypes
+         zn = get_znames_from_NAME spec
+         znames = remdups $ map nfst (select_f_zbr zn)
+         ztypes = remdups $ map ntrd (select_f_zbr zn)
+         restr = mk_charll_to_charl "\n" $ map (mk_restrict spec (select_f_zbr zn)) ztypes
          bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
          restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
 
@@ -1000,9 +1001,10 @@ mapping_CCommand procn spec (CVarDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x"
     ++"\n\t\twithin"
     ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
     where
-      znames = (get_delta_names procn spec)
-      ztypes = remdups $ map select_type_zname znames
-      restr = mk_charll_to_charl "\n" $ map (mk_restrict spec znames) ztypes
+      zn = get_znames_from_NAME spec
+      znames = remdups $ map nfst (select_f_zbr zn)
+      ztypes = remdups $ map ntrd (select_f_zbr zn)
+      restr = mk_charll_to_charl "\n" $ map (mk_restrict spec (select_f_zbr zn)) ztypes
       bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
       restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
 
@@ -1107,8 +1109,8 @@ mapping_predicate lst (ZTrue{reason=[]})
   = "true"
 mapping_predicate lst (ZFalse{reason=[]})
   = "false"
-mapping_predicate lst (ZMember (ZVar (x,[],[tx])) (ZCall (ZVar ("\\delta",[],[])) (ZVar (n,[],_))))
-  = "type"++(def_U_prefix' tx)++"("++n++")"
+mapping_predicate lst (ZMember (ZVar (x,[],tx)) (ZCall (ZVar ("\\delta",[],[])) (ZVar (n,[],_))))
+  = "type"++(def_U_prefix tx)++"("++n++")"
 mapping_predicate lst (ZMember a b)
   = "member("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_predicate lst x
@@ -1163,10 +1165,10 @@ The mapping function for sequence expressions is defined as follows:
 \begin{code}
 get_channel_name :: [ZPara] -> Comm -> ZName
 
-get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[],[t])),ChanInp v1])
-  = "mget."++x++"?"++v1++":(type"++(def_U_prefix' t)++"("++x++"))"
-get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[],[t]))):xs))
-  = "mset."++x++".("++(def_U_prefix' t)++(get_channel_name_cont spec xs)++")"
+get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1])
+  = "mget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"
+get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[],t))):xs))
+  = "mset."++x++".("++(def_U_prefix t)++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -1219,12 +1221,12 @@ get_chan_list _ = []
 mapping_ZTuple [ZVar ("\\nat",_,[])] = "NatValue"
 mapping_ZTuple [ZVar ("\\nat_1",_,[])] = "NatValue"
 -- mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
-mapping_ZTuple [ZVar (v,_,[t])]
-  | (is_ZVar_v_st v) = "value"++(def_U_prefix' t)++"("++v++")"
+mapping_ZTuple [ZVar (v,_,t)]
+  | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"
   | otherwise = v
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
-mapping_ZTuple ((ZVar (v,_,[t])):xs)
-  | (is_ZVar_v_st v) = "value"++(def_U_prefix' t)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
+mapping_ZTuple ((ZVar (v,_,t)):xs)
+  | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
   | otherwise = v ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple _ = ""
@@ -1256,9 +1258,9 @@ mapping_ZExpr lst (ZVar ("\\emptyset",[],[])) = "{}"
 mapping_ZExpr lst (ZVar ("\\int",[],[])) = "Int"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
-mapping_ZExpr lst (ZVar (a,_,[t]))
-  | (inListVar a lst) = "value"++(def_U_prefix' t)++"(v_"++a++")"
-  | (is_ZVar_v_st a) = "value"++(def_U_prefix' t)++"("++a++")"
+mapping_ZExpr lst (ZVar (a,_,t))
+  | (inListVar a lst) = "value"++(def_U_prefix t)++"(v_"++a++")"
+  | (is_ZVar_v_st a) = "value"++(def_U_prefix t)++"("++a++")"
   | otherwise = a
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"

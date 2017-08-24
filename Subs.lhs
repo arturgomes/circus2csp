@@ -29,9 +29,7 @@ invariant.
   avoid_variables,
   choose_fresh_var,
   def_U_NAME,
-  def_U_NAME',
   def_U_prefix,
-  def_U_prefix',
   diff_varset,
   empty_varset,
   free_var_CAction,
@@ -798,7 +796,7 @@ free_var_if (CircThenElse (CircGAction p a) gb)
 -- returns a ZVar that does not appear in the given list of zvars.
 choose_fresh_var :: VarSet -> String -> ZVar
 choose_fresh_var vs s
-  = head [v|d <- decors, let v = make_zvar s d, not (ZVar v `in_varset` vs)]
+  = head [v|[d] <- decors, let v = (make_zvar (s++d) []), not (ZVar v `in_varset` vs)]
 
 decors0 = [[d] | d <- ["_1","_2","_3","_4","_5","_6","_7","_8","_9"]]
 decors  = [[]] ++ [d2++d | d2 <- decors, d <- decors0]
@@ -824,7 +822,7 @@ list_ZGenFilt_loc_var (Choose (va,x,y) e)
   = [((va,x,[e]),e)]
 list_ZGenFilt_loc_var _ = []
 list_ZGenFilt_loc_var' (Choose (va,x,y) e)
-  = [ZVar (va,x,[e])]
+  = [ZVar (va,x,"")]
 list_ZGenFilt_loc_var' _ = []
 \end{code}
 \begin{code}
@@ -847,15 +845,6 @@ mergeTwoLists _ _ = error "Error whilst mergin two lists"
 def_U_NAME x = ("U_"++(map toUpper (take 3 x)))
 def_U_prefix x = (map toUpper (take 3 x))
 
-def_U_NAME' (ZVar ("\\nat",[],_)) = "U_NAT"
-def_U_NAME' (ZVar (c,[],_)) = (def_U_NAME c)
-def_U_NAME' (ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_)))
-  = (def_U_NAME ("P"++c))
-
-def_U_prefix' (ZVar ("\\nat",[],_)) = "U_NAT"
-def_U_prefix' (ZVar (c,[],_)) = (def_U_prefix c)
-def_U_prefix' (ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_)))
-  = (def_U_prefix ("P"++c))
 \end{code}
 
 \begin{code}

@@ -119,17 +119,17 @@ TODO: Make this a separate module, perhaps combined with \texttt{VarSet}.
 \subsection{Z Names and Decorations}
 \begin{code}
 type ZDecor = String      -- a decoration: ''', '!', '?' or '_N'
-type ZVar = (String, [ZDecor], [ZExpr]) -- all kinds of Z names
+type ZVar = (String, [ZDecor], String) -- all kinds of Z names
 type ZName = String
 \end{code}
 
 \begin{code}
 
 make_zvar :: String -> [ZDecor] -> ZVar
-make_zvar s dl = (s,dl,[])
+make_zvar s dl = (s,dl,"")
 
-make_ztvar :: String -> [ZDecor] -> ZExpr -> ZVar
-make_ztvar s dl t = (s,dl,[t])
+make_ztvar :: String -> [ZDecor] -> String -> ZVar
+make_ztvar s dl t = (s,dl,t)
 
 decorate_zvar :: ZVar -> [ZDecor] -> ZVar
 decorate_zvar (s,dl,t) d = (s,dl++d,t)
@@ -148,7 +148,7 @@ nfst (a,b,c) = a
 nsnd :: ZVar -> [ZDecor]
 nsnd (a,b,c) = b
 
-ntrd :: ZVar -> [ZExpr]
+ntrd :: ZVar -> String
 ntrd (a,b,c) = c
 
 get_zvar_name :: ZVar -> String

@@ -72,7 +72,7 @@ mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair 
 
 The function $mk\_sub\_list$ will make a list of substitution variables to $v\_$ prefix.
 \begin{code}
-mk_sub_list :: [ZName] -> [((ZName,[t0],[ZExpr]),ZExpr)]
+mk_sub_list :: [ZName] -> [((ZName,[t0],String),ZExpr)]
 mk_sub_list [] = []
 mk_sub_list [x] = [((x,[],[]),(ZVar ("v_"++x,[],[])))]
 mk_sub_list (x:xs) = [((x,[],[]),(ZVar ("v_"++x,[],[])))]++(mk_sub_list xs)
@@ -278,17 +278,15 @@ splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
 \subsection{$get\_ZVar\_st$}
 This function extracts those variables $ZVar$ that are a state variable member.
 \begin{code}
-get_ZVar_st ((('l':'v':'_':xs),x,t))
- = [('l':'v':'_':xs)]
-get_ZVar_st ((('s':'v':'_':xs),x,t))
-  = [('s':'v':'_':xs)]
 get_ZVar_st x
- = []
+  | is_ZVar_st (nfst x) = [nfst x]
+  | otherwise = []
 \end{code}
 \subsection{$is\_ZVar\_st$}
 
 \begin{code}
 is_ZVar_st a = isPrefixOf "sv" a
+is_ZVar_st a = isPrefixOf "lv" a
 is_ZVar_st' a procn = isPrefixOf (join_name "sv" procn) a
 \end{code}
 
@@ -307,7 +305,7 @@ Renames a $ZVar$ that is a state variable.
 \begin{code}
 rename_ZVar :: ([Char], t,t2) -> ([Char], t,t2)
 rename_ZVar (va,x,y)
-  = case (is_st_var va) of
+  = case (is_ZVar_st va) of
      True -> ("v_"++va,x,y)
      False -> (va,x,y)
 \end{code}
@@ -390,12 +388,8 @@ Auxiliary function for renaming, where any binding is renamed as well as its rel
 bindingsVar :: [(ZVar, ZExpr)] -> [(ZVar, ZExpr)]
 
 bindingsVar [] = []
-bindingsVar [((va,x,t),b)]
- = case (is_st_var va) of
-   True -> [(("v_"++va,x,t),(rename_ZExpr b))]
-   False -> [((va,x,t),(rename_ZExpr b))]
 bindingsVar (((va,x,t),b):xs)
- = case (is_st_var va) of
+ = case (is_ZVar_st va) of
    True -> [(("v_"++va,x,t),(rename_ZExpr b))]++(bindingsVar xs)
    False -> [((va,x,t),(rename_ZExpr b))]++(bindingsVar xs)
 \end{code}
@@ -914,18 +908,6 @@ filter_state_comp [(_, v, _)] = [v]
 filter_state_comp ((_, v, _):xs) = [v]++(filter_state_comp xs)
 \end{code}
 
-\begin{code}
-is_st_var ('s':'v':'_':xs) = True
-is_st_var _ = False
-\end{code}
-
-
-
-
-\begin{code}
-middle (a,b,c) = b
-\end{code}
-
 \subsubsection{rename vars}
 
 \begin{code}
@@ -951,10 +933,10 @@ zvar_to_zexpr ((a,[],t):as) = [ZVar (a,[],t)]++(zvar_to_zexpr as)
 \begin{code}
 
 zgenfilt_to_zexpr [] = []
-zgenfilt_to_zexpr [(Choose (a,[],_) t)]
-  = [ZVar (a,[],[t])]
-zgenfilt_to_zexpr ((Choose (a,[],_) t):as)
-  = [ZVar (a,[],[t])]++(zgenfilt_to_zexpr as)
+zgenfilt_to_zexpr [(Choose (a,[],tx) t)]
+  = [ZVar (a,[],tx)]
+zgenfilt_to_zexpr ((Choose (a,[],tx) t):as)
+  = [ZVar (a,[],tx)]++(zgenfilt_to_zexpr as)
 zgenfilt_to_zexpr (_:as) = []++(zgenfilt_to_zexpr as)
 \end{code}
 \subsubsection{rename vars}
@@ -1199,8 +1181,6 @@ rename_vars_CReplace1 pn lst (CRenameAssign zvarls1 zvarls)
 \begin{code}
 bindingsVar1 pn lst []
  = []
-bindingsVar1 pn lst [((va,x,t),b)]
- = [(((join_name pn va),x,t),(rename_vars_ZExpr1 pn lst b))]
 bindingsVar1 pn lst (((va,x,t),b):xs)
  = [(((join_name pn va),x,t),(rename_vars_ZExpr1 pn lst b))]++(bindingsVar1 pn lst xs)
 \end{code}
@@ -1248,13 +1228,11 @@ get_var_type x ((a,(va,x1,_),b):vst)
   _ -> get_var_type x vst
 \end{code}
 
-
-
 \begin{code}
 rename_ZGenFilt1 pn  lst (Include s) = (Include s)
 rename_ZGenFilt1 pn  lst (Choose (va,x,t) e)
-  = (Choose ((join_name (join_name (join_name "sv" pn) va) newt),x,t) (rename_vars_ZExpr1 pn lst e))
-    where newt = (def_U_NAME $ get_vars_ZExpr e)
+  = (Choose ((join_name (join_name "sv" pn) va),x,newt) (rename_vars_ZExpr1 pn lst e))
+    where newt = (def_U_prefix $ get_vars_ZExpr e)
 rename_ZGenFilt1 pn  lst (Check p) = (Check (rename_vars_ZPred1 pn lst p))
 rename_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn lst e1) (rename_vars_ZExpr1 pn lst e2))
 \end{code}
@@ -1262,18 +1240,18 @@ rename_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn
 rename_vars_ZVar1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
 rename_vars_ZVar1 pn lst (va,x,t)
  = case (inListVar1 va lst) of
-    True -> ((join_name (join_name (join_name "sv" pn) va) newt),x,t)
+    True -> ((join_name (join_name "sv" pn) va),x,newt)
     _ -> (va,x,t)
-    where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
+    where newt = (def_U_prefix $ get_vars_ZExpr $ get_var_type va lst)
 \end{code}
 \begin{code}
 rename_vars_ZExpr1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
 rename_vars_ZExpr1 pn lst (ZVar (va,x,t))
  = case (inListVar1 va lst) of
     True -> (ZVar
-              ((join_name (join_name (join_name "sv" pn) va) newt),x,t))
+              ((join_name (join_name "sv" pn) va),x,newt))
     _ -> (ZVar (va,x,t))
-  where newt = (def_U_NAME $ get_vars_ZExpr $ get_var_type va lst)
+  where newt = (def_U_prefix $ get_vars_ZExpr $ get_var_type va lst)
 rename_vars_ZExpr1 pn lst (ZInt zi)
  = (ZInt zi)
 rename_vars_ZExpr1 pn lst (ZGiven gv)
@@ -1524,43 +1502,38 @@ mk_mset_mem_bndg' fs (b:xs)
 -- make subtype NAME_TYPE1, subtype...
 
 -- this function returns the entire set of NAME
-get_znames_from_NAME [(ZFreeTypeDef ("NAME",[],_) xs)] = xs
-get_znames_from_NAME [_] = []
-
-
+get_znames_from_NAME [] = []
 get_znames_from_NAME ((ZFreeTypeDef ("NAME",[],_) xs):axs) = xs
 get_znames_from_NAME (_:axs) = get_znames_from_NAME axs
 
 -- first we get the names from NAME datatype
-select_zname_f_zbr (ZBranch0 (n,[],_)) = n
-select_zname_f_zbr _ = ""
-
---then we get the type of some name
-select_type_zname n = (lastN 3 n)
+select_f_zbr [] = []
+select_f_zbr ((ZBranch0 v):xs) = v : (select_f_zbr xs)
+select_f_zbr (_:xs) = (select_f_zbr xs)
 
 -- now we filter a list of names nms of a selected type tp
 filter_znames_f_type [] tp = []
-filter_znames_f_type [n] tp
-  | (lastN 3 n) == tp = [n]
-  | otherwise = []
 filter_znames_f_type (n:nms) tp
-  = (filter_znames_f_type [n] tp) ++ (filter_znames_f_type nms tp)
+  | (ntrd n) == tp = [n] ++ (filter_znames_f_type nms tp)
+  | otherwise = (filter_znames_f_type nms tp)
 
 -- with all that, we create a subtype NAME_TYPEX
 lst_subtype t [] = []
-lst_subtype t [z]
-      | (lastN 3 z) == t = [z]
-      | otherwise = []
 lst_subtype t (z:zs)
-      | (lastN 3 z) == t = [z] ++ (lst_subtype t zs)
+      | (ntrd z) == t = z : (lst_subtype t zs)
       | otherwise = (lst_subtype t zs)
+
+make_subtype_NAME :: [ZBranch] -> [Char]
 make_subtype_NAME zb
   = nametypels
   where
-    make_subtype znls zt = "subtype NAME_"++zt++" = "++mk_charll_to_charl " | " (lst_subtype zt znls)
-    znames = remdups $ map select_zname_f_zbr zb
-    ztypes = remdups $ map select_type_zname znames
-    nametypels = mk_charll_to_charl "\n" $ map (make_subtype znames) ztypes
+    make_subtype znls zt =
+      "subtype NAME_"++zt++" = "
+        ++(mk_charll_to_charl " | " (map nfst (lst_subtype zt znls)))
+    znames = remdups $ select_f_zbr zb
+    ztypes = remdups $ map ntrd (select_f_zbr zb)
+    nametypels = mk_charll_to_charl "\n" $
+            map (make_subtype znames) ztypes
 
 -- make NAME_VALUES_TYPE
 mk_NAME_VALUES_TYPE n
@@ -1571,8 +1544,9 @@ mk_BINDINGS_TYPE n
 -- make restrict functions within main action
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
+  
 mk_restrict spec vlst n
-    = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ lst_subtype n vlst)++"})"
+    = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (map nfst (lst_subtype n vlst)))++"})"
     where
       univlst = (def_universe spec)
       funivlst = remdups (filter_types_universe univlst)
@@ -1641,21 +1615,18 @@ Pieces from MappingFunStatelessCircus file
 
 \begin{code}
 def_delta_mapping :: [ZGenFilt] -> [ZExpr]
-def_delta_mapping [(Choose (v,[],_) t)]
-  = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],[t]),t])]
-def_delta_mapping ((Choose (v,[],_) t):xs)
-  = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],[t]),t])]
-    ++ (def_delta_mapping xs)
 def_delta_mapping [] = []
+def_delta_mapping ((Choose (v,[],tx) t):xs)
+  = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],tx),t])]
+    ++ (def_delta_mapping xs)
+def_delta_mapping (_:xs) = (def_delta_mapping xs)
 \end{code}
 
 \begin{code}
 def_delta_name :: [ZGenFilt] -> [ZBranch]
-def_delta_name [(Choose (v,[],_) t)]
-  = [ZBranch0 (v,[],[t])]
-def_delta_name ((Choose (v,[],_) t):xs)
-  = [ZBranch0 (v,[],[t])] ++ (def_delta_name xs)
 def_delta_name [] = []
+def_delta_name ((Choose v t):xs) = [ZBranch0 v] ++ (def_delta_name xs)
+def_delta_name (_:xs) = (def_delta_name xs)
 
 \end{code}
 \begin{code}
@@ -1788,8 +1759,8 @@ mk_main_action_bind lst ca
 \begin{code}
 mk_inv :: [(ZName, ZVar, ZExpr)] -> [(ZName, ZVar, ZExpr)] -> ZPred
 mk_inv lst [(a,(va,x,t),c)]
-  = (ZMember (ZVar ((join_name (join_name (join_name "sv" a) va) newt),x,t)) (rename_vars_ZExpr1 a lst c))
-    where newt = (def_U_NAME $ get_vars_ZExpr c)
+  = (ZMember (ZVar ((join_name (join_name "sv" a) va) ,x,newt)) (rename_vars_ZExpr1 a lst c))
+    where newt = (def_U_prefix $ get_vars_ZExpr c)
 mk_inv lst ((a,b,c):xs)
   = (ZAnd (mk_inv lst xs) (mk_inv lst [(a,b,c)]))
 -- mk_inv x (_:xs) = mk_inv x xs
@@ -1869,28 +1840,323 @@ vars_to_name :: ZVar -> ZName
 vars_to_name (v,x,t) = v
 \end{code}
 \begin{code}
+rename_list_lv
+  :: [Char]
+     -> [(String, [t2], t)]
+     -> [ZGenFilt]
+     -> [((String, [t1], t), ZExpr)]
 rename_list_lv p ys vs
   = ren p ys vs
     where
       ren' pn (v,[],t1) [Choose (v1,[],t2) t] =
         case v == v1 of
-            True -> [((v,[],[t]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]))]
+            True -> [((v,[],t1),ZVar ((join_name (join_name "lv" pn) v) ,[],newt))]
             False -> []
-        where newt = (def_U_NAME $ get_vars_ZExpr t)
+        where newt = (def_U_prefix $ get_vars_ZExpr t)
       ren' pn (v,[],t1) ((Choose (v1,[],t2) t):xs) =
         case v == v1 of
-            True -> [((v,[],[t]),ZVar ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]))]
-            False -> ren' pn (v,[],[t]) xs
-        where newt = (def_U_NAME $ get_vars_ZExpr t)
+            True -> [((v,[],t1),ZVar ((join_name (join_name "lv" pn) v) ,[],newt))]
+            False -> ren' pn (v,[],t1) xs
+        where newt = (def_U_prefix $ get_vars_ZExpr t)
       ren pn [x] as = ren' pn x as
       ren pn (x:xs) as = (ren' pn x as)++(ren pn xs as)
 
-rename_genfilt_lv pn [Choose (v,[],_) t]
-  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]) t]
-  where newt = (def_U_NAME $ get_vars_ZExpr t)
-rename_genfilt_lv pn x = x
-rename_genfilt_lv pn ((Choose (v,[],_) t):xs)
-  = [Choose ((join_name (join_name (join_name "lv" pn) v) newt),[],[t]) t]
-  where newt = (def_U_NAME $ get_vars_ZExpr t)
-rename_genfilt_lv pn (x:xs) = (x:(rename_genfilt_lv pn xs))
+rename_genfilt_lv :: [Char] -> [ZGenFilt] -> [ZGenFilt]
+rename_genfilt_lv pn xs
+  = map (rename_genfilt_lv' pn) xs
+
+rename_genfilt_lv' pn (Choose (va,x,t) e)
+  = (Choose ((join_name (join_name "lv" pn) va),[],newt) e)
+    where newt = (def_U_prefix $ get_vars_ZExpr e)
+rename_genfilt_lv' pn x = x
+\end{code}
+
+
+Entire rewriting of the types within a ZVar
+\begin{code}
+
+
+upd_type_ZPara lst (Process _ProcDecl)
+	= (Process (upd_type_ProcDecl lst _ProcDecl))
+upd_type_ZPara lst x
+	= x
+
+--ProcDecl
+upd_type_ProcDecl lst (CProcess _ZName _ProcessDef)
+	= (CProcess _ZName  (upd_type_ProcessDef lst _ProcessDef))
+upd_type_ProcDecl lst (CParamProcess _ZName _ZName_lst _ProcessDef)
+	= (CParamProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
+upd_type_ProcDecl lst (CGenProcess _ZName _ZName_lst _ProcessDef)
+	= (CGenProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
+
+--ProcessDef
+upd_type_ProcessDef lst (ProcDefSpot _ZGenFilt_lst _ProcessDef)
+	= (ProcDefSpot _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
+upd_type_ProcessDef lst (ProcDefIndex _ZGenFilt_lst _ProcessDef)
+	= (ProcDefIndex _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
+upd_type_ProcessDef lst (ProcDef _CProc)
+	= (ProcDef (upd_type_CProc lst _CProc))
+
+-- CProc
+upd_type_CProc lst (CRepSeqProc _ZGenFilt_lst _CProc)
+	= (CRepSeqProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+upd_type_CProc lst (CRepExtChProc _ZGenFilt_lst _CProc)
+	= (CRepExtChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+upd_type_CProc lst (CRepIntChProc _ZGenFilt_lst _CProc)
+	= (CRepIntChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+upd_type_CProc lst (CRepParalProc _CSExp _ZGenFilt_lst _CProc)
+	= (CRepParalProc _CSExp _ZGenFilt_lst (upd_type_CProc lst _CProc))
+upd_type_CProc lst (CRepInterlProc _ZGenFilt_lst _CProc)
+	= (CRepInterlProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+upd_type_CProc lst (CHide _CProc _CSExp)
+	= (CHide (upd_type_CProc lst _CProc) _CSExp)
+upd_type_CProc lst (CExtChoice _CProc1 _CProc2)
+	= (CExtChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+upd_type_CProc lst (CIntChoice _CProc1 _CProc2)
+	= (CIntChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+upd_type_CProc lst (CParParal _CSExp _CProc1 _CProc2)
+	= (CParParal _CSExp (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+upd_type_CProc lst (CInterleave _CProc1 _CProc2)
+	= (CInterleave (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+upd_type_CProc lst (CGenProc _ZName  _ZExpr_lst)
+	= (CGenProc _ZName  _ZExpr_lst)
+upd_type_CProc lst (CParamProc _ZName  _ZExpr_lst)
+	= (CParamProc _ZName  _ZExpr_lst)
+upd_type_CProc lst (CProcRename _ZName  _Comm_lst1  _Comm_lst2)
+	= (CProcRename _ZName  _Comm_lst1  _Comm_lst2)
+upd_type_CProc lst (CSeq _CProc1 _CProc2)
+	= (CSeq (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+upd_type_CProc lst (CSimpIndexProc _ZName  _ZExpr_lst)
+	= (CSimpIndexProc _ZName  _ZExpr_lst)
+upd_type_CProc lst (CircusProc _ZName)
+	= (CircusProc _ZName)
+upd_type_CProc lst (ProcMain _ZPara _PPar_lst _CAction)
+	= (ProcMain _ZPara _PPar_lst (upd_type_CAction lst _CAction))
+upd_type_CProc lst (ProcStalessMain _PPar_lst _CAction)
+	= (ProcStalessMain _PPar_lst (upd_type_CAction lst _CAction))
+
+
+upd_type_PPar lst (CParAction _ZName p)
+	= (CParAction _ZName (upd_type_ParAction lst p))
+upd_type_PPar lst x
+	= x
+
+upd_type_ParAction lst (CircusAction _CAction)
+	= (CircusAction (upd_type_CAction lst _CAction))
+upd_type_ParAction lst (ParamActionDecl _ZGenFilt_lst _ParAction)
+	= (ParamActionDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_ParAction lst _ParAction))
+
+
+
+upd_type_CAction lst (CActionCommand _CCommand)
+	= (CActionCommand (upd_type_CCommand lst _CCommand))
+upd_type_CAction lst (CSPCommAction _Comm _CAction)
+	= (CSPCommAction (upd_type_Comm lst _Comm) (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPGuard _ZPred _CAction)
+	= (CSPGuard _ZPred (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPSeq _CAction1 _CAction2)
+	= (CSPSeq (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPExtChoice _CAction1 _CAction2)
+	= (CSPExtChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPIntChoice _CAction1 _CAction2)
+	= (CSPIntChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPNSParal _NSExp1 _CSExp _NSExp2 _CAction1 _CAction2)
+	= (CSPNSParal _NSExp1 _CSExp _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPParal _CSExp _CAction1 _CAction2)
+	= (CSPParal _CSExp (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPNSInter _NSExp1 _NSExp2 _CAction1 _CAction2)
+	= (CSPNSInter _NSExp1 _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPInterleave _CAction1 _CAction2)
+	= (CSPInterleave (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+upd_type_CAction lst (CSPHide _CAction _CSExp)
+	= (CSPHide (upd_type_CAction lst _CAction) _CSExp)
+upd_type_CAction lst (CSPParAction _ZName  _ZExpr_lst)
+	= (CSPParAction _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst))
+upd_type_CAction lst (CSPRenAction _ZName _CReplace)
+	= (CSPRenAction _ZName (upd_type_CReplace lst _CReplace))
+upd_type_CAction lst (CSPRecursion _ZName _CAction)
+	= (CSPRecursion _ZName (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPUnfAction _ZName _CAction)
+	= (CSPUnfAction _ZName (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPUnParAction _ZGenFilt_lst _CAction _ZName)
+	= (CSPUnParAction (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction) _ZName)
+upd_type_CAction lst (CSPRepSeq _ZGenFilt_lst _CAction)
+	= (CSPRepSeq (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepExtChoice _ZGenFilt_lst _CAction)
+	= (CSPRepExtChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepIntChoice _ZGenFilt_lst _CAction)
+	= (CSPRepIntChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepParalNS _CSExp _ZGenFilt_lst _NSExp _CAction)
+	= (CSPRepParalNS _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepParal _CSExp _ZGenFilt_lst _CAction)
+	= (CSPRepParal _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepInterlNS _ZGenFilt_lst _NSExp _CAction)
+	= (CSPRepInterlNS (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
+upd_type_CAction lst (CSPRepInterl _ZGenFilt_lst _CAction)
+	= (CSPRepInterl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CAction lst x = x
+
+upd_type_Comm lst (ChanComm _ZName  _CParameter_lst)
+	= (ChanComm _ZName  (map (upd_type_CParameter lst) _CParameter_lst))
+upd_type_Comm lst (ChanGenComm _ZName  _ZExpr_lst  _CParameter_lst)
+	= (ChanGenComm _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst)  (map (upd_type_CParameter lst) _CParameter_lst))
+
+
+upd_type_CParameter lst (ChanInpPred _ZName p1)
+	= (ChanInpPred _ZName (upd_type_ZPred lst p1))
+upd_type_CParameter lst (ChanOutExp e)
+	= (ChanOutExp (upd_type_ZExpr lst e))
+upd_type_CParameter lst (ChanDotExp e)
+	= (ChanDotExp (upd_type_ZExpr lst e))
+upd_type_CParameter lst x
+	= x
+
+
+upd_type_CCommand lst (CAssign _ZVar_lst  _ZExpr_lst)
+	= (CAssign (map (upd_type_ZVar lst) _ZVar_lst)  (map (upd_type_ZExpr lst) _ZExpr_lst))
+upd_type_CCommand lst (CIf _CGActions)
+	= (CIf (upd_type_CGActions lst _CGActions))
+upd_type_CCommand lst (CVarDecl _ZGenFilt_lst _CAction)
+	= (CVarDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CCommand lst (CValDecl _ZGenFilt_lst _CAction)
+	= (CValDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CCommand lst (CResDecl _ZGenFilt_lst _CAction)
+	= (CResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CCommand lst (CVResDecl _ZGenFilt_lst _CAction)
+	= (CVResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+upd_type_CCommand lst (CAssumpt _ZName_lst _ZPred1 _ZPred2)
+	= (CAssumpt _ZName_lst (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
+upd_type_CCommand lst (CAssumpt1 _ZName_lst _ZPred)
+	= (CAssumpt1 _ZName_lst _ZPred)
+upd_type_CCommand lst (CPrefix _ZPred1 _ZPred2)
+	= (CPrefix (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
+upd_type_CCommand lst (CPrefix1 _ZPred)
+	= (CPrefix1 (upd_type_ZPred lst _ZPred))
+upd_type_CCommand lst (CommandBrace _ZPred)
+	= (CommandBrace (upd_type_ZPred lst _ZPred))
+upd_type_CCommand lst (CommandBracket _ZPred)
+	= (CommandBracket (upd_type_ZPred lst _ZPred))
+
+
+upd_type_CGActions lst (CircGAction _ZPred _CAction)
+	= (CircGAction (upd_type_ZPred lst _ZPred) (upd_type_CAction lst _CAction))
+upd_type_CGActions lst (CircThenElse _CGActions1 _CGActions2)
+	= (CircThenElse (upd_type_CGActions lst _CGActions1) (upd_type_CGActions lst _CGActions2))
+
+upd_type_CReplace lst (CRename _ZVar_lst1 _ZVar_lst2)
+	= (CRename (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
+upd_type_CReplace lst (CRenameAssign _ZVar_lst1 _ZVar_lst2)
+	= (CRenameAssign (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
+
+upd_type_ZPred lst (ZFalse{reason=a})
+ = (ZFalse{reason=a})
+upd_type_ZPred lst (ZTrue{reason=a})
+ = (ZTrue{reason=a})
+upd_type_ZPred lst (ZAnd p1 p2)
+ = (ZAnd (upd_type_ZPred lst p1) (upd_type_ZPred lst p2))
+upd_type_ZPred lst (ZOr p1 p2)
+ = (ZOr (upd_type_ZPred lst p1) (upd_type_ZPred lst p2))
+upd_type_ZPred lst (ZImplies p1 p2)
+ = (ZImplies (upd_type_ZPred lst p1) (upd_type_ZPred lst p2))
+upd_type_ZPred lst (ZIff p1 p2)
+ = (ZIff (upd_type_ZPred lst p1) (upd_type_ZPred lst p2))
+upd_type_ZPred lst (ZNot p)
+ = (ZNot (upd_type_ZPred lst p))
+upd_type_ZPred lst (ZExists pname1 p)
+ = (ZExists pname1 (upd_type_ZPred lst p))
+upd_type_ZPred lst (ZExists_1 lst1 p)
+ = (ZExists_1 lst1 (upd_type_ZPred lst p))
+upd_type_ZPred lst (ZForall pname1 p)
+ = (ZForall pname1 (upd_type_ZPred lst p))
+upd_type_ZPred lst (ZPLet varxp p)
+ = (ZPLet varxp (upd_type_ZPred lst p))
+upd_type_ZPred lst (ZEqual xpr1 xpr2)
+ = (ZEqual (upd_type_ZExpr lst xpr1) (upd_type_ZExpr lst xpr2))
+upd_type_ZPred lst (ZMember xpr1 xpr2)
+ = (ZMember (upd_type_ZExpr lst xpr1) (upd_type_ZExpr lst xpr2))
+upd_type_ZPred lst (ZPre sp)
+ = (ZPre sp)
+upd_type_ZPred lst (ZPSchema sp)
+ = (ZPSchema sp)
+
+upd_type_ZVar [] (x,y,z) = (x,y,z)
+upd_type_ZVar ((a,b,c):xs) (x,y,z)
+  | a == x = (a,b,c)
+  | (join_name "v" a) == x = ((join_name "v" a),b,c)
+  | otherwise = upd_type_ZVar xs (x,y,z)
+upd_type_ZVar (_:xs) (x,y,z)
+    = upd_type_ZVar xs (x,y,z)
+
+upd_type_ZExpr lst (ZVar v)
+ = ZVar (upd_type_ZVar lst v)
+upd_type_ZExpr lst (ZInt zi)
+ = (ZInt zi)
+upd_type_ZExpr lst (ZGiven gv)
+ = (ZGiven gv)
+upd_type_ZExpr lst (ZFree0 va)
+ = (ZFree0 va)
+upd_type_ZExpr lst (ZFree1 va xpr)
+ = (ZFree1 va (upd_type_ZExpr lst xpr))
+upd_type_ZExpr lst (ZTuple xpr)
+ = (ZTuple (map (upd_type_ZExpr lst) xpr))
+upd_type_ZExpr lst (ZBinding xs)
+ = (ZBinding (map ((\l (a,b) -> ((upd_type_ZVar l a),(upd_type_ZExpr l b))) lst) xs))
+upd_type_ZExpr lst (ZSetDisplay xpr)
+ = (ZSetDisplay (map (upd_type_ZExpr lst) xpr))
+upd_type_ZExpr lst (ZSeqDisplay xpr)
+ = (ZSeqDisplay (map (upd_type_ZExpr lst) xpr))
+upd_type_ZExpr lst (ZFSet zf)
+ = (ZFSet zf)
+upd_type_ZExpr lst (ZIntSet i1 i2)
+ = (ZIntSet i1 i2)
+upd_type_ZExpr lst (ZGenerator zrl xpr)
+ = (ZGenerator zrl (upd_type_ZExpr lst xpr))
+upd_type_ZExpr lst (ZCross xpr)
+ = (ZCross (map (upd_type_ZExpr lst) xpr))
+upd_type_ZExpr lst (ZFreeType va pname1)
+ = (ZFreeType va pname1)
+upd_type_ZExpr lst (ZPowerSet{baseset=xpr, is_non_empty=b1, is_finite=b2})
+ = (ZPowerSet{baseset=(upd_type_ZExpr lst xpr), is_non_empty=b1, is_finite=b2})
+upd_type_ZExpr lst (ZFuncSet{ domset=expr1, ranset=expr2, is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
+ = (ZFuncSet{ domset=(upd_type_ZExpr lst expr1), ranset=(upd_type_ZExpr lst expr2), is_function=b1, is_total=b2, is_onto=b3, is_one2one=b4, is_sequence=b5, is_non_empty=b6, is_finite=b7})
+upd_type_ZExpr lst (ZSetComp pname1 (Just xpr))
+ = (ZSetComp (map (upd_type_ZGenFilt  lst) pname1) (Just (upd_type_ZExpr lst xpr)))
+upd_type_ZExpr lst (ZSetComp pname1 Nothing)
+ = (ZSetComp (map (upd_type_ZGenFilt  lst) pname1) Nothing)
+upd_type_ZExpr lst (ZLambda pname1 xpr)
+ = (ZLambda (map (upd_type_ZGenFilt  lst) pname1) (upd_type_ZExpr lst xpr))
+upd_type_ZExpr lst (ZESchema zxp)
+ = (ZESchema zxp)
+upd_type_ZExpr lst (ZGivenSet gs)
+ = (ZGivenSet gs)
+upd_type_ZExpr lst (ZUniverse)
+ = (ZUniverse)
+upd_type_ZExpr lst (ZCall xpr1 xpr2)
+ = (ZCall (upd_type_ZExpr lst xpr1) (upd_type_ZExpr lst xpr2))
+upd_type_ZExpr lst (ZReln rl)
+ = (ZReln rl)
+upd_type_ZExpr lst (ZFunc1 f1)
+ = (ZFunc1 f1)
+upd_type_ZExpr lst (ZFunc2 f2)
+ = (ZFunc2 f2)
+upd_type_ZExpr lst (ZStrange st)
+ = (ZStrange st)
+upd_type_ZExpr lst (ZMu pname1 (Just xpr))
+ = (ZMu (map (upd_type_ZGenFilt  lst) pname1) (Just (upd_type_ZExpr lst xpr)))
+upd_type_ZExpr lst (ZELet pname1 xpr1)
+ = (ZELet (map ((\l (a,b) -> ((upd_type_ZVar l a),(upd_type_ZExpr l b))) lst)  pname1) (upd_type_ZExpr lst xpr1))
+upd_type_ZExpr lst (ZIf_Then_Else zp xpr1 xpr2)
+ = (ZIf_Then_Else zp (upd_type_ZExpr lst xpr1) (upd_type_ZExpr lst xpr2))
+upd_type_ZExpr lst (ZSelect xpr va)
+ = (ZSelect xpr va)
+upd_type_ZExpr lst (ZTheta zs)
+ = (ZTheta zs)
+
+upd_type_ZGenFilt lst (Include s) = (Include s)
+upd_type_ZGenFilt lst (Choose v e) = (Choose (upd_type_ZVar lst v) e)
+upd_type_ZGenFilt lst (Check p) = (Check (upd_type_ZPred lst p))
+upd_type_ZGenFilt lst (Evaluate v e1 e2)
+ = (Evaluate (upd_type_ZVar lst v) (upd_type_ZExpr lst e1) (upd_type_ZExpr lst e2))
+
+
 \end{code}
