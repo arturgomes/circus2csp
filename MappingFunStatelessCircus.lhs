@@ -237,7 +237,16 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
   = proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[],[]) (ZVar ("BINDING",[],[]))] (CSPExtChoice
   (CSPExtChoice
     (CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],[])),ChanOutExp (ZCall (ZVar ("b",[],[])) (ZVar ("n",[],[])))]) (CSPParAction "Memory" [ZVar ("b",[],[])])))
-		(CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[],[])) (ZCall (ZVar ("\\delta",[],[])) (ZVar ("n",[],[]))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar ("b",[],[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar ("n",[],[]),ZVar ("nv",[],[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))] (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult ["b"]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[],[])])) (CSExpr "MEMI"))))))))
+		(CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[],[])) (ZCall (ZVar ("\\delta",[],[])) (ZVar ("n",[],[]))))])
+    (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar ("b",[],[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar ("n",[],[]),ZVar ("nv",[],[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl [Choose ("b",[],"")
+    (ZVar ("BINDING",[],"")),Choose ("s",[],"") (ZVar ("SIDE",[],""))]
+    (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("b",[],"")))]
+    (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("b",[],"")) (ZVar ("n",[],"")))])
+    (CSPParAction "MemoryMerge" [ZVar ("b",[],""),ZVar ("s",[],"")]))) (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("b",[],"")))]
+    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],""))))])
+    (CSPParAction "MemoryMerge" [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ("b",[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]]),ZVar ("s",[],"")]))))
+    (CSPCommAction (ChanComm "terminate" []) (CSPExtChoice (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("LEFT",[],""))) (CSPCommAction (ChanComm "mleft" [ChanOutExp (ZVar ("b",[],""))]) CSPSkip)) (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("RIGHT",[],"")))
+    (CSPCommAction (ChanComm "mright" [ChanOutExp (ZVar ("b",[],""))]) CSPSkip))))))))] (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd] (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult [("b",[],"")]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[],[])])) (CSExpr "MEMI"))))))))
   where
     nma = omega_CAction ma
     ne = sub_pred (make_subinfo [(("b",[],[]),ZVar ("x",[],[]))] (varset_from_zvars [("x",[],[])])) e
@@ -267,6 +276,20 @@ proc_ref4 x = proc_ref5 x
 					\extchoice~terminate \then \Skip
 					\end{array}
 					\end{array} \\
+        MemoryMerge \circdef\\
+				\qquad\begin{array}{l}
+					\circvres b : BINDING; s : SIDE \circspot \\
+					\qquad \begin{array}{l}
+					(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then MemoryMerge(b,s))\\
+					\extchoice \left(\begin{array}{l}
+					\Extchoice n: \dom\ b \circspot\\
+					\qquad
+					mset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv},s)
+					\end{array}\right)\\
+					\extchoice~terminate \then \left(\begin{array}{l} \lcircguard s = LEFT \rcircguard \circguard mleft!b \then \Skip\\\extchoice \lcircguard s = RIGHT \rcircguard \circguard mright!b \then \Skip\end{array}\right)
+					\end{array}
+					\end{array}\\
+
 				\circspot \circvar b :
 					\left\{\begin{array}{l}
 					x : BINDING | \begin{array}{l}
@@ -568,6 +591,35 @@ omega_CAction (CSPExtChoice ca cb)
    where
     lsx = remdups $ concat $ map get_ZVar_st $ varset_to_zvars $ free_var_CAction (CSPExtChoice ca cb)
 \end{code}
+% \begin{circus}
+% \Omega_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
+% \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+% \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%       \\\t2\left (\begin{array}{l}
+%        \left (\begin{array}{l}
+%         \left (\begin{array}{l}
+%          \left (\begin{array}{l}
+%           \Omega'_A (A_1) \circseq terminate \then \Skip
+%          \end{array}\right )\\
+%           \lpar \{\} | MEM_I | \{\} \rpar
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+%         \end{array}\right )
+%         \circhide MEM_I \\
+%        \lpar \{\} | cs | \{\} \rpar \\
+%         \left (\begin{array}{l}
+%          \left (\begin{array}{l}
+%           \Omega'_A (A_2) \circseq terminate \then \Skip
+%          \end{array}\right )\\
+%           \lpar \{\} | MEM_I | \{\} \rpar
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+%         \end{array}\right )
+%         \circhide MEM_I
+%        \end{array}\right )\\
+%       \lpar \{\} | MRG_I | \{\} \rpar\\
+%       Merge
+%     \end{array}\right )\\
+%     \t2\circhide \lchanset mleft, mright \rchanset
+% \end{circus}
 
 \begin{circus}
 \Omega_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
@@ -593,14 +645,16 @@ omega_CAction (CSPExtChoice ca cb)
         \end{array}\right )
         \circhide MEM_I
        \end{array}\right )\\
-      \lpar \{\} | MEM_I | \{\} \rpar\\
-      Merge
+      \lpar \{\} | MRG_I | \{\} \rpar\\
+      \left (\begin{array}{l}mleft?l \then (\Semi n:ns1 \circspot mset.n!l(n) \then \Skip)\\ \interleave~mright?r \then (\Semi n:ns2 \circspot mset.n!r(n) \then \Skip)\end{array}\right )
     \end{array}\right )\\
     \t2\circhide \lchanset mleft, mright \rchanset
 \end{circus}
 
+The definition of parallel composition (and interleaving), as defined in the D24.1, has a $MemoryMerge$, $MRG_I$ and $Merge$ components and channel sets. Whilst translating them into CSP, the tool would rather expand their definition
+
 \begin{code}
-omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
+omega_CAction (CSPNSParal (NSExprMult ns1) cs (NSExprMult ns2) a1 a2)
   = make_get_com lsx (rename_vars_CAction (CSPHide
    (CSPNSParal NSExpEmpty (CSExpr "MEMi") NSExpEmpty
      (CSPNSParal NSExpEmpty cs NSExpEmpty
@@ -618,7 +672,7 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
          [ZSetDisplay [],
                 ZVar ("RIGHT",[],[])]))
        (CSExpr "MEMi")))
-      (CActionName "Merge"))
+      (CSPInterleave (CSPCommAction (ChanComm "mleft" [ChanInp "l"]) (CSPRepSeq [Choose ("n",[],"") (ZSetDisplay (zvar_to_zexpr ns1))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("l",[],"")) (ZVar ("n",[],"")))]) CSPSkip))) (CSPCommAction (ChanComm "mright" [ChanInp "r"]) (CSPRepSeq [Choose ("n",[],"") (ZSetDisplay (zvar_to_zexpr ns2))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("r",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))
       (CChanSet ["mleft","mright"])))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))

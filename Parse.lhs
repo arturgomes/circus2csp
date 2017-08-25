@@ -1427,7 +1427,7 @@ nsexp_empty
 nsexp_nset_mult ::  EParser ZToken NSExp
 nsexp_nset_mult
 	= do {tok L_OPENBRACE; -- \{N^{+}\}
-	  		ws <- zword `sepby1` comma;
+	  		ws <- zdef_lhs `sepby1` comma;
 	 		tok L_CLOSEBRACE;
 	 		return (NSExprMult ws)}
 

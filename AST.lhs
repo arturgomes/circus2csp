@@ -1074,7 +1074,7 @@ data CProc
 \begin{code}
 data NSExp
   = NSExpEmpty                             -- \{\}
-  | NSExprMult [ZName]                     -- \{N^{+}\}
+  | NSExprMult [ZVar]                     -- \{N^{+}\}
   | NSExprSngl ZName                       -- N
   | NSExprParam ZName [ZExpr]              -- N(Exp)
   | NSUnion NSExp NSExp                    -- NSExp \union NSExp

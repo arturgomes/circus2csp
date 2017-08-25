@@ -449,7 +449,7 @@ crl_parallelismIntroduction1b
           proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zvar_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1b _ _ _ _ = None
 
 crl_parallelismIntroduction1a :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
@@ -461,7 +461,7 @@ crl_parallelismIntroduction1a
                   (CSPCommAction (ChanComm c e) CSPSkip)),proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[]))  (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zvar_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1a _ _ _ _ = None
 \end{code}
 % \begin{code}

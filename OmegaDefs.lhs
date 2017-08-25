@@ -1544,7 +1544,7 @@ mk_BINDINGS_TYPE n
 -- make restrict functions within main action
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
-  
+
 mk_restrict spec vlst n
     = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (map nfst (lst_subtype n vlst)))++"})"
     where
@@ -2159,4 +2159,9 @@ upd_type_ZGenFilt lst (Evaluate v e1 e2)
  = (Evaluate (upd_type_ZVar lst v) (upd_type_ZExpr lst e1) (upd_type_ZExpr lst e2))
 
 
+\end{code}
+
+Hoping to intercalate strings with something
+\begin{code}
+joinBy sep cont = drop (length sep) $ concat $ map (\w -> sep ++ w) cont
 \end{code}
