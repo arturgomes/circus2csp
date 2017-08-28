@@ -1398,10 +1398,14 @@ Construction of the Universe set in CSP
 \begin{code}
 
 -- Make UNIVERSE datatype in CSP
-mk_universe []
-  = ""
-mk_universe [(a,b,c,d)]
-  = c++"."++d
+get_u_tag_ZBranch [] = []
+get_u_tag_ZBranch ((ZBranch1 (tag,_,_) (ZVar (typ,_,_))):xs)
+  = tag : (get_u_tag_ZBranch xs)
+get_u_tag_ZBranch (_:xs) = get_u_tag_ZBranch xs
+
+
+mk_universe [] = ""
+mk_universe [(a,b,c,d)] = c++"."++d
 mk_universe ((a,b,c,d):xs)
   = c++"."++d++" | "++(mk_universe xs)
 
@@ -1417,27 +1421,22 @@ mk_subtype ((a,b,c,d):xs)
 -- This won't be used anymore in the next commit - 21.03.17
 mk_value []
   = ""
-mk_value [(a,b,c,d)]
-  = "value"++(lastN 3 b)++"("++c++".v) = v\n"
-mk_value ((a,b,c,d):xs)
-  = "value"++(lastN 3 b)++"("++c++".v) = v\n"++(mk_value xs)
+mk_value (a:xs)
+  = "value"++a++"("++a++".v) = v\n"++(mk_value xs)
 
 -- Make type(x) function call
 -- This won't be used anymore in the next commit - 21.03.17
+
 mk_type []
   = ""
-mk_type [(a,b,c,d)]
-  = "type"++(lastN 3 b)++"(x) = U_"++(lastN 3 b)++"\n"
-mk_type ((a,b,c,d):xs)
-  = "type"++(lastN 3 b)++"(x) = U_"++(lastN 3 b)++"\n"++(mk_type xs)
+mk_type (a:xs)
+  = "type"++a++"(x) = U_"++a++"\n"++(mk_type xs)
 
 -- Make tag(x) function call
 mk_tag []
   = ""
-mk_tag [(a,b,c,d)]
-  = "tag"++(lastN 3 b)++"(x) = "++(lastN 3 b)++"\n"
-mk_tag ((a,b,c,d):xs)
-  = "tag"++(lastN 3 b)++"(x) = "++(lastN 3 b)++"\n"++(mk_tag xs)
+mk_tag (a:xs)
+  = "tag"++a++"(x) = "++a++"\n"++(mk_tag xs)
 
 -- make Memory(b_type1,b_type2,b_type3) parameters
 mk_mem_param :: [String] -> String
@@ -1627,6 +1626,32 @@ def_delta_name :: [ZGenFilt] -> [ZBranch]
 def_delta_name [] = []
 def_delta_name ((Choose v t):xs) = [ZBranch0 v] ++ (def_delta_name xs)
 def_delta_name (_:xs) = (def_delta_name xs)
+
+def_new_universe [] = []
+def_new_universe ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (ZBranch1 (tx,[],"") (ZVar (tt,[],""))):(def_new_universe xs)
+def_new_universe (_:xs) = (def_new_universe xs)
+
+def_sub_univ [] = []
+def_sub_univ ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (ZFreeTypeDef (join_name "U" tx,[],"")
+      [ZBranch1 (tx,[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
+def_sub_univ (_:xs) = (def_sub_univ xs)
+
+def_sub_name :: [ZGenFilt] -> [ZPara]
+def_sub_name xs
+    = map (subname xs) tlist
+      where
+        tlist = map (\(Choose v t) -> (ntrd v)) xs
+        subname xs tl =
+          (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
+        sub_name [] _= []
+        sub_name ((Choose v t):xs) t1
+          | t1 == (ntrd v) = [ZBranch0 v] ++ (sub_name xs t1)
+          | otherwise = (sub_name xs t1)
+        sub_name (_:xs) t1 = (sub_name xs t1)
+
+
 
 \end{code}
 \begin{code}

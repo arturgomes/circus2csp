@@ -66,18 +66,17 @@ mapping_Circus spec (x:xs)
 \begin{code}
 
 mapping_CircParagraphs :: [ZPara] -> ZPara -> String
-mapping_CircParagraphs spec (ZGivenSetDecl ("UNIVERSE",[],[]))
+mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) univ)
   = case res of
     False -> ("\n--------------------------------"++
             "\n-- The universe of values"++
-            "\n datatype UNIVERSE = " ++ (mk_universe funivlst)++
+            "\n datatype UNIVERSE = " ++ (mapping_ZBranch_list univ)++
             -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
             "\n\n--------------------------------"++
             "\n--Conversions\n"++
-            (mk_subtype funivlst)++
-            "\n\n"++(mk_value funivlst)++
-            "\n\n"++(mk_type funivlst)++
-            "\n\n"++(mk_tag funivlst))
+            "\n\n"++(mk_value (get_u_tag_ZBranch univ))++
+            "\n\n"++(mk_type (get_u_tag_ZBranch univ))++
+            "\n\n"++(mk_tag (get_u_tag_ZBranch univ)))
     True -> ""
   where
     univlst = (def_universe spec)
@@ -193,7 +192,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b,[]) zbs)
             ++ "\n -- NAME -- "
             ++ "\n--------------------------------"
             ++ "\ndatatype NAME = " ++ (mapping_ZBranch_list zbs)
-            ++ "\n" ++ make_subtype_NAME zbs
+            -- ++ "\n" ++ make_subtype_NAME zbs
             ++ "\n\n" ++ nameval
             ++ "\n")
     True -> ""

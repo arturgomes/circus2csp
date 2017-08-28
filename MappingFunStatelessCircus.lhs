@@ -1,5 +1,5 @@
 
-\chapter{Mapping Functions - Stateless Circus}
++\chapter{Mapping Functions - Stateless Circus}
 Mapping Omega Functions from Circus to Circus
 
 \ignore{
@@ -18,27 +18,32 @@ import Subs
 import AST
 import OmegaDefs
 import Data.List hiding (union, intersect)
-import FormatterToCSP
+-- import FormatterToCSP
 import CRL
 \end{code}
 }
+
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec =
-   [ZGivenSetDecl ("UNIVERSE",[],[]),
-      ZFreeTypeDef ("NAME",[],[]) names,
-      ZAbbreviation ("BINDINGS",[],[]) (ZCall (ZVar ("\\fun",[],[])) (ZTuple [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])])),
-      ZAbbreviation ("\\delta",[],[]) (ZSetDisplay deltamap),
-      CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],[]),ZVar ("UNIVERSE",[],[])])],
-      CircChannel [CChan "terminate"],
-      CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"])]
-      ++ (map (upd_type_ZPara (genfilt_names zb)) para)
-    where
-      spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec)
-      (zb,para) = (omega_Circus_aux' spec1)
-       -- renaming variables for highlighting which state var is from which process
-      names = (def_delta_name zb)
-      deltamap = (def_delta_mapping zb)
+   [ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
+        subuniv ++
+         [ZFreeTypeDef ("NAME",[],"") names]++
+        (def_sub_name zb)++
+         [ZAbbreviation ("BINDINGS",[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])),
+         ZAbbreviation ("\\delta",[],"") (ZSetDisplay deltamap),
+         CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
+         CircChannel [CChan "terminate"],
+         CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"])]
+         ++ (map (upd_type_ZPara (genfilt_names zb)) para)
+       where
+         spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec)
+         (zb,para) = (omega_Circus_aux' spec1)
+          -- renaming variables for highlighting which state var is from which process
+         names = (def_delta_name zb)
+         deltamap = (def_delta_mapping zb)
+         nuniv =remdups (def_new_universe zb)
+         subuniv = remdups (def_sub_univ zb)
 \end{code}
 
 \subsection{Omega functions}
