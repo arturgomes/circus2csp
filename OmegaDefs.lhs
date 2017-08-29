@@ -1619,6 +1619,26 @@ def_delta_mapping ((Choose (v,[],tx) t):xs)
   = [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (v,[],tx),t])]
     ++ (def_delta_mapping xs)
 def_delta_mapping (_:xs) = (def_delta_mapping xs)
+
+
+def_delta_mapping_t :: [ZGenFilt] -> [ZPara]
+def_delta_mapping_t xs
+    = map (subname xs) tlist
+      where
+        tlist = map (\(Choose v t) -> (ntrd v)) xs
+        subname xs tl =
+          (ZAbbreviation
+                (join_name "\\delta" tl,[],"")
+                (ZSetDisplay (sub_name xs tl)))
+          -- (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
+        sub_name [] _= []
+        sub_name ((Choose v t):xs) t1
+          | t1 == (ntrd v) =
+              [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar v,t])]
+                ++ (sub_name xs t1)
+          | otherwise = (sub_name xs t1)
+        sub_name (_:xs) t1 = (sub_name xs t1)
+
 \end{code}
 
 \begin{code}
@@ -1637,6 +1657,17 @@ def_sub_univ ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZFreeTypeDef (join_name "U" tx,[],"")
       [ZBranch1 (tx,[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
 def_sub_univ (_:xs) = (def_sub_univ xs)
+
+def_sub_univ_set :: [ZGenFilt] -> [ZExpr]
+def_sub_univ_set [] = []
+def_sub_univ_set ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (ZVar (join_name "U" tx,[],"")):(def_sub_univ_set xs)
+def_sub_univ_set (_:xs) = (def_sub_univ_set xs)
+
+def_sub_bind [] = []
+def_sub_bind ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (ZAbbreviation (join_name "BINDINGS" tx,[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" tx,[],""),ZVar (join_name "U" tx ,[],"")]))):(def_sub_bind xs)
+def_sub_bind (_:xs) = (def_sub_bind xs)
 
 def_sub_name :: [ZGenFilt] -> [ZPara]
 def_sub_name xs

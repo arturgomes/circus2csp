@@ -139,6 +139,11 @@ mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","termi
       res =  member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
 
 \end{code}
+\subsection{Mapping $\delta$ function}
+
+The definition of the $\delta$ is not directly translated into CSP. Instead, we define in the $UNIVERSE$ translation rules, the equivalent notation, the $typeXYZ$ function.
+
+
 \subsection{Mapping $BINDING$}
 
 \begin{circus}
@@ -155,20 +160,17 @@ mapping_CircParagraphs spec (CircChanSet "MEM_I" (CChanSet ["mset","mget","termi
       \item $\delta(\emptyset) \notin spec$ -- There is at least one element in the $\delta$ mapping.
     \end{provs}
 \begin{code}
-mapping_CircParagraphs spec (ZAbbreviation ("BINDINGS",b,[]) zbs)
-  = case res of
-    False -> ("\n--------------------------------"
-            ++ "\n -- BINDINGS -- "
-            ++ "\n--------------------------------\n"
-            ++ bindingsval ++ "\n")
-    True -> ""
-    where
-      zn = get_znames_from_NAME spec
-      znames = remdups $ map nfst (select_f_zbr zn)
-      ztypes = remdups $ map ntrd (select_f_zbr zn)
-      bindingsval = mk_charll_to_charl "\n" $ map mk_BINDINGS_TYPE ztypes
-      res =  member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
-
+mapping_CircParagraphs spec (ZAbbreviation (xn,_,_) xp)
+  | Subs.isPrefixOf "\\delta" xn = ""
+  | Subs.isPrefixOf "BINDINGS" xn
+    && (Data.List.length xn > Data.List.length "BINDINGS")
+        = ("\n"
+            ++ xn
+            ++ " = {set(b) | b <- set(distCardProd(NAMES_VALUES_"
+            ++ (lastN 3 xn)
+            ++ "))}\n")
+  | otherwise = "\n"++ xn ++
+                " = (" ++ mapping_ZExpr (get_delta_names1 spec) xp ++ ")"
 \end{code}
 \subsection{Mapping $NAME$}
 
@@ -203,18 +205,18 @@ mapping_CircParagraphs spec (ZFreeTypeDef ("NAME",b,[]) zbs)
       res =  member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
 
 \end{code}
-\subsection{Mapping given sets}
-
-\begin{circus}
-  \Upsilon_{CircParagraphs}(N == \{a | b\})
-  \defs\\\qquad
-  \tco{N = }\Upsilon_{ZTuple}(\{a | b\})
-\end{circus}
-\begin{code}
-mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetComp xl (Just (ZTuple ztp))))
-  = "\n"++ n ++ " = (" ++ mapping_ZTuple ztp ++ ")"
-
-\end{code}
+% \subsection{Mapping given sets}
+%
+% \begin{circus}
+%   \Upsilon_{CircParagraphs}(N == \{a | b\})
+%   \defs\\\qquad
+%   \tco{N = }\Upsilon_{ZTuple}(\{a | b\})
+% \end{circus}
+% \begin{code}
+% mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetComp xl (Just (ZTuple ztp))))
+%   = "\n"++ n ++ " = (" ++ mapping_ZTuple ztp ++ ")"
+%
+% \end{code}
 \subsection{Mapping Z free types}
 
 \begin{circus}
@@ -274,29 +276,22 @@ mapping_CircParagraphs spec (CircChanSet cn c2)
 --   = undefined
 \end{code}
 }
-\subsection{Mapping $\delta$ function}
-
-The definition of the $\delta$ is not directly translated into CSP. Instead, we define in the $UNIVERSE$ translation rules, the equivalent notation, the $typeXYZ$ function.
-\begin{code}
-mapping_CircParagraphs spec (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay ls))
-  = ""
-\end{code}
-\subsection{Mapping Z abbreviation}
-
-\begin{circus}
-  \Upsilon_{CircParagraphs}(N == expr) \defs \tco{N = }\Upsilon_{ZExpr}
-\end{circus}
-    \begin{provs}
-      \item $expr$ is a Z expression.
-    \end{provs}
-\begin{code}
-mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetDisplay ls))
-  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
-mapping_CircParagraphs spec (ZAbbreviation (n,[],t) expr)
-  = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
-mapping_CircParagraphs spec (Assert x)
-    = "\n" ++ x
-\end{code}
+% \subsection{Mapping Z abbreviation}
+%
+% \begin{circus}
+%   \Upsilon_{CircParagraphs}(N == expr) \defs \tco{N = }\Upsilon_{ZExpr}
+% \end{circus}
+%     \begin{provs}
+%       \item $expr$ is a Z expression.
+%     \end{provs}
+% \begin{code}
+% mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetDisplay ls))
+%   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
+% mapping_CircParagraphs spec (ZAbbreviation (n,[],t) expr)
+%   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
+% mapping_CircParagraphs spec (Assert x)
+%     = "\n" ++ x
+% \end{code}
 \ignore{
 \begin{code}
 -- mapping_CircParagraphs spec (ZPredicate zp)
@@ -594,7 +589,7 @@ mapping_CProc procn spec (CRepSeqProc [(Choose (x,[],tx) s)] a)
 mapping_CProc procn spec (ProcStalessMain al ma)
   | al == [] = "\n\t" ++ (mapping_CAction procn spec ma)
   | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec al)
-    ++ memproc
+    -- ++ memproc
     ++ "\twithin " ++ (mapping_CAction procn spec ma)
   where
     memproc = (case res of
@@ -610,7 +605,7 @@ mapping_CProc procn spec (ProcStalessMain al ma)
                   "\n\t\t    ((P; terminate -> SKIP) [| MEM_I |]"++
                   "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEM_I\n"
                 True -> "")
-    res = member (ZAbbreviation ("\\delta",[],[]) (ZSetDisplay [])) spec
+    res = member (ZAbbreviation ( "\\delta" ,[],[]) (ZSetDisplay [])) spec
     funivlst = remdups $ filter_universe_st procn (def_universe spec)
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
@@ -625,11 +620,13 @@ mapping_CProc procn spec (CProcRename n (zv:zvs) (xp:xps))
 mapping_CProc procn spec x
   = fail ("not implemented by mapping_CProc: " ++ show x)
 \end{code}
+
 This function maps any renaming, to its equivalent syntax in \CSPM.
 \begin{circus}
   \Upsilon_{Rename}(x\#xs,y\#xs) \defs \Upsilon_{Comm}(x)~\tco{<- }\Upsilon_{Comm}(y)\tco{ , }\Upsilon_{Rename}(xs,xs) \\
   \Upsilon_{Rename}([x],[y]=) \defs \Upsilon_{Comm}(x)~\tco{<- }\Upsilon_{Comm}(y)
   \end{circus}
+
 \begin{code}
 mapping_rename :: ZName -> [ZPara] -> [Comm] -> [Comm] -> [Char]
 mapping_rename procn spec [y] [x]
@@ -649,7 +646,7 @@ NOTE: $CNameSet$ and $ProcZPara$ is not yet implemented
 mapping_PPar :: ZName -> [ZPara] -> PPar -> String
 --mapping_PPar procn spec (CNameSet zn nse) --  = undefined
 -- mapping_PPar procn spec (CParAction "Memory" (CircusAction (CActionCommand (CVResDecl decl a ))))
-mapping_PPar procn spec (CParAction "Memory" x) = ""
+-- mapping_PPar procn spec (CParAction "Memory" x) = ""
 mapping_PPar procn spec (CParAction p (CircusAction (CActionCommand (CVResDecl decl a ))))
   = p ++"("++ (mapping_ZGenFilt_list spec decl) ++ ") =" ++ (mapping_CAction procn spec a)
 mapping_PPar procn spec (CParAction p pa)
@@ -664,8 +661,6 @@ This function just process a list of $PPar$ from within a \Circus\ process print
 mapping_PPar_list :: ZName -> [ZPara] -> [PPar] -> String
 mapping_PPar_list procn spec []
   = ""
-mapping_PPar_list procn spec [x]
-  = mapping_PPar procn spec x ++ "\n\t"
 mapping_PPar_list procn spec (x:xs)
   = (mapping_PPar procn spec x) ++ "\n\t\t" ++ (mapping_PPar_list procn spec xs)
 \end{code}
@@ -1137,22 +1132,19 @@ Couldn't match expected type Event with actual type Int=>Event
 I think it would be rather correct if we define it as {| x,y,z|}
 
 -}
-mapping_predicate_cs (cs)
-  -- = "Union({{| c |} | c <- "++ (mapping_set_cs_exp cs) ++" })"
-  = (mapping_set_cs_exp cs)
-mapping_set_cs_exp (CSEmpty) = "{}"
-mapping_set_cs_exp (CChanSet x)
-  = "{| "++(mapping_ZExpr_def x)++" |}"
-mapping_set_cs_exp (CSExpr x)
-  = x
-mapping_set_cs_exp (ChanSetUnion a b)
-  = "union("++ (mapping_set_cs_exp a)++","++ (mapping_set_cs_exp b) ++")"
-mapping_set_cs_exp (ChanSetInter a b)
-  = "inter("++ (mapping_set_cs_exp a)++","++ (mapping_set_cs_exp b) ++")"
-mapping_set_cs_exp (ChanSetDiff a b)
-  = "diff("++ (mapping_set_cs_exp a)++","++ (mapping_set_cs_exp b) ++")"
-mapping_set_cs_exp x
-  = fail ("not implemented by mapping_set_cs_exp: " ++ show x)
+-- mapping_predicate_cs cs = (mapping_set_cs_exp cs)
+
+mapping_predicate_cs (CSEmpty) = "{}"
+mapping_predicate_cs (CChanSet x) = "{| "++(mapping_ZExpr_def x)++" |}"
+mapping_predicate_cs (CSExpr x) = x
+mapping_predicate_cs (ChanSetUnion a b)
+  = "union("++ (mapping_predicate_cs a)++","++ (mapping_predicate_cs b) ++")"
+mapping_predicate_cs (ChanSetInter a b)
+  = "inter("++ (mapping_predicate_cs a)++","++ (mapping_predicate_cs b) ++")"
+mapping_predicate_cs (ChanSetDiff a b)
+  = "diff("++ (mapping_predicate_cs a)++","++ (mapping_predicate_cs b) ++")"
+-- mapping_predicate_cs x
+--   = fail ("not implemented by mapping_predicate_cs: " ++ show x)
 
 \end{code}
 
