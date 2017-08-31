@@ -114,7 +114,7 @@ omega_ProcessDef zn spec (ProcDef cp)
 This is the implementation of the entire refinement process end-to-end
 from the description of the Deliverable 24.1, page 83 and 84. All of
 the refinement actions and processes are split in boxes, with the steps.
-What I did here is to implmenent that sequence of steps in such a way
+What I did here is to implement that sequence of steps in such a way
 that the functions are recursive until the last refinement step of the
 second iteration of refinement strategy.
 \begin{argue}
@@ -252,49 +252,91 @@ proc_ref3 x = proc_ref4 x
 	\\= & Action Refinement\\
 \end{argue}
 \begin{code}
-filter_bnd_param [] = []
-filter_bnd_param [Choose b t] = [Choose b t]
-filter_bnd_param ((Choose b t):xs) = (Choose b t):(filter_bnd_param xs)
-filter_bnd_param (_:xs) = (filter_bnd_param xs)
+-- filtering ZGenFilt so only Choose are returned
+zexp_to_zvar (ZVar x) = x
+filter_ZGenFilt_Choose :: [ZGenFilt] -> [ZGenFilt]
+filter_ZGenFilt_Choose [] = []
+filter_ZGenFilt_Choose ((Choose b t):xs) = (Choose b t):(filter_ZGenFilt_Choose xs)
+filter_ZGenFilt_Choose (_:xs) = (filter_ZGenFilt_Choose xs)
 
-
+filter_ZGenFilt_Check :: [ZGenFilt] -> [ZPred]
+filter_ZGenFilt_Check [] = []
+filter_ZGenFilt_Check ((Check e):xs) = e:(filter_ZGenFilt_Check xs)
+filter_ZGenFilt_Check (_:xs) = (filter_ZGenFilt_Check xs)
+-- extracting ZVar from  ZGenFilt list
+filter_bnd_var :: [ZGenFilt] -> [ZExpr]
 filter_bnd_var [] = []
-filter_bnd_var ((Choose b t):xs) = b:(filter_bnd_param xs)
+filter_bnd_var ((Choose b t):xs) = (ZVar b):(filter_bnd_var xs)
 
-mk_mget_bndg_CSPRepExtChoice [ZVar (t,_,_)] tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar (join_name "b" t,[],"")))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar (join_name "b" t,[],"")) (ZVar ("n",[],"")))]) (CSPParAction "Memory" tls))) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
-mk_mget_bndg_CSPRepExtChoice (ZVar (a,_,_):xs) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar (join_name "b" t,[],"")))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar (join_name "b" t,[],"")) (ZVar ("n",[],"")))]) (CSPParAction "Memory" tls)) (mk_mget_bndg_CSPRepExtChoice xs tls))
+-- Memory parameters
+mk_mem_param_circ :: ZExpr -> [ZExpr] -> [ZExpr]
+mk_mem_param_circ (ZVar t) [ZVar t1]
+  | t == t1 = [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar t,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]
+  | otherwise = [ZVar t1]
+mk_mem_param_circ (ZVar t) (ZVar t1:tx)
+  | t == t1
+    = (ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar t,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])): (mk_mem_param_circ (ZVar t) tx)
+  | otherwise = (ZVar t1: (mk_mem_param_circ (ZVar t) tx))
 
-(CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("b",[],"")))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],""))))]) (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ("b",[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]))))
+-- gets and sets replicated ext choice for Memory
+mk_mget_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mget_mem_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t)
+  (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "Memory" tls)))
+mk_mget_mem_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "Memory" tls))) (mk_mget_mem_CSPRepExtChoice tx tls))
 
+mk_mset_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mset_mem_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(nfst t))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
+mk_mset_mem_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
+  (mk_mset_mem_CSPRepExtChoice tx tls))
 
-mk_mget_bndg_CSPRepExtChoice [ZVar (t,_,_)] tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar (join_name "b" t,[],"")))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("b",[],"")) (ZVar ("n",[],"")))]) (CSPParAction "Memory" tls))) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
-mk_mget_bndg_CSPRepExtChoice (ZVar (t,_,_):xs) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar (join_name "b" t,[],"")))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("b",[],"")) (ZVar ("n",[],"")))]) (CSPParAction "Memory" tls)) (mk_mget_bndg_CSPRepExtChoice xs tls))
+-- gets and sets replicated ext choice for MemoryMerge
+mk_mget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mget_mem_merg_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],"")]))))
+mk_mget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],"")])))) (mk_mget_mem_merg_CSPRepExtChoice tx tls))
 
+mk_mset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],"")])))))
+mk_mset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],"")])))))
+  (mk_mset_mem_merg_CSPRepExtChoice tx tls))
+
+-- making renaming list for bindings
+mk_subinfo_bndg [] = []
+mk_subinfo_bndg ((ZVar (t,_,_)):tx) = ((t,[],""), ZVar (join_name "n" (lastN 3 t),[],"")):(mk_subinfo_bndg tx)
 
 proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
-  = proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (filter_bnd_param bst) (CSPExtChoice
+  =  proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose bst)
   (CSPExtChoice
-    (CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],[])),ChanOutExp (ZCall (ZVar ("b",[],[])) (ZVar ("n",[],[])))]) (CSPParAction "Memory" [ZVar ("b",[],[])])))
-		(CSPRepExtChoice [Choose ("n",[],[]) (ZCall (ZVar ("\\dom",[],[])) (ZVar ("b",[],[])))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],[])),ChanInpPred "nv" (ZMember (ZVar ("nv",[],[])) (ZCall (ZVar ("\\delta",[],[])) (ZVar ("n",[],[]))))])
-    (CSPParAction "Memory" [ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar ("b",[],[]),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar ("n",[],[]),ZVar ("nv",[],[])])]])])))) (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ((filter_bnd_param bst)++[Choose ("s",[],"") (ZVar ("SIDE",[],""))])
-    (CSPExtChoice (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("b",[],"")))]
-    (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("b",[],"")) (ZVar ("n",[],"")))])
-    (CSPParAction "MemoryMerge" [ZVar ("b",[],""),ZVar ("s",[],"")]))) (CSPRepExtChoice [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("b",[],"")))]
-    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],""))))])
-    (CSPParAction "MemoryMerge" [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ("b",[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]]),ZVar ("s",[],"")]))))
+    (CSPExtChoice
+      (mk_mget_mem_CSPRepExtChoice nbst nbst)
+      (mk_mset_mem_CSPRepExtChoice nbst nbst))
+    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++[Choose ("s",[],"") (ZVar ("SIDE",[],""))])
+    (CSPExtChoice (CSPExtChoice
+      (mk_mget_mem_merg_CSPRepExtChoice nbst nbst)
+      (mk_mset_mem_merg_CSPRepExtChoice nbst nbst))
     (CSPCommAction (ChanComm "terminate" []) (CSPExtChoice (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("LEFT",[],""))) (CSPCommAction (ChanComm "mleft" [ChanOutExp (ZVar ("b",[],""))]) CSPSkip)) (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("RIGHT",[],"")))
     (CSPCommAction (ChanComm "mright" [ChanOutExp (ZVar ("b",[],""))]) CSPSkip))))))))]
-    (CActionCommand (CVarDecl []
-    -- (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
-    (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult [("b",[],"")]) (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" [ZVar ("b",[],[])])) (CSExpr "MEMI"))))))))
+    -- (CActionCommand (CVarDecl []
+    (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
+    (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI")
+      (NSExprMult (map (\(ZVar v) -> v) nbst))
+      (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
     nma = omega_CAction ma
-    -- ne = sub_pred (make_subinfo [(("b",[],[]),ZVar ("x",[],[]))] (varset_from_zvars [("x",[],[])])) e
-    -- nbd = ZSetComp [Choose ("x",[],"") (ZVar ("BINDING",[],[])), Check ne] Nothing
+    ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst) (varset_from_zvars (map fst (mk_subinfo_bndg nbst)))) (head $ filter_ZGenFilt_Check bst)
+    nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
@@ -398,10 +440,8 @@ proc_ref5 x = proc_ref6 x
 	\\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose b (ZSetComp [Choose x bi,Check pr] Nothing)] ma ))))))
-	= (Process (CProcess p (ProcDef (ProcStalessMain mem (CSPRepIntChoice [Choose x bi] ma)))))
-proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem x))))
-  	= (Process (CProcess p (ProcDef (ProcStalessMain mem x))))
+proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose b (ZSetComp bst Nothing)] ma ))))))
+	= (Process (CProcess p (ProcDef (ProcStalessMain mem (CSPRepIntChoice (filter_ZGenFilt_Choose bst) ma)))))
 proc_ref6 x = x
 \end{code}
 \begin{argue}

@@ -1518,8 +1518,8 @@ filter_znames_f_type (n:nms) tp
 
 -- with all that, we create a subtype NAME_TYPEX
 lst_subtype t [] = []
-lst_subtype t (z:zs)
-      | (ntrd z) == t = z : (lst_subtype t zs)
+lst_subtype t ((z,s,f):zs)
+      | f == t = z : (lst_subtype t zs)
       | otherwise = (lst_subtype t zs)
 
 make_subtype_NAME :: [ZBranch] -> [Char]
@@ -1528,7 +1528,7 @@ make_subtype_NAME zb
   where
     make_subtype znls zt =
       "subtype NAME_"++zt++" = "
-        ++(mk_charll_to_charl " | " (map nfst (lst_subtype zt znls)))
+        ++(mk_charll_to_charl " | " ((lst_subtype zt znls)))
     znames = remdups $ select_f_zbr zb
     ztypes = remdups $ map ntrd (select_f_zbr zb)
     nametypels = mk_charll_to_charl "\n" $
@@ -1544,12 +1544,8 @@ mk_BINDINGS_TYPE n
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
 
-mk_restrict spec vlst n
-    = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (map nfst (lst_subtype n vlst)))++"})"
-    where
-      univlst = (def_universe spec)
-      funivlst = remdups (filter_types_universe univlst)
-      bndlst = mk_mem_param_lst funivlst
+mk_restrict vlst n
+    = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (lst_subtype n vlst))++"})"
 
 mk_restrict_name n
   = "restrict"++n++"("++"b_"++n++")"
