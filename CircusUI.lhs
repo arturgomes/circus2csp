@@ -21,7 +21,7 @@ import System.Directory
 import MappingFunStatelessCircus
 --import System.Console.Readline  -- was Readline
 
-prompt1 = "CircusParser> " -- prompt for each command
+prompt1 = "Circus2CSP> " -- prompt for each command
 prompt2 = "      " -- a visible, but cut/pastable, prompt for multiline input
 
 specname = ""
@@ -34,7 +34,7 @@ output_zpara = zpara_stdout pinfo
 
 main :: IO ()
 main
-  = do  putStrLn "Welcome to Circus Parser, version 0.5b.  April 2017"
+  = do  putStrLn "Welcome to Circus2CSP translator, version 0.6b.  September 2017"
         putStrLn "Author: Artur Oliveira Gomes (gomesa at tcd.ie)"
         putStrLn "This is based on JAZA (Just Another Z Animator), see below."
         putStrLn "Copyright(C) 1999-2005 Mark Utting (marku@cs.waikato.ac.nz)."

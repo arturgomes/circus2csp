@@ -1089,7 +1089,7 @@ data NSExp
 data PPar
  = ProcZPara ZPara                         -- Par
  | CParAction ZName ParAction              -- N \circdef ParAction
- | CNameSet ZName NSExp                    -- \circnameset N == NSExp
+ | CNameSet ZName [ZExpr]                    -- \circnameset N == NSExp
  deriving (Eq,Ord,Show)
 \end{code}
 \subsection{Parametrised Actions -- $ParAction$}
@@ -1112,9 +1112,9 @@ data CAction
  | CSPSeq CAction CAction                 -- Action \circseq Action
  | CSPExtChoice CAction CAction           -- Action \extchoice Action
  | CSPIntChoice CAction CAction           -- Action \intchoice Action
- | CSPNSParal NSExp CSExp NSExp CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
+ | CSPNSParal [ZExpr] CSExp [ZExpr] CAction CAction -- Action \lpar NSExp | CSExp | NSExp \rpar Action
  | CSPParal CSExp CAction CAction         -- Action \lpar CSExp \rpar Action
- | CSPNSInter NSExp NSExp CAction CAction -- Action \linter NSExp | NSExp \rinter Action
+ | CSPNSInter [ZExpr] [ZExpr] CAction CAction -- Action \linter NSExp | NSExp \rinter Action
  | CSPInterleave CAction CAction          -- Action \interleave Action
  | CSPHide CAction CSExp                  -- Action \circhide CSExp
  | CSPParAction ZName [ZExpr]             -- Action(Exp^{+})
@@ -1125,9 +1125,9 @@ data CAction
  | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
  | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
  | CSPRepIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
- | CSPRepParalNS CSExp [ZGenFilt] NSExp CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
+ | CSPRepParalNS CSExp [ZGenFilt] [ZExpr] CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
  | CSPRepParal CSExp [ZGenFilt] CAction   -- \lpar CSExp \rpar Decl \circspot ction
- | CSPRepInterlNS [ZGenFilt] NSExp CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
+ | CSPRepInterlNS [ZGenFilt] [ZExpr] CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
  | CSPRepInterl [ZGenFilt] CAction        -- \Interleave Decl \circspot  Action
   deriving (Eq,Ord,Show)
 \end{code}

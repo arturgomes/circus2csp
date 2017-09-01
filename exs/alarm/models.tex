@@ -51,7 +51,7 @@ MinInit \circdef (min:=0)\\
 IncMin \circdef (min:=(min+1)\mod 3)\\
 RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
 Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
-\circspot ((Seconds \lpar {seq} | Sync | {min} \rpar Minutes ) \circhide Sync)\\
+\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
 \circend
 \end{circus}
 

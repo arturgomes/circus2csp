@@ -1504,7 +1504,7 @@ circus_action_p
 			optnls;
 			tok L_EQUALS_EQUALS;
 			optnls;
-			nexp1 <- circusnsexpr;
+			nexp1 <- zexpressions;
 		  	return [CNameSet nmb nexp1]}
 
 --ParAction 	::= Action
@@ -1563,11 +1563,11 @@ circus_action_ns_interleave
 							(do {optnls;
 								tok L_LINTER;
 								optnls;
-								nsex1 <- circusnsexpr;
+								nsex1 <- zexpressions;
 								optnls;
 								tok L_VERT;
 								optnls;
-								nsex2 <- circusnsexpr;
+								nsex2 <- zexpressions;
 								optnls;
 								tok L_RINTER;
 								return (nsex1,nsex2)})
@@ -1585,7 +1585,7 @@ circus_action_ns_paral
 	= recursiveCSPParParal1 circus_action_paral (do {optnls;
 															tok L_LPAR;
 															optnls;
-															nsex1 <- circusnsexpr;
+															nsex1 <- zexpressions;
 															optnls;
 															tok L_VERT;
 															optnls;
@@ -1593,7 +1593,7 @@ circus_action_ns_paral
 															optnls;
 															tok L_VERT;
 															optnls;
-															nsex2 <- circusnsexpr;
+															nsex2 <- zexpressions;
 															optnls;
 															tok L_RPAR;
 															return (nsex1,csex,nsex2)})
@@ -1668,7 +1668,7 @@ circus_action_rep
 	  		tok L_CIRCSPOT;
 			optnls;
 	  		tok L_LINTER;
-			ns<- circusnsexpr;
+			ns<- zexpressions;
 			tok L_RINTER;
 	 		optnls;
 	  		cp1<- circus_action;
@@ -1695,7 +1695,7 @@ circus_action_rep
 			optnls;
 	  		tok L_LPAR;
 			optnls;
-			ns<- circusnsexpr;
+			ns<- zexpressions;
 			optnls;
 			tok L_RPAR;
 	 		optnls;

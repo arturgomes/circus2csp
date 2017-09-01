@@ -180,28 +180,27 @@ rep_CSPRepExtChoice a (x:xs)
 Function used to propagate $CSPRepInterNS$ actions
 
 \begin{code}
-rep_CSPRepParalNS :: ZName -> ZName -> ZName -> String -> [ZExpr] -> CAction
 rep_CSPRepParalNS a _ _ _ [x]
   = (CSPParAction a [x])
 rep_CSPRepParalNS a cs ns y (x:xs)
-  = (CSPNSParal (NSExprParam ns [x]) (CSExpr cs)
-    (NSBigUnion (ZSetComp
-           [Choose (y,[],[]) (ZSetDisplay xs)]
-           (Just (ZCall (ZVar (ns,[],[])) (ZVar (y,[],[])))) ) )
+  = (CSPNSParal [x] (CSExpr cs)
+      [(ZSetComp
+             [Choose y (ZSetDisplay xs)]
+             (Just (ZCall (ZVar ns) (ZVar y))) )]
      (CSPParAction a [x]) (rep_CSPRepParalNS a cs ns y xs) )
 \end{code}
 
 Function used to propagate $CSPRepInterNS$ actions
 
 \begin{code}
-rep_CSPRepInterlNS :: ZName -> ZName -> String -> [ZExpr] -> CAction
+rep_CSPRepInterlNS :: ZName -> ZVar -> ZVar -> [ZExpr] -> CAction
 rep_CSPRepInterlNS a _ _ [x]
   = (CSPParAction a [x])
 rep_CSPRepInterlNS a ns y (x:xs)
-  = (CSPNSInter (NSExprParam ns [x])
-    (NSBigUnion (ZSetComp
-           [Choose (y,[],[]) (ZSetDisplay xs)]
-           (Just (ZCall (ZVar (ns,[],[])) (ZVar (y,[],[])))) ) )
+  = (CSPNSInter [x]
+    [(ZSetComp
+           [Choose (ntrd y,[],[]) (ZSetDisplay xs)]
+           (Just (ZCall (ZVar ns) (ZVar y))) )]
      (CSPParAction a [x]) (rep_CSPRepInterlNS a ns y xs) )
 \end{code}
 \subsection{Functions imported from $Data.List$}
@@ -1046,23 +1045,6 @@ rename_vars_ParAction1 pn lst (ParamActionDecl zgf pa)
 \end{code}
 
 \begin{code}
-rename_vars_NSExp1 pn lst NSExpEmpty = NSExpEmpty
-rename_vars_NSExp1 pn lst (NSExprMult zvls)
-  = (NSExprMult (map (rename_vars_ZVar1 pn lst) zvls))
-rename_vars_NSExp1 pn lst (NSExprSngl n) = (NSExprSngl n)
-rename_vars_NSExp1 pn lst (NSExprParam n zels)
-  = (NSExprParam n (map (rename_vars_ZExpr1 pn lst) zels))
-rename_vars_NSExp1 pn lst (NSUnion n1 n2)
-  = (NSUnion (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
-rename_vars_NSExp1 pn lst (NSIntersect n1 n2)
-  = (NSIntersect (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
-rename_vars_NSExp1 pn lst (NSHide n1 n2 )
-  = (NSHide (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
-rename_vars_NSExp1 pn lst (NSBigUnion z)
-  = (NSBigUnion (rename_vars_ZExpr1 pn lst z))
-\end{code}
-
-\begin{code}
 rename_vars_CAction1 :: String ->  [(ZName, ZVar, ZExpr)] -> CAction -> CAction
 rename_vars_CAction1 pn lst (CActionSchemaExpr zsexp)
  = (CActionSchemaExpr zsexp)
@@ -1087,11 +1069,11 @@ rename_vars_CAction1 pn lst (CSPExtChoice a1 a2)
 rename_vars_CAction1 pn lst (CSPIntChoice a1 a2)
  = (CSPIntChoice (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPNSParal ns1 cs ns2 a1 a2)
- = (CSPNSParal (rename_vars_NSExp1 pn lst ns1) cs (rename_vars_NSExp1 pn lst ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
+ = (CSPNSParal (map (rename_vars_ZExpr1 pn lst) ns1) cs (map (rename_vars_ZExpr1 pn lst) ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPParal cs a1 a2)
  = (CSPParal cs (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPNSInter ns1 ns2 a1 a2)
- = (CSPNSInter (rename_vars_NSExp1 pn lst ns1) (rename_vars_NSExp1 pn lst ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
+ = (CSPNSInter (map (rename_vars_ZExpr1 pn lst) ns1) (map (rename_vars_ZExpr1 pn lst) ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPInterleave a1 a2)
  = (CSPInterleave (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPHide a cs)
@@ -1679,6 +1661,11 @@ def_sub_bind ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZAbbreviation (join_name "BINDINGS" tx,[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" tx,[],""),ZVar (join_name "U" tx ,[],"")]))):(def_sub_bind xs)
 def_sub_bind (_:xs) = (def_sub_bind xs)
 
+def_sub_bindn [] = []
+def_sub_bindn ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (ZVar (join_name "BINDINGS" tx,[],"")):(def_sub_bindn xs)
+def_sub_bindn (_:xs) = (def_sub_bindn xs)
+
 def_sub_name :: [ZGenFilt] -> [ZPara]
 def_sub_name xs
     = map (subname xs) tlist
@@ -2230,4 +2217,10 @@ upd_type_ZGenFilt lst (Evaluate v e1 e2)
 Hoping to intercalate strings with something
 \begin{code}
 joinBy sep cont = drop (length sep) $ concat $ map (\w -> sep ++ w) cont
+\end{code}
+\begin{code}
+mk_var_v_var_bnds [] = []
+mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
+  [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
+mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
 \end{code}

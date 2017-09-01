@@ -29,7 +29,7 @@ ran(f) = {v | (n,v) <- f}
 
 --- Artur Gomes - 23.03.17
 
-
+sequence(f) = <n | n <- f>
 -- Returns the domain of a relation
 name(f) = {n | (n,t,v) <- f}
 
@@ -39,4 +39,3 @@ nvalue(f) = {v | (n,t,v) <- f}
 -- Returns the function return
 -- Raises error if z is not in the domain of the function
 applyf(f,x) = pick({ v | (n,t,v) <- f, n==x})
-

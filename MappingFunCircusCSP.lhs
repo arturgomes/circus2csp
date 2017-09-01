@@ -268,14 +268,13 @@ mapping_CircParagraphs spec (CircChanSet cn c2)
 %     \begin{provs}
 %       \item $expr$ is a Z expression.
 %     \end{provs}
-% \begin{code}
-% mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetDisplay ls))
-%   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
-% mapping_CircParagraphs spec (ZAbbreviation (n,[],t) expr)
-%   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
-% mapping_CircParagraphs spec (Assert x)
-%     = "\n" ++ x
-% \end{code}
+\begin{code}
+-- % mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetDisplay ls))
+-- %   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) (ZSetDisplay ls))
+-- % mapping_CircParagraphs spec (ZAbbreviation (n,[],t) expr)
+-- %   = "\n" ++ n ++ " = " ++ (mapping_ZExpr (get_delta_names1 spec) expr)
+mapping_CircParagraphs spec (Assert x) = "\n" ++ x
+\end{code}
 \ignore{
 \begin{code}
 -- mapping_CircParagraphs spec (ZPredicate zp)
@@ -822,10 +821,10 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[],tx) s)] a)
 
 
 -- first case is for the BINDING
-mapping_CAction procn spec (CSPRepIntChoice bdls (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult bs1) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))
+mapping_CAction procn spec (CSPRepIntChoice bdls (CSPHide (CSPNSParal [] (CSExpr "MEMI") bs1 (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))
     = "\n\t\tlet "++ restr
        ++"\n\t\twithin"
-       ++"\n\t\t\t|~| "++ bnd ++" @ "++(mapping_CAction procn spec (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult bs1) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))++"\n"
+       ++"\n\t\t\t|~| "++ bnd ++" @ "++(mapping_CAction procn spec (CSPHide (CSPNSParal [] (CSExpr "MEMI") bs1 (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))++"\n"
        where
          zn =  get_znames_from_NAME spec
          znames = remdups $ map nfst (select_f_zbr zn)
@@ -866,7 +865,7 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[],tx) s)] a)
 \Upsilon_A(\Interleave x : S \circspot \lpar \emptyset \rpar A) \circdef~\tco{||| x:}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[],tx) s)] NSExpEmpty a)
+mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[],tx) s)] [] a)
   = "( " ++ "||| "
     ++  x
     ++ " : "
@@ -879,7 +878,7 @@ mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[],tx) s)] NSExpEmpty a)
 \Upsilon_A(\lpar cs \rpar x : S \circspot \lpar \emptyset \rpar A)\circdef~\tco{[|}\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|] x :}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[],tx) s)] NSExpEmpty a)
+mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[],tx) s)] [] a)
   = "( " ++ "[| "
     ++ mapping_predicate_cs (cs)
     ++ " |] "
@@ -1017,7 +1016,7 @@ mapping_CParameter procn spec (ChanDotExp ze)
 \subsection{Mapping Circus Namesets}
 \begin{code}
 
--- mapping_NSExp procn spec (NSExpEmpty)
+-- mapping_NSExp procn spec ([])
 --   = undefined
 -- mapping_NSExp procn spec (NSExprMult (x:xs))
 --   = undefined
@@ -1207,10 +1206,18 @@ mapping_ZCross _ = ""
 mapping_ZExpr_def :: [ZName] -> String
 mapping_ZExpr_def [x] = x
 mapping_ZExpr_def (x:xs) = x++","++(mapping_ZExpr_def xs)
+
+mapping_ZExpr_set [] = ""
+mapping_ZExpr_set [ZVar (a,b,x)] = a
+mapping_ZExpr_set ((ZVar (a,b,x)):xs) = a++","++(mapping_ZExpr_set xs)
+mapping_ZExpr_set (_:xs) = (mapping_ZExpr_set xs)
 \end{code}
 \begin{code}
 mapping_ZExpr_def_f f [x] = (f x)
 mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
+
+mapping_ZExpr1 (ZVar (a,_,t)) = a
+mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1  a)++","++(mapping_ZExpr1  b)++")"
 \end{code}
 
 \subsection{Mapping Function for Expressions}
@@ -1226,13 +1233,13 @@ mapping_ZExpr lst (ZVar (a,_,t))
   | (is_ZVar_v_st a) = "value"++(def_U_prefix t)++"("++a++")"
   | otherwise = a
 mapping_ZExpr lst (ZBinding _) = ""
-mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f showexpr x)++">"
+--mapping_ZExpr lst (ZCall (ZSeqDisplay x) _) = "<"++(mapping_ZExpr_def_f x)++">"
 mapping_ZExpr lst (ZCall (ZVar ("*",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("+",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("-",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\035",[],[])) a) = "\035(" ++ mapping_ZExpr lst (a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\\035",[],[])) a) = "card("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [a,b])) = "("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
+mapping_ZExpr lst (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\bigcap",[],[])) (ZTuple [a,b])) = "Inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\bigcup",[],[])) (ZTuple [a,b])) = "Union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\cap",[],[])) (ZTuple [a,b])) = "inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
@@ -1254,9 +1261,10 @@ mapping_ZExpr lst (ZCall (ZVar (b,[],_)) (ZVar (n,[],_))) = "apply("++b++","++n+
 mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(mk_charll_to_charl ", " $ (map (mapping_ZExpr lst) x))++"}"
+mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZSeqDisplay []) = "<>"
+mapping_ZExpr lst (ZSeqDisplay x) = "<"++(mapping_ZExpr_set x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZELet _ _) = ""
 mapping_ZExpr lst (ZESchema _) = ""
@@ -1277,7 +1285,6 @@ mapping_ZExpr lst (ZMu _ _) = ""
 mapping_ZExpr lst (ZPowerSet _ _ _) = ""
 mapping_ZExpr lst (ZReln _) = ""
 mapping_ZExpr lst (ZSelect _ _) = ""
-mapping_ZExpr lst (ZSeqDisplay _) = ""
 mapping_ZExpr lst (ZSetComp _ _ ) = ""
 
 mapping_ZExpr lst (ZStrange _) = ""

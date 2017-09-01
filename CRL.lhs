@@ -437,37 +437,37 @@ crl_recUnfold _ = None
   \label{law:parallelismIntroduction1}
 \end{lawn}
 \begin{code}
-crl_parallelismIntroduction1b :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
+crl_parallelismIntroduction1b :: CAction -> [ZExpr] -> [ZName] -> [ZExpr] -> Refinement CAction
 crl_parallelismIntroduction1b
   ei@(CSPCommAction (ChanComm c
       [ChanDotExp e]) a)
-      (NSExprMult ns1) cs (NSExprMult ns2)
+      ns1 cs ns2
   =  Done{orig = Just ei,
-          refined = Just (CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2)
+          refined = Just (CSPNSParal ns1 (CChanSet cs) ns2
                 (CSPCommAction (ChanComm c [ChanDotExp e]) a)
                 (CSPCommAction (ChanComm c [ChanDotExp e]) CSPSkip)),
           proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zvar_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay  ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1b _ _ _ _ = None
 
-crl_parallelismIntroduction1a :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
+crl_parallelismIntroduction1a :: CAction -> [ZExpr] -> [ZName] -> [ZExpr] -> Refinement CAction
 crl_parallelismIntroduction1a
     ei@(CSPCommAction (ChanComm c e) a)
-        (NSExprMult ns1) cs (NSExprMult ns2)
-  =  Done{orig = Just ei, refined = Just (CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2)
+        ns1 cs ns2
+  =  Done{orig = Just ei, refined = Just (CSPNSParal ns1 (CChanSet cs) ns2
                   (CSPCommAction (ChanComm c e) a)
                   (CSPCommAction (ChanComm c e) CSPSkip)),proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[]))  (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zvar_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1a _ _ _ _ = None
 \end{code}
 % \begin{code}
 % crl_parallelismIntroduction1b_backwards :: CAction -> Refinement CAction
 % crl_parallelismIntroduction1b_backwards
-%   e@(CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2)
+%   e@(CSPNSParal ns1 (CChanSet cs) ns2
 %                 (CSPCommAction (ChanComm c1 [ChanDotExp e1]) a)
 %                 (CSPCommAction (ChanComm c2 [ChanDotExp e2]) CSPSkip))
 %   = case (c1 == c2) && (e1 == e2) of
@@ -481,7 +481,7 @@ crl_parallelismIntroduction1a _ _ _ _ = None
 
 % crl_parallelismIntroduction1a_backwards :: CAction -> Refinement CAction
 % crl_parallelismIntroduction1a_backwards
-%     e@(CSPNSParal (NSExprMult ns1) (CChanSet cs) (NSExprMult ns2)
+%     e@(CSPNSParal ns1 (CChanSet cs) ns2
 %                   (CSPCommAction (ChanComm c1 []) a)
 %                   (CSPCommAction (ChanComm c2 []) CSPSkip))
 %   = case (c1 == c2) of
@@ -1733,8 +1733,8 @@ First I'm listing all the refinement laws currently available. Then I'm putting 
 -- crl_parallelismDeadlocked3 :: CAction -> Refinement CAction
 -- crl_parallelismExternalChoiceDistribution :: CAction -> CAction
 -- crl_parallelismExternalChoiceExpansion :: CAction -> Comm -> CAction -> Refinement CAction
--- crl_parallelismIntroduction1a :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
--- crl_parallelismIntroduction1b :: CAction -> NSExp -> [ZName] -> NSExp -> Refinement CAction
+-- crl_parallelismIntroduction1a :: CAction -> ZExpr -> [ZName] -> ZExpr -> Refinement CAction
+-- crl_parallelismIntroduction1b :: CAction -> ZExpr -> [ZName] -> ZExpr -> Refinement CAction
 -- crl_parallelismUnit1 :: CAction -> Refinement CAction
 -- crl_parallelismZero :: CAction -> Refinement CAction
 -- crl_parallInterlEquiv :: CAction -> Refinement CAction
@@ -2207,9 +2207,9 @@ Testing area
 -- $ print_file_ref "ref_steps.txt" cexample2
 -- And it will write the refinement of cexample2 into the ref_steps.txt file.
 cexample :: CAction
-cexample = (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2"))
+cexample = (CSPNSParal [] (CChanSet ["c1","c2"]) [] (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2"))
 cexample2 :: CAction
-cexample2 = (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CSPNSParal NSExpEmpty (CChanSet ["c1","c2"]) NSExpEmpty (CSPGuard (ZMember (ZTuple [ZVar ("v2",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2")))
+cexample2 = (CSPGuard (ZMember (ZTuple [ZVar ("v1",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CSPNSParal [] (CChanSet ["c1","c2"]) [] (CSPGuard (ZMember (ZTuple [ZVar ("v2",[],[]),ZInt 0]) (ZVar (">",[],[])))  (CActionName "a1")) (CActionName "a2")))
 cexample3 :: CAction
 cexample3 = (CActionCommand (CValDecl [Choose ("b",[],[]) (ZSetComp [Choose ("x",[],[]) (ZVar ("BINDING",[],[])),Check (ZAnd (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))) (ZMember (ZVar ("time",[],[])) (ZVar ("\\nat",[],[]))))] Nothing)] (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CSPRecursion "X" (CSPSeq (CSPExtChoice (CSPGuard (ZMember (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 2]) (ZVar (">",[],[]))) (CSPSeq (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZInt 0])) (CActionName "X"))) (CSPInterleave (CSPCommAction (ChanComm "tick" []) (CActionCommand (CAssign [("sv_SysClock2_time",[],[])] [ZCall (ZVar ("+",[],[])) (ZTuple [ZVar ("sv_SysClock2_time",[],[]),ZInt 1])]))) (CSPCommAction (ChanComm "getCurrentTime" [ChanOutExp (ZVar ("sv_SysClock2_time",[],[]))]) CSPSkip))) (CActionName "X"))))))
 cexample4 :: CAction
