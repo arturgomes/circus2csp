@@ -573,24 +573,7 @@ mapping_CProc procn spec (CRepSeqProc [(Choose (x,[],tx) s)] a)
 mapping_CProc procn spec (ProcStalessMain al ma)
   | al == [] = "\n\t" ++ (mapping_CAction procn spec ma)
   | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec al)
-    -- ++ memproc
     ++ "within " ++ (mapping_CAction procn spec ma)
-  where
-    memproc = (case res of
-                False ->
-                  "--------------------------------"++
-                  "\n\t\t-- MEMORY"++
-                  "\n\t\t--------------------------------\n"++
-                  "\t\tMemory("++mk_mem_param funivlst++") ="
-                  ++ mk_mget_mem_bndg funivlst
-                  ++ mk_mset_mem_bndg funivlst ++
-                  "\n\t\t    [] terminate -> SKIP\n\n"++
-                  "\t\tMemorise(P,"++mk_mem_param funivlst++") ="++
-                  "\n\t\t    ((P; terminate -> SKIP) [| MEMI |]"++
-                  "\n\t\t    Memory("++mk_mem_param funivlst++")) \\ MEMI\n"
-                True -> "")
-    res = member (ZAbbreviation ( "\\delta" ,[],[]) (ZSetDisplay [])) spec
-    funivlst = remdups $ filter_universe_st procn (def_universe spec)
 -- (mapping_CProc procn spec CGenProc zn (x:xs))
 --   = undefined
 mapping_CProc procn spec (CParamProc zn xl)
@@ -840,17 +823,17 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[],tx) s)] a)
 
 -- first case is for the BINDING
 mapping_CAction procn spec (CSPRepIntChoice bdls (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult bs1) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))
-    = "let "++ restr
-       ++"\n\twithin"
-       ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
+    = "\n\t\tlet "++ restr
+       ++"\n\t\twithin"
+       ++"\n\t\t\t|~| "++ bnd ++" @ "++(mapping_CAction procn spec (CSPHide (CSPNSParal (NSExprSngl "\\emptyset") (CSExpr "MEMI") (NSExprMult bs1) (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))++"\n"
        where
          zn =  get_znames_from_NAME spec
          znames = remdups $ map nfst (select_f_zbr zn)
          ztypes = remdups $ map ntrd (select_f_zbr zn)
          restr = mk_charll_to_charl "\n\t\t\t" $
-            map (mk_restrict (concat $ map (\(va,b,c) -> (if (Subs.isPrefixOf ((join_name "sv" procn)++"_") va) then [(va,b,c)] else [])) (select_f_zbr zn))) ztypes
-         bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
-         restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
+            map (mk_restrict (concat $ map (\(va,b,c) -> (if (Subs.isPrefixOf ((join_name "sv" procn)++"_") va) then [(va,b,c)] else [])) (select_f_zbr zn))) (get_binding_types bdls)
+         bnd = mk_charll_to_charl ", " $ map mk_binding_list (get_binding_types bdls)
+         restn = mk_charll_to_charl ", " $ map mk_restrict_name (get_binding_types bdls)
 
 -- otherwise...
 mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[],tx) (ZVar (t,_,tx1)))] a)
@@ -974,11 +957,11 @@ mapping_CCommand procn spec (CIf cga)
 --   = undefined
 -- mapping_CCommand procn spec (CResDecl (x:xs) ca)
 --   = undefined
-
+{-
 mapping_CCommand procn spec (CVarDecl bds ca)
  = "let "++ restr
-    ++"\n\t\twithin"
-    ++"\n\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
+    ++"\n\t\t\twithin"
+    ++"\n\t\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
     where
       zn =  get_znames_from_NAME spec
       znames = remdups $ map nfst (select_f_zbr zn)
@@ -987,7 +970,7 @@ mapping_CCommand procn spec (CVarDecl bds ca)
          map (mk_restrict (concat (map (\(va,b,c) -> if (Subs.isPrefixOf ((join_name "sv" procn)++"_") va) then [(va,b,c)] else []) (select_f_zbr zn)))) ztypes
       bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
       restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
-
+-}
 mapping_CCommand procn spec (CValDecl (x:xs) ca)
    = ""
 -- mapping_CCommand procn spec (CVResDecl (x:xs) ca)
@@ -1249,6 +1232,7 @@ mapping_ZExpr lst (ZCall (ZVar ("+",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr
 mapping_ZExpr lst (ZCall (ZVar ("-",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\035",[],[])) a) = "\035(" ++ mapping_ZExpr lst (a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\\035",[],[])) a) = "card("++(mapping_ZExpr lst a)++")"
+mapping_ZExpr lst (ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [a,b])) = "("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\bigcap",[],[])) (ZTuple [a,b])) = "Inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\bigcup",[],[])) (ZTuple [a,b])) = "Union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\cap",[],[])) (ZTuple [a,b])) = "inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"

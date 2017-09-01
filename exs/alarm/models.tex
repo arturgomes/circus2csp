@@ -14,6 +14,8 @@ RANGE == 0 \upto 2
 \circprocess\ AChrono \circdef\\
 \circbegin\\
 \circstate AState \defs [ sec, min : RANGE ]\\
+Memorise \circdef\\
+  (((P \circseq (terminate \then \Skip)) \lpar MEMI \rpar Memory(binds)) \circhide MEMI)\\
 AInit \circdef (sec,min:=0,0)\\
 IncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
 IncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
@@ -42,7 +44,7 @@ RunSec \circdef \t1
     (\circif  sec = 0 \circthen inc \then \Skip
     \circelse sec \neq 0 \circthen \Skip \circfi)
   \\\t3 \extchoice\\
-  \t3  time \then minsReq \then ans?mins \then out!(mins,sec)
+  \t3  time \then minsReq \then ans?min \then out!(min,sec)
       \then \Skip )  \\
 Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
 MinInit \circdef (min:=0)\\

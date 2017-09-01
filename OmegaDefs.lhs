@@ -20,13 +20,13 @@ make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 \\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then A
 \end{circus}
 \begin{code}
-make_get_com :: [ZName] -> CAction -> CAction
-make_get_com [x] c
+make_get_com :: [ZVar] -> CAction -> CAction
+make_get_com [(x,y,z)] c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[],[])),ChanInp ("v_"++x)]) c)
-make_get_com (x:xs) c
+    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) c)
+make_get_com ((x,y,z):xs) c
   = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[],[])),ChanInp ("v_"++x)]) (make_get_com xs c))
+    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) (make_get_com xs c))
 make_get_com x c = c
 \end{code}
 \subsection{$make\_set\_com$}
@@ -55,7 +55,7 @@ get_guard_pair (CircThenElse (CircGAction g2 a2) glx)
 The function $rename\_guard\_pair$ will rename the guards to $v\_$ prefix of free variables.
 
 \begin{code}
-rename_guard_pair :: [ZName] -> [(ZPred, CAction)] -> [(ZPred, CAction)]
+rename_guard_pair :: [ZVar] -> [(ZPred, CAction)] -> [(ZPred, CAction)]
 rename_guard_pair sub [(a,b)]
   = [((substitute (mk_sub_list sub) (free_vars a) a),b)]
 rename_guard_pair sub ((a,b):xs) = [((substitute (mk_sub_list sub) (free_vars a) a),b)]++(rename_guard_pair sub xs)
@@ -72,10 +72,9 @@ mk_guard_pair f ((g,a):ls) = (CircThenElse (CircGAction g (f a)) (mk_guard_pair 
 
 The function $mk\_sub\_list$ will make a list of substitution variables to $v\_$ prefix.
 \begin{code}
-mk_sub_list :: [ZName] -> [((ZName,[t0],String),ZExpr)]
+mk_sub_list :: [ZVar] -> [(ZVar,ZExpr)]
 mk_sub_list [] = []
-mk_sub_list [x] = [((x,[],[]),(ZVar ("v_"++x,[],[])))]
-mk_sub_list (x:xs) = [((x,[],[]),(ZVar ("v_"++x,[],[])))]++(mk_sub_list xs)
+mk_sub_list ((a,b,c):xs) = [((a,b,c),(ZVar ("v_"++a,b,c)))]++(mk_sub_list xs)
 \end{code}
 \subsection{Prototype of $wrtV(A)$, from D24.1.}
 Prototype of $wrtV(A)$, from D24.1.
@@ -279,7 +278,7 @@ splitOn d s = x : splitOn d (drop 1 y) where (x,y) = span (/= d) s
 This function extracts those variables $ZVar$ that are a state variable member.
 \begin{code}
 get_ZVar_st x
-  | is_ZVar_st (nfst x) = [nfst x]
+  | is_ZVar_st (nfst x) = [x]
   | otherwise = []
 \end{code}
 \subsection{$is\_ZVar\_st$}
@@ -1046,6 +1045,22 @@ rename_vars_ParAction1 pn lst (ParamActionDecl zgf pa)
   = (ParamActionDecl zgf (rename_vars_ParAction1 pn lst pa))
 \end{code}
 
+\begin{code}
+rename_vars_NSExp1 pn lst NSExpEmpty = NSExpEmpty
+rename_vars_NSExp1 pn lst (NSExprMult zvls)
+  = (NSExprMult (map (rename_vars_ZVar1 pn lst) zvls))
+rename_vars_NSExp1 pn lst (NSExprSngl n) = (NSExprSngl n)
+rename_vars_NSExp1 pn lst (NSExprParam n zels)
+  = (NSExprParam n (map (rename_vars_ZExpr1 pn lst) zels))
+rename_vars_NSExp1 pn lst (NSUnion n1 n2)
+  = (NSUnion (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
+rename_vars_NSExp1 pn lst (NSIntersect n1 n2)
+  = (NSIntersect (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
+rename_vars_NSExp1 pn lst (NSHide n1 n2 )
+  = (NSHide (rename_vars_NSExp1 pn lst n1) (rename_vars_NSExp1 pn lst n2))
+rename_vars_NSExp1 pn lst (NSBigUnion z)
+  = (NSBigUnion (rename_vars_ZExpr1 pn lst z))
+\end{code}
 
 \begin{code}
 rename_vars_CAction1 :: String ->  [(ZName, ZVar, ZExpr)] -> CAction -> CAction
@@ -1072,11 +1087,11 @@ rename_vars_CAction1 pn lst (CSPExtChoice a1 a2)
 rename_vars_CAction1 pn lst (CSPIntChoice a1 a2)
  = (CSPIntChoice (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPNSParal ns1 cs ns2 a1 a2)
- = (CSPNSParal ns1 cs ns2 (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
+ = (CSPNSParal (rename_vars_NSExp1 pn lst ns1) cs (rename_vars_NSExp1 pn lst ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPParal cs a1 a2)
  = (CSPParal cs (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPNSInter ns1 ns2 a1 a2)
- = (CSPNSInter ns1 ns2 (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
+ = (CSPNSInter (rename_vars_NSExp1 pn lst ns1) (rename_vars_NSExp1 pn lst ns2) (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPInterleave a1 a2)
  = (CSPInterleave (rename_vars_CAction1 pn lst a1) (rename_vars_CAction1 pn lst a2))
 rename_vars_CAction1 pn lst (CSPHide a cs)
@@ -1246,12 +1261,8 @@ rename_vars_ZVar1 pn lst (va,x,t)
 \end{code}
 \begin{code}
 rename_vars_ZExpr1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZExpr -> ZExpr
-rename_vars_ZExpr1 pn lst (ZVar (va,x,t))
- = case (inListVar1 va lst) of
-    True -> (ZVar
-              ((join_name (join_name "sv" pn) va),x,newt))
-    _ -> (ZVar (va,x,t))
-  where newt = (def_U_prefix $ get_vars_ZExpr $ get_var_type va lst)
+rename_vars_ZExpr1 pn lst (ZVar v)
+ = ZVar (rename_vars_ZVar1 pn lst v)
 rename_vars_ZExpr1 pn lst (ZInt zi)
  = (ZInt zi)
 rename_vars_ZExpr1 pn lst (ZGiven gv)
@@ -1543,6 +1554,9 @@ mk_BINDINGS_TYPE n
 -- make restrict functions within main action
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
+get_binding_types :: [ZGenFilt] -> [String]
+get_binding_types [] = []
+get_binding_types ((Choose (v,a,b) t):ts) = (lastN 3 v):get_binding_types ts
 
 mk_restrict vlst n
     = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (lst_subtype n vlst))++"})"
