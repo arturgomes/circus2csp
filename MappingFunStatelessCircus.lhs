@@ -36,9 +36,10 @@ omega_Circus spec =
          (def_delta_mapping_t zb)++
         --  ZAbbreviation ("\\delta",[],"") (ZSetDisplay deltamap),
          [CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
-        CircChannel [CChanDecl "mleft" (ZVar ("BINDINGS",[],"")), CChanDecl "mright" (ZVar ("BINDINGS",[],""))],
-         CircChannel [CChan "terminate"],
-         CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"])]
+         CircChannel [CChanDecl "lget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "lset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
+         CircChannel [CChan "terminate",CChan "lterminate"],
+         CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"]),
+         CircChanSet "MEML" (CChanSet ["lset","lget","lterminate"])]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
          spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec)
@@ -300,17 +301,17 @@ mk_mset_mem_CSPRepExtChoice (ZVar t:tx) tls
 -- gets and sets replicated ext choice for MemoryMerge
 mk_mget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
 mk_mget_mem_merg_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],"")]))))
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")]))))
 mk_mget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],"")])))) (mk_mget_mem_merg_CSPRepExtChoice tx tls))
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))) (mk_mget_mem_merg_CSPRepExtChoice tx tls))
 
 mk_mset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
 mk_mset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],"")])))))
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))))
 mk_mset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],"")])))))
+  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))))
   (mk_mset_mem_merg_CSPRepExtChoice tx tls))
 
 -- making renaming list for bindings
@@ -325,12 +326,12 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
     (CSPExtChoice
       (mk_mget_mem_CSPRepExtChoice nbst nbst)
       (mk_mset_mem_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++[Choose ("s",[],"") (ZVar ("SIDE",[],""))])
+    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++[Choose ("s",[],"") (ZVar ("SIDE",[],"")),Choose ("ns1",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],""))),Choose ("ns2",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
     (CSPExtChoice (CSPExtChoice
       (mk_mget_mem_merg_CSPRepExtChoice nbst nbst)
       (mk_mset_mem_merg_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "terminate" []) (CSPExtChoice (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("LEFT",[],""))) (CSPCommAction (ChanComm "mleft" [ChanOutExp (union_ml_mr nbst)]) CSPSkip)) (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("RIGHT",[],"")))
-    (CSPCommAction (ChanComm "mright" [ChanOutExp (union_ml_mr nbst)]) CSPSkip))))))))]
+    (CSPCommAction (ChanComm "lterminate" []) (CSPExtChoice (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("LEFT",[],""))) (CSPRepSeq [Choose ("l",[],"") (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]), Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns1",[],""))])] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("l",[],"")) (ZVar ("n",[],"")))]) CSPSkip))) (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("RIGHT",[],"")))
+    (CSPRepSeq [Choose ("r",[],"") (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns2",[],""))])] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("r",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))))]
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
@@ -374,7 +375,7 @@ proc_ref4 x = proc_ref5 x
 					\qquad
 					mset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv},s)
 					\end{array}\right)\\
-					\extchoice~terminate \then \left(\begin{array}{l} \lcircguard s = LEFT \rcircguard \circguard mleft!b \then \Skip\\\extchoice \lcircguard s = RIGHT \rcircguard \circguard mright!b \then \Skip\end{array}\right)
+					\extchoice~lterminate \then \left(\begin{array}{l} \lcircguard s = LEFT \rcircguard \circguard mleft!b \then \Skip\\\extchoice \lcircguard s = RIGHT \rcircguard \circguard mright!b \then \Skip\end{array}\right)
 					\end{array}
 					\end{array}\\
 
@@ -717,22 +718,20 @@ omega_CAction (CSPExtChoice ca cb)
          \left (\begin{array}{l}
           \Omega'_A (A_1) \circseq terminate \then \Skip
          \end{array}\right )\\
-          \lpar \{\} | MEMI | \{\} \rpar
+          \lpar \{\} | MEML | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
         \end{array}\right )
-        \circhide MEMI \\
+        \circhide MEML \\
        \lpar \{\} | cs | \{\} \rpar \\
         \left (\begin{array}{l}
          \left (\begin{array}{l}
           \Omega'_A (A_2) \circseq terminate \then \Skip
          \end{array}\right )\\
-          \lpar \{\} | MEMI | \{\} \rpar
+          \lpar \{\} | MEML | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
         \end{array}\right )
-        \circhide MEMI
-       \end{array}\right )\\
-      \lpar \{\} | MRG_I | \{\} \rpar\\
-      \left (\begin{array}{l}mleft?l \then (\Semi n:ns1 \circspot mset.n!l(n) \then \Skip)\\ \interleave~mright?r \then (\Semi n:ns2 \circspot mset.n!r(n) \then \Skip)\end{array}\right )
+        \circhide MEML
+       \end{array}\right ))
     \end{array}\right )\\
     \t2\circhide \lchanset mleft, mright \rchanset
 \end{circus}
@@ -741,30 +740,22 @@ The definition of parallel composition (and interleaving), as defined in the D24
 
 \begin{code}
 omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
-  = make_get_com lsx ( (CSPHide
-   (CSPNSParal [] (CSExpr "MEMI") []
-     (CSPNSParal [] cs []
+  = make_get_com lsx
+      (CSPNSParal [] cs []
       (CSPHide
-       (CSPNSParal [] (CSExpr "MEMI") []
-        (CSPSeq (omega_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds ns1),
-                ZVar ("LEFT",[],[])]))
-       (CSExpr "MEMI"))
+                ZVar ("LEFT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+       (CSExpr "MEML"))
       (CSPHide
-       (CSPNSParal [] (CSExpr "MEMI") []
-        (CSPSeq (omega_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds ns2),
-                ZVar ("RIGHT",[],[])]))
-       (CSExpr "MEMI")))
-      (CSPInterleave (CSPCommAction (ChanComm "mleft" [ChanInp "l"])
-        (CSPRepSeq [Choose ("n",[],"") (ZSeqDisplay ns1)]
-        (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("l",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))
-        (CSPCommAction (ChanComm "mright" [ChanInp "r"])
-        (CSPRepSeq [Choose ("n",[],"") (ZSeqDisplay ns2)]
-        (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("r",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))
-      (CChanSet ["mleft","mright"])))
+                ZVar ("RIGHT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+       (CSExpr "MEML")))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
 \end{code}
@@ -1404,4 +1395,874 @@ omega_prime_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName) = (CSPUnParAc
 -- omega_prime_CAction (CSPRepInterlNS vZGenFilt_lst vNSExp vCAction) = (CSPRepInterlNS vZGenFilt_lst vNSExp (omega_prime_CAction vCAction))
 -- omega_prime_CAction (CSPRepInterl vZGenFilt_lst vCAction) = (CSPRepInterl vZGenFilt_lst (omega_prime_CAction vCAction))
 omega_prime_CAction x = x
+\end{code}
+
+
+
+\subsection{$\Gamma$ functions}
+
+Set of mapping functions for those actions that runs within the scope of a parallel actions
+
+
+\subsection{Stateless Circus - Actions}
+
+\begin{circus}
+\Gamma_A (\Skip) \circdef \Skip
+\also \Gamma_A (\Stop) \circdef \Stop
+\also \Gamma_A (\Chaos) \circdef \Chaos
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction :: CAction -> CAction
+gamma_CAction CSPSkip = CSPSkip
+gamma_CAction CSPStop = CSPStop
+gamma_CAction CSPChaos = CSPChaos
+\end{code}
+
+\begin{circus}
+\Gamma_A (c \then A) \circdef c \then \Gamma_A (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPCommAction (ChanComm c []) a)
+  = (CSPCommAction (ChanComm c []) (gamma_CAction a))
+\end{code}
+
+\begin{circus}
+\Gamma_A (c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
+\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 c.e(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Gamma'_{A} (A)
+\end{circus}
+where
+\begin{circus}
+FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+  = make_lget_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (gamma_prime_CAction a)))
+  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
+gamma_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+  = make_lget_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (gamma_prime_CAction a)))
+  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
+\end{code}
+
+\begin{circus}
+\Gamma_A (c!e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
+\\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
+\end{circus}
+\begin{code}
+gamma_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
+  = gamma_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+gamma_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
+  = gamma_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+\end{code}
+
+\begin{circus}
+\Gamma_A (g(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
+\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 g(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \circguard \Gamma'_{A} (A)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPGuard g a)
+  = make_lget_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (gamma_prime_CAction a)))
+  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred g))
+\end{code}
+
+
+I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforward:
+
+\begin{circus}
+\Gamma_A (c?x \then A) \circdef
+\\\t2 c?x \then \Gamma'_{A} (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
+  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (gamma_CAction a))
+\end{code}
+
+
+\begin{circus}
+\Gamma_A (c?x : P(x,v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
+\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 c?x : P(x,vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Gamma'_{A} (A)
+\end{circus}
+where
+\begin{circus}
+x \in wrtV(A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+  = case not (elem x (getWrtV(a))) of
+    True -> make_lget_com lsx (rename_vars_CAction (CSPCommAction
+             (ChanComm c [ChanInpPred x p])
+                 (gamma_prime_CAction a)))
+    _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+  where lsx = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred p))
+\end{code}
+
+
+
+\begin{circus}
+\Gamma_A (A_1 \circseq A_2) \circdef \Gamma_A (A_1) \circseq \Gamma_A (A_2)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPSeq ca cb)
+  = (CSPSeq (gamma_CAction ca) (gamma_CAction cb))
+\end{code}
+
+\begin{circus}
+\Gamma_A (A_1 \intchoice A_2) \circdef \Gamma_A (A_1) \intchoice \Gamma_A (A_2)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPIntChoice ca cb)
+  = (CSPIntChoice (gamma_CAction ca) (gamma_CAction cb))
+\end{code}
+
+% TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
+\begin{circus}
+\Gamma_A (A_1 \extchoice A_2) \circdef
+\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 (\Gamma'_A (A_1) \extchoice \Gamma'_A (A_2))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPExtChoice ca cb)
+  = make_lget_com lsx (CSPExtChoice (gamma_prime_CAction ca) (gamma_prime_CAction cb))
+   where
+    lsx = remdups $ concat $ map get_ZVar_st $ varset_to_zvars $ free_var_CAction (CSPExtChoice ca cb)
+\end{code}
+% \begin{circus}
+% \Gamma_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
+% \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+% \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%       \\\t2\left (\begin{array}{l}
+%        \left (\begin{array}{l}
+%         \left (\begin{array}{l}
+%          \left (\begin{array}{l}
+%           \Gamma'_A (A_1) \circseq terminate \then \Skip
+%          \end{array}\right )\\
+%           \lpar \{\} | MEMI | \{\} \rpar
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+%         \end{array}\right )
+%         \circhide MEMI \\
+%        \lpar \{\} | cs | \{\} \rpar \\
+%         \left (\begin{array}{l}
+%          \left (\begin{array}{l}
+%           \Gamma'_A (A_2) \circseq terminate \then \Skip
+%          \end{array}\right )\\
+%           \lpar \{\} | MEMI | \{\} \rpar
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+%         \end{array}\right )
+%         \circhide MEMI
+%        \end{array}\right )\\
+%       \lpar \{\} | MRG_I | \{\} \rpar\\
+%       Merge
+%     \end{array}\right )\\
+%     \t2\circhide \lchanset mleft, mright \rchanset
+% \end{circus}
+
+\begin{circus}
+\Gamma_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
+\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+      \\\t2\left (\begin{array}{l}
+       \left (\begin{array}{l}
+        \left (\begin{array}{l}
+         \left (\begin{array}{l}
+          \Gamma'_A (A_1) \circseq terminate \then \Skip
+         \end{array}\right )\\
+          \lpar \{\} | MEMI | \{\} \rpar
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+        \end{array}\right )
+        \circhide MEMI \\
+       \lpar \{\} | cs | \{\} \rpar \\
+        \left (\begin{array}{l}
+         \left (\begin{array}{l}
+          \Gamma'_A (A_2) \circseq terminate \then \Skip
+         \end{array}\right )\\
+          \lpar \{\} | MEMI | \{\} \rpar
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+        \end{array}\right )
+        \circhide MEMI
+       \end{array}\right )\\
+      \lpar \{\} | MRG_I | \{\} \rpar\\
+      \left (\begin{array}{l}mleft?l \then (\Semi n:ns1 \circspot mset.n!l(n) \then \Skip)\\ \interleave~mright?r \then (\Semi n:ns2 \circspot mset.n!r(n) \then \Skip)\end{array}\right )
+    \end{array}\right )\\
+    \t2\circhide \lchanset mleft, mright \rchanset
+\end{circus}
+
+The definition of parallel composition (and interleaving), as defined in the D24.1, has a $MemoryMerge$, $MRG_I$ and $Merge$ components and channel sets. Whilst translating them into CSP, the tool would rather expand their definition
+
+\begin{code}
+gamma_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
+  = make_lget_com lsx ( (CSPHide
+     (CSPNSParal [] cs []
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEMI") []
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds ns1),
+                ZVar ("LEFT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+       (CSExpr "MEMI"))
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEMI") []
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds ns2),
+                ZVar ("RIGHT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+       (CSExpr "MEMI")))
+      (CChanSet ["mleft","mright"])))
+   where
+    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\Semi x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma_A (A(v_1)\circseq \ldots \circseq A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+{-
+gamma_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_CAction (rep_CSPRepSeq act xs)
+    _  -> (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))-}
+gamma_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
+  = (CSPRepSeq [Choose (x,[],tx) v] (gamma_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\Extchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma_A (A(v_1)\extchoice \ldots \extchoice A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_CAction (rep_CSPRepExtChoice act xs)
+    _  -> (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+gamma_CAction (CSPRepExtChoice [Choose (x,[],tx) v] act)
+  = (CSPRepExtChoice [Choose (x,[],tx) v] (gamma_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\Intchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma_A (A(v_1)\intchoice \ldots \intchoice A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_CAction(rep_CSPRepIntChoice act xs)
+    _  -> (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+gamma_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
+  = (CSPRepIntChoice [Choose (x,[],tx) v] (gamma_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\lpar cs \rpar x : \langle v_1,...,v_n \rangle \circspot \lpar ns(x) \rpar A(x)) \circdef
+\\\t1
+\left (\begin{array}{l}A(v_1)
+   \\ \lpar ns(v_1) | cs | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
+   \\ \left (\begin{array}{l}
+     \ldots
+      \left (\begin{array}{l}
+      \Gamma_A(A(v_n -1))
+      \\ \lpar ns(v_n -1 ) | cs | ns(v_n) \rpar
+      \\ A(v_n)\end{array}\right )\end{array}\right )\end{array}\right )
+
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+  = case (member (ZVar x) [ZVar (x1,[],tx1)]) && (member (ZVar x) [ZVar (x2,[],tx2)]) of
+    True -> gamma_CAction (rep_CSPRepParalNS a cs (x1,[],tx1) x lsx)
+    _  -> (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+gamma_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] act)
+  = (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] (gamma_CAction act))
+\end{code}
+\begin{circus}
+\Gamma_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Gamma_A (P)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_CAction (CActionCommand (CValDecl xs a))
+  = (CActionCommand (CValDecl xs (gamma_CAction a)))
+\end{code}
+\begin{circus}
+\Gamma_A \left (\begin{array}{l}x_0,\ldots,x_n:=e_0\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right ),\ldots,e_n\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right )\end{array}\right ) \circdef
+\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 set.x_0!e_0(vv_0,...,vv_n,vl_0,...,vl_m) \then
+\\\t1\ldots\then
+\\\t1 set.x_n!e_n(vv_0,...,vv_n,vl_0,...,vl_m) \then \Skip
+\end{circus}
+
+\begin{code}
+gamma_CAction (CActionCommand (CAssign varls valls))
+  = make_lget_com lxs (make_lset_com gamma_CAction varls (map rename_ZExpr valls) CSPSkip)
+    where
+      lxsvarls = (concat (map get_ZVar_st varls))
+      lxsvalls = (concat (map get_ZVar_st (varset_to_zvars $ union_varsets (map fvars_expr valls))))
+      lxs = remdups (lxsvalls ++ lxsvarls)
+\end{code}
+
+\begin{circus}
+\Gamma_A (A \circhide cs) \circdef \Gamma_A (A) \circhide cs
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_CAction (CSPHide a cs) = (CSPHide (gamma_CAction a) cs)
+\end{code}
+
+\begin{circus}
+\Gamma_A
+   \left (\begin{array}{l}
+   \circif g_0 (v_0,...,v_n,l_0,...,l_m) \circthen A_0
+   \\\t1\circelse \ldots
+   \\\t1 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen A_n
+   \\\circfi
+   \end{array}\right ) \defs
+   \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+   \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+   \\\t1\circif g_0 (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A_0)
+   \\\t2\circelse \ldots
+   \\\t2 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A_n)
+   \\\t1\circfi
+\end{circus}
+
+\begin{code}
+gamma_CAction (CActionCommand (CIf gax))
+  = make_lget_com lsx (CActionCommand (CIf (mk_guard_pair gamma_prime_CAction (rename_guard_pair lsx gpair))))
+  where
+   gpair = get_guard_pair gax
+   lsx = concat (map get_ZVar_st (remdups (concat (map (varset_to_zvars . free_var_ZPred) (map fst gpair)))))
+\end{code}
+% \begin{circus}
+% \Gamma_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
+%    \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+%    \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A) \circfi
+% \end{circus}
+% \begin{code}
+% gamma_CAction (CActionCommand (CIf (CircGAction g a)))
+%   = make_lget_com lsx (rename_vars_CAction (CActionCommand
+%              (CIf (CircGAction g (gamma_prime_CAction a)))))
+%   where
+%    lsx = remdups $ concat $ map get_ZVar_st $ remdups $ free_var_ZPred g
+% \end{code}
+
+\begin{circus}
+\Gamma_A (\circmu X \circspot A(X)) \circdef \circmu X \circspot \Gamma_A(A(X))
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+--  TODO Jun 30 2017: rename the recursion action name, so it won't clash with any Circus action name.
+gamma_CAction (CSPRecursion x c) = (CSPRecursion x (gamma_CAction c))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\Interleave x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef
+\\\t1
+\left (\begin{array}{l}A(v_1)
+   \\ \lpar ns(v_1) | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
+   \\ \left (\begin{array}{l}
+     \ldots
+      \left (\begin{array}{l}
+      \Gamma_A(A(v_n -1))
+      \\ \lpar ns(v_n -1 ) | ns(v_n)\rpar
+      \\ A(v_n)\end{array}\right )\end{array}\right )\end{array}\right )
+
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_CAction (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+  = case (member (ZVar x) [ZVar (x1,[],tx1)]) && (member (ZVar x) [ZVar (x2,[],tx2)]) of
+    True -> gamma_CAction (rep_CSPRepInterlNS a (x1,[],tx1) x lsx)
+    _  ->  (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          (CSPParAction a [ZVar (x2,[],tx2)]))
+gamma_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          act)
+  = (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx1)]
+          (gamma_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma_A (\{g\}) \circdef \prefixcolon [g, true]
+\end{circus}
+
+\begin{code}
+gamma_CAction (CActionCommand (CommandBrace g))
+  = gamma_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
+\end{code}
+
+\begin{circus}
+\Gamma_A ([g]) \circdef \prefixcolon [g]
+\end{circus}
+
+\begin{code}
+gamma_CAction (CActionCommand (CommandBracket g))
+  = gamma_CAction (CActionCommand (CPrefix1 g))
+\end{code}
+
+\begin{circus}
+\Gamma_A (A[old_1,...,old_n := new_1,...,new_n) \circdef
+\\\t1A[new_1,...,new_n/old_1,...,old_n)
+\end{circus}
+
+\begin{code}
+gamma_CAction (CSPRenAction a (CRenameAssign left right))
+  = (CSPRenAction a (CRename right left))
+\end{code}
+
+In order to pattern match any other \Circus\ construct not mentioned here, we propagate the $gamma\_CAction$ function to the remainder of the constructs.
+
+% I left the replicated operators for future work as they are similar to what I already implemented. Once I'm done with the verification bits, I'll get back here
+\begin{code}
+gamma_CAction (CActionSchemaExpr vZSExpr) = (CActionSchemaExpr vZSExpr)
+gamma_CAction (CActionName vZName) = (CActionName vZName)
+gamma_CAction (CSPCommAction vComm vCAction) = (CSPCommAction vComm (gamma_CAction vCAction))
+-- gamma_CAction (CSPNSParal v1NSExp vCSExp v2NSExp v1CAction v2CAction) = (CSPNSParal v1NSExp vCSExp v2NSExp (gamma_CAction v1CAction) (gamma_CAction v2CAction))
+gamma_CAction (CSPParal vCSExp v1CAction v2CAction) = (CSPParal vCSExp (gamma_CAction v1CAction) (gamma_CAction v2CAction))
+gamma_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction) = (CSPNSInter v1NSExp v2NSExp (gamma_CAction v1CAction) (gamma_CAction v2CAction))
+gamma_CAction (CSPInterleave v1CAction v2CAction) = (CSPInterleave (gamma_CAction v1CAction) (gamma_CAction v2CAction))
+gamma_CAction (CSPParAction vZName vZExpr_lst) = (CSPParAction vZName vZExpr_lst)
+gamma_CAction (CSPRenAction vZName vCReplace) = (CSPRenAction vZName vCReplace)
+gamma_CAction (CSPUnfAction vZName vCAction) = (CSPUnfAction vZName (gamma_CAction vCAction))
+gamma_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName) = (CSPUnParAction vZGenFilt_lst (gamma_CAction vCAction) vZName)
+-- gamma_CAction (CSPRepSeq vZGenFilt_lst vCAction) = (CSPRepSeq vZGenFilt_lst (gamma_CAction vCAction))
+-- gamma_CAction (CSPRepExtChoice vZGenFilt_lst vCAction) = (CSPRepExtChoice vZGenFilt_lst (gamma_CAction vCAction))
+-- gamma_CAction (CSPRepIntChoice vZGenFilt_lst vCAction) = (CSPRepIntChoice vZGenFilt_lst (gamma_CAction vCAction))
+-- gamma_CAction (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp vCAction) = (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp (gamma_CAction vCAction))
+-- gamma_CAction (CSPRepParal vCSExp vZGenFilt_lst vCAction) = (CSPRepParal vCSExp vZGenFilt_lst (gamma_CAction vCAction))
+-- gamma_CAction (CSPRepInterl vZGenFilt_lst vCAction) = (CSPRepInterl vZGenFilt_lst (gamma_CAction vCAction))
+gamma_CAction x = x
+\end{code}
+
+% NOTE: Besides the transformation rules for $[g]$ and ${g}$, the remaining transformation rules from page 91 of the D24.1 document, were not yet implemented.
+\subsection{Definitions of $\Gamma'_{A}$}
+
+\begin{circus}
+\Gamma'_A (\Skip) \circdef \Skip
+\also \Gamma'_A (\Stop) \circdef \Stop
+\also \Gamma'_A (\Chaos) \circdef \Chaos
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction :: CAction -> CAction
+gamma_prime_CAction CSPSkip = CSPSkip
+gamma_prime_CAction CSPStop = CSPStop
+gamma_prime_CAction CSPChaos = CSPChaos
+\end{code}
+
+\begin{circus}
+\Gamma'_A (c \then A) \circdef c \then \Gamma'_A (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPCommAction (ChanComm c []) a)
+  = (CSPCommAction (ChanComm c []) (gamma_prime_CAction a))
+\end{code}
+
+
+\begin{circus}
+\Gamma'_A (c.e \then A) \circdef c(vv_0,...,vv_n,vl_0,...,vl_m) \then \Gamma'_A (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+  = (CSPCommAction (ChanComm c [ChanDotExp (rename_ZExpr e)]) (gamma_prime_CAction a))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (c!e \then A) \circdef
+\\\t2 c.e \then A
+\end{circus}
+\begin{code}
+gamma_prime_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
+  = gamma_prime_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+gamma_prime_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
+  = gamma_prime_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+\end{code}
+
+\begin{circus}
+\Gamma'_A (g \then A) \circdef
+\\\t2 g \circguard \Gamma'_{A} (A)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPGuard g a)
+  = (CSPGuard (rename_ZPred g) (gamma_prime_CAction a))
+\end{code}
+
+
+I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforward:
+
+\begin{circus}
+\Gamma'_A (c?x \then A) \circdef
+\\\t2 c?x \then \Gamma'_{A} (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
+  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (gamma_prime_CAction a))
+\end{code}
+
+
+\begin{circus}
+\Gamma'_A (c?x : P \then A) \circdef
+\\\t2 c?x : P \then \Gamma'_{A} (A)
+\end{circus}
+where
+\begin{circus}
+x \in wrtV(A)
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+  = (CSPCommAction (ChanComm c [ChanInpPred x p])
+                 (gamma_prime_CAction a))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (A_1 \circseq A_2) \circdef \Gamma'_A (A_1) \circseq \Gamma_A (A_2)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPSeq ca cb)
+  = (CSPSeq (gamma_prime_CAction ca) (gamma_CAction cb))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (A_1 \intchoice A_2) \circdef \Gamma'_A (A_1) \intchoice \Gamma'_A (A_2)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPIntChoice ca cb)
+  = (CSPIntChoice (gamma_prime_CAction ca) (gamma_prime_CAction cb))
+\end{code}
+
+% TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
+\begin{circus}
+\Gamma'_A (A_1 \extchoice A_2) \circdef
+\\\t2 (\Gamma'_A (A_1) \extchoice \Gamma'_A (A_2))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPExtChoice ca cb)
+  = (CSPExtChoice (gamma_prime_CAction ca) (gamma_prime_CAction cb))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
+\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
+\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+      \\\t2\left (\begin{array}{l}
+       \left (\begin{array}{l}
+        \left (\begin{array}{l}
+         \left (\begin{array}{l}
+          \Gamma'_A (A_1) \circseq terminate \then \Skip
+         \end{array}\right )\\
+          \lpar \{\} | MEMI | \{\} \rpar
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+        \end{array}\right )
+        \circhide MEMI \\
+       \lpar \{\} | cs | \{\} \rpar \\
+        \left (\begin{array}{l}
+         \left (\begin{array}{l}
+          \Gamma'_A (A_2) \circseq terminate \then \Skip
+         \end{array}\right )\\
+          \lpar \{\} | MEMI | \{\} \rpar
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+        \end{array}\right )
+        \circhide MEMI
+       \end{array}\right )\\
+      \lpar \{\} | MEMI | \{\} \rpar\\
+      Merge
+    \end{array}\right )\\
+    \t2\circhide \lchanset mleft, mright \rchanset
+\end{circus}
+
+\begin{code}
+-- gamma_prime_CAction (CSPNSParal ns1 cs ns2 a1 a2)
+--   = make_lget_com lsx (rename_vars_CAction (CSPHide
+--    (CSPNSParal [] (CSExpr "MEMI") []
+--      (CSPNSParal [] cs []
+--       (CSPHide
+--        (CSPNSParal [] (CSExpr "MEMI") []
+--         (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPParAction "MemoryMerge"
+--          [ZSetDisplay [],
+--                 ZVar ("LEFT",[])]))
+--        (CSExpr "MEMI"))
+--       (CSPHide
+--        (CSPNSParal [] (CSExpr "MEMI") []
+--         (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPParAction "MemoryMerge"
+--          [ZSetDisplay [],
+--                 ZVar ("RIGHT",[])]))
+--        (CSExpr "MEMI")))
+--       (CActionName "Merge"))
+--       (CChanSet ["mleft","mright"])))
+--    where
+--     lsx = union (map fst (remdups (free_var_CAction a1))) (map fst (remdups (free_var_CAction a2)))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\Semi x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma'_A (A(v_1)\circseq \ldots \circseq A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_prime_CAction (rep_CSPRepSeq act xs)
+    _  -> (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+gamma_prime_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
+  = (CSPRepSeq [Choose (x,[],tx) v] (gamma_prime_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\Extchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma'_A (A(v_1)\extchoice \ldots \extchoice A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_prime_CAction (rep_CSPRepExtChoice act xs)
+    _  -> (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+gamma_prime_CAction (CSPRepExtChoice [Choose (x,[],s) v] act)
+  = (CSPRepExtChoice [Choose (x,[],s) v] (gamma_prime_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\Intchoice x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef \Gamma'_A (A(v_1)\intchoice \ldots \intchoice A(v_n))
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+  = case x == x1 of
+    True -> gamma_prime_CAction(rep_CSPRepIntChoice act xs)
+    _  -> (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+          (CSPParAction act [ZVar (x1,[],tx1)]))
+gamma_prime_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
+  = (CSPRepIntChoice [Choose (x,[],tx) v] (gamma_prime_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\lpar cs \rpar x : \langle v_1,...,v_n \rangle \circspot \lpar ns(x) \rpar A(x)) \circdef
+\\\t1
+\left (\begin{array}{l}A(v_1)
+   \\ \lpar ns(v_1) | cs | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
+   \\ \left (\begin{array}{l}
+     \ldots
+      \left (\begin{array}{l}
+      \Gamma'_A(A(v_n -1))
+      \\ \lpar ns(v_n -1 ) | cs | ns(v_n) \rpar
+      \\ A(v_n)\end{array}\right )\end{array}\right )\end{array}\right )
+
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx2)]
+          (CSPParAction a [ZVar (x2,[],tx3)]))
+  = case (member (ZVar x) [ZVar (x1,[],tx2)]) && (member (ZVar x) [ZVar (x2,[],tx3)]) of
+    True -> gamma_prime_CAction (rep_CSPRepParalNS a cs (x1,[],tx2) x lsx)
+    _  -> (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
+          [ZVar (x1,[],tx2)]
+          (CSPParAction a [ZVar (x2,[],tx3)]))
+gamma_prime_CAction (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] act)
+  = (CSPRepParalNS (CSExpr cs) [Choose (x,[],tx) (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] (gamma_prime_CAction act))
+\end{code}
+\begin{circus}
+\Gamma'_A ( \circval Decl \circspot P) \circdef \circval Decl \circspot \Gamma'_A (P)
+\end{circus}
+is written in Haskell as:
+\begin{code}
+gamma_prime_CAction (CActionCommand (CValDecl xs a))
+  = (CActionCommand (CValDecl xs (gamma_prime_CAction a)))
+\end{code}
+\begin{circus}
+\Gamma'_A \left (\begin{array}{l}x_0,\ldots,x_n:=e_0,\ldots,e_n\end{array}\right ) \circdef
+\\\t1 set.x_0!e_0 \then
+\\\t1\ldots\then
+\\\t1 set.x_n!e_n \then \Skip
+\end{circus}
+
+\begin{code}
+gamma_prime_CAction (CActionCommand (CAssign varls valls))
+  =  (make_lset_com gamma_prime_CAction varls valls CSPSkip)
+\end{code}
+% \begin{circus}
+% \Gamma'_A (\circif g \circthen A \circfi ) \defs
+%    \\\t1\circif g \circthen \Gamma'_A (A) \circfi
+% \end{circus}
+% \begin{code}
+% gamma_prime_CAction (CActionCommand (CIf (CircGAction g a)))
+%   = (CActionCommand (CIf (CircGAction g (gamma_prime_CAction a))))
+
+% \end{code}
+
+\begin{circus}
+\Gamma'_A (A \circhide cs) \circdef \Gamma'_A (A) \circhide cs
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_prime_CAction (CSPHide a cs) = (CSPHide (gamma_prime_CAction a) cs)
+\end{code}
+
+\begin{circus}
+\Gamma'_A
+   \left (\begin{array}{l}
+   \circif g_0  \circthen A_0
+   \\\t1\circelse \ldots
+   \\\t1 \circelse g_n  \circthen A_n
+   \\\circfi
+   \end{array}\right ) \defs
+   \\\t1\circif g_0 \circthen \Gamma'_A (A_0)
+   \\\t2\circelse \ldots
+   \\\t2 \circelse g_n \circthen \Gamma'_A (A_n)
+   \\\t1\circfi
+\end{circus}
+
+\begin{code}
+gamma_prime_CAction (CActionCommand (CIf glx))
+  = (CActionCommand (CIf (mk_guard_pair gamma_prime_CAction guard_pair)))
+  where
+   guard_pair = get_guard_pair glx
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\circmu X \circspot A(X)) \circdef \circmu X \circspot \Gamma'_A(A(X))
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_prime_CAction (CSPRecursion x c) = (CSPRecursion x (gamma_prime_CAction c))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\Interleave x : \langle v_1,...,v_n \rangle \circspot A(x)) \circdef
+\\\t1
+\left (\begin{array}{l}A(v_1)
+   \\ \lpar ns(v_1) | \bigcup\{x : \{v_2,...,v_n\} \circspot ns(x)\} \rpar
+   \\ \left (\begin{array}{l}
+     \ldots
+      \left (\begin{array}{l}
+      \Gamma'_A(A(v_n -1))
+      \\ \lpar ns(v_n -1 ) | ns(v_n)\rpar
+      \\ A(v_n)\end{array}\right )\end{array}\right )\end{array}\right )
+
+\end{circus}
+
+is written in Haskell as:
+
+\begin{code}
+gamma_prime_CAction (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
+          [ZVar ns1]
+          (CSPParAction a ns2))
+  = case (member (ZVar x) [ZVar ns1] ) && (member (ZVar x) ns2 ) of
+    True -> gamma_prime_CAction (rep_CSPRepInterlNS a ns1 x lsx)
+    _  ->  (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
+          [ZVar ns1]
+          (CSPParAction a ns2))
+gamma_prime_CAction (CSPRepInterlNS [Choose (x,[],t1) (ZSetDisplay lsx)]
+          ([ZVar (x1,[],t2)])
+          act)
+  = (CSPRepInterlNS [Choose (x,[],t1) (ZSetDisplay lsx)]
+          ([ZVar (x1,[],t2)])
+          (gamma_prime_CAction act))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (\{g\}) \circdef \prefixcolon [g, true]
+\end{circus}
+
+\begin{code}
+gamma_prime_CAction (CActionCommand (CommandBrace g))
+  = gamma_prime_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
+\end{code}
+
+\begin{circus}
+\Gamma'_A ([g]) \circdef \prefixcolon [g]
+\end{circus}
+
+\begin{code}
+gamma_prime_CAction (CActionCommand (CommandBracket g))
+  = gamma_prime_CAction (CActionCommand (CPrefix1 g))
+\end{code}
+
+\begin{circus}
+\Gamma'_A (A[old_1,...,old_n := new_1,...,new_n) \circdef
+\\\t1A[new_1,...,new_n/old_1,...,old_n)
+\end{circus}
+
+\begin{code}
+gamma_prime_CAction (CSPRenAction a (CRenameAssign left right))
+  = (CSPRenAction a (CRename right left))
+\end{code}
+
+In order to pattern match any other \Circus\ construct not mentioned here, we propagate the $gamma\_prime_CAction$ function to the remainder of the constructs.
+
+\begin{code}
+gamma_prime_CAction (CActionSchemaExpr vZSExpr) = (CActionSchemaExpr vZSExpr)
+gamma_prime_CAction (CActionName vZName) = (CActionName vZName)
+gamma_prime_CAction (CSPCommAction vComm vCAction) = (CSPCommAction vComm (gamma_prime_CAction vCAction))
+gamma_prime_CAction (CSPNSParal v1NSExp vCSExp v2NSExp v1CAction v2CAction) = (CSPNSParal v1NSExp vCSExp v2NSExp (gamma_prime_CAction v1CAction) (gamma_prime_CAction v2CAction))
+gamma_prime_CAction (CSPParal vCSExp v1CAction v2CAction) = (CSPParal vCSExp (gamma_prime_CAction v1CAction) (gamma_prime_CAction v2CAction))
+gamma_prime_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction) = (CSPNSInter v1NSExp v2NSExp (gamma_prime_CAction v1CAction) (gamma_prime_CAction v2CAction))
+gamma_prime_CAction (CSPInterleave v1CAction v2CAction) = (CSPInterleave (gamma_prime_CAction v1CAction) (gamma_prime_CAction v2CAction))
+gamma_prime_CAction (CSPParAction vZName vZExpr_lst) = (CSPParAction vZName vZExpr_lst)
+gamma_prime_CAction (CSPRenAction vZName vCReplace) = (CSPRenAction vZName vCReplace)
+gamma_prime_CAction (CSPUnfAction vZName vCAction) = (CSPUnfAction vZName (gamma_prime_CAction vCAction))
+gamma_prime_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName) = (CSPUnParAction vZGenFilt_lst (gamma_prime_CAction vCAction) vZName)
+-- gamma_prime_CAction (CSPRepSeq vZGenFilt_lst vCAction) = (CSPRepSeq vZGenFilt_lst (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepExtChoice vZGenFilt_lst vCAction) = (CSPRepExtChoice vZGenFilt_lst (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepIntChoice vZGenFilt_lst vCAction) = (CSPRepIntChoice vZGenFilt_lst (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp vCAction) = (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepParal vCSExp vZGenFilt_lst vCAction) = (CSPRepParal vCSExp vZGenFilt_lst (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepInterlNS vZGenFilt_lst vNSExp vCAction) = (CSPRepInterlNS vZGenFilt_lst vNSExp (gamma_prime_CAction vCAction))
+-- gamma_prime_CAction (CSPRepInterl vZGenFilt_lst vCAction) = (CSPRepInterl vZGenFilt_lst (gamma_prime_CAction vCAction))
+gamma_prime_CAction x = x
 \end{code}

@@ -44,7 +44,7 @@ RunSec \circdef \t1
     (\circif  sec = 0 \circthen inc \then \Skip
     \circelse sec \neq 0 \circthen \Skip \circfi)
   \\\t3 \extchoice\\
-  \t3  time \then minsReq \then ans?min \then out!(min,sec)
+  \t3  time \then minsReq \then ans?m \then out!(m,sec)
       \then \Skip )  \\
 Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
 MinInit \circdef (min:=0)\\

@@ -24,7 +24,7 @@ It will build the translator tool with a binary file "circus".
 If you're familiar with JAZA, you'll see a very similar prompt. Just type ``help`` and you'll see the list of options.
 
 ## Loading a file
-In order to load a file, enter the following code, with **filename** being the name of your file 
+In order to load a file, enter the following code, with **filename** being the name of your file
 without the extension .tex
 ```
 load filename
@@ -41,7 +41,7 @@ Then you'll be able to apply the omega transformation, just typing ``omega``. Th
 
 After executing the ``omega`` operation, the final operation is the ``tocsp`` so you can use it in FDR.
 
-The result of the translation will produce a file *.csp with the new spec ready to run on FDR. You'll have to copy the files **function_aux.csp** and **sequence_aux.csp** along with the generated code, in order to use FDR. Both files contains auxiliary definitions regarding sets and sequences. These are very important and useful. 
+The result of the translation will produce a file *.csp with the new spec ready to run on FDR. You'll have to copy the files **function_aux.csp** and **sequence_aux.csp** along with the generated code, in order to use FDR. Both files contains auxiliary definitions regarding sets and sequences. These are very important and useful.
 
 
 # References
@@ -50,7 +50,7 @@ The result of the translation will produce a file *.csp with the new spec ready 
 
 # CHANGELOG
 
-## 
+##
 New version 0.5
 Now that we can load the files without the extension .tex, we produce
 two other files : .hc and .csp on the same folder of the .tex file:
@@ -61,3 +61,14 @@ clashing.
 We also are able to have tailored Memory and Memorise actions within
 a CSP process with respect only to the types used within the scope
 of that process.
+
+##
+New version 0.6 - September 2017
+
+Now every variable in the AST has a third field, its type. The translator
+will be in charge of filling all those fields with the respective type
+of the variable.
+Moreover, now we have a correct implementation of the multiple bindings
+since the Circus specification. What it was doing before was to
+translate into CSP with the definitions being made directly into the CSP text.
+Now it comes from the AST and the mapping functions.

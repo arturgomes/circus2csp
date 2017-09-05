@@ -1,5 +1,5 @@
-include "exs/sequence_aux.csp"
-include "exs/function_aux.csp"
+include "sequence_aux.csp"
+include "function_aux.csp"
 
 
 RANGE = {0..2}
@@ -21,7 +21,7 @@ typeRAN(x) = U_RAN
 tagRAN(x) = RAN
 
 --------------------------------
- -- NAME -- 
+ -- NAME --
 --------------------------------
 datatype NAME = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
 subtype NAME_RAN = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_RAN | sv_AChrono_min_U_RAN
@@ -29,55 +29,50 @@ subtype NAME_RAN = sv_Chrono_sec_U_RAN | sv_Chrono_min_U_RAN | sv_AChrono_sec_U_
 NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
 
 --------------------------------
- -- BINDINGS -- 
+ -- BINDINGS --
 --------------------------------
 BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
 
 
 --------------------------------
- -- mget, mset and terminate -- 
+ -- mget, mset and terminate --
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEM_I -- 
+ -- MEM_I --
 --------------------------------
 MEM_I = {| mset,mget,terminate |}
 
-Chrono = 
-	let Memory(b) =( ( ( [] n : dom(b) @
-			 mget.n.apply(b,n) -> Memory(b) )
-		 [] ( [] n : dom(b) @
-			 
-		mset.n.(n?nv:typenv(n)) -> Memory(over(b,n,nv)) ))
-		 [] terminate -> SKIP)
-	
+Chrono =
+	let
+
 --------------------------------
 -- MEMORY
 --------------------------------
-Memory(b_RAN) = 
+Memory(b_RAN) =
     ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN))
 	[] ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory(over(b_RAN,n,x)))
 		[] terminate -> SKIP
 
-Memorise(P,b_RAN) = 
-    ((P; terminate -> SKIP) [| MEM_I |] 
+Memorise(P,b_RAN) =
+    ((P; terminate -> SKIP) [| MEM_I |]
     Memory(b_RAN)) \ MEM_I
 within (let  restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
 	within
-		|~| b_RAN : BINDINGS_RAN @ Memorise(( ( 
-		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> 
-		mset.sv_Chrono_sec_U_RAN.(RAN.0) -> ( let X = ( 
-		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> ( tick -> 
-		mset.sv_Chrono_sec_U_RAN.(RAN.(valueRAN(v_sv_Chrono_sec_U_RAN) + 1) % 3) -> 
+		|~| b_RAN : BINDINGS_RAN @ Memorise(( (
+		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) ->
+		mset.sv_Chrono_sec_U_RAN.(RAN.0) -> ( let X = (
+		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> ( tick ->
+		mset.sv_Chrono_sec_U_RAN.(RAN.(valueRAN(v_sv_Chrono_sec_U_RAN) + 1) % 3) ->
 		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> (valueRAN(v_sv_Chrono_sec_U_RAN) == 0 & inc -> SKIP [] valueRAN(v_sv_Chrono_sec_U_RAN) != 0 & SKIP)
 		 [] time -> minsReq -> ans?mins -> out.(mins,valueRAN(v_sv_Chrono_sec_U_RAN)) -> SKIP) ; X ) within X )
-		 [| Sync |] 
-		
-		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) -> 
-		mset.sv_Chrono_min_U_RAN.(RAN.0) -> ( let X = ( 
-		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) -> ( inc -> 
+		 [| Sync |]
+
+		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) ->
+		mset.sv_Chrono_min_U_RAN.(RAN.0) -> ( let X = (
+		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) -> ( inc ->
 		mset.sv_Chrono_min_U_RAN.(RAN.(valueRAN(v_sv_Chrono_min_U_RAN) + 1) % 3) -> SKIP
 		 [] minsReq -> ans.valueRAN(v_sv_Chrono_min_U_RAN) -> SKIP) ; X ) within X ) )\Sync ), restrictRAN(b_RAN))
 )
@@ -85,40 +80,42 @@ Sync = {| inc,minsReq,ans |}
 channel ans : RANGE
 channel inc, minsReq
 
-AChrono = 
-	let Memory(b) =( ( ( [] n : dom(b) @
-			 mget.n.apply(b,n) -> Memory(b) )
-		 [] ( [] n : dom(b) @
-			 
-		mset.n.(n?nv:typenv(n)) -> Memory(over(b,n,nv)) ))
-		 [] terminate -> SKIP)
-	
+AChrono =
+	let
 --------------------------------
 -- MEMORY
 --------------------------------
-Memory(b_RAN) = 
+Memory(b_RAN) =
     ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory(b_RAN))
 	[] ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory(over(b_RAN,n,x)))
 		[] terminate -> SKIP
 
-Memorise(P,b_RAN) = 
-    ((P; terminate -> SKIP) [| MEM_I |] 
+Memorise(P,b_RAN) =
+    ((P; terminate -> SKIP) [| MEM_I |]
     Memory(b_RAN)) \ MEM_I
 within (let  restrictRAN(bs) = dres(bs,{sv_Chrono_sec_U_RAN, sv_Chrono_min_U_RAN, sv_AChrono_sec_U_RAN, sv_AChrono_min_U_RAN})
 	within
 		|~| b_RAN : BINDINGS_RAN @ Memorise(
-		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> 
-		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) -> 
-		mset.sv_Chrono_sec_U_RAN.(RAN.0) -> 
-		mset.sv_Chrono_min_U_RAN.(RAN.0) -> ( let X = ( 
-		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) -> 
-		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> ( tick -> 
-		mset.sv_Chrono_sec_U_RAN.(RAN.(valueRAN(v_sv_Chrono_sec_U_RAN) + 1) % 3) -> 
-		mset.sv_Chrono_min_U_RAN.(RAN.valueRAN(v_sv_Chrono_min_U_RAN)) -> 
-		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> (valueRAN(v_sv_Chrono_sec_U_RAN) == 0 & 
-		mset.sv_Chrono_min_U_RAN.(RAN.(valueRAN(v_sv_Chrono_min_U_RAN) + 1) % 3) -> 
+		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) ->
+		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) ->
+		mset.sv_Chrono_sec_U_RAN.(RAN.0) ->
+		mset.sv_Chrono_min_U_RAN.(RAN.0) -> ( let X = (
+		mget.sv_Chrono_min_U_RAN?v_sv_Chrono_min_U_RAN:(typeRAN(sv_Chrono_min_U_RAN)) ->
+		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> ( tick ->
+		mset.sv_Chrono_sec_U_RAN.(RAN.(valueRAN(v_sv_Chrono_sec_U_RAN) + 1) % 3) ->
+		mset.sv_Chrono_min_U_RAN.(RAN.valueRAN(v_sv_Chrono_min_U_RAN)) ->
+		mget.sv_Chrono_sec_U_RAN?v_sv_Chrono_sec_U_RAN:(typeRAN(sv_Chrono_sec_U_RAN)) -> (valueRAN(v_sv_Chrono_sec_U_RAN) == 0 &
+		mset.sv_Chrono_min_U_RAN.(RAN.(valueRAN(v_sv_Chrono_min_U_RAN) + 1) % 3) ->
 		mset.sv_Chrono_sec_U_RAN.(RAN.valueRAN(v_sv_Chrono_sec_U_RAN)) -> SKIP [] valueRAN(v_sv_Chrono_sec_U_RAN) != 0 & SKIP)
 		 [] time -> out.(valueRAN(v_sv_Chrono_min_U_RAN),valueRAN(v_sv_Chrono_sec_U_RAN)) -> SKIP) ; X ) within X ), restrictRAN(b_RAN))
 )
 channel out : (RANGE,RANGE)
 channel tick, time
+
+
+
+
+assert AChrono :[deterministic [FD]]
+assert Chrono :[deterministic [FD]]
+assert AChrono [FD= Chrono
+assert Chrono [FD= AChrono

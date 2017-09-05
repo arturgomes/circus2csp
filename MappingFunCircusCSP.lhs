@@ -893,12 +893,8 @@ mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[],tx) s)] [] a)
 \Upsilon_A(\Semi x : S \circspot A)\circdef~\tco{; x :}\Upsilon_{seq}(S)~\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
-mapping_CAction procn spec (CSPRepSeq [(Choose (x,[],tx) s)] a)
-  = "( " ++ "; "
-    ++  x
-    ++ " : "
-    ++ (mapping_ZExpr (get_delta_names1 spec) s)
-    ++ " @ "
+mapping_CAction procn spec (CSPRepSeq xs a)
+  = "( " ++  c_to_csp_CSPRepSeq spec xs
     ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
@@ -1128,16 +1124,16 @@ The mapping function for sequence expressions is defined as follows:
 % # (ChanComm "mset" [ChanDotExp (ZVar v),ChanDotExp (ZVar v)])
 \begin{code}
 get_channel_name :: [ZPara] -> Comm -> ZName
-get_channel_name spec (ChanComm "mset" [ChanDotExp (ZVar (n,[],x)),ChanInpPred nv1 (ZMember (ZVar (nv2,[],_)) (ZCall (ZVar ("\\delta",[],_)) (ZVar (nv3,[],_))))])
-  = "mset."++n++"?"++nv1++":type"++(lastN 3 x)++"("++n++")"
-get_channel_name spec  (ChanComm "mget" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))])
-    = "mget."++n++".apply("++b++","++n1++")"
-get_channel_name spec  (ChanComm "mset" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))])
-  = "mset."++n++".apply("++b++","++n1++")"
-get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1])
-  = "mget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"
-get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[],t))):xs))
-  = "mset."++x++".("++(def_U_prefix t)++(get_channel_name_cont spec xs)++")"
+get_channel_name spec (ChanComm "mset" [ChanDotExp (ZVar (n,[],x)),ChanInpPred nv1 (ZMember (ZVar (nv2,[],_)) (ZCall (ZVar ("\\delta",[],_)) (ZVar (nv3,[],_))))]) = "mset."++n++"?"++nv1++":type"++(lastN 3 x)++"("++n++")"
+get_channel_name spec  (ChanComm "mget" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "mget."++n++".apply("++b++","++n1++")"
+get_channel_name spec (ChanComm "mset" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "mset."++n++".apply("++b++","++n1++")"
+get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1]) = "mget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"
+get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[],t))):xs)) = "mset."++x++".("++(def_U_prefix t)++(get_channel_name_cont spec xs)++")"
+get_channel_name spec (ChanComm "lset" [ChanDotExp (ZVar (n,[],x)),ChanInpPred nv1 (ZMember (ZVar (nv2,[],_)) (ZCall (ZVar ("\\delta",[],_)) (ZVar (nv3,[],_))))]) = "lset."++n++"?"++nv1++":type"++(lastN 3 x)++"("++n++")"
+get_channel_name spec  (ChanComm "lget" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "lget."++n++".apply("++b++","++n1++")"
+get_channel_name spec (ChanComm "lset" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "lset."++n++".apply("++b++","++n1++")"
+get_channel_name spec (ChanComm "lget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1]) = "lget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"
+get_channel_name spec (ChanComm "lset" ((ChanDotExp (ZVar (x,[],t))):xs)) = "lset."++x++".("++(def_U_prefix t)++(get_channel_name_cont spec xs)++")"
 get_channel_name spec (ChanComm x y)
   = x++(get_channel_name_cont spec y)
 get_channel_name spec (ChanGenComm _ _ _)
@@ -1264,7 +1260,12 @@ mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) =
 mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZSeqDisplay []) = "<>"
-mapping_ZExpr lst (ZSeqDisplay x) = "<"++(mapping_ZExpr_set x)++">"
+mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
+  | Subs.isPrefixOf "b_" a ="<"++a++">"
+  | Subs.isPrefixOf "sv_" a ="<"++a++">"
+  | otherwise = "<y | y <- "++a++">"
+mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple [a,b])) ]) = "< "++(mapping_ZExpr lst a)++">^<"++(mapping_ZExpr lst b)++">"
+mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZELet _ _) = ""
 mapping_ZExpr lst (ZESchema _) = ""
@@ -1292,4 +1293,15 @@ mapping_ZExpr lst (ZTheta _) = ""
 mapping_ZExpr lst (ZUniverse) = ""
 mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 
+\end{code}
+
+
+
+\begin{code}
+c_to_csp_CSPRepSeq _ [] = ""
+c_to_csp_CSPRepSeq spec [Choose (a,b,c) s]
+  = " ; " ++a ++ " : " ++ (mapping_ZExpr (get_delta_names1 spec) s)++ " @  "
+c_to_csp_CSPRepSeq spec ((Choose (a,b,c) s):xs)
+  = " ; " ++a ++ " : " ++ (mapping_ZExpr (get_delta_names1 spec) s) ++ " @  "
+  ++ c_to_csp_CSPRepSeq spec xs
 \end{code}

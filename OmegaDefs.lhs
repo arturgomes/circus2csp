@@ -40,6 +40,37 @@ make_set_com f ((x,_,t):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
      [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
+
+\section{Local $MemoryMerge$ functions}
+\subsection{$make\_lget\_com$}
+This function will take the list of state variables $[ZName]$ that are free in an expression $e$, with no duplicates, and then make a $lget$ for each one, with a copy of such value with the prefix $v\_$. It will recurse until the point where a single element $x$ is left and then the prefixed action continues behaving like $c$.
+\begin{circus}
+make\_lget\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
+\\\t2 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t2 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then A
+\end{circus}
+\begin{code}
+make_lget_com :: [ZVar] -> CAction -> CAction
+make_lget_com [(x,y,z)] c
+  = (CSPCommAction (ChanComm "lget"
+    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) c)
+make_lget_com ((x,y,z):xs) c
+  = (CSPCommAction (ChanComm "lget"
+    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) (make_lget_com xs c))
+make_lget_com x c = c
+\end{code}
+\subsection{$make\_lset\_com$}
+This function updates the values of the $Memory$ process by generating a sequence of $lset$ communications and then it behaves like $f~c$, where $f$ may be the $omega\_CAction$ or $omega\_prime\_CAction$.
+\begin{code}
+make_lset_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
+make_lset_com f [(x,_,t)] [y] c
+  = (CSPCommAction (ChanComm "lset"
+    [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (f c))
+make_lset_com f ((x,_,t):xs) (y:ys) c
+  = (CSPCommAction (ChanComm "lset"
+     [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_lset_com f xs ys c))
+\end{code}
+
 \subsection{$get\_guard\_pair$}
 
 The function $get\_guard\_pair$ transform $CircGAction$ constructs into a list of tuples $(ZPred, CAction)$
