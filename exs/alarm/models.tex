@@ -99,18 +99,22 @@ WRun \circdef \\
 \end{circus}
 \begin{assert}
 "HAChrono = AChrono \{|time, tick|}"\\
-\also "HChrono = Chrono \{|time, tick|}"\\
-\also "HWakeUpOK = WakeUpOK \{|time, tick|}"\\
-\also "assert AChrono :[deterministic [FD]]"\\
-\also "assert Chrono :[deterministic [FD]]"\\
-\also "assert HAChrono [FD= HChrono"\\
-\also "assert HChrono [FD= HAChrono"\\
-\also "assert WakeUp :[deterministic [FD]]"\\
-\also "HWakeUp = WakeUp \ {|time, tick, snooze, radioOn |}"\\
-\also "assert HWakeUp :[deterministic [FD]]"\\
-\also "assert AChrono [FD= HWakeUp"\\
-\also "assert HWakeUp [FD= AChrono"\\
-\also "assert WakeUpOK :[deterministic [FD]]"\\
-\also "assert AChrono [FD= WakeUpOK"\\
-\also "assert WakeUpOK [FD= AChrono"\\
+ \also "HChrono = Chrono \{|time, tick|}"\\
+ \also "assert AChrono :[deterministic [FD]]"\\
+ \also "assert Chrono :[deterministic [FD]]"\\
+ \also "assert AChrono [FD= Chrono"\\
+ \also "assert Chrono [FD= AChrono"\\
+ \also "assert WakeUp :[deterministic [FD]]"\\
+ \also "HWakeUp = WakeUp \ {| radioOn |}"\\
+ \also "HWakeUpOK = WakeUpOK \ {| radioOn |}"\\
+ \also "assert HAChrono [FD= HWakeUp"\\
+ \also "assert HWakeUp [FD= HAChrono"\\
+ \also "assert WakeUpOK :[deterministic [FD]]"\\
+ \also "assert HWakeUpOK [FD= AChrono"\\
+ \also "assert AChrono [FD= HWakeUpOK"\\
+ \also "-- Testing the behavior of the WakeUpOk process"\\
+ \also "TestWU = (time -> out.(1,1) -> SKIP) [] (snooze -> SKIP)"\\
+ \also "TestWU1 = (time -> out.(1,1) ->  snooze -> SKIP)"\\
+ \also "assert WakeUpOK\{|tick|} [FD= TestWU"\\
+ \also "assert WakeUpOK\{|tick|} [FD= TestWU1"
 \end{assert}
