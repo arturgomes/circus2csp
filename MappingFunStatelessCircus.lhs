@@ -1,5 +1,5 @@
 
-+\chapter{Mapping Functions - Stateless Circus}
+\chapter{Mapping Functions - Stateless Circus}
 Mapping Omega Functions from Circus to Circus
 
 \ignore{
@@ -22,32 +22,113 @@ import Data.List hiding (union, intersect)
 import CRL
 \end{code}
 }
+\subsection{The Memory Model}\label{ref:mem}
+As the approach for model checking \Circus\ consists of mapping the \Circus\
+into CSP, some restrictions are imposed by the CSP notation. It means that, for
+instance, we should consider that CSP does not naturally capture the notion of
+mutable $state$. Thus, we need to provide a transformation that models the
+state-changes in state-rich \Circus\ processes in a manner that fits with
+CSP. The solution for that is to produce a state-poor process that communicates
+with a Memory model~\cite{Nogueira2012} that stores the values of state
+components and local variables from the original state-rich processes.
 
+In our approach, we define a notation for renaming the variables allowing the
+user to easily identify which ones are state components, or local variables.
+We rename the component in two sections: a prefix $sv$
+denoting a state variable, followed by the name itself, $var$. Thus, the
+$buzz$ variable becomes $sv\_var$. A local variable would be similarly renamed into $lv\_var$.
+
+As part of the translation strategy, the \CSPM\ environment is redefined in
+terms of the type system. Based on the work of Mota~\etal\cite{Nogueira2012},
+Oliveira~\etal\cite{compassd241} defined a type $UNIVERSE$ comprising any type
+defined in the specification.
+\begin{circus}
+    [UNIVERSE]
+\end{circus}%
+However, our approach differs as we introduce the same granularity used for the data in CSP. Therefore, instead of using a single $UNIVERSE$ given type, we define a datatype $UNIVERSE$ and, after preprocessing each type in the scope of the specification, we use its first three leters as a constructor. We illustrate our approach with an example: given that an arbitrary specification uses two types $RANGE$ and $ALARM$, the $UNIVERSE$ datatype is defined as
+\begin{circus}
+UNIVERSE ::= RAN\ldata RANGE \rdata | ALA\ldata ALARM \rdata
+\end{circus}
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec =
-   [ZFreeTypeDef ("SIDE",[],"") [ZBranch0 ("LEFT",[],""),ZBranch0 ("RIGHT",[],"")],
-        ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
+   [ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
         subuniv ++
-         [ZFreeTypeDef ("NAME",[],"") names]++
+\end{code}
+Moreover, the names of every state component and local
+variable are then defined as components of the $NAME$ free type.
+In our case, using our naming approach, we get:
+\begin{circus}
+    NAME ::= sv\_v0 | \ldots | sv\_vn | lv\_v0 | \ldots | lv\_vn
+\end{circus}%
+\begin{code}
+       [ZFreeTypeDef ("NAME",[],"") names]++
         (def_sub_name zb)++
+\end{code}
+%
+\noindent The approach makes use of a set of bindings, $BINDING$,
+which maps all the names, $NAME$, into the $UNIVERSE$ type.
+In \cite{compassd241},
+a function $\delta$ is defined as a mapping between each variable and
+its type, which is instantiated in in \CSPM\ as a function called \texttt{type}.
+%
+\begin{circus}
+    BINDING == NAME \fun UNIVERSE
+    \also \delta == \{sv\_v0 \mapsto X, \ldots, lv\_vn \mapsto Z\}
+ \end{circus}%
+\begin{code}
         (def_sub_bind zb) ++
-         [ZAbbreviation ("BINDINGS",[],"") (ZCall (ZVar ("\\cup",[],"")) (ZTuple (remdups $ def_sub_bindn zb)))]++
+         [ZAbbreviation ("BINDINGS",[],"")
+            (ZCall (ZVar ("\\cup",[],""))
+              (ZTuple (remdups $ def_sub_bindn zb)))]++
          (def_delta_mapping_t zb)++
-        --  ZAbbreviation ("\\delta",[],"") (ZSetDisplay deltamap),
+\end{code}
+%%
+This approach works fine for the $RingBuffer$ example presented
+in~\cite[p. 163]{compassd241}, as it uses only subtypes of the natural numbers for
+all its state and local variables.
+
+However, whilst testing our tool, we
+identified that the current approach would not work with FDR when loading
+specifications with state variables with different types,
+such as a mix of number and enumeration types.
+The translation of $\delta$ as \texttt{type} in CSP in this more general context
+results in a type error in FDR.
+
+As a result of applying the $\Omega$ functions, the state of a \Circus\
+process is replaced by a $Memory$ process which manages the
+values of the state components of such process when translated into \CSPM.
+Therefore, such a $Memory$ process will run in parallel with the main action of
+the \Circus\ process, and any communication between them will occur through
+the channels $mget$ and $mset$. Moreover, the process execution ends when the
+$terminate$ signal is triggered. The above three channels compose the $MEMI$
+channel set used hereafter in the translated specification.
+%
+\begin{circus}
+   \circchannel\ mget, mset: NAME \cross UNIVERSE
+   \also \circchannel\ terminate
+   \also \circchannelset\ MEMI == \lchanset mset, mget, terminate \rchanset
+\end{circus}%
+%
+\begin{code}
          [CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
-         CircChannel [CChanDecl "lget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "lset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
-         CircChannel [CChan "terminate",CChan "lterminate"],
+         CircChannel [CChan "terminate"],
          CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"]),
+\end{code}
+Whenever a action parallelism (or interleaving) occurs, we need to avoid conflict whilst acessing the state variables. Therefore, two name sets are defined, and each side of the parallelism has access to a copy of the memory model, defined as $MemoryMerge$. At the end of the execution, captured by the $lterminate$ signal the final values are written to the main memory according to the name set used (left or right).  Finally, the communication between the action and the local memory, $MemoryMerge$, is made using the channel set $MEML$ and are hidden from outside.
+
+\begin{code}
+         CircChannel [CChanDecl "lget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "lset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
+         CircChannel [CChan "lterminate"],
          CircChanSet "MEML" (CChanSet ["lset","lget","lterminate"])]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
          spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec)
          (zb,para) = (omega_Circus_aux' spec1)
           -- renaming variables for highlighting which state var is from which process
-         names = (def_delta_name zb)
+         names = remdups (def_delta_name zb)
          deltamap = (def_delta_mapping zb)
-         nuniv =remdups (def_new_universe zb)
+         nuniv = remdups (def_new_universe zb)
          subuniv = remdups (def_sub_univ zb)
 \end{code}
 
@@ -178,14 +259,18 @@ proc_ref2 :: ZPara -> ([ZGenFilt],ZPara)
 proc_ref2 e@(Process (CProcess p (ProcDef
       (ProcMain (ZSchemaDef (ZSPlain x) (ZSchema zs)) aclst ma))))
   = case ref of
-      Just xe@(Process (CProcess pq (ProcDef (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) -> (xzs,(proc_ref3 xe))
-      Nothing ->(zs,(proc_ref3 e))
+      Just xe@(Process (CProcess pq (ProcDef
+          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
+        (xzs,(proc_ref3 xe))
+      Nothing -> (zs,(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
-    = case ref of
-        Just xe@(Process (CProcess pq (ProcDef (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) -> (xzs,(proc_ref3 xe))
-        Nothing ->([],(proc_ref3 e))
-    where ref = runRefinementZp e
+  = case ref of
+      Just xe@(Process (CProcess pq (ProcDef
+          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
+        (xzs,(proc_ref3 xe))
+      Nothing ->([],(proc_ref3 e))
+  where ref = runRefinementZp e
 proc_ref2 x = error ("can not show this" ++ show x)
 \end{code}
 \begin{argue}
@@ -214,14 +299,19 @@ def_bndg_lhs (_:xs) = (def_bndg_lhs xs)
 
 def_bndg_rhs :: [ZGenFilt] -> ZPred
 def_bndg_rhs xs
-    = sub_name xs
-      where
-        sub_name [(Choose (v,_,t1) t)]
-          = (ZMember (ZCall (ZVar (join_name "b" t1,[],[])) (ZVar (v,[],t1))) (ZVar (join_name "U" t1,[],"")))
-        sub_name ((Choose (v,_,t1) t):xs)
-          = (ZAnd (ZMember (ZCall (ZVar (join_name "b" t1,[],[])) (ZVar (v,[],t1))) (ZVar (join_name "U" t1,[],""))) (sub_name xs))
-        sub_name (_:xs) = (sub_name xs)
-
+  = sub_name xs
+    where
+      sub_name [(Choose (v,_,t1) t)]
+        = (ZMember (ZCall
+                    (ZVar (join_name "b" t1,[],[]))
+                    (ZVar (v,[],t1)))
+                (ZVar (join_name "U" t1,[],"")))
+      sub_name ((Choose (v,_,t1) t):xs)
+        = (ZAnd (ZMember (ZCall
+                    (ZVar (join_name "b" t1,[],[]))
+                    (ZVar (v,[],t1)))
+              (ZVar (join_name "U" t1,[],""))) (sub_name xs))
+      sub_name (_:xs) = (sub_name xs)
 
 data_refinement stv
   = (remdups $ def_bndg_lhs stv)++[Check (def_bndg_rhs stv)]
@@ -274,45 +364,99 @@ filter_bnd_var ((Choose b t):xs) = (ZVar b):(filter_bnd_var xs)
 -- Memory parameters
 mk_mem_param_circ :: ZExpr -> [ZExpr] -> [ZExpr]
 mk_mem_param_circ (ZVar t) [ZVar t1]
-  | t == t1 = [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar t,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]
+  | t == t1 = [ZCall (ZVar ("\\oplus",[],""))
+            (ZTuple [ZVar t,
+              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
+                                      (ZTuple [ZVar ("n",[],""),
+                                  ZVar ("nv",[],"")])]])]
   | otherwise = [ZVar t1]
 mk_mem_param_circ (ZVar t) (ZVar t1:tx)
   | t == t1
-    = (ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar t,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])): (mk_mem_param_circ (ZVar t) tx)
+    = (ZCall (ZVar ("\\oplus",[],""))
+            (ZTuple [ZVar t,
+              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
+                      (ZTuple [ZVar ("n",[],""),
+                  ZVar ("nv",[],"")])]])): (mk_mem_param_circ (ZVar t) tx)
   | otherwise = (ZVar t1: (mk_mem_param_circ (ZVar t) tx))
 
 -- gets and sets replicated ext choice for Memory
 mk_mget_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
 mk_mget_mem_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t)
-  (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "Memory" tls)))
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t)))
+        (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+        (CSPCommAction (ChanComm "mget"
+            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+            ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+        (CSPParAction "Memory" tls)))
 mk_mget_mem_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "Memory" tls))) (mk_mget_mem_CSPRepExtChoice tx tls))
+  = (CSPExtChoice (CSPRepExtChoice
+        [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+        (CSPCommAction (ChanComm "mget"
+            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+             ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+             (CSPParAction "Memory" tls)))
+             (mk_mget_mem_CSPRepExtChoice tx tls))
 
 mk_mset_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
 mk_mset_mem_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(nfst t))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  = (CSPRepExtChoice
+      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+      (CSPCommAction (ChanComm "mset"
+        [ChanDotExp (ZVar ("n",[],(nfst t))),
+        ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+        (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
   (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
 mk_mset_mem_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "mset"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
   (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
   (mk_mset_mem_CSPRepExtChoice tx tls))
 
 -- gets and sets replicated ext choice for MemoryMerge
-mk_mget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_mget_mem_merg_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")]))))
-mk_mget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))]) (CSPParAction "MemoryMerge" (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))) (mk_mget_mem_merg_CSPRepExtChoice tx tls))
+mk_lget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_lget_mem_merg_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lget"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+       (CSPParAction "MemoryMerge"
+        (tls++[ZVar ("ns",[],"")]))))
+mk_lget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lget"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+       (CSPParAction "MemoryMerge"
+       (tls++[ZVar ("ns",[],"")]))))
+        (mk_lget_mem_merg_CSPRepExtChoice tx tls))
 
-mk_mset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_mset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))))
-mk_mset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
-  = (CSPExtChoice (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))] (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "MemoryMerge" (mk_mem_param_circ (ZVar t) (tls++[ZVar ("s",[],""),ZVar ("ns1",[],""),ZVar ("ns2",[],"")])))))
-  (mk_mset_mem_merg_CSPRepExtChoice tx tls))
+mk_lset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_lset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
+  = (CSPRepExtChoice
+      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+      (CSPCommAction (ChanComm "lset"
+        [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+         ChanInpPred "nv" (ZMember (ZVar ("nv",[],
+            (lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],""))
+            (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge"
+    (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
+mk_lset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lset"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+       (CSPParAction "MemoryMerge"
+       (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
+  (mk_lset_mem_merg_CSPRepExtChoice tx tls))
 
 -- making renaming list for bindings
 mk_subinfo_bndg [] = []
@@ -321,23 +465,36 @@ union_ml_mr [ZVar t] = ZVar t
 union_ml_mr (x:xs) = ((ZCall (ZVar ("\\cup",[],"")) (ZTuple (x:xs))))
 
 proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
-  =  proc_ref5 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose bst)
+  =  proc_ref5 (Process (CProcess p
+    (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
+      [CParAction "Memory" (CircusAction (CActionCommand
+        (CVResDecl (remdups $ filter_ZGenFilt_Choose bst)
   (CSPExtChoice
     (CSPExtChoice
       (mk_mget_mem_CSPRepExtChoice nbst nbst)
       (mk_mset_mem_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++[Choose ("s",[],"") (ZVar ("SIDE",[],"")),Choose ("ns1",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],""))),Choose ("ns2",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
+    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),
+    CParAction "MemoryMerge" (CircusAction (CActionCommand
+      (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++
+      [Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
     (CSPExtChoice (CSPExtChoice
-      (mk_mget_mem_merg_CSPRepExtChoice nbst nbst)
-      (mk_mset_mem_merg_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "lterminate" []) (CSPExtChoice (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("LEFT",[],""))) (CSPRepSeq [Choose ("l",[],"") (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]), Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns1",[],""))])] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("l",[],"")) (ZVar ("n",[],"")))]) CSPSkip))) (CSPGuard (ZEqual (ZVar ("s",[],"")) (ZVar ("RIGHT",[],"")))
-    (CSPRepSeq [Choose ("r",[],"") (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns2",[],""))])] (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("r",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))))]
+      (mk_lget_mem_merg_CSPRepExtChoice nbst nbst)
+      (mk_lset_mem_merg_CSPRepExtChoice nbst nbst))
+    (CSPCommAction (ChanComm "lterminate" [])
+    (CSPRepSeq [Choose ("bd",[],"")
+      (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),
+      Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
+    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
+      ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))]
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
-      (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
+      (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+       (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
     nma = omega_CAction ma
-    ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst) (varset_from_zvars (map fst (mk_subinfo_bndg nbst)))) (head $ filter_ZGenFilt_Check bst)
+    ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
+            (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
+            (head $ filter_ZGenFilt_Check bst)
     nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
     nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
 proc_ref4 x = proc_ref5 x
@@ -367,15 +524,15 @@ proc_ref4 x = proc_ref5 x
 					\end{array} \\
         MemoryMerge \circdef\\
 				\qquad\begin{array}{l}
-					\circvres b : BINDING; s : SIDE \circspot \\
+					\circvres b : BINDING \\
 					\qquad \begin{array}{l}
-					(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then MemoryMerge(b,s))\\
+					(\Extchoice n: \dom\ b \circspot lget.n!b(n) \then MemoryMerge(b))\\
 					\extchoice \left(\begin{array}{l}
 					\Extchoice n: \dom\ b \circspot\\
 					\qquad
-					mset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv},s)
+					lset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv})
 					\end{array}\right)\\
-					\extchoice~lterminate \then \left(\begin{array}{l} \lcircguard s = LEFT \rcircguard \circguard mleft!b \then \Skip\\\extchoice \lcircguard s = RIGHT \rcircguard \circguard mright!b \then \Skip\end{array}\right)
+					\extchoice~lterminate \then \left(\begin{array}{l}\Semi n : ns \circspot\left(\begin{array}{l}\lcircguard n \in \dom\ b \rcircguard \circguard mset.n.b(n)\then \Skip\\\extchoice \\\lcircguard n \notin \dom\ b \rcircguard \circguard \Skip\end{array}\right)\end{array}\right)
 					\end{array}
 					\end{array}\\
 
@@ -443,8 +600,11 @@ proc_ref5 x = proc_ref6 x
 	\\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose b (ZSetComp bst Nothing)] ma ))))))
-	= (Process (CProcess p (ProcDef (ProcStalessMain mem (CSPRepIntChoice (filter_ZGenFilt_Choose bst) ma)))))
+proc_ref6 (Process (CProcess p (ProcDef
+  (ProcStalessMain mem (CActionCommand (CVarDecl
+    [Choose b (ZSetComp bst Nothing)] ma ))))))
+	= (Process (CProcess p (ProcDef (ProcStalessMain mem
+    (CSPRepIntChoice (filter_ZGenFilt_Choose bst) ma)))))
 proc_ref6 x = x
 \end{code}
 \begin{argue}
@@ -482,6 +642,8 @@ proc_ref6 x = x
 		\end{array}
 	\end{array}
 	\end{argue}
+
+
 \subsection{Mapping Circus Processes}
 So far we have no other mapping functions for these constructs. They are basically translated directly into CSP.
 Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
@@ -564,8 +726,8 @@ omega_CAction (CSPCommAction (ChanComm c []) a)
 
 \begin{circus}
 \Omega_A (c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 \\\t2 c.e(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Omega'_{A} (A)
 \end{circus}
 where
@@ -596,8 +758,8 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
 
 \begin{circus}
 \Omega_A (g(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 \\\t2 g(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \circguard \Omega'_{A} (A)
 \end{circus}
 is written in Haskell as:
@@ -624,8 +786,8 @@ omega_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
 
 \begin{circus}
 \Omega_A (c?x : P(x,v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 \\\t2 c?x : P(x,vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Omega'_{A} (A)
 \end{circus}
 where
@@ -667,8 +829,8 @@ omega_CAction (CSPIntChoice ca cb)
 % TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
 \begin{circus}
 \Omega_A (A_1 \extchoice A_2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 \\\t2 (\Omega'_A (A_1) \extchoice \Omega'_A (A_2))
 \end{circus}
 is written in Haskell as:
@@ -680,8 +842,8 @@ omega_CAction (CSPExtChoice ca cb)
 \end{code}
 % \begin{circus}
 % \Omega_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-% \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-% \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+% \\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+% \\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 %       \\\t2\left (\begin{array}{l}
 %        \left (\begin{array}{l}
 %         \left (\begin{array}{l}
@@ -689,7 +851,7 @@ omega_CAction (CSPExtChoice ca cb)
 %           \Omega'_A (A_1) \circseq terminate \then \Skip
 %          \end{array}\right )\\
 %           \lpar \{\} | MEMI | \{\} \rpar
-%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns1)
 %         \end{array}\right )
 %         \circhide MEMI \\
 %        \lpar \{\} | cs | \{\} \rpar \\
@@ -698,20 +860,17 @@ omega_CAction (CSPExtChoice ca cb)
 %           \Omega'_A (A_2) \circseq terminate \then \Skip
 %          \end{array}\right )\\
 %           \lpar \{\} | MEMI | \{\} \rpar
-%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+%           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns2)
 %         \end{array}\right )
 %         \circhide MEMI
-%        \end{array}\right )\\
-%       \lpar \{\} | MRG_I | \{\} \rpar\\
-%       Merge
+%        \end{array}\right )
 %     \end{array}\right )\\
-%     \t2\circhide \lchanset mleft, mright \rchanset
 % \end{circus}
 
 \begin{circus}
 \Omega_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
       \\\t2\left (\begin{array}{l}
        \left (\begin{array}{l}
         \left (\begin{array}{l}
@@ -719,7 +878,7 @@ omega_CAction (CSPExtChoice ca cb)
           \Omega'_A (A_1) \circseq terminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEML | \{\} \rpar
-          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns1)
         \end{array}\right )
         \circhide MEML \\
        \lpar \{\} | cs | \{\} \rpar \\
@@ -728,12 +887,11 @@ omega_CAction (CSPExtChoice ca cb)
           \Omega'_A (A_2) \circseq terminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEML | \{\} \rpar
-          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
+          \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns2)
         \end{array}\right )
         \circhide MEML
-       \end{array}\right ))
-    \end{array}\right )\\
-    \t2\circhide \lchanset mleft, mright \rchanset
+       \end{array}\right )
+    \end{array}\right )
 \end{circus}
 
 The definition of parallel composition (and interleaving), as defined in the D24.1, has a $MemoryMerge$, $MRG_I$ and $Merge$ components and channel sets. Whilst translating them into CSP, the tool would rather expand their definition
@@ -746,15 +904,13 @@ omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds ns1),
-                ZVar ("LEFT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds ns2),
-                ZVar ("RIGHT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
        (CSExpr "MEML")))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
@@ -840,8 +996,8 @@ omega_CAction (CActionCommand (CValDecl xs a))
 \end{code}
 \begin{circus}
 \Omega_A \left (\begin{array}{l}x_0,\ldots,x_n:=e_0\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right ),\ldots,e_n\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right )\end{array}\right ) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 \\\t1 set.x_0!e_0(vv_0,...,vv_n,vl_0,...,vl_m) \then
 \\\t1\ldots\then
 \\\t1 set.x_n!e_n(vv_0,...,vv_n,vl_0,...,vl_m) \then \Skip
@@ -874,8 +1030,8 @@ omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
    \\\t1 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen A_n
    \\\circfi
    \end{array}\right ) \defs
-   \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-   \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+   \\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+   \\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
    \\\t1\circif g_0 (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A_0)
    \\\t2\circelse \ldots
    \\\t2 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A_n)
@@ -891,8 +1047,8 @@ omega_CAction (CActionCommand (CIf gax))
 \end{code}
 % \begin{circus}
 % \Omega_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
-%    \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-%    \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%    \\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+%    \\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
 %    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
 % \end{circus}
 % \begin{code}
@@ -979,23 +1135,26 @@ In order to pattern match any other \Circus\ construct not mentioned here, we pr
 
 % I left the replicated operators for future work as they are similar to what I already implemented. Once I'm done with the verification bits, I'll get back here
 \begin{code}
-omega_CAction (CActionSchemaExpr vZSExpr) = (CActionSchemaExpr vZSExpr)
-omega_CAction (CActionName vZName) = (CActionName vZName)
-omega_CAction (CSPCommAction vComm vCAction) = (CSPCommAction vComm (omega_CAction vCAction))
--- omega_CAction (CSPNSParal v1NSExp vCSExp v2NSExp v1CAction v2CAction) = (CSPNSParal v1NSExp vCSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPParal vCSExp v1CAction v2CAction) = (CSPParal vCSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction) = (CSPNSInter v1NSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPInterleave v1CAction v2CAction) = (CSPInterleave (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPParAction vZName vZExpr_lst) = (CSPParAction vZName vZExpr_lst)
-omega_CAction (CSPRenAction vZName vCReplace) = (CSPRenAction vZName vCReplace)
-omega_CAction (CSPUnfAction vZName vCAction) = (CSPUnfAction vZName (omega_CAction vCAction))
-omega_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName) = (CSPUnParAction vZGenFilt_lst (omega_CAction vCAction) vZName)
--- omega_CAction (CSPRepSeq vZGenFilt_lst vCAction) = (CSPRepSeq vZGenFilt_lst (omega_CAction vCAction))
--- omega_CAction (CSPRepExtChoice vZGenFilt_lst vCAction) = (CSPRepExtChoice vZGenFilt_lst (omega_CAction vCAction))
--- omega_CAction (CSPRepIntChoice vZGenFilt_lst vCAction) = (CSPRepIntChoice vZGenFilt_lst (omega_CAction vCAction))
--- omega_CAction (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp vCAction) = (CSPRepParalNS vCSExp vZGenFilt_lst vNSExp (omega_CAction vCAction))
--- omega_CAction (CSPRepParal vCSExp vZGenFilt_lst vCAction) = (CSPRepParal vCSExp vZGenFilt_lst (omega_CAction vCAction))
--- omega_CAction (CSPRepInterl vZGenFilt_lst vCAction) = (CSPRepInterl vZGenFilt_lst (omega_CAction vCAction))
+omega_CAction (CActionSchemaExpr vZSExpr)
+  = (CActionSchemaExpr vZSExpr)
+omega_CAction (CActionName vZName)
+  = (CActionName vZName)
+omega_CAction (CSPCommAction vComm vCAction)
+  = (CSPCommAction vComm (omega_CAction vCAction))
+omega_CAction (CSPParal vCSExp v1CAction v2CAction)
+  = (CSPParal vCSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction)
+  = (CSPNSInter v1NSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPInterleave v1CAction v2CAction)
+  = (CSPInterleave (omega_CAction v1CAction) (omega_CAction v2CAction))
+omega_CAction (CSPParAction vZName vZExpr_lst)
+  = (CSPParAction vZName vZExpr_lst)
+omega_CAction (CSPRenAction vZName vCReplace)
+  = (CSPRenAction vZName vCReplace)
+omega_CAction (CSPUnfAction vZName vCAction)
+  = (CSPUnfAction vZName (omega_CAction vCAction))
+omega_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName)
+  = (CSPUnParAction vZGenFilt_lst (omega_CAction vCAction) vZName)
 omega_CAction x = x
 \end{code}
 
@@ -1120,8 +1279,8 @@ omega_prime_CAction (CSPExtChoice ca cb)
 
 \begin{circus}
 \Omega'_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t1 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
       \\\t2\left (\begin{array}{l}
        \left (\begin{array}{l}
         \left (\begin{array}{l}
@@ -1289,10 +1448,10 @@ omega_prime_CAction (CSPHide a cs) = (CSPHide (omega_prime_CAction a) cs)
    \\\t1 \circelse g_n  \circthen A_n
    \\\circfi
    \end{array}\right ) \defs
-   \\\t1\circif g_0 \circthen \Omega'_A (A_0)
+   \left (\begin{array}{l}\circif g_0 \circthen \Omega'_A (A_0)
    \\\t2\circelse \ldots
    \\\t2 \circelse g_n \circthen \Omega'_A (A_n)
-   \\\t1\circfi
+   \\\t1\circfi\end{array}\right )
 \end{circus}
 
 \begin{code}
@@ -1431,8 +1590,8 @@ gamma_CAction (CSPCommAction (ChanComm c []) a)
 
 \begin{circus}
 \Gamma_A (c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t2 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 \\\t2 c.e(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Gamma'_{A} (A)
 \end{circus}
 where
@@ -1463,8 +1622,8 @@ gamma_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
 
 \begin{circus}
 \Gamma_A (g(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t2 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 \\\t2 g(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \circguard \Gamma'_{A} (A)
 \end{circus}
 is written in Haskell as:
@@ -1491,8 +1650,8 @@ gamma_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
 
 \begin{circus}
 \Gamma_A (c?x : P(x,v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
-\\\t2 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t2 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t2 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t2 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 \\\t2 c?x : P(x,vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Gamma'_{A} (A)
 \end{circus}
 where
@@ -1534,8 +1693,8 @@ gamma_CAction (CSPIntChoice ca cb)
 % TODO: I need to somehow calculate the $FV(A_1)$ and $FV(A_2)$. What should I do?
 \begin{circus}
 \Gamma_A (A_1 \extchoice A_2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 \\\t2 (\Gamma'_A (A_1) \extchoice \Gamma'_A (A_2))
 \end{circus}
 is written in Haskell as:
@@ -1547,8 +1706,8 @@ gamma_CAction (CSPExtChoice ca cb)
 \end{code}
 % \begin{circus}
 % \Gamma_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-% \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-% \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+% \\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+% \\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 %       \\\t2\left (\begin{array}{l}
 %        \left (\begin{array}{l}
 %         \left (\begin{array}{l}
@@ -1577,8 +1736,8 @@ gamma_CAction (CSPExtChoice ca cb)
 
 \begin{circus}
 \Gamma_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
       \\\t2\left (\begin{array}{l}
        \left (\begin{array}{l}
         \left (\begin{array}{l}
@@ -1710,8 +1869,8 @@ gamma_CAction (CActionCommand (CValDecl xs a))
 \end{code}
 \begin{circus}
 \Gamma_A \left (\begin{array}{l}x_0,\ldots,x_n:=e_0\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right ),\ldots,e_n\left (\begin{array}{l}v_0,...,v_n,\\l_0,...,l_m\end{array}\right )\end{array}\right ) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 \\\t1 set.x_0!e_0(vv_0,...,vv_n,vl_0,...,vl_m) \then
 \\\t1\ldots\then
 \\\t1 set.x_n!e_n(vv_0,...,vv_n,vl_0,...,vl_m) \then \Skip
@@ -1744,8 +1903,8 @@ gamma_CAction (CSPHide a cs) = (CSPHide (gamma_CAction a) cs)
    \\\t1 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen A_n
    \\\circfi
    \end{array}\right ) \defs
-   \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-   \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+   \\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+   \\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
    \\\t1\circif g_0 (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A_0)
    \\\t2\circelse \ldots
    \\\t2 \circelse g_n (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A_n)
@@ -1761,8 +1920,8 @@ gamma_CAction (CActionCommand (CIf gax))
 \end{code}
 % \begin{circus}
 % \Gamma_A (\circif g (v_0,...,v_n,l_0,...,l_m) \circthen A \circfi ) \defs
-%    \\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-%    \\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+%    \\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+%    \\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
 %    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Gamma'_A (A) \circfi
 % \end{circus}
 % \begin{code}
@@ -1990,8 +2149,8 @@ gamma_prime_CAction (CSPExtChoice ca cb)
 
 \begin{circus}
 \Gamma'_A (A1 \lpar ns1 | cs | ns2 \rpar A2) \circdef
-\\\t1 get.v_0?vv_0 \then \ldots \then get.v_n?vv_n \then
-\\\t1 get.l_0?vl_0 \then \ldots \then get.l_m?vl_m \then
+\\\t1 lget.v_0?vv_0 \then \ldots \then lget.v_n?vv_n \then
+\\\t1 lget.l_0?vl_0 \then \ldots \then lget.l_m?vl_m \then
       \\\t2\left (\begin{array}{l}
        \left (\begin{array}{l}
         \left (\begin{array}{l}

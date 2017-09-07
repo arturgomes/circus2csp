@@ -44,7 +44,7 @@ mapping_Circus spec (x:xs)
 \begin{circus}
   \Upsilon_{CircParagraphs}([UNIVERSE])
   \defs\\
-  \tco{datatype UNIVERSE = }MK_{Universe}(ulst)\\
+     co{datatype UNIVERSE = }MK_{Universe}(ulst)\\
   MK_{subtype}(fulst)\\
   MK_{value}(fulst)\\
   MK_{type}(fulst)\\
@@ -148,9 +148,9 @@ The definition of the $\delta$ is not directly translated into CSP. Instead, we 
 \begin{circus}
   \Upsilon_{CircParagraphs}(BINDING \defs NAME \cross \mathbb{U})
   \defs\\\qquad
-  \tco{BINDINGS\_}
+     co{BINDINGS\_}
   T_1
-  \tco{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\tco{))\}}\\
+     co{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\tco{))\}}\\
   \qquad\ldots
 \\\qquad \tco{BINDINGS\_}T_n\tco{ = \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_n\tco{))\}}
 \end{circus}
@@ -179,7 +179,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
   | Subs.isPrefixOf "NAME" nm
       && (Data.List.length nm > Data.List.length "NAME")
         = "\n-- Subtype definition for "++(lastN 3 nm)
-          ++ "\n subtype "++nm ++ " = " ++(mapping_ZBranch_list zbs)++
+          ++ "\nsubtype "++nm ++ " = " ++(mapping_ZBranch_list (remdups zbs))++
           "\n" ++ mk_NAME_VALUES_TYPE (lastN 3 nm) ++ "\n"
   | Subs.isPrefixOf "U_" nm
       && (Data.List.length nm > Data.List.length "U_")
@@ -194,7 +194,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
 % \begin{circus}
 %   \Upsilon_{CircParagraphs}(N == \{a | b\})
 %   \defs\\\qquad
-%   \tco{N = }\Upsilon_{ZTuple}(\{a | b\})
+%      co{N = }\Upsilon_{ZTuple}(\{a | b\})
 % \end{circus}
 % \begin{code}
 % mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetComp xl (Just (ZTuple ztp))))
@@ -241,7 +241,7 @@ mapping_CircParagraphs spec (CircChannel cc2)
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(\circchannelset CN == CS) \defs
-   \tco{CN = }\Upsilon_{CSExp}(CS)
+      co{CN = }\Upsilon_{CSExp}(CS)
 \end{circus}
     \begin{provs}
       \item $CS$ is a $CSExp$.
@@ -392,11 +392,11 @@ get_channel_type_list (x:xs) = (get_channel_type x) ++ "." ++ (get_channel_type_
 \begin{circus}
   \Upsilon_{CSExp}(\lchanset xs \rchanset) \defs \tco{\{| } \Upsilon_{CSExp\_get\_cs}(xs) \tco{ |\}}\\
   \Upsilon_{CSExp}(CS1 \setminus CS2) \defs
-    \tco{diff(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
+       co{diff(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
   \Upsilon_{CSExp}(CS1 \cup CS2) \defs
-    \tco{union(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
+       co{union(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
   \Upsilon_{CSExp}(CS1 \cap CS2) \defs
-    \tco{inter(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
+       co{inter(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
   \Upsilon_{CSExp}(\lchanset \rchanset) \defs \tco{\{\}}\\
   \Upsilon_{CSExp}(CS) \defs \tco{CS}
 \end{circus}
@@ -570,17 +570,11 @@ mapping_CProc procn spec (CRepSeqProc [(Choose (x,[],tx) s)] a)
     ++ " @ "
     ++ (mapping_CProc procn spec a)
 mapping_CProc procn spec (ProcStalessMain al ma)
-  | al == [] = "\n\t" ++ (mapping_CAction procn spec ma)
-  | otherwise = "\n\tlet " ++ (mapping_PPar_list procn spec al)
-    ++ "within " ++ (mapping_CAction procn spec ma)
--- (mapping_CProc procn spec CGenProc zn (x:xs))
---   = undefined
+  | al == [] = "" ++ (mapping_CAction procn spec ma)
+  | otherwise = "\n  let" ++ (mapping_PPar_list procn spec al)
+    ++ "\n  within " ++ (mapping_CAction procn spec ma)
 mapping_CProc procn spec (CParamProc zn xl)
    = zn ++ "(" ++ concat (map (mapping_ZExpr (get_delta_names1 spec)) xl) ++ ")"
--- (mapping_CProc procn spec CSimpIndexProc zn (x:xs))
---   = undefined
--- (mapping_CProc procn spec ProcMain zp (x:xs) ca)
---   = undefined
 mapping_CProc procn spec (CProcRename n (zv:zvs) (xp:xps))
   = n ++"[["++ (mapping_rename procn spec (zv:zvs) (xp:xps)) ++"]]"
 mapping_CProc procn spec x
@@ -614,7 +608,7 @@ mapping_PPar :: ZName -> [ZPara] -> PPar -> String
 -- mapping_PPar procn spec (CParAction "Memory" (CircusAction (CActionCommand (CVResDecl decl a ))))
 -- mapping_PPar procn spec (CParAction "Memory" x) = ""
 mapping_PPar procn spec (CParAction p (CircusAction (CActionCommand (CVResDecl decl a ))))
-  = p ++"("++ (mapping_ZGenFilt_list spec decl) ++ ") =\n\t\t\t" ++ (mapping_CAction procn spec a)
+  = p ++"("++ (mapping_ZGenFilt_list spec decl) ++ ") =\n        " ++ (mapping_CAction procn spec a)
 mapping_PPar procn spec (CParAction p pa)
   = p ++ (mapping_ParAction procn spec pa)
 mapping_PPar procn spec x
@@ -626,9 +620,9 @@ This function just process a list of $PPar$ from within a \Circus\ process print
 \begin{code}
 mapping_PPar_list :: ZName -> [ZPara] -> [PPar] -> String
 mapping_PPar_list procn spec []
-  = "\n\t\t"
+  = "\n     "
 mapping_PPar_list procn spec (x:xs)
-  = "\n\t\t" ++ (mapping_PPar procn spec x) ++ (mapping_PPar_list procn spec xs)
+  = "\n     " ++ (mapping_PPar procn spec x) ++ (mapping_PPar_list procn spec xs)
 \end{code}
 
 \subsection{Mapping Parameterised Circus Actions}
@@ -662,8 +656,8 @@ mapping_CAction procn spec (CSPUnfAction x (CActionName v))
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
   = case np of
-    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} ->\n\t\t ("++ (mapping_CAction procn spec a)++")"
-    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names1 spec) p) ++ "} ->\n\t\t ("++ (mapping_CAction procn spec a)++")"
+    "true" -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ "} ->\n      ("++ (mapping_CAction procn spec a)++")"
+    _ -> c ++ "?"++ x ++ " : { x | x <- "++ (get_c_chan_type spec c (get_chan_list spec)) ++ ", "++ (mapping_predicate (get_delta_names1 spec) p) ++ "} ->\n      ("++ (mapping_CAction procn spec a)++")"
     where
       np = (mapping_predicate (get_delta_names1 spec) p)
 \end{code}
@@ -671,9 +665,12 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 \Upsilon_A(c?x\then A)\circdef~\tco{c?x -> } \Upsilon_A(A)
 \end{circus}
 \begin{code}
+mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) CSPSkip)
+  = (get_channel_name spec (ChanComm c [ChanInp x]))
+    ++ " -> SKIP"
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
   = (get_channel_name spec (ChanComm c [ChanInp x]))
-    ++ " ->\n\t\t "
+    ++ " ->\n      "
     ++ mapping_CAction procn spec (a)
 \end{code}
 
@@ -681,15 +678,21 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
 \Upsilon_A(c!v \then\ A)\circdef~\tco{c!v -> }\Upsilon_A(A)
 \end{circus}
 \begin{code}
+mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[],tx))]) CSPSkip)
+  = (get_channel_name spec (ChanComm c [ChanOutExp (ZVar (x,[],tx))]))
+    ++ " -> SKIP"
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[],tx))]) a)
   = (get_channel_name spec (ChanComm c [ChanOutExp (ZVar (x,[],tx))]))
-    ++ " ->  "
+    ++ " ->\n      "
     ++ mapping_CAction procn spec (a) ++ ""
 
+mapping_CAction procn spec (CSPCommAction (ChanComm c lst) CSPSkip)
+  = (get_channel_name spec (ChanComm c lst))
+    ++ " -> SKIP"
 mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
   = (get_channel_name spec (ChanComm c lst))
-    ++ " -> "
-    ++ mapping_CAction procn spec (a) ++ ""
+    ++ " ->\n      "
+    ++ mapping_CAction procn spec (a)
 \end{code}
 
 
@@ -699,7 +702,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
 \begin{code}
 mapping_CAction procn spec (CSPCommAction c a)
   = (get_channel_name spec c)
-    ++ " ->\n\t\t "
+    ++ " ->\n      "
     ++ mapping_CAction procn spec (a) ++ ""
 \end{code}
 
@@ -709,7 +712,7 @@ mapping_CAction procn spec (CSPCommAction c a)
 \begin{code}
 mapping_CAction procn spec (CSPExtChoice a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ "\n\t\t [] "
+    ++ "\n      [] "
     ++ mapping_CAction procn spec (b) ++ ")"
 \end{code}
 
@@ -744,13 +747,13 @@ mapping_CAction procn spec (CSPHide a cs)
 \begin{code}
 mapping_CAction procn spec (CSPIntChoice a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ " |~| "
+    ++ "\n      |~| "
     ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 \begin{code}
 mapping_CAction procn spec (CSPInterleave ca cb)
    = "( " ++ mapping_CAction procn spec (ca)
-     ++ "\n\t\t ||| "
+     ++ "\n      ||| "
      ++ mapping_CAction procn spec (cb) ++ " )"
 \end{code}
 
@@ -760,7 +763,7 @@ mapping_CAction procn spec (CSPInterleave ca cb)
 \begin{code}
 mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ "\n\t\t|||"
+    ++ "\n     |||"
     ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 
@@ -768,23 +771,29 @@ mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
 \Upsilon_A(A\lpar ns1|cs|ns2\rpar B)\circdef~\Upsilon_A(A)~\tco{[|}~\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|]}\Upsilon_A(B)
 \end{circus}
 \begin{code}
+
+mapping_CAction procn spec (CSPNSParal _ (CSExpr "MEMI") _ ca (CSPParAction "Memory" zb))
+  = "( " ++ mapping_CAction procn spec ca
+   ++ "\n      [| MEMI |] Memory("++(joinBy "," (map mk_Memory_param zb) )++"))"
 mapping_CAction procn spec (CSPNSParal ns1 cs ns2 a b)
-  = "( " ++ mapping_CAction procn spec (a)
-    ++ "\n\t\t [| "
-    ++ mapping_predicate_cs (cs)
-    ++ " |] \n\t\t"
-    ++ mapping_CAction procn spec (b) ++ " )"
+ = "( " ++ mapping_CAction procn spec (a)
+   ++ "\n      [| "
+   ++ mapping_predicate_cs (cs)
+   ++ " |] \n      "
+   ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 \begin{code}
+
+
 mapping_CAction procn spec (CSPParAction zn xl)
   = zn ++ "(" ++ joinBy "," (map (mapping_ZExpr (get_delta_names1 spec)) xl) ++ ")"
 \end{code}
 % \begin{code}
 % mapping_CAction procn spec (CSPParal cs a b)
 %   = mapping_CAction procn spec (a)
-%     ++ " [| "
+%     ++ "\n      [| "
 %     ++ mapping_predicate_cs (cs)
-%     ++ " |] "
+%     ++ " |]\n      "
 %     ++ mapping_CAction procn spec (b)
 % \end{code}
 
@@ -822,15 +831,15 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[],tx) s)] a)
 
 -- first case is for the BINDING
 mapping_CAction procn spec (CSPRepIntChoice bdls (CSPHide (CSPNSParal [] (CSExpr "MEMI") bs1 (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))
-    = "\n\t\tlet "++ restr
-       ++"\n\t\twithin"
-       ++"\n\t\t\t|~| "++ bnd ++" @ "++(mapping_CAction procn spec (CSPHide (CSPNSParal [] (CSExpr "MEMI") bs1 (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))++"\n"
+    = "\n     let "++ restr
+       ++"\n     within"
+       ++"\n        |~| "++ bnd ++" @ "++(mapping_CAction procn spec (CSPHide (CSPNSParal [] (CSExpr "MEMI") bs1 (CSPSeq ca (CSPCommAction (ChanComm "terminate" []) CSPSkip)) (CSPParAction "Memory" zb)) (CSExpr "MEMI")))++"\n"
        where
          zn =  get_znames_from_NAME spec
          znames = remdups $ map nfst (select_f_zbr zn)
          ztypes = remdups $ map ntrd (select_f_zbr zn)
-         restr = mk_charll_to_charl "\n\t\t\t" $
-            map (mk_restrict (concat $ map (\(va,b,c) -> (if (Subs.isPrefixOf ((join_name "sv" procn)++"_") va) then [(va,b,c)] else [])) (select_f_zbr zn))) (get_binding_types bdls)
+         restr = mk_charll_to_charl "\n        " $
+            map (mk_restrict (concat $ map (\(va,b,c) -> (if (Subs.isPrefixOf ("sv"++"_") va) || (Subs.isPrefixOf ("lv"++"_") va) then [(va,b,c)] else [])) (select_f_zbr zn))) (get_binding_types bdls)
          bnd = mk_charll_to_charl ", " $ map mk_binding_list (get_binding_types bdls)
          restn = mk_charll_to_charl ", " $ map mk_restrict_name (get_binding_types bdls)
 
@@ -840,14 +849,14 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[],tx) (ZVar (t,_,tx1)))
     ++  x
     ++ " : "
     ++ t
-    ++ " @\n\t\t\t "
+    ++ " @\n         "
     ++ mapping_CAction procn spec (a) ++ " )"
 mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[],tx) s)] a)
       = "( " ++ "|~| "
         ++  x
         ++ " : "
         ++ (mapping_ZExpr (get_delta_names1 spec) s)
-        ++ " @\n\t\t\t "
+        ++ " @\n         "
         ++ mapping_CAction procn spec (a) ++ " )"
 \end{code}
 
@@ -904,7 +913,7 @@ mapping_CAction procn spec (CSPRepSeq xs a)
 \begin{code}
 mapping_CAction procn spec (CSPSeq a b)
   = "( " ++ mapping_CAction procn spec (a)
-    ++ " ; "
+    ++ ";\n      "
     ++ mapping_CAction procn spec (b) ++ " )"
 \end{code}
 
@@ -955,14 +964,14 @@ mapping_CCommand procn spec (CIf cga)
 {-
 mapping_CCommand procn spec (CVarDecl bds ca)
  = "let "++ restr
-    ++"\n\t\t\twithin"
-    ++"\n\t\t\t|~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n\t\t\t "++restn++")\n"
+    ++"\n        within"
+    ++"\n        |~| "++ bnd ++" @ Memorise("++(mapping_CAction procn spec ca)++",\n         "++restn++")\n"
     where
       zn =  get_znames_from_NAME spec
       znames = remdups $ map nfst (select_f_zbr zn)
       ztypes = remdups $ map ntrd (select_f_zbr zn)
-      restr = mk_charll_to_charl "\n\t\t\t" $
-         map (mk_restrict (concat (map (\(va,b,c) -> if (Subs.isPrefixOf ((join_name "sv" procn)++"_") va) then [(va,b,c)] else []) (select_f_zbr zn)))) ztypes
+      restr = mk_charll_to_charl "\n        " $
+         map (mk_restrict (concat (map (\(va,b,c) -> if (Subs.isPrefixOf ("sv"++"_") va) || (Subs.isPrefixOf ("lv"++"_") va) then [(va,b,c)] else []) (select_f_zbr zn)))) ztypes
       bnd = mk_charll_to_charl ", " $ map mk_binding_list ztypes
       restn = mk_charll_to_charl ", " $ map mk_restrict_name ztypes
 -}
@@ -980,7 +989,7 @@ mapping_CGActions :: ZName -> [ZPara] -> CGActions -> ZName
 mapping_CGActions procn spec (CircThenElse cga1 cga2)
   = (mapping_CGActions procn spec cga1) ++ " [] " ++ (mapping_CGActions procn spec cga2)
 mapping_CGActions procn spec (CircGAction zp ca)
-  = (mapping_predicate (get_delta_names1 spec) zp) ++ " &\n\t\t\t " ++ (mapping_CAction procn spec ca)
+  = (mapping_predicate (get_delta_names1 spec) zp) ++ " &\n         " ++ (mapping_CAction procn spec ca)
 \end{code}
 
 \subsection{Mapping Channel Communication}

@@ -1259,7 +1259,7 @@ get_var_type x ((a,(va,x1,_),b):vst)
 \begin{code}
 rename_ZGenFilt1 pn  lst (Include s) = (Include s)
 rename_ZGenFilt1 pn  lst (Choose (va,x,t) e)
-  = (Choose ((join_name (join_name "sv" pn) va),x,newt) (rename_vars_ZExpr1 pn lst e))
+  = (Choose ((join_name "sv" va),x,newt) (rename_vars_ZExpr1 pn lst e))
     where newt = (def_U_prefix $ get_vars_ZExpr e)
 rename_ZGenFilt1 pn  lst (Check p) = (Check (rename_vars_ZPred1 pn lst p))
 rename_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn lst e1) (rename_vars_ZExpr1 pn lst e2))
@@ -1268,7 +1268,7 @@ rename_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn
 rename_vars_ZVar1 :: String ->  [(ZName, ZVar, ZExpr)] -> ZVar -> ZVar
 rename_vars_ZVar1 pn lst (va,x,t)
  = case (inListVar1 va lst) of
-    True -> ((join_name (join_name "sv" pn) va),x,newt)
+    True -> ((join_name "sv" va),x,newt)
     _ -> (va,x,t)
     where newt = (def_U_prefix $ get_vars_ZExpr $ get_var_type va lst)
 \end{code}
@@ -1573,7 +1573,8 @@ get_binding_types ((Choose (v,a,b) t):ts) = (lastN 3 v):get_binding_types ts
 
 mk_restrict vlst n
     = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (lst_subtype n vlst))++"})"
-
+mk_Memory_param (ZVar (n,x,y)) = "restrict"++(lastN 3 n)++"(b_"++(lastN 3 n)++")"
+mk_Memory_param _ = ""
 mk_restrict_name n
   = "restrict"++n++"("++"b_"++n++")"
 
@@ -1934,12 +1935,12 @@ rename_list_lv p ys vs
     where
       ren' pn (v,[],t1) [Choose (v1,[],t2) t] =
         case v == v1 of
-            True -> [((v,[],t1),ZVar ((join_name (join_name "lv" pn) v) ,[],newt))]
+            True -> [((v,[],t1),ZVar ((join_name "lv" v) ,[],newt))]
             False -> []
         where newt = (def_U_prefix $ get_vars_ZExpr t)
       ren' pn (v,[],t1) ((Choose (v1,[],t2) t):xs) =
         case v == v1 of
-            True -> [((v,[],t1),ZVar ((join_name (join_name "lv" pn) v) ,[],newt))]
+            True -> [((v,[],t1),ZVar ((join_name "lv" v) ,[],newt))]
             False -> ren' pn (v,[],t1) xs
         where newt = (def_U_prefix $ get_vars_ZExpr t)
       ren pn [x] as = ren' pn x as
@@ -1950,7 +1951,7 @@ rename_genfilt_lv pn xs
   = map (rename_genfilt_lv' pn) xs
 
 rename_genfilt_lv' pn (Choose (va,x,t) e)
-  = (Choose ((join_name (join_name "lv" pn) va),[],newt) e)
+  = (Choose ((join_name "lv" va),[],newt) e)
     where newt = (def_U_prefix $ get_vars_ZExpr e)
 rename_genfilt_lv' pn x = x
 \end{code}
