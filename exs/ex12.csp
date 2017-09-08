@@ -1,60 +1,203 @@
-include "ring-buffer-marcel/csp/sequence_aux.csp"
-include "ring-buffer-marcel/csp/function_aux.csp"
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+maxbuff = 2
+maxring = (maxbuff - 1)
+Value = {0..2}
+CellId = {1..maxring}
+datatype Direction = req | ack
+
+NatValue = {0..maxbuff}
+------------------------
+-- VERIFICATION
+--------------------------------
+ABuffer =
+  let BufferState(s)= #s > 0 & output!head(s) -> BufferState(tail(s))
+                      [] #s < maxbuff & input?x -> BufferState(s ^ <x>)
+  within BufferState(<>)
+assert ABuffer [FD= DBuffer
+assert DBuffer [FD= ABuffer
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = NAT.NatValue | CEL.CellId | VAL.Value
+--Conversions
+valueNAT(NAT.v) = v
+valueCEL(CEL.v) = v
+valueVAL(VAL.v) = v
+
+typeNAT(x) = U_NAT
+typeCEL(x) = U_CEL
+typeVAL(x) = U_VAL
+
+tagNAT(x) = NAT
+tagCEL(x) = CEL
+tagVAL(x) = VAL
+
+-- subtypes of UNIVERSE for NAT
+subtype U_NAT = NAT.NatValue
+
+-- subtypes of UNIVERSE for CEL
+subtype U_CEL = CEL.CellId
+
+-- subtypes of UNIVERSE for VAL
+subtype U_VAL = VAL.Value
+
+-- definition of NAME for the entire spec 
+datatype NAME = sv_cache | sv_size | sv_top | sv_bot | sv_v
+
+-- Subtype definition for VAL
+subtype NAME_VAL = sv_cache | sv_v
+NAMES_VALUES_VAL = seq({seq({(n,v) | v <- typeVAL(n)}) | n <- NAME_VAL})
+
+-- Subtype definition for NAT
+subtype NAME_NAT = sv_size
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+
+-- Subtype definition for CEL
+subtype NAME_CEL = sv_top | sv_bot
+NAMES_VALUES_CEL = seq({seq({(n,v) | v <- typeCEL(n)}) | n <- NAME_CEL})
+
+-- Bindings definitions for VAL
+BINDINGS_VAL = {set(b) | b <- set(distCartProd(NAMES_VALUES_VAL))}
+
+-- Bindings definitions for NAT
+BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
+
+-- Bindings definitions for CEL
+BINDINGS_CEL = {set(b) | b <- set(distCartProd(NAMES_VALUES_CEL))}
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI -- 
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+DBuffer = ( ( ControllerR [| CtrI |] DRing ) \ CtrI )
+
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+  let
+     Memory(b_VAL,b_NAT,b_CEL) =
+        ( ( ( ( [] n : dom(b_VAL) @ mget.n.apply(b_VAL,n) ->
+      Memory(b_VAL,b_NAT,b_CEL) )
+      [] ( ( [] n : dom(b_NAT) @ mget.n.apply(b_NAT,n) ->
+      Memory(b_VAL,b_NAT,b_CEL) )
+      [] ( [] n : dom(b_CEL) @ mget.n.apply(b_CEL,n) ->
+      Memory(b_VAL,b_NAT,b_CEL) )))
+      [] ( ( [] n : dom(b_VAL) @ mset.n?nv:typeVAL(n) ->
+      Memory(over(b_VAL,n,nv),b_NAT,b_CEL) )
+      [] ( ( [] n : dom(b_NAT) @ mset.n?nv:typeNAT(n) ->
+      Memory(b_VAL,over(b_NAT,n,nv),b_CEL) )
+      [] ( [] n : dom(b_CEL) @ mset.n?nv:typeCEL(n) ->
+      Memory(b_VAL,b_NAT,over(b_CEL,n,nv)) ))))
+      [] terminate -> SKIP)
+     MemoryMerge(b_VAL,b_NAT,b_CEL,ns) =
+        ( ( ( ( [] n : dom(b_VAL) @ lget.n.apply(b_VAL,n) ->
+      MemoryMerge(b_VAL,b_NAT,b_CEL,ns) )
+      [] ( ( [] n : dom(b_NAT) @ lget.n.apply(b_NAT,n) ->
+      MemoryMerge(b_VAL,b_NAT,b_CEL,ns) )
+      [] ( [] n : dom(b_CEL) @ lget.n.apply(b_CEL,n) ->
+      MemoryMerge(b_VAL,b_NAT,b_CEL,ns) )))
+      [] ( ( [] n : dom(b_VAL) @ lset.n?nv:typeVAL(n) ->
+      MemoryMerge(over(b_VAL,n,nv),b_NAT,b_CEL,ns) )
+      [] ( ( [] n : dom(b_NAT) @ lset.n?nv:typeNAT(n) ->
+      MemoryMerge(b_VAL,over(b_NAT,n,nv),b_CEL,ns) )
+      [] ( [] n : dom(b_CEL) @ lset.n?nv:typeCEL(n) ->
+      MemoryMerge(b_VAL,b_NAT,over(b_CEL,n,nv),ns) ))))
+      [] lterminate ->
+      (  ; bd : < b_VAL>^< b_NAT>^< b_CEL> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
+  within 
+     let  restrictVAL(bs) = dres(bs,{sv_cache, sv_v})
+         restrictNAT(bs) = dres(bs,{sv_size})
+         restrictCEL(bs) = dres(bs,{sv_top, sv_bot})
+     within
+        |~| b_VAL : BINDINGS_VAL, b_NAT : BINDINGS_NAT, b_CEL : BINDINGS_CEL @ ( ( ( ( mget.sv_cache?v_sv_cache:(typeVAL(sv_cache)) ->
+      mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+      mget.sv_top?v_sv_top:(typeCEL(sv_top)) ->
+      mget.sv_bot?v_sv_bot:(typeCEL(sv_bot)) ->
+      mset.sv_cache.(VAL.0) ->
+      mset.sv_size.(NAT.0) ->
+      mset.sv_top.(CEL.1) ->
+      mset.sv_bot.(CEL.1) -> SKIP;
+      ( let X = mget.sv_bot?v_sv_bot:(typeCEL(sv_bot)) ->
+      mget.sv_cache?v_sv_cache:(typeVAL(sv_cache)) ->
+      mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+      mget.sv_top?v_sv_top:(typeCEL(sv_top)) ->
+      ( ( valueNAT(v_sv_size) < maxbuff & input?x ->
+      ( ( valueNAT(v_sv_size) == 0 & ( ( mset.sv_cache.(VAL.x) -> SKIP;
+      mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+      mset.sv_size.(NAT.1) -> SKIP );
+      X ) )
+      [] ( valueNAT(v_sv_size) > 0 & ( write.valueCEL(v_sv_top).req.x ->
+      write.valueCEL(v_sv_top).ack?dumb ->
+      ( mset.sv_size.(NAT.(valueNAT(v_sv_size) + 1)) -> SKIP;
+      mget.sv_top?v_sv_top:(typeCEL(sv_top)) ->
+      mset.sv_top.(CEL.(valueCEL(v_sv_top) % maxring + 1)) -> SKIP );
+      X ) )) )
+      [] ( valueNAT(v_sv_size) > 0 & ( output.valueVAL(v_sv_cache) ->
+      ( ( valueNAT(v_sv_size) > 1 & ( ( |~| dumb : Value @
+         read.valueCEL(v_sv_bot).req.dumb ->
+      read.valueCEL(v_sv_bot).ack?x ->
+      mset.sv_cache.(VAL.x) -> SKIP );
+      mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+      ( valueNAT(v_sv_size) > 1 & ( mset.sv_size.(NAT.(valueNAT(v_sv_size) - 1)) -> SKIP;
+      mget.sv_bot?v_sv_bot:(typeCEL(sv_bot)) ->
+      mset.sv_bot.(CEL.(valueCEL(v_sv_bot) % maxring + 1)) -> SKIP ) ) ) )
+      [] ( valueNAT(v_sv_size) == 1 & mset.sv_size.(NAT.0) -> SKIP ));
+      X ) )) within X ) );
+      terminate -> SKIP )
+      [| MEMI |] Memory(restrictVAL(b_VAL),restrictNAT(b_NAT),restrictCEL(b_CEL)))\MEMI )
+
+
+DRing = |||i : CellId @ IRCell(i)
+
+IRCell(i) = RingCell[[rrd <- rdi.i, wrt <- wrti.i]]
+
+RingCell = 
+  let
+     Memory(b_VAL) =
+        ( ( ( [] n : dom(b_VAL) @ mget.n.apply(b_VAL,n) ->
+      Memory(b_VAL) )
+      [] ( [] n : dom(b_VAL) @ mset.n?nv:typeVAL(n) ->
+      Memory(over(b_VAL,n,nv)) ))
+      [] terminate -> SKIP)
+     MemoryMerge(b_VAL,ns) =
+        ( ( ( [] n : dom(b_VAL) @ lget.n.apply(b_VAL,n) ->
+      MemoryMerge(b_VAL,ns) )
+      [] ( [] n : dom(b_VAL) @ lset.n?nv:typeVAL(n) ->
+      MemoryMerge(over(b_VAL,n,nv),ns) ))
+      [] lterminate ->
+      (  ; bd : <b_VAL> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
+  within 
+     let  restrictVAL(bs) = dres(bs,{sv_cache, sv_v})
+     within
+        |~| b_VAL : BINDINGS_VAL @ ( ( ( ( ( |~| x : Value @
+         mget.sv_v?v_sv_v:(typeVAL(sv_v)) ->
+      mset.sv_v.(VAL.x) -> SKIP );
+      ( let X = ( mget.sv_v?v_sv_v:(typeVAL(sv_v)) ->
+      ( wrt.req?x ->
+      ( mset.sv_v.(VAL.x) -> SKIP;
+      wrt.ack.x -> SKIP )
+      [] rrd.req?dumb ->
+      rrd.ack.valueVAL(v_sv_v) -> SKIP);
+      X ) within X ) );
+      terminate -> SKIP )
+      [| MEMI |] Memory(restrictVAL(b_VAL)))\MEMI )
 
 CtrI = {| rdi,wrti |}
 channel rrd, wrt : Direction.Value
 channel write, read, rdi, wrti : CellId.Direction.Value
 channel input, output : Value
-datatype Direction = req | ack
-datatype NAME = Controller_cache | Controller_size | Controller_top | Controller_bot | RingCell_v
-channel mget, mset : NAME.Universe
-channel terminate
-MEMi = {| mset,mget,terminate |}
-
-DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
-
-ControllerR = Controller[[read <- rdi, write <- wrti]]
-
-Controller = 
-	let 
-		Memory(b) =( ( ( [] n : dom(b) @ mget.n!apply(b,n) -> (Memory(b)) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> (Memory(over(b,n,nv))) )) [] terminate -> (SKIP))
-	within 
-	( 
-		mget.cache?vcache -> 
-		(mget.size?vsize -> 
-		(mget.top?vtop -> 
-		(mget.bot?vbot -> 
-		(mset.cache!0 -> 
-		(mset.size!0 -> 
-		(mset.top!1 -> (mset.bot!1 -> (SKIP)))))))) ; 
-		( let 
-			X = 
-				((mget.size?vsize -> 
-				(mget.cache?vcache -> 
-				(mget.top?vtop -> 
-				(((vsize < maxbuff 
-					& input?x -> 
-					(( vsize == 0 
-						& ( mset.cache!x -> (SKIP) ; mset.size!1 -> (SKIP) ) )) ) 
-					[] ( vsize > 0 
-						& write.top.req!x -> 
-							(write.top.ack?dumb -> 
-							(( mset.size!vsize -> (SKIP) ; mset.top!vtop -> (SKIP) ))) ))))) 
-				[] mget.size?vsize -> 
-				(mget.cache?vcache -> 
-				(mget.bot?vbot -> 
-					(( ( vsize > 0 
-						& output!cache -> 
-							(( vsize > 1 & ( ( |~| dumb : Value @ read.bot.req.dumb -> (read.bot.ack?x -> (Skip)) ) ; ( mset.size!vsize -> (SKIP) ; mset.bot!vbot -> (SKIP) ) ) )) ) 
-						[] ( vsize == 1 & mset.size!0 -> (SKIP) )))))) ; 
-			X ) 
-			within X ) )
-
-DRing = |||i : CellId @ IRCell(i)
-
-IRCell = RingCell[[rrd <- rdi, wrt <- wrti]]
-
-RingCell = 
-	let 
-		Memory(b) =( ( ( [] n : dom(b) @ mget.n!apply(b,n) -> (Memory(b)) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> (Memory(over(b,n,nv))) )) [] terminate -> (SKIP))
-	within ( ( |~| x : Value @ mget.v?vv -> (mset.v!x -> (SKIP)) ) ; ( let X = ( mget.v?vv -> (( ( wrt.req?x -> (mset.v!x -> (SKIP)) ; wrt.ack.x -> (SKIP) ) [] rrd.req?dumb -> (rrd.ack!v -> (Skip)))) ; X ) within X ) )

@@ -8,10 +8,10 @@
 \begin{document}
 \begin{circus}
 
-maxbuff == 3 \\
+maxbuff == 2 \\
 maxring == maxbuff - 1 \\
 Value == 0 \upto 2 \\
-CellId == 1 \upto 10 \\
+CellId == 1 \upto maxring \\
 Direction ::=  req | ack\\
 NatValue == 0 \upto maxbuff\\
 \also \circchannel\ input, output : Value \\
@@ -38,27 +38,27 @@ NatValue == 0 \upto maxbuff\\
 \t1 \circstate\ CtrState \defs [cache:Value; size:\nat; top:CellId; bot:CellId] \\
 
 \t1 InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 1) \\
-\t1 Input \circdef  
-	\lcircguard size < maxbuff \rcircguard 
+\t1 Input \circdef
+	\lcircguard size < maxbuff \rcircguard
 		\circguard (
-        input?x \then 
+        input?x \then
         ((\lcircguard size = 0 \rcircguard
                   \circguard ((cache:=x) \circseq (size:=1)))
-                \extchoice 
-                (\lcircguard size > 0 \rcircguard 
-                  \circguard 
+                \extchoice
+                (\lcircguard size > 0 \rcircguard
+                  \circguard
                     write.top.req!x \then
-                    write.top.ack?dumb \then 
-                    ((size:=size+1) \circseq\ 
+                    write.top.ack?dumb \then
+                    ((size:=size+1) \circseq
                     (top:=(top~\mod~maxring)+1)))))
     \\
  Output \circdef
-\lcircguard size > 0 \rcircguard 
-\circguard 
+\lcircguard size > 0 \rcircguard
+\circguard
     output!cache \then
-    ((\lcircguard size > 1 \rcircguard \circguard 
+    ((\lcircguard size > 1 \rcircguard \circguard
           (\Intchoice dumb:Value \circspot read.bot.req.dumb \then read.bot.ack?x \then (cache:=x)) \circseq \\
-          ((size:=size-1)\circseq (bot := (bot~\mod~maxring)+1)))\\
+          ((\lcircguard size > 1 \rcircguard \circguard (size:=size-1))\circseq (bot := (bot~\mod~maxring)+1)))\\
       \extchoice \lcircguard size = 1 \rcircguard \circguard (size := 0)) \\
 
  \circspot InitCtr \circseq\ \circmu X \circspot ((Input \extchoice Output)\circseq X)
@@ -69,4 +69,15 @@ NatValue == 0 \upto maxbuff\\
 \\
 \circprocess\ DBuffer \circdef\ ((ControllerR \lpar CtrI \rpar DRing) \circhide CtrI)
 \end{circus}%
+\begin{assert}
+"------------------------"\\
+\also"-- VERIFICATION"\\
+\also"--------------------------------"\\
+\also"ABuffer ="\\
+\also"  let BufferState(s)= #s > 0 & output!head(s) -> BufferState(tail(s))"\\
+\also"                      [] #s < maxbuff & input?x -> BufferState(s ^ <x>)"\\
+\also"  within BufferState(<>)"\\
+\also"assert ABuffer [FD= DBuffer"\\
+\also"assert DBuffer [FD= ABuffer"
+\end{assert}
 \end{document}

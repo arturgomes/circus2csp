@@ -44,17 +44,17 @@ mapping_Circus spec (x:xs)
 \begin{circus}
   \Upsilon_{CircParagraphs}([UNIVERSE])
   \defs\\
-     co{datatype UNIVERSE = }MK_{Universe}(ulst)\\
+     \tco{datatype UNIVERSE = }MK_{Universe}(ulst)\\
   MK_{subtype}(fulst)\\
   MK_{value}(fulst)\\
   MK_{type}(fulst)\\
   MK_{tag}(fulst)\\\\
-  % \tco{Memory(}MK_{mem\_param}(fulst)\tco{)=}\\
+  % \t\tco{Memory(}MK_{mem\_param}(fulst)\t\tco{)=}\\
   % \qquad MK_{mget}(fulst)\\
   % \qquad MK_{mset}(fulst)\\
-  % \qquad \tco{[] terminate -> SKIP}\\\\
-  % \tco{Memorise(P,}MK_{mem\_param}(fulst)\tco{)=}\\
-  % \qquad\tco{((P ; terminate -> SKIP)[|MEM\_I|] Memory(}MK_{mem\_param}(fulst)\tco{))\textbackslash MEM\_I}
+  % \qquad \t\tco{[] terminate -> SKIP}\\\\
+  % \t\tco{Memorise(P,}MK_{mem\_param}(fulst)\t\tco{)=}\\
+  % \qquad\t\tco{((P ; terminate -> SKIP)[|MEM\_I|] Memory(}MK_{mem\_param}(fulst)\t\tco{))\textbackslash MEM\_I}
 \end{circus}
     \begin{provs}
       \item $\delta(\emptyset) \notin spec$ -- There is at least one element in the $\delta$ mapping.
@@ -121,7 +121,7 @@ mapping_CircParagraphs spec (CircChannel [CChan "terminate"])
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(\circchannelset MEMI == \lchanset mget, mset, terminate \rchanset)
-  \defs\\\qquad \tco{MEM\_I =}\Upsilon_{CSExp}(\lchanset mget, mset, terminate \rchanset)
+  \defs\\\qquad \t\tco{MEM\_I =}\Upsilon_{CSExp}(\lchanset mget, mset, terminate \rchanset)
 \end{circus}
     \begin{provs}
       \item $\delta(\emptyset) \notin spec$ -- There is at least one element in the $\delta$ mapping.
@@ -148,11 +148,11 @@ The definition of the $\delta$ is not directly translated into CSP. Instead, we 
 \begin{circus}
   \Upsilon_{CircParagraphs}(BINDING \defs NAME \cross \mathbb{U})
   \defs\\\qquad
-     co{BINDINGS\_}
+     \tco{BINDINGS\_}
   T_1
-     co{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\tco{))\}}\\
+     \tco{ =\ \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_1\t\tco{))\}}\\
   \qquad\ldots
-\\\qquad \tco{BINDINGS\_}T_n\tco{ = \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_n\tco{))\}}
+\\\qquad \t\tco{BINDINGS\_}T_n\t\tco{ = \{set(b) | b <- set(distCartProd(NAMES\_VALUES\_}T_n\t\tco{))\}}
 \end{circus}
     \begin{provs}
       \item $T_1,\ldots,T_N$ are the possible types of the specification.
@@ -168,6 +168,7 @@ mapping_CircParagraphs spec (ZAbbreviation (xn,_,_) xp)
             ++ " = {set(b) | b <- set(distCartProd(NAMES_VALUES_"
             ++ (lastN 3 xn)
             ++ "))}\n")
+  | "BINDINGS" == xn = ""
   | otherwise = "\n"++ xn ++
                 " = " ++ mapping_ZExpr (get_delta_names1 spec) xp
 \end{code}
@@ -175,7 +176,7 @@ mapping_CircParagraphs spec (ZAbbreviation (xn,_,_) xp)
 \begin{code}
 mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
   | nm == "NAME" = "\n-- definition of NAME for the entire spec "
-      ++ "\ndatatype NAME = "++(mapping_ZBranch_list zbs)++"\n"
+      ++ "\ndatatype NAME = "++(mapping_ZBranch_list (remdups zbs))++"\n"
   | Subs.isPrefixOf "NAME" nm
       && (Data.List.length nm > Data.List.length "NAME")
         = "\n-- Subtype definition for "++(lastN 3 nm)
@@ -194,7 +195,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
 % \begin{circus}
 %   \Upsilon_{CircParagraphs}(N == \{a | b\})
 %   \defs\\\qquad
-%      co{N = }\Upsilon_{ZTuple}(\{a | b\})
+%      \tco{N = }\Upsilon_{ZTuple}(\{a | b\})
 % \end{circus}
 % \begin{code}
 % mapping_CircParagraphs spec (ZAbbreviation (n,[],t) (ZSetComp xl (Just (ZTuple ztp))))
@@ -204,7 +205,7 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
 \subsection{Mapping Z free types}
 
 \begin{circus}
-  \Upsilon_{CircParagraphs}(N ::= a_1 | \ldots | a_n) \defs \tco{datatype N = }\Upsilon_{ZBranch\_list}(a_1 | \ldots | a_n)
+  \Upsilon_{CircParagraphs}(N ::= a_1 | \ldots | a_n) \defs \t\tco{datatype N = }\Upsilon_{ZBranch\_list}(a_1 | \ldots | a_n)
 \end{circus}
 \begin{code}
 mapping_CircParagraphs spec (ZFreeTypeDef (a,b,c) zbs)
@@ -241,7 +242,7 @@ mapping_CircParagraphs spec (CircChannel cc2)
 
 \begin{circus}
   \Upsilon_{CircParagraphs}(\circchannelset CN == CS) \defs
-      co{CN = }\Upsilon_{CSExp}(CS)
+      \tco{CN = }\Upsilon_{CSExp}(CS)
 \end{circus}
     \begin{provs}
       \item $CS$ is a $CSExp$.
@@ -263,7 +264,7 @@ mapping_CircParagraphs spec (CircChanSet cn c2)
 % \subsection{Mapping Z abbreviation}
 %
 % \begin{circus}
-%   \Upsilon_{CircParagraphs}(N == expr) \defs \tco{N = }\Upsilon_{ZExpr}
+%   \Upsilon_{CircParagraphs}(N == expr) \defs \t\tco{N = }\Upsilon_{ZExpr}
 % \end{circus}
 %     \begin{provs}
 %       \item $expr$ is a Z expression.
@@ -294,9 +295,9 @@ mapping_CircParagraphs spec x
 The function $mapping\_ZBranch$ transforms free types and composite free types into the corresponding notation in CSP. For such, a composite type can be $A\cross B$ and therefore, it is translated using $mapping\_ZBranch\_cross$.
 \begin{code}
 mapping_ZBranch :: ZBranch -> String
-mapping_ZBranch  (ZBranch0 (a,b,c)) = a
-mapping_ZBranch  (ZBranch1 (a,xb,c) (ZVar (b,[],t))) = a ++ "." ++ b
-mapping_ZBranch  (ZBranch1 (a,xb,c) (ZCross b)) = a ++ "." ++ (mapping_ZBranch_cross  b)
+mapping_ZBranch  (ZBranch0 (a,b,c)) = mapping_ZExpr [] (ZVar (a,b,c))
+mapping_ZBranch  (ZBranch1 (a,xb,c) (ZVar (b,[],t))) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] (ZVar (b,[],t))
+mapping_ZBranch  (ZBranch1 (a,xb,c) (ZCross b)) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ (mapping_ZBranch_cross  b)
 \end{code}
 
 \begin{code}
@@ -315,8 +316,8 @@ mapping_ZBranch_list (x:xs) = (mapping_ZBranch x) ++ " | " ++ (mapping_ZBranch_l
 This set of mapping functions will translate the declaration of channels from \Circus\ into \CSPM. Although, generic channels are not yet available.
 
 \begin{circus}
-  \Upsilon_{CDecl}(\circchannel a) \defs \tco{channel a}\\
-  \Upsilon_{CDecl}(\circchannel a : T) \defs \tco{channel a : T}
+  \Upsilon_{CDecl}(\circchannel a) \defs \t\tco{channel a}\\
+  \Upsilon_{CDecl}(\circchannel a : T) \defs \t\tco{channel a : T}
 \end{circus}
 \begin{code}
 mapping_CDecl :: [ZPara] -> [CDecl] -> String
@@ -390,15 +391,15 @@ get_channel_type_list (x:xs) = (get_channel_type x) ++ "." ++ (get_channel_type_
 \subsection{Mapping Circus channel sets}
 
 \begin{circus}
-  \Upsilon_{CSExp}(\lchanset xs \rchanset) \defs \tco{\{| } \Upsilon_{CSExp\_get\_cs}(xs) \tco{ |\}}\\
+  \Upsilon_{CSExp}(\lchanset xs \rchanset) \defs \t\tco{\{| } \Upsilon_{CSExp\_get\_cs}(xs) \t\tco{ |\}}\\
   \Upsilon_{CSExp}(CS1 \setminus CS2) \defs
-       co{diff(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
+       \tco{diff(}\Upsilon_{CSExp}(CS1)\t\tco{,}\Upsilon_{CSExp}(CS2)\t\tco{)}\\
   \Upsilon_{CSExp}(CS1 \cup CS2) \defs
-       co{union(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
+       \tco{union(}\Upsilon_{CSExp}(CS1)\t\tco{,}\Upsilon_{CSExp}(CS2)\t\tco{)}\\
   \Upsilon_{CSExp}(CS1 \cap CS2) \defs
-       co{inter(}\Upsilon_{CSExp}(CS1)\tco{,}\Upsilon_{CSExp}(CS2)\tco{)}\\
-  \Upsilon_{CSExp}(\lchanset \rchanset) \defs \tco{\{\}}\\
-  \Upsilon_{CSExp}(CS) \defs \tco{CS}
+       \tco{inter(}\Upsilon_{CSExp}(CS1)\t\tco{,}\Upsilon_{CSExp}(CS2)\t\tco{)}\\
+  \Upsilon_{CSExp}(\lchanset \rchanset) \defs \t\tco{\{\}}\\
+  \Upsilon_{CSExp}(CS) \defs \t\tco{CS}
 \end{circus}
     \begin{provs}
       \item $CS$, $CS1$ and $CS2$ are channel sets, $CSExp$.
@@ -423,7 +424,7 @@ mapping_CSExp_get_cs (c:cs) = c ++ "," ++ (mapping_CSExp_get_cs cs)
 \subsection{Mapping Circus Processes Declaration}
 This is the translation rules for $ProcDecl$. Up to the date, we don't have a translation rule for generic processes.
 \begin{circus}
-  \Upsilon_{ProcDecl}(\circprocess P \circdef ProcDef) \defs \tco{P} \Upsilon_{ProcessDef}(PD)
+  \Upsilon_{ProcDecl}(\circprocess P \circdef ProcDef) \defs \t\tco{P} \Upsilon_{ProcessDef}(PD)
 \end{circus}
     \begin{provs}
       \item $P$ is the name of a \Circus\ process.
@@ -442,8 +443,8 @@ mapping_ProcDecl spec _
 \subsection{Mapping Circus Processes Definition}
 NOTE:Process definition index is not yet defined.
 \begin{circus}
-  \Upsilon_{ProcessDef}(Proc) \defs \tco{= } \Upsilon_{CProc}(Proc)\\
-  \Upsilon_{ProcessDef}(Decl \circspot Proc) \defs \tco{(}\Upsilon_{ZGenFilt\_list}\tco{)= }\Upsilon_{CProc}(Proc)
+  \Upsilon_{ProcessDef}(Proc) \defs \t\tco{= } \Upsilon_{CProc}(Proc)\\
+  \Upsilon_{ProcessDef}(Decl \circspot Proc) \defs \t\tco{(}\Upsilon_{ZGenFilt\_list}\t\tco{)= }\Upsilon_{CProc}(Proc)
 \end{circus}
     \begin{provs}
       \item $Proc$ is the process content.
@@ -475,23 +476,23 @@ mapping_ZGenFilt  spec (Choose v _) = nfst v
 In this section, we list all the mapping functions for the possible behaviours of a \Circus\ process. Note that $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
 
 \begin{circus}
-  \Upsilon_{CProc}(P1 \extchoice P2) \defs \Upsilon_{CProc}(P1)\tco{ [] }\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(P1 \circhide CS) \defs \Upsilon_{CProc}(P1)~\tco{\textbackslash}~\Upsilon_{Pred_{CS}}(CS) \\
-  \Upsilon_{CProc}(P1 \intchoice P2) \defs \Upsilon_{CProc}(P1)~\tco{|\textasciitilde|}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(P1 \interleave P2) \defs \Upsilon_{CProc}(P1)~\tco{|||}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(P) \defs \tco{P} \\
-  \Upsilon_{CProc}(P1 \lpar CS \rpar P2) \defs \Upsilon_{CProc}(P1)~\tco{[|}~\Upsilon_{Pred_{CS}}(CS)~\tco{|]}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(P1 \circseq P2) \defs \Upsilon_{CProc}(P1)~\tco{;}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(\Extchoice x:S \circspot P1) \defs \tco{[] x :}~\Upsilon_{ZExpr}(S)~\tco{@}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(\Intchoice x:S \circspot P1) \defs \tco{|\textasciitilde| x :}~\Upsilon_{ZExpr}(S)~\tco{@}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(\Interleave x:S \circspot P1) \defs \tco{|\textasciitilde| x :}~\Upsilon_{ZExpr}(S)~\tco{@}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(\lpar CS \rpar x:S \circspot P1) \defs ~\tco{[|}~\Upsilon_{Pred_{CS}}(CS)~\tco{|] x :}~\Upsilon_{ZExpr}(S)~\tco{@}~\Upsilon_{CProc}(P2) \\
-  \Upsilon_{CProc}(\Semi x:S \circspot P1) \defs \tco{; x :}~\Upsilon_{ZExpr}(S)~\tco{@}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(P1 \extchoice P2) \defs \Upsilon_{CProc}(P1)\t\tco{ [] }\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(P1 \circhide CS) \defs \Upsilon_{CProc}(P1)~\t\tco{\textbackslash}~\Upsilon_{Pred_{CS}}(CS) \\
+  \Upsilon_{CProc}(P1 \intchoice P2) \defs \Upsilon_{CProc}(P1)~\t\tco{|\textasciitilde|}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(P1 \interleave P2) \defs \Upsilon_{CProc}(P1)~\t\tco{|||}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(P) \defs \t\tco{P} \\
+  \Upsilon_{CProc}(P1 \lpar CS \rpar P2) \defs \Upsilon_{CProc}(P1)~\t\tco{[|}~\Upsilon_{Pred_{CS}}(CS)~\t\tco{|]}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(P1 \circseq P2) \defs \Upsilon_{CProc}(P1)~\t\tco{;}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(\Extchoice x:S \circspot P1) \defs \t\tco{[] x :}~\Upsilon_{ZExpr}(S)~\t\tco{@}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(\Intchoice x:S \circspot P1) \defs \t\tco{|\textasciitilde| x :}~\Upsilon_{ZExpr}(S)~\t\tco{@}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(\Interleave x:S \circspot P1) \defs \t\tco{|\textasciitilde| x :}~\Upsilon_{ZExpr}(S)~\t\tco{@}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(\lpar CS \rpar x:S \circspot P1) \defs ~\t\tco{[|}~\Upsilon_{Pred_{CS}}(CS)~\t\tco{|] x :}~\Upsilon_{ZExpr}(S)~\t\tco{@}~\Upsilon_{CProc}(P2) \\
+  \Upsilon_{CProc}(\Semi x:S \circspot P1) \defs \t\tco{; x :}~\Upsilon_{ZExpr}(S)~\t\tco{@}~\Upsilon_{CProc}(P2) \\
   \Upsilon_{CProc}(\circbegin AL \circspot MA \circend) \defs\\
-  \qquad \tco{let} \Upsilon_{PPar\_list}(AL)\\
-  \qquad \tco{within}~\Upsilon_{CAction}(MA) \\
+  \qquad \t\tco{let} \Upsilon_{PPar\_list}(AL)\\
+  \qquad \t\tco{within}~\Upsilon_{CAction}(MA) \\
   \Upsilon_{CProc}(\circbegin \circspot MA \circend) \defs \Upsilon_{CAction}(MA)\\
-  \Upsilon_{CProc}(Proc[NL:=EL]) \defs \tco{P[[}~\Upsilon_{Rename}(NL,EL)~\tco{]]}
+  \Upsilon_{CProc}(Proc[NL:=EL]) \defs \t\tco{P[[}~\Upsilon_{Rename}(NL,EL)~\t\tco{]]}
 
 
 \end{circus}
@@ -583,8 +584,8 @@ mapping_CProc procn spec x
 
 This function maps any renaming, to its equivalent syntax in \CSPM.
 \begin{circus}
-  \Upsilon_{Rename}(x\#xs,y\#xs) \defs \Upsilon_{Comm}(x)~\tco{<- }\Upsilon_{Comm}(y)\tco{ , }\Upsilon_{Rename}(xs,xs) \\
-  \Upsilon_{Rename}([x],[y]=) \defs \Upsilon_{Comm}(x)~\tco{<- }\Upsilon_{Comm}(y)
+  \Upsilon_{Rename}(x\#xs,y\#xs) \defs \Upsilon_{Comm}(x)~\t\tco{<- }\Upsilon_{Comm}(y)\t\tco{ , }\Upsilon_{Rename}(xs,xs) \\
+  \Upsilon_{Rename}([x],[y]=) \defs \Upsilon_{Comm}(x)~\t\tco{<- }\Upsilon_{Comm}(y)
   \end{circus}
 
 \begin{code}
@@ -599,8 +600,8 @@ mapping_rename _ _ _ [] = ""
 \subsection{Mapping Circus Processes Paragraphs}
 NOTE: $CNameSet$ and $ProcZPara$ is not yet implemented
 \begin{circus}
-  \Upsilon_{PPar}(P \circdef Decl \circspot A) \defs~\tco{P(}\Upsilon_{ZGenFilt\_list}(Decl)\tco{) = }\Upsilon_{CAction}(A) \\
-  \Upsilon_{PPar}(P \circdef A) \defs~\tco{P = }\Upsilon_{CAction}(A)
+  \Upsilon_{PPar}(P \circdef Decl \circspot A) \defs~\t\tco{P(}\Upsilon_{ZGenFilt\_list}(Decl)\t\tco{) = }\Upsilon_{CAction}(A) \\
+  \Upsilon_{PPar}(P \circdef A) \defs~\t\tco{P = }\Upsilon_{CAction}(A)
   \end{circus}
 \begin{code}
 mapping_PPar :: ZName -> [ZPara] -> PPar -> String
@@ -650,7 +651,7 @@ mapping_CAction procn spec (CSPUnfAction x (CActionName v))
 \end{code}
 \begin{circus}
 \Upsilon_A(c?x : P \then A)
-\defs~\tco{c?x :\{x | x <- $\delta(c)$,$\Upsilon_{\mathbb{B}}(P(x))$\} -> $\Upsilon_A(A)$}
+\defs~\t\tco{c?x :\{x | x <- $\delta(c)$,$\Upsilon_{\mathbb{B}}(P(x))$\} -> $\Upsilon_A(A)$}
 \end{circus}
 
 \begin{code}
@@ -662,7 +663,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
       np = (mapping_predicate (get_delta_names1 spec) p)
 \end{code}
 \begin{circus}
-\Upsilon_A(c?x\then A)\circdef~\tco{c?x -> } \Upsilon_A(A)
+\Upsilon_A(c?x\then A)\circdef~\t\tco{c?x -> } \Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) CSPSkip)
@@ -675,7 +676,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanInp x]) a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(c!v \then\ A)\circdef~\tco{c!v -> }\Upsilon_A(A)
+\Upsilon_A(c!v \then\ A)\circdef~\t\tco{c!v -> }\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[],tx))]) CSPSkip)
@@ -697,7 +698,7 @@ mapping_CAction procn spec (CSPCommAction (ChanComm c lst) a)
 
 
 \begin{circus}
-\Upsilon_A(c\then\ A)\circdef~\tco{c -> }\Upsilon_A(A)
+\Upsilon_A(c\then\ A)\circdef~\t\tco{c -> }\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPCommAction c a)
@@ -707,7 +708,7 @@ mapping_CAction procn spec (CSPCommAction c a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A \extchoice B) \circdef~\Upsilon_A(A) ~\tco{[]} \Upsilon_A(B)
+\Upsilon_A(A \extchoice B) \circdef~\Upsilon_A(A) ~\t\tco{[]} \Upsilon_A(B)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPExtChoice a b)
@@ -717,7 +718,7 @@ mapping_CAction procn spec (CSPExtChoice a b)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(g \& A)\circdef~\Upsilon_{\mathbb{B}}(g)~\tco{\&}~\Upsilon_A(A)
+\Upsilon_A(g \& A)\circdef~\Upsilon_{\mathbb{B}}(g)~\t\tco{\&}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPGuard g ca)
@@ -732,7 +733,7 @@ mapping_CAction procn spec (CSPGuard g ca)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A \circhide cs) \circdef~\Upsilon_A(A)~\tco{\textbackslash} \Upsilon_{\mathbb{P}^{cs}} (cs)
+\Upsilon_A(A \circhide cs) \circdef~\Upsilon_A(A)~\t\tco{\textbackslash} \Upsilon_{\mathbb{P}^{cs}} (cs)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPHide a cs)
@@ -742,7 +743,7 @@ mapping_CAction procn spec (CSPHide a cs)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A \intchoice B) \circdef~\Upsilon_A(A)~\tco{|\textasciitilde|} \Upsilon_A(B)
+\Upsilon_A(A \intchoice B) \circdef~\Upsilon_A(A)~\t\tco{|\textasciitilde|} \Upsilon_A(B)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPIntChoice a b)
@@ -758,7 +759,7 @@ mapping_CAction procn spec (CSPInterleave ca cb)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A \linter ns1 | ns2 \rinter B) \circdef~\Upsilon_A(A)~\tco{|||}~\Upsilon_A(B)
+\Upsilon_A(A \linter ns1 | ns2 \rinter B) \circdef~\Upsilon_A(A)~\t\tco{|||}~\Upsilon_A(B)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
@@ -768,7 +769,7 @@ mapping_CAction procn spec (CSPNSInter ns1 ns2 a b)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A\lpar ns1|cs|ns2\rpar B)\circdef~\Upsilon_A(A)~\tco{[|}~\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|]}\Upsilon_A(B)
+\Upsilon_A(A\lpar ns1|cs|ns2\rpar B)\circdef~\Upsilon_A(A)~\t\tco{[|}~\Upsilon_{\mathbb{P}^{cs}}(cs)\t\tco{|]}\Upsilon_A(B)
 \end{circus}
 \begin{code}
 
@@ -798,7 +799,7 @@ mapping_CAction procn spec (CSPParAction zn xl)
 % \end{code}
 
 \begin{circus}
-\Upsilon (\circmu X \circspot\ A(X )) \circdef~\tco{let Arec =}~\Upsilon_A(A(A_{rec}))~\tco{within Arec}
+\Upsilon (\circmu X \circspot\ A(X )) \circdef~\t\tco{let Arec =}~\Upsilon_A(A(A_{rec}))~\t\tco{within Arec}
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPRecursion x a)
@@ -811,7 +812,7 @@ mapping_CAction procn spec (CSPRecursion x a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Extchoice x : S \circspot A)\circdef~\tco{[] x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
+\Upsilon_A(\Extchoice x : S \circspot A)\circdef~\t\tco{[] x :}~\Upsilon_{\mathbb{P}}(S)~\t\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[],tx) s)] a)
@@ -824,7 +825,7 @@ mapping_CAction procn spec (CSPRepExtChoice [(Choose (x,[],tx) s)] a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Intchoice x : S \circspot A)\circdef~\tco{|\textasciitilde| x :}~\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
+\Upsilon_A(\Intchoice x : S \circspot A)\circdef~\t\tco{|\textasciitilde| x :}~\Upsilon_{\mathbb{P}}(S)~\t\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 
@@ -871,7 +872,7 @@ mapping_CAction procn spec (CSPRepIntChoice [(Choose (x,[],tx) s)] a)
 % \end{code}
 
 \begin{circus}
-\Upsilon_A(\Interleave x : S \circspot \lpar \emptyset \rpar A) \circdef~\tco{||| x:}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
+\Upsilon_A(\Interleave x : S \circspot \lpar \emptyset \rpar A) \circdef~\t\tco{||| x:}\Upsilon_{\mathbb{P}}(S)~\t\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[],tx) s)] [] a)
@@ -884,7 +885,7 @@ mapping_CAction procn spec (CSPRepInterlNS [(Choose (x,[],tx) s)] [] a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\lpar cs \rpar x : S \circspot \lpar \emptyset \rpar A)\circdef~\tco{[|}\Upsilon_{\mathbb{P}^{cs}}(cs)\tco{|] x :}\Upsilon_{\mathbb{P}}(S)~\tco{@}~\Upsilon_A(A)
+\Upsilon_A(\lpar cs \rpar x : S \circspot \lpar \emptyset \rpar A)\circdef~\t\tco{[|}\Upsilon_{\mathbb{P}^{cs}}(cs)\t\tco{|] x :}\Upsilon_{\mathbb{P}}(S)~\t\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[],tx) s)] [] a)
@@ -899,7 +900,7 @@ mapping_CAction procn spec (CSPRepParalNS cs [(Choose (x,[],tx) s)] [] a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Semi x : S \circspot A)\circdef~\tco{; x :}\Upsilon_{seq}(S)~\tco{@}~\Upsilon_A(A)
+\Upsilon_A(\Semi x : S \circspot A)\circdef~\t\tco{; x :}\Upsilon_{seq}(S)~\t\tco{@}~\Upsilon_A(A)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPRepSeq xs a)
@@ -908,7 +909,7 @@ mapping_CAction procn spec (CSPRepSeq xs a)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(A \circseq B) \circdef~\Upsilon_A(A)~\tco{;}~\Upsilon_A(B)
+\Upsilon_A(A \circseq B) \circdef~\Upsilon_A(A)~\t\tco{;}~\Upsilon_A(B)
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPSeq a b)
@@ -918,7 +919,7 @@ mapping_CAction procn spec (CSPSeq a b)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Skip) \defs~\tco{SKIP}
+\Upsilon_A(\Skip) \defs~\t\tco{SKIP}
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPSkip)
@@ -926,7 +927,7 @@ mapping_CAction procn spec (CSPSkip)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Stop) \defs~\tco{STOP}
+\Upsilon_A(\Stop) \defs~\t\tco{STOP}
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPStop)
@@ -934,7 +935,7 @@ mapping_CAction procn spec (CSPStop)
 \end{code}
 
 \begin{circus}
-\Upsilon_A(\Chaos) \defs~\tco{CHAOS}
+\Upsilon_A(\Chaos) \defs~\t\tco{CHAOS}
 \end{circus}
 \begin{code}
 mapping_CAction procn spec (CSPChaos)
@@ -1231,6 +1232,7 @@ mapping_ZExpr :: [ZName] ->  ZExpr -> String
 
 mapping_ZExpr lst (ZVar ("\\emptyset",[],[])) = "{}"
 mapping_ZExpr lst (ZVar ("\\int",[],[])) = "Int"
+mapping_ZExpr lst (ZVar ("\\nat",_,_)) = "NatValue"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
 mapping_ZExpr lst (ZVar (a,_,t))
@@ -1273,7 +1275,7 @@ mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
   | Subs.isPrefixOf "b_" a ="<"++a++">"
   | Subs.isPrefixOf "sv_" a ="<"++a++">"
   | otherwise = "<y | y <- "++a++">"
-mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple [a,b])) ]) = "< "++(mapping_ZExpr lst a)++">^<"++(mapping_ZExpr lst b)++">"
+mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple xs)) ]) = joinBy "^" $ map (\x -> "< "++(mapping_ZExpr lst x)++">") xs
 mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZELet _ _) = ""

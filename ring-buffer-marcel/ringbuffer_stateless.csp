@@ -6,7 +6,7 @@ include "function_aux.csp"
 --------------------------------
 
 -- The maximum size of the buffer is a strictly positive constant.
-maxbuff = 3
+maxbuff = 2
 
 -- The values buffered are numbers.
 Value = {0..2}
@@ -53,23 +53,20 @@ NatValue = {0..maxbuff}
 
 --------------------------------
 -- The universe of values
-datatype UNIVERSE = 
-    Boolean.Bool | 
+datatype UNIVERSE =
     Nat.NatValue | Val.Value | Cel.CellId
 
 --------------------------------
 -- Conversions
-subtype U_BOOL = Boolean.Bool
 subtype U_NAT = Nat.NatValue
 subtype U_VALUE = Val.Value
 subtype U_CELL = Cel.CellId
 
 value(Nat.v) = v
-value(Boolean.v) = v
 value(Val.v) = v
 value(Cel.v) = v
 
-type(x) = 
+type(x) =
     if x== RingCell_v then U_VALUE
     else if x == Controller_top then U_CELL
     else if x == Controller_bot then U_CELL
@@ -77,7 +74,7 @@ type(x) =
     else if x == Controller_size then U_NAT
     else {}
 
-tag(x) = 
+tag(x) =
     if x== RingCell_v then Val
     else if x == Controller_top then Cel
     else if x == Controller_bot then Cel
@@ -91,19 +88,19 @@ NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
 BINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
 
 --------------------------------
--- MEMORY 
+-- MEMORY
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 MEM_I = {| mset, mget, terminate |}
 
-Memory(b) = 
+Memory(b) =
     ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))
     [] ([] n:dom(b) @ mset.n?x:type(n) -> Memory(over(b,n,x)))
     [] terminate -> SKIP
 
-Memorise(P, b) = 
+Memorise(P, b) =
     ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
 
 --------------------------------
@@ -111,29 +108,29 @@ Memorise(P, b) =
 --------------------------------
 channel rd, wrt: Direction . Value
 
-RingCellMain = 
-    (|~| v:Value @ 
+RingCellMain =
+    (|~| v:Value @
         mget.RingCell_v?vRingCell_v:(type(RingCell_v)) ->
-        mset.RingCell_v!((tag(RingCell_v)).v) -> 
-        SKIP); 
-    (let 
-        MuCellX = 
+        mset.RingCell_v!((tag(RingCell_v)).v) ->
+        SKIP);
+    (let
+        MuCellX =
             (mget.RingCell_v?vRingCell_v:(type(RingCell_v)) ->
                 (
-                rd.req?dumb -> 
-                    rd.ack!(value(vRingCell_v)) -> 
+                rd.req?dumb ->
+                    rd.ack!(value(vRingCell_v)) ->
                     SKIP
-                [] 
-                wrt.req?x -> 
-                    mset.RingCell_v!((tag(RingCell_v)).x) -> 
-                    wrt.ack?dumb -> 
+                []
+                wrt.req?x ->
+                    mset.RingCell_v!((tag(RingCell_v)).x) ->
+                    wrt.ack?dumb ->
                     SKIP
-            )); 
+            ));
             MuCellX
     within
         MuCellX)
-        
-MemoryRingCell = 
+
+MemoryRingCell =
     let restrict(bs) = dres(bs,{RingCell_v})
     within
         |~| b:BINDINGS @ Memorise(RingCellMain, restrict(b))
@@ -169,33 +166,33 @@ let
         mget.Controller_top?vController_top:(type(Controller_top)) ->
         mget.Controller_bot?vController_bot:(type(Controller_bot)) ->
             (
-               (value(vController_size) < maxbuff) & 
-                    input?x -> 
+               (value(vController_size) < maxbuff) &
+                    input?x ->
         ---- THE READING BELOW BREAKS IT BECAUSE WE CAN NO LONGER GUARANTEEE THAT
         ---- value(vController_size) < maxbuff. Hence, incrementing it may take its value
-        ---- outside the range of the channel. 
+        ---- outside the range of the channel.
         --            mget.Controller_size?vController_size:(type(Controller_size)) ->
             (
-                (value(vController_size) == 0) & 
+                (value(vController_size) == 0) &
                     mset.Controller_cache.((tag(Controller_cache)).x) ->
                     mset.Controller_size.((tag(Controller_size)).1) ->
                     SKIP
                 []
-                (value(vController_size) > 0) & 
-                    write.(value(vController_top)).req!x -> 
-                    write.(value(vController_top)).ack?dumb ->  
+                (value(vController_size) > 0) &
+                    write.(value(vController_top)).req!x ->
+                    write.(value(vController_top)).ack?dumb ->
                     mset.Controller_size.((tag(Controller_size)).((value(vController_size))+1)) ->
                     mset.Controller_top.((tag(Controller_top)).(((value(vController_top)) % maxring)+1)) ->
                     SKIP
             )
        []
        (value(vController_size) > 0) &
-            output!(value(vController_cache)) -> 
+            output!(value(vController_cache)) ->
             (
-                (value(vController_size) > 1) & 
-                    (|~| dumb:Value @ 
-                        read.(value(vController_bot)).req.dumb -> 
-                        read.(value(vController_bot)).ack?x -> 
+                (value(vController_size) > 1) &
+                    (|~| dumb:Value @
+                        read.(value(vController_bot)).req.dumb ->
+                        read.(value(vController_bot)).ack?x ->
                         mset.Controller_cache.((tag(Controller_cache)).x) -> SKIP);
                         (mset.Controller_size.((tag(Controller_size)).((value(vController_size)) - 1)) ->
                          mset.Controller_bot.((tag(Controller_bot)).(((value(vController_bot)) % maxring)+1)) ->
@@ -210,8 +207,8 @@ let
         MuControllerX
 within
     MuControllerX
-    
-MemoryController = 
+
+MemoryController =
     let restrict(bs) = dres(bs,{Controller_cache, Controller_size, Controller_top, Controller_bot})
     within
         |~| b:BINDINGS @ Memorise(ControllerMain, restrict(b))
@@ -227,4 +224,3 @@ MemoryDBuffer = (MemoryControllerR [| {| rd_i, wrt_i |} |] MemoryDRing) \ {| rd_
 --------------------------------
 assert ABuffer [FD= MemoryDBuffer
 assert MemoryDBuffer [FD= ABuffer
-
