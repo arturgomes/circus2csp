@@ -123,7 +123,8 @@ Whenever a action parallelism (or interleaving) occurs, we need to avoid conflic
          CircChanSet "MEML" (CChanSet ["lset","lget","lterminate"])]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
-         spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec spec)) spec)
+         spec0 = normal_state_proc spec spec
+         spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec0 spec0)) spec0)
          (zb,para) = (omega_Circus_aux' spec1)
           -- renaming variables for highlighting which state var is from which process
          names = remdups (def_delta_name zb)
@@ -271,7 +272,7 @@ proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
         (xzs,(proc_ref3 xe))
       Nothing ->([],(proc_ref3 e))
   where ref = runRefinementZp e
-proc_ref2 x = error ("can not show this" ++ show x)
+proc_ref2 x = ([],x)
 \end{code}
 \begin{argue}
 	\\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\

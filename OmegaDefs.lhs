@@ -2258,3 +2258,27 @@ mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
   [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
 mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
 \end{code}
+Preprocessing any Z Schema used as a state
+\begin{code}
+-- ZSchemaDef (ZSPlain nn) zs
+-- Process (CProcess "SysClock" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSRef (ZSPlain "SysC
+get_state_from_spec [] n = error "no schema found in the current spec"
+get_state_from_spec ((ZSchemaDef (ZSPlain nn) zs):xs) n
+  | n == nn = zs
+  | otherwise = (get_state_from_spec xs n)
+get_state_from_spec (_:xs) n = (get_state_from_spec xs n)
+
+normal_state_proc spec [] = []
+normal_state_proc spec ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSRef (ZSPlain stn) [] [])) ls ma)))):xs)
+  = ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSchema nstn))  ls ma )))):(normal_state_proc spec xs))
+  where
+    nstn = restruct_state_proc spec $ get_state_from_spec spec stn
+normal_state_proc spec (_:xs) = (normal_state_proc spec xs)
+
+restruct_state_proc spec (ZSchema s) = s
+restruct_state_proc spec (ZS2 ZSAnd s1 s2)
+  = restruct_state_proc spec s1 ++ restruct_state_proc spec s2
+restruct_state_proc spec (ZSRef (ZSPlain s) [] [])
+  = restruct_state_proc spec $ get_state_from_spec spec s
+
+\end{code}
