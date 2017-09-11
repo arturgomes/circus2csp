@@ -534,8 +534,8 @@ zlexz c ls (']':s) = Token L_CLOSEBRACKET (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('\'':s)= Token (L_STROKE "'") (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('?':s) = Token L_CINPUT       (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('!':s) = Token L_COUTPUT      (line ls) c : zlexz (c+1) ls s
-zlexz c ls ('?':s) = Token (L_STROKE "?") (line ls) c : zlexz (c+1) ls s
-zlexz c ls ('!':s) = Token (L_STROKE "!") (line ls) c : zlexz (c+1) ls s
+-- zlexz c ls ('?':s) = Token (L_STROKE "?") (line ls) c : zlexz (c+1) ls s
+-- zlexz c ls ('!':s) = Token (L_STROKE "!") (line ls) c : zlexz (c+1) ls s
 zlexz c ls ('"':s)
   | take 1 rest == "\"" = Token (L_GIVENVAL val) (line ls) c : toks
   | otherwise           = Token (L_ERROR "unclosed string") (line ls) c : toks

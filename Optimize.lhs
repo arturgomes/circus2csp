@@ -71,7 +71,8 @@ import Reorder
 import Data.List
 import Unfold
 import Eval
-
+import Control.Applicative  hiding (many)
+import Control.Monad (liftM, ap, MonadPlus, mplus, mzero)
 -- This does the same as opt_expr, but first it restores
 -- the uniquify invariant (no repeated nested vars).
 -- You MUST call this instead of opt_expr whenever new bound
@@ -111,8 +112,13 @@ type Context = Bool
 newtype OptVisitor a =
     OptVisitor{unWrapOptV :: (Env,Context) -> (Env,Context,a)}
 
+instance Functor OptVisitor where
+    fmap  = liftM
+instance Applicative OptVisitor where
+    pure a = OptVisitor (\(e,c) -> (e,c,a))
+    (<*>) = ap  {- defined in Control.Monad -}
 instance Monad OptVisitor  where
-    return a = OptVisitor (\(e,c) -> (e,c,a))
+    return = pure
     fail msg = OptVisitor (\(e,c) -> (e,c,error msg))
     g >>= h =
 	OptVisitor (\(e,c) -> (let (e2,c2,res) = unWrapOptV g (e,c) in

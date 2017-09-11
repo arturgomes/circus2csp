@@ -27,7 +27,6 @@ import Parse
 import Unfold
 import Optimize
 import Eval
-import BZTT
 import Errors
 import Data.Char
 import Data.List

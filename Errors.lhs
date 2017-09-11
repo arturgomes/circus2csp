@@ -20,7 +20,8 @@ module Errors
 -- the Haskell Prelude, but with more kinds of errors, and better messages.
 --
 where
-import Control.Monad
+import Control.Applicative
+import Control.Monad (liftM, ap)
 import AST
 
 infixr 1 $?
@@ -103,12 +104,14 @@ instance Functor ErrorOr where
   fmap f (Ok v) = Ok (f v)
   fmap f err    = sameError err
 
+instance Applicative ErrorOr where
+  pure v = Ok v
+  (<*>) = ap 
+
 instance Monad ErrorOr where
-  return v = Ok v
+  return = pure
   fail msg = Impossible [MStr msg]
-  p >>= q  = if isOk p then q (fromOk p) else sameError p
-
-
+  p >>= q =  if isOk p then q (fromOk p) else sameError p
 isOk :: ErrorOr a -> Bool
 isOk (Ok _) = True
 isOk _      = False

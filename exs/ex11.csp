@@ -1,6 +1,0 @@
--- ex11.csp
-TIME = {1..10}
-channel a, b, c
-channel d : TIME
-
-B = d?y : {x|x<-TIME, x<3} -> SKIP

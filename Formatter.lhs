@@ -321,7 +321,7 @@ print_expr pi (ZBinding lvl)
 print_expr pi (ZFree0 v) = print_var pi v
 print_expr pi (ZFree1 v e) = print_expr pi (ZCall (ZVar v) e)
 print_expr pi (ZFreeType v bl) = print_var pi v
-print_expr pi _      = text "Not Implemented (print_expr)"
+-- print_expr pi _      = text "Not Implemented (print_expr)"
 
 
 print_bindmem :: PrintInfo -> (ZVar, ZValue) -> Doc
@@ -457,7 +457,7 @@ print_pred pi (ZMember e1 e2)
   =  plevel pi Predu (print_inrel pi{preced=Predu} e1 e2)
 print_pred pi (ZPSchema se)
   =  plevel pi Predu (print_sexpr pi{preced=Predu} se)
-print_pred pi _      = text "Not Implemented (print_pred)"
+-- print_pred pi _      = text "Not Implemented (print_pred)"
 
 
 print_inrel :: PrintInfo -> ZExpr -> ZExpr -> Doc
@@ -528,7 +528,7 @@ print_sexpr pi (ZSExists_1 st se)
   =  plevel pi SExpr (text "\\exists_1" <+> print_squantify pi st se)
 print_sexpr pi (ZSForall st se)
   =  plevel pi SExpr (text "\\forall" <+> print_squantify pi st se)
-print_sexpr pi _      = text "Not Implemented (print_sexpr)"
+-- print_sexpr pi _      = text "Not Implemented (print_sexpr)"
 
 
 print_squantify :: PrintInfo -> [ZGenFilt] -> ZSExpr -> Doc

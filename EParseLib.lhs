@@ -57,9 +57,9 @@ module EParseLib
     parse, token, natural, integer, symbol, identifier
    )
 where
-
+import Control.Applicative  hiding (many)
+import Control.Monad (liftM, ap, MonadPlus, mplus, mzero)
 import Data.Char
-import Control.Monad
 import AST
 infixr 5 +++
 
@@ -168,14 +168,16 @@ takeUntil1 p (x:xs)
       | otherwise =  x : takeUntil1 p xs
 
 
---instance Functor (EParser toks) where
---   -- map         :: (a -> b) -> (EParser a -> EParser b)
---   fmap f (P p)   = P (\inp -> Parsed [(f v, out) | (v,out) <- p inp]) ??
-
-instance Monad (EParser tok) where
-  return v = P (\toks -> ParseResult{parses=[(v,[],toks)],
+instance Functor (EParser toks) where
+  fmap  = liftM
+instance Applicative (EParser tok) where
+  pure v = P (\toks -> ParseResult{parses=[(v,[],toks)],
 				     seencut=False,
 				     besterror=no_error})
+  (<*>) = ap
+
+instance Monad (EParser tok) where
+  return = pure
   fail msg = P (\toks -> ParseResult{parses=[],
 				     seencut=False,
 				     besterror=parse_error toks msg})
@@ -190,17 +192,19 @@ instance Monad (EParser tok) where
 						   : map besterror qout)
 				  })
 
+instance Alternative (EParser tok) where
+  (<|>) (P p) (P q)= P (\toks -> choose (p toks) (q toks))
+            where
+            choose r@ParseResult{seencut=True} _ = r
+            choose pout qout
+              = ParseResult{parses    = parses pout ++ parses qout,
+        		    seencut   = seencut pout || seencut qout,
+        		    besterror = choose_error [besterror pout, besterror qout]}
+  empty = P (\toks -> error_parse toks)
+
 instance MonadPlus (EParser tok) where
-  mzero
-    = P (\toks -> error_parse toks)
-  (P p) `mplus` (P q)
-    = P (\toks -> choose (p toks) (q toks))
-    where
-    choose r@ParseResult{seencut=True} _ = r
-    choose pout qout
-      = ParseResult{parses    = parses pout ++ parses qout,
-		    seencut   = seencut pout || seencut qout,
-		    besterror = choose_error [besterror pout, besterror qout]}
+  mzero = empty
+  mplus = (<|>)
 
 
 -- Other primitive parser combinators ---------------------------------

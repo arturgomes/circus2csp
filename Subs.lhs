@@ -742,7 +742,6 @@ free_var_CParameter [ChanInp x] = varset_from_zvars [(x,[],[])]
 free_var_CParameter [ChanDotExp x] = free_var_ZExpr x
 free_var_CParameter [ChanOutExp x] = free_var_ZExpr x
 free_var_CParameter [ChanInpPred _ x] = free_var_ZPred x
-free_var_CParameter [_] = empty_varset
 free_var_CParameter ((ChanInp x):xs)
   = (varset_from_zvars [(x,[],[])]) `union_varset` (free_var_CParameter xs)
 free_var_CParameter ((ChanDotExp x):xs)
@@ -751,7 +750,6 @@ free_var_CParameter ((ChanOutExp x):xs)
   = (free_var_ZExpr x) `union_varset` (free_var_CParameter xs)
 free_var_CParameter ((ChanInpPred _ x):xs)
   = (free_var_ZPred x) `union_varset` (free_var_CParameter xs)
-free_var_CParameter (_:xs) = (free_var_CParameter xs)
 \end{code}
 
 

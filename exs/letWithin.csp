@@ -1,4 +1,0 @@
-channel a
-MyProc =
-  let A1(x) = let xA1(x) = a -> xA1(x-1) within xA1(x)
-  within A1(5)

@@ -51,6 +51,21 @@ The result of the translation will produce a file *.csp with the new spec ready 
 # CHANGELOG
 
 ##
+New version 0.7b - September 2017
+
+I've removed all the unused files from JAZA and also fixed the migration to GHC 7.10. Now we don't get those weird messages of "No instance for (Applicative ...)".
+##
+New version 0.6b - September 2017
+
+Now every variable in the AST has a third field, its type. The translator
+will be in charge of filling all those fields with the respective type
+of the variable.
+Moreover, now we have a correct implementation of the multiple bindings
+since the Circus specification. What it was doing before was to
+translate into CSP with the definitions being made directly into the CSP text.
+Now it comes from the AST and the mapping functions.
+
+##
 New version 0.5
 Now that we can load the files without the extension .tex, we produce
 two other files : .hc and .csp on the same folder of the .tex file:
@@ -61,14 +76,3 @@ clashing.
 We also are able to have tailored Memory and Memorise actions within
 a CSP process with respect only to the types used within the scope
 of that process.
-
-##
-New version 0.6 - September 2017
-
-Now every variable in the AST has a third field, its type. The translator
-will be in charge of filling all those fields with the respective type
-of the variable.
-Moreover, now we have a correct implementation of the multiple bindings
-since the Circus specification. What it was doing before was to
-translate into CSP with the definitions being made directly into the CSP text.
-Now it comes from the AST and the mapping functions.

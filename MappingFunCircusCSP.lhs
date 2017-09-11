@@ -12,7 +12,7 @@ where
 import AST
 import Subs
 import CRL
-import FormatterToCSP
+import Formatter
 import Data.List
 import Data.Text hiding (map,concat)
 import Data.Char hiding (toUpper, toTitle)

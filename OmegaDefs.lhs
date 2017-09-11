@@ -314,8 +314,9 @@ get_ZVar_st x
 \subsection{$is\_ZVar\_st$}
 
 \begin{code}
-is_ZVar_st a = isPrefixOf "sv" a
-is_ZVar_st a = isPrefixOf "lv" a
+is_ZVar_st a = isPrefixOf "sv" a || isPrefixOf "lv" a
+
+is_ZVar_st' a "" = False
 is_ZVar_st' a procn = isPrefixOf (join_name "sv" procn) a
 \end{code}
 
@@ -731,8 +732,6 @@ renameRecursive_CAction name (CSPParAction nm xp)
   | otherwise = (CSPParAction nm xp)
 renameRecursive_CAction name (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
-renameRecursive_CAction name (CSPRecursion n c)
- = (CSPRecursion n (renameRecursive_CAction name c))
 renameRecursive_CAction name (CSPRecursion n c)
  = (CSPRecursion n (renameRecursive_CAction name c))
 renameRecursive_CAction name (CSPUnParAction namea c nm)
@@ -2173,8 +2172,7 @@ upd_type_ZVar ((a,b,c):xs) (x,y,z)
   | a == x = (a,b,c)
   | (join_name "v" a) == x = ((join_name "v" a),b,c)
   | otherwise = upd_type_ZVar xs (x,y,z)
-upd_type_ZVar (_:xs) (x,y,z)
-    = upd_type_ZVar xs (x,y,z)
+
 
 upd_type_ZExpr lst (ZVar v)
  = ZVar (upd_type_ZVar lst v)

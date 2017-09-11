@@ -1,7 +1,0 @@
-channel a, b, c, d
-
-A = (a -> b -> SKIP)
-B = (a -> b -> SKIP)
-C = A; B
-
-assert C [FD= A;A

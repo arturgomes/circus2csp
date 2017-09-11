@@ -671,7 +671,6 @@ class (Monad m) => Visitor m where
     visitBinder    :: [ZGenFilt] -> ZTerm -> m ([ZGenFilt],ZTerm,Env)
     visitGenFilt   :: ZGenFilt -> m ZGenFilt
     visitTerm      :: ZTerm -> m ZTerm
-    visitCDecl      :: CDecl -> m CDecl
     -- visitPara ??
 
     -- Methods for manipulating the environment,
@@ -702,7 +701,6 @@ class (Monad m) => Visitor m where
     visitBinder = traverseBinder
     visitGenFilt = traverseGenFilt
     visitTerm = traverseTerm
-    -- visitCDecl = traverseCDecl
 
     -- Default environment implementations.
     -- Minimum defs required are: currEnv and setEnv.

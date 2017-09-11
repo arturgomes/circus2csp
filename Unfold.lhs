@@ -55,6 +55,8 @@ import FiniteSets(emptyset)
 import Data.List
 import Data.Maybe
 import Subs
+import Control.Applicative  hiding (many)
+import Control.Monad (liftM, ap, MonadPlus, mplus, mzero)
 
 unfoldexpr :: Env -> ZExpr  -> ErrorOr ZExpr
 unfoldexpr env e =
@@ -101,9 +103,16 @@ newtype UnfoldVisitor a = UnfoldVisitor{doUnfold :: Env -> ErrorOr(Env,a)}
 
 instance Show a => Show (UnfoldVisitor a) where
     show u = show (doUnfold u (empty_env []))
+instance Functor UnfoldVisitor where
+    fmap  = liftM
+instance Applicative UnfoldVisitor where
+    pure a = UnfoldVisitor (\s -> return(s,a))
+
+    (<*>) = ap  {- defined in Control.Monad -}
+
 
 instance Monad UnfoldVisitor  where
-    return a = UnfoldVisitor (\s -> return(s,a))
+    return = pure
     fail msg = UnfoldVisitor (\s -> IllFormed [MStr msg])
     g >>= h =  UnfoldVisitor (\s -> res s)
 	       where

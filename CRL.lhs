@@ -10,9 +10,6 @@ where
 import AST
 import OmegaDefs
 import Subs
-import Data.List hiding (union, intersect)
-import Data.Maybe
-import Data.Time
 
 \end{code}
 }
@@ -118,6 +115,8 @@ crefineZp :: [RFun ZPara]
                  -> ZPara
                  -> [Refinement ZPara]
                  -> [Refinement ZPara]
+
+crefineZp _ [] _ _ = [None]
 crefineZp _ [r] e steps =
     reverse (results:steps)
     where
@@ -130,6 +129,7 @@ crefineZp lst (r:rs) e steps =
           True -> crefineZp lst rs e steps
           False -> crefineZp lst lst e' (ei:steps)
       None -> crefineZp lst rs e steps
+      _ -> [None]
     where rsx = applyZPara r e
 
 refineZp :: [RFun ZPara] -> ZPara -> [Refinement ZPara]
@@ -141,9 +141,11 @@ First we get the bits from the $Refinement$ record
 \begin{code}
 get_origZp :: Refinement ZPara -> ZPara
 get_origZp (Done{orig=Just a,refined=_,proviso=_}) = a
+get_origZp _ = error "Unable to find the original ZPara on the refinement"
 get_refinedZp :: Refinement ZPara -> ZPara
 get_refinedZp (Done{orig=_,refined=Just b,proviso=_}) = b
 get_refinedZp (Done{orig=Just a,refined=Nothing,proviso=_}) = a
+get_refinedZp _ = error "Unable to find the refined ZPara on the refinement"
 get_provisoZp :: Refinement ZPara -> [ZPred]
 get_provisoZp None = []
 get_provisoZp (Done{orig=_,refined=_,proviso=c}) = c
@@ -156,12 +158,12 @@ testproc1 = (Process (CProcess "P" (ProcDef (ProcStalessMain [CParAction "L" (Ci
 testproc2 :: ZPara
 testproc2 = (Process (CProcess "AChrono" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CActionCommand (CAssign [("sec",[],[]),("min",[],[])] [ZVar ("ms",[],[]),ZInt 0]))))))))
 
-testcac0 = (Process (CProcess "LocWakeUp" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "WState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[])),Choose ("buzz",[],[]) (ZVar ("ALARM",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))))) )
-testcac2 = (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))
-testvac1 = [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))]
-testcac1 =  (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))
+-- testcac0 = (Process (CProcess "LocWakeUp" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "WState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[])),Choose ("buzz",[],[]) (ZVar ("ALARM",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))))) )
+-- testcac2 = (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))
+-- testvac1 = [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))]
+-- testcac1 =  (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))
 
-test2 = (ZAnd (ZAnd (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_buzz_U_ALA_U_ALA",[],[])) (ZVar ("ALARM",[],[]))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_min_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[])))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_sec_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[]))))
+-- test2 = (ZAnd (ZAnd (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_buzz_U_ALA_U_ALA",[],[])) (ZVar ("ALARM",[],[]))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_min_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[])))) (ZMember (ZVar ("sv_LocWakeUp_sv_LocWakeUp_sec_U_RAN_U_RAN",[],[])) (ZVar ("RANGE",[],[]))))
 \end{code}
 
 \section{Action Refinement}
@@ -304,7 +306,6 @@ crl_variableBlockIntroduction a x t
           proviso=[prov]}
   where
     prov = (ZNot (ZMember (ZVar x) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a))))
-crl_variableBlockIntroduction _ _ _ = None
 \end{code}
 \begin{code}
 crl_variableBlockIntroduction_backwards :: CAction -> Refinement CAction
@@ -710,8 +711,8 @@ crl_parallelismDeadlocked1
       ref = (CSPNSParal ns1 (CChanSet cs) ns2
               CSPStop
               (CSPCommAction (ChanComm c2 y) a2))
-crl_parallelismDeadlocked1 e@(CSPNSParal ns1 (CChanSet cs) ns2
-                              CSPStop (CSPCommAction c2 a2))
+crl_parallelismDeadlocked1 e@(CSPNSParal _ _ _
+                              CSPStop (CSPCommAction _ _))
   = Done{orig = Just e, refined = Just ref, proviso=[]}
     where
       ref = CSPStop
@@ -727,7 +728,7 @@ crl_parallelismDeadlocked1 _ = None
 \end{lawn}
 \begin{code}
 crl_seqStopZero :: CAction -> Refinement CAction
-crl_seqStopZero e@(CSPSeq CSPStop a)
+crl_seqStopZero e@(CSPSeq CSPStop _)
   =  Done{orig = Just e, refined = Just CSPStop,proviso=[]}
 crl_seqStopZero _ = None
 \end{code}
@@ -753,7 +754,7 @@ crl_communicationParallelismDistribution
         (CSPCommAction (ChanComm c [ChanOutExp e]) a1)
         (CSPCommAction (ChanComm c1 [ChanInp x1])
           (CSPParAction a2 [ZVar (x,[],tx1)])))
-  = case pred of
+  = case pred1 of
       True  -> Done{orig = Just ei, refined = Just ref, proviso=[p1,p2]}
       False -> None
     where
@@ -761,7 +762,7 @@ crl_communicationParallelismDistribution
        p2 = (ZNot (ZMember (ZVar (x,[],tx1)) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [ZVar (x,[],tx1)])))))
        ref = (CSPCommAction (ChanComm c [ChanDotExp e])
                     (CSPNSParal ns1 (CChanSet cs) ns2 a1 (CSPParAction a2 [e])))
-       pred = (c == c1 && x == x1)
+       pred1 = (c == c1 && x == x1)
 crl_communicationParallelismDistribution _ = None
 \end{code}
 % Law 24 (Channel extension 3$^*$)
@@ -780,6 +781,8 @@ crl_communicationParallelismDistribution _ = None
 TODO: implement proviso
 \end{lawn}
 \begin{code}
+crl_channelExtension3 :: CAction
+                               -> ZName -> ZName -> Refinement CAction
 crl_channelExtension3 ei@(CSPHide
           (CSPNSParal ns1 (CChanSet cs1) ns2 a1 (CActionCommand (CVarDecl [Choose (e,[],tx1) t1] mact))) (CChanSet cs2)) c x
   =  Done{orig = Just ei, refined = Just ref, proviso=[p1,p2,p3]}
@@ -796,15 +799,16 @@ crl_channelExtension3 ei@(CSPHide
 crl_channelExtension3 _ _ _= None
 \end{code}
 \begin{code}
-crl_channelExtension3_backwards ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c2 [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c1 [ChanInp x]) (CSPParAction a2 [ZVar (x1,[],t1)]))) (CChanSet cs2))
-  = case pred of
+crl_channelExtension3_backwards :: CAction -> Refinement CAction
+crl_channelExtension3_backwards ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 (CSPCommAction (ChanComm c2 [ChanOutExp (e)]) a1) (CSPCommAction (ChanComm c1 [ChanInp x]) (CSPParAction a2 [ZVar (x1,[],_)]))) (CChanSet cs2))
+  = case pred1 of
       True -> Done{orig = Just ei, refined = Just ref, proviso=[p1,p2,p3]}
       False -> None
     where
        p1 = (ZNot (ZMember (ZVar (c1,[],[])) (ZSetDisplay $ zname_to_zexpr cs1)))
        p2 = (ZNot (ZMember (ZVar (c2,[],[])) (ZSetDisplay $ zname_to_zexpr cs2)))
        p3 = (ZNot (ZMember (ZVar (x,[],[])) (ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars(free_var_CAction (CSPParAction a2 [e])))))
-       pred = (c1 == c2) && (x == x1)
+       pred1 = (c1 == c2) && (x == x1)
        ref = (CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 (CSPParAction a2 [e])) (CChanSet cs2))
 crl_channelExtension3_backwards _ = None
 \end{code}
@@ -826,6 +830,7 @@ crl_channelExtension3_backwards _ = None
   \label{law:channelExtension4}
 \end{lawn}
 \begin{code}
+crl_channelExtension4 :: CAction -> Comm -> Refinement CAction
 crl_channelExtension4 ei@(CSPHide (CSPNSParal ns1 (CChanSet cs1) ns2 a1 a2) (CChanSet cs2)) (ChanComm c [ChanOutExp (e)])
   =  Done{orig = Just ei, refined = Just ref, proviso=[p1,p2]}
     where
@@ -851,7 +856,7 @@ crl_promVarState
   e@(ProcMain
       (ZSchemaDef (ZSPlain st) s)
       [CParAction l (CircusAction (CActionCommand (CValDecl [Choose (x,[],tx1) (ZVar (t,[],tx2))] a)))]
-      (CActionCommand (CValDecl [Choose (x1,[],tx3) (ZVar (t1,[],tx4))] ma)))
+      (CActionCommand (CValDecl [Choose (x1,[],_) (ZVar (t1,[],_))] ma)))
   = case (x==x1 && t == t1) of
         True -> Done{orig = Just e, refined = Just ref, proviso=[]}
         False -> None
@@ -886,6 +891,7 @@ crl_promVarState2
         ref = (ProcMain (ZSchemaDef st (ZSchema [Choose v1 t1]))
                 [CParAction lact (ParamActionDecl xs act)]
                 (CActionCommand (CVarDecl ys mact)))
+crl_promVarState2 _ _ = None
 \end{code}
 \begin{lawn}[Parallelism composition unit$^*$]\sl
     \begin{circus}
@@ -1016,7 +1022,6 @@ crl_inputPrefixParallelismDistribution2
       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr cs)))
       p2 = (ZNot (ZMember (ZVar (c,[],[])) (ZSetDisplay $ zname_to_zexpr(usedV a2))))
       p3 = (ZMember (ZTuple [ZSetDisplay (initials a2),ZSetDisplay (zname_to_zexpr cs)]) (ZVar ("\\subseteq",[],[])))
-      p4 = "a2 is deterministic"
 crl_inputPrefixParallelismDistribution2 _ = None
 \end{code}
 % Law 34 (Prefix/$Skip$$^*$)
@@ -1049,12 +1054,15 @@ crl_inputPrefixParallelismDistribution2 _ = None
 -- Basically, it searches for a CSPSkip within a prefixed action
 -- and then removes the CSPSkip replacing it with a2, the RHS of
 -- a CSPSeq action.
-endPrefWithSkip (CSPCommAction c CSPSkip) = True
-endPrefWithSkip (CSPCommAction c c1) = endPrefWithSkip c1
+endPrefWithSkip :: CAction -> Bool
+endPrefWithSkip (CSPCommAction _ CSPSkip) = True
+endPrefWithSkip (CSPCommAction _ c1) = endPrefWithSkip c1
 endPrefWithSkip _ = False
 
+remPrefSkip :: CAction -> CAction -> CAction
 remPrefSkip a2 (CSPCommAction c CSPSkip) = (CSPCommAction c a2)
 remPrefSkip a2 (CSPCommAction c c1) = (CSPCommAction c (remPrefSkip a2 c1))
+remPrefSkip a2 a1 = (CSPSeq a1 a2)
 
 crl_prefixSkip_backwards :: CAction -> Refinement CAction
 crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
@@ -1314,8 +1322,8 @@ crl_hidingCombination _ = None
 
 crl_assignmentRemoval :: CAction -> Refinement CAction
 crl_assignmentRemoval ei@(CSPSeq
-                            (CActionCommand (CAssign [(x,[],t1)] [ZVar (e,[],t2)]))
-                            (CActionCommand (CValDecl [Choose (x1,[],t3) (ZVar (t,[],t4))] a)))
+                            (CActionCommand (CAssign [(x,[],_)] [ZVar (e,[],t2)]))
+                            (CActionCommand (CValDecl [Choose (x1,[],_) (ZVar (t,[],t4))] a)))
   = case x == x1 of
       True -> Done{orig = Just ei, refined = Just ref, proviso=[prov]}
       _ -> None
@@ -1363,8 +1371,8 @@ TODO: implement proviso
 \begin{code}
 crl_variableSubstitution2 :: CAction -> ZName -> Refinement CAction
 crl_variableSubstitution2
-    e@(CActionCommand (CVarDecl [Include (ZSRef (ZSPlain x) [] [])]
-             (CSPParAction a [ZVar (x1,[],t)]))) y
+    e@(CActionCommand (CVarDecl [Include (ZSRef (ZSPlain _) [] [])]
+             (CSPParAction a [ZVar _]))) y
   =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
       ref = (CActionCommand (CVarDecl [Include (ZSRef (ZSPlain y) [] [])]
@@ -1517,7 +1525,7 @@ crl_assignmentSkip :: CAction -> Refinement CAction
 crl_assignmentSkip
     ei@(CActionCommand (CValDecl
         [Include (ZSRef (ZSPlain x) [] [])]
-        (CActionCommand (CAssign [(x1,[],t2)] [ZVar (e,[],t)]))))
+        (CActionCommand (CAssign [_] [ZVar _]))))
   =  Done{orig = Just ei, refined = Just ref, proviso=[]}
     where
       ref = (CActionCommand (CValDecl
@@ -1568,7 +1576,7 @@ usedC _ = []
 \end{code}Function for $usedV(A)$
 \begin{code}
 usedV :: CAction -> [a]
-usedV (CSPCommAction x c) = [] ++ usedV c
+usedV (CSPCommAction _ c) = [] ++ usedV c
 usedV (CSPGuard _ c) = usedV c
 usedV (CSPSeq ca cb) = (usedV ca) ++ (usedV cb)
 usedV (CSPExtChoice ca cb) = (usedV ca) ++ (usedV cb)
@@ -1597,9 +1605,9 @@ getCommName (ChanGenComm n _ _) = ZVar (n,[],[])
 Function used for $initials$
 \begin{code}
 initials :: CAction -> [ZExpr]
-initials (CSPCommAction x c) = [getCommName x]
+initials (CSPCommAction x _) = [getCommName x]
 initials (CSPGuard _ c) = initials c
-initials (CSPSeq ca cb) = (initials ca)
+initials (CSPSeq ca _) = (initials ca)
 initials (CSPExtChoice ca cb) = (initials ca) ++ (initials cb)
 initials (CSPIntChoice ca cb) = (initials ca) ++ (initials cb)
 initials (CSPNSParal _ _ _ ca cb) = (initials ca) ++ (initials cb)
@@ -1636,13 +1644,14 @@ trace (CSPSkp)
 Function used for $deterministic$
 \begin{code}
 deterministic :: CAction -> Maybe [Char]
-deterministic (CSPCommAction x c) = deterministic c
+deterministic (CSPCommAction _ c) = deterministic c
 deterministic (CSPGuard _ c) = deterministic c
 deterministic (CSPSeq ca cb) =
   case (da == Nothing)
     && (da == db)
     of
-        false -> Just "Deterministic"
+        False -> Just "Deterministic"
+        True -> Nothing
   where
     da = (deterministic ca)
     db = (deterministic cb)
@@ -1651,19 +1660,21 @@ deterministic (CSPExtChoice ca cb) =
   case (da == Nothing)
     && (da == db)
     of
-        false -> Just "Deterministic"
+        False -> Just "Deterministic"
+        True -> Nothing
   where
     da = (deterministic ca)
     db = (deterministic cb)
 
-deterministic (CSPIntChoice ca cb) = Nothing
-deterministic (CSPNSParal _ _ _ ca cb) = Nothing
-deterministic (CSPParal _ ca cb) =  Nothing
+deterministic (CSPIntChoice _ _) = Nothing
+deterministic (CSPNSParal _ _ _ _ _) = Nothing
+deterministic (CSPParal _ _ _) =  Nothing
 deterministic (CSPNSInter _ _ ca cb) =
   case (da == Nothing)
     && (da == db)
     of
-        false -> Just "Deterministic"
+        False -> Just "Deterministic"
+        True -> Nothing
   where
     da = (deterministic ca)
     db = (deterministic cb)
@@ -1672,17 +1683,18 @@ deterministic (CSPInterleave ca cb) =
   case (da == Nothing)
     && (da == db)
     of
-        false -> Just "Deterministic"
+        False -> Just "Deterministic"
+        True -> Nothing
   where
     da = (deterministic ca)
     db = (deterministic cb)
-deterministic (CSPHide c _) = Nothing
+deterministic (CSPHide _ _) = Nothing
 deterministic (CSPRecursion _ c) = deterministic c
 deterministic (CSPRepSeq _ c) = deterministic c
 deterministic (CSPRepExtChoice _ c) = deterministic c
-deterministic (CSPRepIntChoice _ c) = Nothing
-deterministic (CSPRepParalNS _ _ _ c) = Nothing
-deterministic (CSPRepParal _ _ c) = Nothing
+deterministic (CSPRepIntChoice _ _) = Nothing
+deterministic (CSPRepParalNS _ _ _ _) = Nothing
+deterministic (CSPRepParal _ _ _) = Nothing
 deterministic (CSPRepInterlNS _ _ c) = deterministic c
 deterministic (CSPRepInterl _ c) = deterministic c
 deterministic CSPSkip = Just "Deterministic"
@@ -1693,7 +1705,7 @@ isDeterministic :: CAction -> [Char]
 isDeterministic a
   = case x of
       Just "Deterministic" -> "Deterministic"
-      Just x               -> "undefined"
+      Just _               -> "undefined"
       Nothing              -> "Non-deterministic"
     where x = (deterministic a)
 \end{code}
@@ -1845,10 +1857,9 @@ applyCAction r e@(CActionCommand (CIf g))
  = case r e of
      r'@(Done{orig = _or, refined = _re, proviso=_pr}) -> r'
      None
-      -> case applyCActionsIf r g of
+      -> (case applyCActionsIf r g of
           (a,b) ->
-              Done{orig = Just e, refined = Just (CActionCommand (CIf a)), proviso=b}
-          _ -> None
+              Done{orig = Just e, refined = Just (CActionCommand (CIf a)), proviso=b})
 {-
 applyCAction r e@(CSPSeq a1 a2) = case r e of
      r'@(Done{orig = _or, refined = _re, proviso=_pr}) -> r'
@@ -2080,11 +2091,9 @@ applyCAction r e
 Applies a refinement law into a list of actions.
 \begin{code}
 applyCActions :: RFun CAction -> [CAction] -> [Refinement CAction]
-applyCActions r [] = []
-applyCActions r [e]
- = [applyCAction r e]
-applyCActions r (e:es)
- = (applyCAction r e):(applyCActions r es)
+applyCActions _ [] = []
+applyCActions r [e] = [applyCAction r e]
+applyCActions r (e:es) = (applyCAction r e):(applyCActions r es)
 \end{code}
 \subsection{Applying to a list of guarded actions -- $applyCActionsIf$}
 Applies a refinement law into a list of actions.
@@ -2105,8 +2114,8 @@ This will control if something was refined or not
 isRefined :: t-> Refinement t -> t
 isRefined a b
   = case b of
-      (Done{orig=_, refined=Just e', proviso=z}) -> e'
-      None -> a
+      (Done{orig=_, refined=Just e', proviso=_}) -> e'
+      _ -> a
 isRefined' :: t-> Maybe t -> t
 isRefined' a b
   = case b of
@@ -2123,18 +2132,19 @@ crefine :: [RFun CAction]
                  -> CAction
                  -> [Refinement CAction]
                  -> [Refinement CAction]
-crefine lst [r] e steps =
+crefine _ [] _ _ = [None]
+crefine _ [r] e steps =
     reverse (results:steps)
     where
       results = applyCAction r e
 
 crefine lst (r:rs) e steps =
     case rsx of
-      ei@(Done{orig=Just a, refined=Just e', proviso=z}) ->
+      ei@(Done{orig=Just a, refined=Just e', proviso=_}) ->
         case a==e' of
           True -> crefine lst rs e steps
           False -> crefine lst lst e' (ei:steps)
-      None -> crefine lst rs e steps
+      _ -> crefine lst rs e steps
     where rsx = applyCAction r e
 
 refine :: [RFun CAction] -> CAction -> [Refinement CAction]
@@ -2143,9 +2153,9 @@ refine f g = crefine f f g []
 \begin{code}
 getRef ::  [Refinement t] -> Maybe t
 getRef [] = Nothing
-getRef [e@(Done{orig=x, refined=y, proviso=z})] = y
+getRef [(Done{orig=_, refined=y, proviso=_})] = y
 getRef [_] = Nothing
-getRef [e@(Done{orig=x, refined=y, proviso=z}),_] = y
+getRef [(Done{orig=_, refined=y, proviso=_}),_] = y
 getRef (_ : xs) = getRef xs
 \end{code}
 
@@ -2166,36 +2176,52 @@ First we get the bits from the $Refinement$ record
 \begin{code}
 get_orig :: Refinement CAction -> CAction
 get_orig (Done{orig=Just a,refined=_,proviso=_}) = a
+get_orig _ = error "Unable to get the Action refinement original CAction"
+
 get_refined :: Refinement CAction -> CAction
 get_refined (Done{orig=_,refined=Just b,proviso=_}) = b
 get_refined (Done{orig=Just a,refined=Nothing,proviso=_}) = a
+get_refined _ = error "Unable to get the refined CAction"
+
 get_proviso :: Refinement CAction -> [ZPred]
 get_proviso None = []
 get_proviso (Done{orig=_,refined=_,proviso=c}) = c
 \end{code}
+
 Then we define some printing functions, so the refinement can look better on screen.
+
 \begin{code}
+print_proviso :: Show a => [a] -> [Char]
 print_proviso [] = "none"
 print_proviso [c] = show c
 print_proviso (c:cs) = (show c) ++ "] and also [" ++ (print_proviso cs)
 
+print_ref_head :: Refinement CAction -> [Char]
 print_ref_head c = "LHS\n=\n"
                  ++ (show (get_orig c)) ++"\n\n=   provided["
                  ++ (print_proviso (get_proviso c)) ++"]\n\n"
                  ++ (show (get_refined c)) ++"\n\n"
+
+print_ref_steps :: Refinement CAction -> [Char]
 print_ref_steps c = "=   provided["
                  ++ (print_proviso (get_proviso c)) ++"]\n\n"
                  ++ (show (get_refined c)) ++ "\n\n"
 \end{code}
 Finally, we define a $print\_ref$ function which prints out on screen the refinement. We can take that to a file with $print\_file\_ref$.
 \begin{code}
+
+print_ref :: [Refinement CAction] -> [Char]
 print_ref [] = "No refinement was performed\n"
 print_ref [None] = "No refinement was performed\n"
 print_ref [x] = print_ref_head x
 print_ref (x:xs) = print_ref_head x ++ (print_ref' xs)
+
+print_ref' :: [Refinement CAction] -> [Char]
 print_ref' [] = "=\nRHS"
 print_ref' [x] = print_ref_steps x
 print_ref' (x:xs) = print_ref_steps x ++ (print_ref' xs)
+
+print_file_ref :: FilePath -> CAction -> IO ()
 print_file_ref fname example = writeFile fname $ print_ref $runStepRefinement example
 
 \end{code}

@@ -12,44 +12,33 @@ TESTS=eval_test unfold_test lexer_test parse_test formatter_test subs_test \
       reorder_test
 PROGS=jaza clpstests
 
-COREOBJ=AST.o Errors.o MyDebug.o
+COREOBJ=AST.o Errors.o
 LEXEROBJ=EParseLib.o Lexer.o
 PARSEOBJ=$(LEXEROBJ) Parse.o
 EVALOBJ=$(PARSEOBJ) FiniteSets.o Subs.o Reorder.o SetSize.o Eval.o
 ANIMOBJ=$(COREOBJ) $(EVALOBJ) Formatter.o Animate.o Optimize.o Unfold.o MappingFunStatelessCircus.o
-CLPSOBJ=CLPSType.o CLPSWrite.o BZTT.o
 
 all: $(PROGS) $(TESTS)
 
 help:
 	@echo "Possible make targets include:"
-	@echo "  jaza   -- compile jaza with GHC"
-	@echo "  wc     -- count size of source files"
-	@echo "  test   -- compile and run all unit tests"
-	@echo "  srcrel -- make a source release into ../jaza_source.tgz"
-	@echo "  binrel -- make a Linux binary release into ../jaza_linux.tgz"
-	@echo "  winrel -- make a Windows release into ../jaza_winxp.zip"
+	@echo "  circus   -- compile jaza with GHC"
 	@echo "  clean  -- remove generated files"
 	@echo "  tags   -- make TAGS file for Emacs"
 
 
-CLPSTESTOBJ=$(ANIMOBJ) $(CLPSOBJ) CLPSTests.o
-clpstests: $(CLPSTESTOBJ)
-	ghc $(GHCFLAGS) -o clpstests --make CLPSTests.lhs
 
 # Note: -lHSutil -lreadline -lncurses flags have to go in this order,
 #       otherwise the linker does not search them in the correct order.
-JAZAOBJ=$(ANIMOBJ) $(CLPSOBJ) TextUI.o
-CIRCUSOBJ=$(ANIMOBJ) $(CLPSOBJ) CircusUI.o
+JAZAOBJ=$(ANIMOBJ) TextUI.o
+CIRCUSOBJ=$(ANIMOBJ) CircusUI.o
 jaza: $(JAZAOBJ)
 	ghc $(GHCFLAGS) -o jaza --make TextUI.lhs
 
 circus: $(CIRCUSOBJ)
 	ghc -w $(GHCFLAGS) -o circus --make CircusUI.lhs
 
-Z2BZPOBJ=$(ANIMOBJ) $(CLPSOBJ) Z2BZP.o
-z2bzp: $(Z2BZPOBJ)
-	ghc $(GHCFLAGS) -o z2bzp $(Z2BZPOBJ) -lHSutil
+
 
 
 wc:
@@ -134,36 +123,11 @@ Animate.o : Animate.lhs
 Animate.o : MappingFunCircusCSP.hi
 Animate.o : MappingFunStatelessCircus.hi
 Animate.o : ./Errors.hi
-Animate.o : ./BZTT.hi
 Animate.o : ./Eval.hi
 Animate.o : ./Optimize.hi
 Animate.o : ./Unfold.hi
 Animate.o : ./Parse.hi
 Animate.o : AST.hi
-BZTT.o : BZTT.lhs
-BZTT.o : ./CLPSWrite.hi
-BZTT.o : ./CLPSType.hi
-BZTT.o : ./Errors.hi
-BZTT.o : ./FiniteSets.hi
-BZTT.o : ./Eval.hi
-BZTT.o : ./Optimize.hi
-BZTT.o : ./Subs.hi
-BZTT.o : AST.hi
-CLPSTests.o : CLPSTests.lhs
-CLPSTests.o : ./CLPSWrite.hi
-CLPSTests.o : ./Formatter.hi
-CLPSTests.o : ./Errors.hi
-CLPSTests.o : ./Unfold.hi
-CLPSTests.o : ./Parse.hi
-CLPSTests.o : AST.hi
-CLPSType.o : CLPSType.lhs
-CLPSType.o : AST.hi
-CLPSType.o : ./Errors.hi
-CLPSWrite.o : CLPSWrite.lhs
-CLPSWrite.o : CLPSType.hi
-CLPSWrite.o : ./Eval.hi
-CLPSWrite.o : ./Errors.hi
-CLPSWrite.o : AST.hi
 CRL.o : CRL.lhs
 CRL.o : OmegaDefs.hi
 CRL.o : AST.hi
@@ -179,39 +143,23 @@ Eval.o : ./FiniteSets.hi
 Eval.o : ./SetSize.hi
 Eval.o : Errors.hi
 Eval.o : AST.hi
-Eval_Test.o : Eval_Test.lhs
-Eval_Test.o : ./FiniteSets.hi
-Eval_Test.o : Errors.hi
-Eval_Test.o : Eval.hi
 Formatter.o : Formatter.lhs
 Formatter.o : ./FiniteSets.hi
 Formatter.o : ./Parse.hi
 Formatter.o : AST.hi
-Formatter_Test.o : Formatter_Test.lhs
-Formatter_Test.o : ./Test_Strings.hi
-Formatter_Test.o : Formatter.hi
-Formatter_Test.o : ./Parse.hi
-Formatter_Test.o : AST.hi
 HigherOrder.o : HigherOrder.lhs
 Lexer.o : Lexer.lhs
 Lexer.o : EParseLib.hi
-Lexer_Test.o : Lexer_Test.lhs
-Lexer_Test.o : Lexer.hi
-Lexer_Test.o : EParseLib.hi
-MyDebug.o : MyDebug.lhs
 MappingFunCircusCSP.o : MappingFunCircusCSP.lhs
 MappingFunCircusCSP.o : OmegaDefs.hi
 MappingFunCircusCSP.o : MappingFunStatelessCircus.hi
-MappingFunCircusCSP.o : FormatterToCSP.hi
 MappingFunCircusCSP.o : CRL.hi
 MappingFunCircusCSP.o : AST.hi
 MappingFunStatelessCircus.o : MappingFunStatelessCircus.lhs
 MappingFunStatelessCircus.o : CRL.hi
-MappingFunStatelessCircus.o : FormatterToCSP.hi
 MappingFunStatelessCircus.o : OmegaDefs.hi
 MappingFunStatelessCircus.o : AST.hi
 Optimize.o : Optimize.lhs
-Optimize.o : MyDebug.hi
 Optimize.o : Eval.hi
 Optimize.o : ./Unfold.hi
 Optimize.o : ./Reorder.hi
@@ -222,13 +170,8 @@ Parse.o : Errors.hi
 Parse.o : AST.hi
 Parse.o : Lexer.hi
 Parse.o : EParseLib.hi
-Parse_Test.o : Parse_Test.lhs
-Parse_Test.o : ./Test_Strings.hi
-Parse_Test.o : Lexer.hi
-Parse_Test.o : Parse.hi
 Reorder.o : Reorder.lhs
 Reorder.o : Parse.hi
-Reorder.o : MyDebug.hi
 Reorder.o : ./Subs.hi
 Reorder.o : ./SetSize.hi
 Reorder.o : AST.hi
@@ -246,16 +189,6 @@ SetSize.o : AST.hi
 Subs.o : Subs.lhs
 Subs.o : ./FiniteSets.hi
 Subs.o : AST.hi
-Subs_Test.o : Subs_Test.lhs
-Subs_Test.o : Formatter.hi
-Subs_Test.o : ./Unfold.hi
-Subs_Test.o : Parse.hi
-Subs_Test.o : Subs.hi
-Subs_Test.o : Errors.hi
-Subs_Test.o : AST.hi
-Test.o : Test.lhs
-Test_Strings.o : Test_Strings.lhs
-Test_Strings.o : AST.hi
 TextUI.o : TextUI.lhs
 TextUI.o : Formatter.hi
 TextUI.o : Animate.hi
@@ -272,13 +205,6 @@ Unfold.o : Subs.hi
 Unfold.o : ./FiniteSets.hi
 Unfold.o : Errors.hi
 Unfold.o : AST.hi
-Unfold_Test.o : Unfold_Test.lhs
-Unfold_Test.o : Unfold.hi
-Z2BZP.o : Z2BZP.lhs
-Z2BZP.o : Formatter.hi
-Z2BZP.o : Animate.hi
-Z2BZP.o : Errors.hi
-Z2BZP.o : AST.hi
 FiniteSets.o : FiniteSets.lhs
 FiniteSets.o : AST.hi
 # DO NOT DELETE: End of Haskell dependencies

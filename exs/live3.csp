@@ -1,9 +1,0 @@
-datatype TYPE = blue | black | yellow | green
-TYPES = {blue,black,yellow,green}
-channel x1 : TYPES
-channel x2 : TYPES
-SimpleExample = 
-	let 
-		A1 = x1?y -> SKIP
-		A2 = [] x : {black,yellow,green} @ x2?x -> SKIP
-	within A1 |~| A2

@@ -14,7 +14,6 @@ import AST
 import SetSize
 import Subs
 import Data.List
-import MyDebug
 
 import Parse
 
