@@ -1426,7 +1426,7 @@ Construction of the Universe set in CSP
 
 -- Make UNIVERSE datatype in CSP
 get_u_tag_ZBranch [] = []
-get_u_tag_ZBranch ((ZBranch1 (tag,_,_) (ZVar (typ,_,_))):xs)
+get_u_tag_ZBranch ((ZBranch1 (tag,_,_) x):xs)
   = tag : (get_u_tag_ZBranch xs)
 get_u_tag_ZBranch (_:xs) = get_u_tag_ZBranch xs
 
@@ -1652,7 +1652,7 @@ def_delta_mapping_t :: [ZGenFilt] -> [ZPara]
 def_delta_mapping_t xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v t) -> (ntrd v)) xs
+        tlist = map (\(Choose v t) -> (ntrd v)) $ filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZAbbreviation
                 (join_name "\\delta" tl,[],"")
@@ -1677,12 +1677,17 @@ def_delta_name (_:xs) = (def_delta_name xs)
 def_new_universe [] = []
 def_new_universe ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZBranch1 (tx,[],"") (ZVar (tt,[],""))):(def_new_universe xs)
+def_new_universe ((Choose (_,_,_) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
+  = (ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))):(def_new_universe xs)
 def_new_universe (_:xs) = (def_new_universe xs)
 
 def_sub_univ [] = []
 def_sub_univ ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZFreeTypeDef (join_name "U" tx,[],"")
       [ZBranch1 (tx,[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
+def_sub_univ ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
+  = (ZFreeTypeDef (join_name "U" (def_U_prefix ("P"++c)),[],"")
+      [ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))]):(def_sub_univ xs)
 def_sub_univ (_:xs) = (def_sub_univ xs)
 
 def_sub_univ_set :: [ZGenFilt] -> [ZExpr]
@@ -1705,7 +1710,7 @@ def_sub_name :: [ZGenFilt] -> [ZPara]
 def_sub_name xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v t) -> (ntrd v)) xs
+        tlist = map (\(Choose v t) -> (ntrd v)) $ filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
         sub_name [] _= []
@@ -2258,7 +2263,155 @@ mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
   [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
 mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
 \end{code}
-Preprocessing any Z Schema used as a state
+
+\section{Auxiliary for Ref3}
+\begin{code}
+def_bndg_lhs [] = []
+def_bndg_lhs ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
+  = (Choose (join_name "b" tx,[],[]) (ZVar (join_name "BINDING" tx,[],[]))):(def_bndg_lhs xs)
+def_bndg_lhs (_:xs) = (def_bndg_lhs xs)
+
+def_bndg_rhs :: [ZGenFilt] -> ZPred
+def_bndg_rhs xs
+  = sub_name xs
+    where
+      sub_name [(Choose (v,_,t1) t)]
+        = (ZMember (ZCall
+                    (ZVar (join_name "b" t1,[],[]))
+                    (ZVar (v,[],t1)))
+                (ZVar (join_name "U" t1,[],"")))
+      sub_name ((Choose (v,_,t1) t):xs)
+        = (ZAnd (ZMember (ZCall
+                    (ZVar (join_name "b" t1,[],[]))
+                    (ZVar (v,[],t1)))
+              (ZVar (join_name "U" t1,[],""))) (sub_name xs))
+      sub_name (_:xs) = (sub_name xs)
+
+data_refinement stv
+  = (remdups $ def_bndg_lhs stv)++[Check (def_bndg_rhs stv)]
+\end{code}
+\section{Auxiliary for Ref4}
+\begin{code}
+-- filtering ZGenFilt so only Choose are returned
+zexp_to_zvar (ZVar x) = x
+filter_ZGenFilt_Choose :: [ZGenFilt] -> [ZGenFilt]
+filter_ZGenFilt_Choose [] = []
+filter_ZGenFilt_Choose ((Choose b t):xs) = (Choose b t):(filter_ZGenFilt_Choose xs)
+filter_ZGenFilt_Choose (_:xs) = (filter_ZGenFilt_Choose xs)
+
+filter_ZGenFilt_Check :: [ZGenFilt] -> [ZPred]
+filter_ZGenFilt_Check [] = []
+filter_ZGenFilt_Check ((Check e):xs) = e:(filter_ZGenFilt_Check xs)
+filter_ZGenFilt_Check (_:xs) = (filter_ZGenFilt_Check xs)
+-- extracting ZVar from  ZGenFilt list
+filter_bnd_var :: [ZGenFilt] -> [ZExpr]
+filter_bnd_var [] = []
+filter_bnd_var ((Choose b t):xs) = (ZVar b):(filter_bnd_var xs)
+
+-- Memory parameters
+mk_mem_param_circ :: ZExpr -> [ZExpr] -> [ZExpr]
+mk_mem_param_circ (ZVar t) [ZVar t1]
+  | t == t1 = [ZCall (ZVar ("\\oplus",[],""))
+            (ZTuple [ZVar t,
+              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
+                                      (ZTuple [ZVar ("n",[],""),
+                                  ZVar ("nv",[],"")])]])]
+  | otherwise = [ZVar t1]
+mk_mem_param_circ (ZVar t) (ZVar t1:tx)
+  | t == t1
+    = (ZCall (ZVar ("\\oplus",[],""))
+            (ZTuple [ZVar t,
+              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
+                      (ZTuple [ZVar ("n",[],""),
+                  ZVar ("nv",[],"")])]])): (mk_mem_param_circ (ZVar t) tx)
+  | otherwise = (ZVar t1: (mk_mem_param_circ (ZVar t) tx))
+
+-- gets and sets replicated ext choice for Memory
+mk_mget_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mget_mem_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t)))
+        (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+        (CSPCommAction (ChanComm "mget"
+            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+            ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+        (CSPParAction "Memory" tls)))
+mk_mget_mem_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+        [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+        (CSPCommAction (ChanComm "mget"
+            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+             ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+             (CSPParAction "Memory" tls)))
+             (mk_mget_mem_CSPRepExtChoice tx tls))
+
+mk_mset_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_mset_mem_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice
+      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+      (CSPCommAction (ChanComm "mset"
+        [ChanDotExp (ZVar ("n",[],(nfst t))),
+        ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+        (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
+mk_mset_mem_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "mset"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
+  (mk_mset_mem_CSPRepExtChoice tx tls))
+
+-- gets and sets replicated ext choice for MemoryMerge
+mk_lget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_lget_mem_merg_CSPRepExtChoice [ZVar t] tls
+  = (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lget"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+       (CSPParAction "MemoryMerge"
+        (tls++[ZVar ("ns",[],"")]))))
+mk_lget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lget"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
+       (CSPParAction "MemoryMerge"
+       (tls++[ZVar ("ns",[],"")]))))
+        (mk_lget_mem_merg_CSPRepExtChoice tx tls))
+
+mk_lset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
+mk_lset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
+  = (CSPRepExtChoice
+      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+      (CSPCommAction (ChanComm "lset"
+        [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+         ChanInpPred "nv" (ZMember (ZVar ("nv",[],
+            (lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],""))
+            (ZVar ("n",[],(lastN 3 (nfst t))))))])
+  (CSPParAction "MemoryMerge"
+    (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
+mk_lset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
+  = (CSPExtChoice (CSPRepExtChoice
+    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
+    (CSPCommAction (ChanComm "lset"
+      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
+       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
+       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
+       (CSPParAction "MemoryMerge"
+       (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
+  (mk_lset_mem_merg_CSPRepExtChoice tx tls))
+
+-- making renaming list for bindings
+mk_subinfo_bndg [] = []
+mk_subinfo_bndg ((ZVar (t,_,_)):tx) = ((t,[],""), ZVar (join_name "n" (lastN 3 t),[],"")):(mk_subinfo_bndg tx)
+union_ml_mr [ZVar t] = ZVar t
+union_ml_mr (x:xs) = ((ZCall (ZVar ("\\cup",[],"")) (ZTuple (x:xs))))
+\end{code}
+\section{Preprocessing any Z Schema used as a state}
 \begin{code}
 -- ZSchemaDef (ZSPlain nn) zs
 -- Process (CProcess "SysClock" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSRef (ZSPlain "SysC
@@ -2269,10 +2422,10 @@ get_state_from_spec ((ZSchemaDef (ZSPlain nn) zs):xs) n
 get_state_from_spec (_:xs) n = (get_state_from_spec xs n)
 
 normal_state_proc spec [] = []
-normal_state_proc spec ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSRef (ZSPlain stn) [] [])) ls ma)))):xs)
+normal_state_proc spec ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) std) ls ma)))):xs)
   = ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSchema nstn))  ls ma )))):(normal_state_proc spec xs))
   where
-    nstn = restruct_state_proc spec $ get_state_from_spec spec stn
+    nstn = restruct_state_proc spec std
 normal_state_proc spec (_:xs) = (normal_state_proc spec xs)
 
 restruct_state_proc spec (ZSchema s) = s

@@ -1062,20 +1062,23 @@ endPrefWithSkip _ = False
 remPrefSkip :: CAction -> CAction -> CAction
 remPrefSkip a2 (CSPCommAction c CSPSkip) = (CSPCommAction c a2)
 remPrefSkip a2 (CSPCommAction c c1) = (CSPCommAction c (remPrefSkip a2 c1))
-remPrefSkip a2 a1 = (CSPSeq a1 a2)
+-- remPrefSkip a2 a1 = (CSPSeq a1 a2)
 
 crl_prefixSkip_backwards :: CAction -> Refinement CAction
-crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction (ChanComm c [ChanDotExp x]) CSPSkip) a)
-  = Done{orig = Just e, refined = Just ref, proviso=[]}
-    where
-      ref = (CSPCommAction (ChanComm c [ChanDotExp x]) a)
-crl_prefixSkip_backwards e@(CSPSeq a1 a2)
+crl_prefixSkip_backwards e@(CSPSeq (CSPCommAction c a1) a)
   | endPrefWithSkip a1
-      = Done{orig = Just e, refined = Just ref, proviso=[]}
-  | otherwise = None
-    where
-      ref = remPrefSkip a2 a1
+    = Done{orig = Just e, refined = Just ref, proviso=[]}
+      where
+        ref = remPrefSkip a (CSPCommAction c a1)
 crl_prefixSkip_backwards _ = None
+
+
+crl_prefixSeq_backwards :: CAction -> Refinement CAction
+crl_prefixSeq_backwards e@(CSPSeq (CSPCommAction c a1) a2)
+  = Done{orig = Just e, refined = Just ref, proviso=[]}
+      where
+        ref =  (CSPCommAction c (CSPSeq a1 a2))
+crl_prefixSeq_backwards _ = None
 \end{code}
 \begin{lawn}[Prefix/Parallelism composition---distribution]\sl
     \begin{circus}
@@ -1397,10 +1400,10 @@ TODO: implement proviso
 \begin{code}
 crl_inputPrefixSequenceDistribution :: CAction -> Refinement CAction
 crl_inputPrefixSequenceDistribution
-    e@(CSPSeq (CSPCommAction (ChanComm c [ChanInp x]) a1) a2 )
+    e@(CSPSeq (CSPCommAction (ChanComm c ((ChanInp x):xs)) a1) a2 )
   =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
-      ref = (CSPCommAction (ChanComm c [ChanInp x]) (CSPSeq a1 a2))
+      ref = (CSPCommAction (ChanComm c ((ChanInp x):xs)) (CSPSeq a1 a2))
 crl_inputPrefixSequenceDistribution _ = None
 \end{code}
 % Law 51 (Input Prefix/Hiding Identity$^*$)
@@ -1823,6 +1826,7 @@ reflawsCAction
             crl_prefixParDist,
             -- crl_prefixSkip, -- This one is going into an infinite loop with crl_seqSkipUnit_a
             crl_prefixSkip_backwards, -- this one fixes the probl above
+            crl_prefixSeq_backwards,
             crl_recUnfold,
             crl_seqChaosZero,
             crl_seqSkipUnit_a,
@@ -1908,13 +1912,14 @@ applyCAction r e@(CActionCommand (CVResDecl gf c))
               Done{orig = Just e, refined = Just (CActionCommand (CVResDecl gf (isRefined c c'))), proviso=(get_proviso c')}
           _ -> None
 
-applyCAction r e@(CSPCommAction (ChanComm com xs) c)
+applyCAction r e@(CSPCommAction cc c)
  = case r e of
      r'@(Done{orig = _or, refined = _re, proviso=_pr}) -> r'
      None
       -> case applyCActions r [c]  of
           [c'] ->
-              Done{orig = Just e, refined = Just (CSPCommAction (ChanComm com xs) (isRefined c c')), proviso=(get_proviso c')}
+              Done{orig = Just e,
+                  refined = Just (CSPCommAction cc (isRefined c c')), proviso=(get_proviso c')}
           _ -> None
 
 applyCAction r e@(CSPGuard p c) = case r e of
@@ -1999,8 +2004,9 @@ applyCAction r e@(CSPHide c cs) = case r e of
      r'@( Done{orig = _or, refined = _re, proviso=_pr}) -> r'
      None
       -> case applyCActions r [c]  of
-          [c'] ->
-              Done{orig = Just e, refined = Just (CSPHide (isRefined c c') cs), proviso=(get_proviso c')}
+          [c'] -> Done{orig = Just e,
+                       refined = Just (CSPHide (isRefined c c') cs),
+                       proviso=(get_proviso c')}
           _ -> None
 
 applyCAction r e@(CSPUnfAction nm c) = case r e of
@@ -2092,7 +2098,7 @@ Applies a refinement law into a list of actions.
 \begin{code}
 applyCActions :: RFun CAction -> [CAction] -> [Refinement CAction]
 applyCActions _ [] = []
-applyCActions r [e] = [applyCAction r e]
+-- applyCActions r [e] = [applyCAction r e]
 applyCActions r (e:es) = (applyCAction r e):(applyCActions r es)
 \end{code}
 \subsection{Applying to a list of guarded actions -- $applyCActionsIf$}

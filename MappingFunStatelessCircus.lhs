@@ -292,31 +292,7 @@ proc_ref2 x = ([],x)
 	\end{array}
 	\\= & Data Refinement\\
 \end{argue}
-\begin{code}
-def_bndg_lhs [] = []
-def_bndg_lhs ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (Choose (join_name "b" tx,[],[]) (ZVar (join_name "BINDING" tx,[],[]))):(def_bndg_lhs xs)
-def_bndg_lhs (_:xs) = (def_bndg_lhs xs)
 
-def_bndg_rhs :: [ZGenFilt] -> ZPred
-def_bndg_rhs xs
-  = sub_name xs
-    where
-      sub_name [(Choose (v,_,t1) t)]
-        = (ZMember (ZCall
-                    (ZVar (join_name "b" t1,[],[]))
-                    (ZVar (v,[],t1)))
-                (ZVar (join_name "U" t1,[],"")))
-      sub_name ((Choose (v,_,t1) t):xs)
-        = (ZAnd (ZMember (ZCall
-                    (ZVar (join_name "b" t1,[],[]))
-                    (ZVar (v,[],t1)))
-              (ZVar (join_name "U" t1,[],""))) (sub_name xs))
-      sub_name (_:xs) = (sub_name xs)
-
-data_refinement stv
-  = (remdups $ def_bndg_lhs stv)++[Check (def_bndg_rhs stv)]
-\end{code}
 
 \begin{code}
 proc_ref3 (Process (CProcess p
@@ -346,125 +322,6 @@ proc_ref3 x = proc_ref4 x
 	\\= & Action Refinement\\
 \end{argue}
 \begin{code}
--- filtering ZGenFilt so only Choose are returned
-zexp_to_zvar (ZVar x) = x
-filter_ZGenFilt_Choose :: [ZGenFilt] -> [ZGenFilt]
-filter_ZGenFilt_Choose [] = []
-filter_ZGenFilt_Choose ((Choose b t):xs) = (Choose b t):(filter_ZGenFilt_Choose xs)
-filter_ZGenFilt_Choose (_:xs) = (filter_ZGenFilt_Choose xs)
-
-filter_ZGenFilt_Check :: [ZGenFilt] -> [ZPred]
-filter_ZGenFilt_Check [] = []
-filter_ZGenFilt_Check ((Check e):xs) = e:(filter_ZGenFilt_Check xs)
-filter_ZGenFilt_Check (_:xs) = (filter_ZGenFilt_Check xs)
--- extracting ZVar from  ZGenFilt list
-filter_bnd_var :: [ZGenFilt] -> [ZExpr]
-filter_bnd_var [] = []
-filter_bnd_var ((Choose b t):xs) = (ZVar b):(filter_bnd_var xs)
-
--- Memory parameters
-mk_mem_param_circ :: ZExpr -> [ZExpr] -> [ZExpr]
-mk_mem_param_circ (ZVar t) [ZVar t1]
-  | t == t1 = [ZCall (ZVar ("\\oplus",[],""))
-            (ZTuple [ZVar t,
-              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
-                                      (ZTuple [ZVar ("n",[],""),
-                                  ZVar ("nv",[],"")])]])]
-  | otherwise = [ZVar t1]
-mk_mem_param_circ (ZVar t) (ZVar t1:tx)
-  | t == t1
-    = (ZCall (ZVar ("\\oplus",[],""))
-            (ZTuple [ZVar t,
-              ZSetDisplay [ZCall (ZVar ("\\mapsto",[],""))
-                      (ZTuple [ZVar ("n",[],""),
-                  ZVar ("nv",[],"")])]])): (mk_mem_param_circ (ZVar t) tx)
-  | otherwise = (ZVar t1: (mk_mem_param_circ (ZVar t) tx))
-
--- gets and sets replicated ext choice for Memory
-mk_mget_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_mget_mem_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice [Choose ("n",[],(lastN 3 (nfst t)))
-        (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-        (CSPCommAction (ChanComm "mget"
-            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-            ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
-        (CSPParAction "Memory" tls)))
-mk_mget_mem_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice
-        [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-        (CSPCommAction (ChanComm "mget"
-            [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-             ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
-             (CSPParAction "Memory" tls)))
-             (mk_mget_mem_CSPRepExtChoice tx tls))
-
-mk_mset_mem_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_mset_mem_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice
-      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-      (CSPCommAction (ChanComm "mset"
-        [ChanDotExp (ZVar ("n",[],(nfst t))),
-        ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
-        (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
-mk_mset_mem_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice
-    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-    (CSPCommAction (ChanComm "mset"
-      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
-       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "Memory" (mk_mem_param_circ (ZVar t) tls))))
-  (mk_mset_mem_CSPRepExtChoice tx tls))
-
--- gets and sets replicated ext choice for MemoryMerge
-mk_lget_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_lget_mem_merg_CSPRepExtChoice [ZVar t] tls
-  = (CSPRepExtChoice
-    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-    (CSPCommAction (ChanComm "lget"
-      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
-       (CSPParAction "MemoryMerge"
-        (tls++[ZVar ("ns",[],"")]))))
-mk_lget_mem_merg_CSPRepExtChoice (ZVar t:tx) tls
-  = (CSPExtChoice (CSPRepExtChoice
-    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-    (CSPCommAction (ChanComm "lget"
-      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-       ChanOutExp (ZCall (ZVar t) (ZVar ("n",[],(lastN 3 (nfst t)))))])
-       (CSPParAction "MemoryMerge"
-       (tls++[ZVar ("ns",[],"")]))))
-        (mk_lget_mem_merg_CSPRepExtChoice tx tls))
-
-mk_lset_mem_merg_CSPRepExtChoice :: [ZExpr] -> [ZExpr] -> CAction
-mk_lset_mem_merg_CSPRepExtChoice [(ZVar t)] tls
-  = (CSPRepExtChoice
-      [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-      (CSPCommAction (ChanComm "lset"
-        [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-         ChanInpPred "nv" (ZMember (ZVar ("nv",[],
-            (lastN 3 (nfst t)))) (ZCall (ZVar ("\\delta",[],""))
-            (ZVar ("n",[],(lastN 3 (nfst t))))))])
-  (CSPParAction "MemoryMerge"
-    (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
-mk_lset_mem_merg_CSPRepExtChoice ((ZVar t):tx) tls
-  = (CSPExtChoice (CSPRepExtChoice
-    [Choose ("n",[],(lastN 3 (nfst t))) (ZCall (ZVar ("\\dom",[],"")) (ZVar t))]
-    (CSPCommAction (ChanComm "lset"
-      [ChanDotExp (ZVar ("n",[],(lastN 3 (nfst t)))),
-       ChanInpPred "nv" (ZMember (ZVar ("nv",[],(lastN 3 (nfst t))))
-       (ZCall (ZVar ("\\delta",[],"")) (ZVar ("n",[],(lastN 3 (nfst t))))))])
-       (CSPParAction "MemoryMerge"
-       (mk_mem_param_circ (ZVar t) (tls++[ZVar ("ns",[],"")])))))
-  (mk_lset_mem_merg_CSPRepExtChoice tx tls))
-
--- making renaming list for bindings
-mk_subinfo_bndg [] = []
-mk_subinfo_bndg ((ZVar (t,_,_)):tx) = ((t,[],""), ZVar (join_name "n" (lastN 3 t),[],"")):(mk_subinfo_bndg tx)
-union_ml_mr [ZVar t] = ZVar t
-union_ml_mr (x:xs) = ((ZCall (ZVar ("\\cup",[],"")) (ZTuple (x:xs))))
-
 proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
   =  proc_ref5 (Process (CProcess p
     (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
@@ -492,7 +349,7 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
-    nma = omega_CAction ma
+    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma)) 
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
             (head $ filter_ZGenFilt_Check bst)
@@ -898,6 +755,47 @@ omega_CAction (CSPExtChoice ca cb)
 The definition of parallel composition (and interleaving), as defined in the D24.1, has a $MemoryMerge$, $MRG_I$ and $Merge$ components and channel sets. Whilst translating them into CSP, the tool would rather expand their definition
 
 \begin{code}
+omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZVar ("\\emptyset",[],"")] a1 a2)
+  = make_get_com lsx
+      (CSPNSParal [] cs []
+      (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+      (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))
+   where
+    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
+omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZSetDisplay ns2] a1 a2)
+  = make_get_com lsx
+      (CSPNSParal [] cs []
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
+       (CSExpr "MEML"))
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
+       (CSExpr "MEML")))
+   where
+    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
+omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZVar ("\\emptyset",[],"")] a1 a2)
+  = make_get_com lsx
+      (CSPNSParal [] cs []
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
+       (CSExpr "MEML"))
+      (CSPHide
+       (CSPNSParal [] (CSExpr "MEML") []
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPParAction "MemoryMerge"
+         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
+       (CSExpr "MEML")))
+   where
+    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
 omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
   = make_get_com lsx
       (CSPNSParal [] cs []

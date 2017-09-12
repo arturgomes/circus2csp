@@ -297,7 +297,8 @@ The function $mapping\_ZBranch$ transforms free types and composite free types i
 mapping_ZBranch :: ZBranch -> String
 mapping_ZBranch  (ZBranch0 (a,b,c)) = mapping_ZExpr [] (ZVar (a,b,c))
 mapping_ZBranch  (ZBranch1 (a,xb,c) (ZVar (b,[],t))) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] (ZVar (b,[],t))
-mapping_ZBranch  (ZBranch1 (a,xb,c) (ZCross b)) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ (mapping_ZBranch_cross  b)
+mapping_ZBranch  (ZBranch1 (a,xb,c) tt) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] tt
+mapping_ZBranch  (ZBranch1 (a,xb,c) (ZCross b)) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ (mapping_ZBranch_cross b)
 \end{code}
 
 \begin{code}
@@ -376,7 +377,7 @@ get_channel_type (ZTuple xls) = "(" ++ get_channel_type_tuple xls ++ ")"
 get_channel_type (ZSetComp [Choose (a,[],ta) (ZVar (at,[],tat)),
               Choose (b,[],tb) (ZVar (bt,[],tbt))]
                 (Just (ZTuple [ZVar (a1,[],ta1),ZVar (b1,[],tb1)])))
-  = "(" ++ get_channel_type_tuple [(ZVar (at,[],tat)),(ZVar (bt,[],tbt))] ++ ")"
+  = "(" ++ get_channel_type_tuple [ZVar (a1,[],ta1),ZVar (b1,[],tb1)] ++ ")"
 get_channel_type _ = ""
 
 get_channel_type_tuple :: [ZExpr] -> String
@@ -1297,6 +1298,7 @@ mapping_ZExpr lst (ZMu _ _) = ""
 mapping_ZExpr lst (ZPowerSet _ _ _) = ""
 mapping_ZExpr lst (ZReln _) = ""
 mapping_ZExpr lst (ZSelect _ _) = ""
+mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ filter_ZGenFilt_Choose a)++")"
 mapping_ZExpr lst (ZSetComp _ _ ) = ""
 
 mapping_ZExpr lst (ZStrange _) = ""
@@ -1305,8 +1307,6 @@ mapping_ZExpr lst (ZUniverse) = ""
 mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 
 \end{code}
-
-
 
 \begin{code}
 c_to_csp_CSPRepSeq _ [] = ""
