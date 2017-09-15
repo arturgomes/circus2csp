@@ -349,7 +349,7 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
-    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma)) 
+    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
             (head $ filter_ZGenFilt_Check bst)
@@ -603,6 +603,38 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
 \end{code}
 
+Included by Artur - An input carrying a value named with a state variable is defined as an assignment to that, but as assignments are not allowed,
+we directly make a mset with that value.
+\begin{circus}
+\Omega_A (c?v_n \then A) \circdef
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
+\\\t2 c.e(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Omega'_{A} (A)
+\end{circus}
+where
+\begin{circus}
+v_n \in StateVariables
+\end{circus}
+\begin{circus}
+\Omega_A (c?x \then A) \circdef
+\\\t2 c?x \then \Omega'_{A} (A)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
+omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_CAction a))
+omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
+\end{code}
+
+
+
+
 \begin{circus}
 \Omega_A (c!e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
 \\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
@@ -627,19 +659,6 @@ omega_CAction (CSPGuard g a)
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred g))
 \end{code}
 
-
-I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforward:
-
-\begin{circus}
-\Omega_A (c?x \then A) \circdef
-\\\t2 c?x \then \Omega'_{A} (A)
-\end{circus}
-
-is written in Haskell as:
-\begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
-  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (omega_CAction a))
-\end{code}
 
 
 \begin{circus}
@@ -906,9 +925,8 @@ omega_CAction (CActionCommand (CValDecl xs a))
 omega_CAction (CActionCommand (CAssign varls valls))
   = make_get_com lxs (make_set_com omega_CAction varls (map rename_ZExpr valls) CSPSkip)
     where
-      lxsvarls = (concat (map get_ZVar_st varls))
       lxsvalls = (concat (map get_ZVar_st (varset_to_zvars $ union_varsets (map fvars_expr valls))))
-      lxs = remdups (lxsvalls ++ lxsvarls)
+      lxs = remdups lxsvalls
 \end{code}
 
 \begin{circus}
@@ -1125,8 +1143,14 @@ I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforwar
 
 is written in Haskell as:
 \begin{code}
-omega_prime_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
-  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (omega_prime_CAction a))
+omega_prime_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_prime_CAction a))
+omega_prime_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_prime_CAction a))
 \end{code}
 
 
@@ -1143,8 +1167,7 @@ is written in Haskell as:
 
 \begin{code}
 omega_prime_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  = (CSPCommAction (ChanComm c [ChanInpPred x p])
-                 (omega_prime_CAction a))
+  = (CSPCommAction (ChanComm c [ChanInpPred x p]) (omega_prime_CAction a))
 \end{code}
 
 \begin{circus}
@@ -1542,8 +1565,15 @@ I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforwar
 
 is written in Haskell as:
 \begin{code}
-gamma_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
-  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (gamma_CAction a))
+gamma_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_CAction a))
+gamma_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_CAction a))
+
 \end{code}
 
 
@@ -1995,8 +2025,15 @@ I'm considering $x?k \neq x?k : P$ and I'm making the translation straightforwar
 
 is written in Haskell as:
 \begin{code}
-gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInp (x:xs)]) a)
-  = (CSPCommAction (ChanComm c [ChanInp (x:xs)]) (gamma_prime_CAction a))
+
+gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_prime_CAction a))
+gamma_prime_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+  = case is_ZVar_st e of
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_prime_CAction a))
 \end{code}
 
 

@@ -323,7 +323,7 @@ This set of mapping functions will translate the declaration of channels from \C
 \begin{code}
 mapping_CDecl :: [ZPara] -> [CDecl] -> String
 mapping_CDecl spec x
-  = (display_chann_CChan x1) ++ (display_chann_CChanDecl x2)
+  = (display_chann_CChan spec x1) ++ (display_chann_CChanDecl spec x2)
   where x1 = filter_channels_CChan x
         x2 = filter_channels_CChanDecl x
 -- mapping_CDecl spec (CGenChanDecl zn3 zn4 ze)
@@ -332,63 +332,38 @@ mapping_CDecl spec x
 A channel declaration can be either of form $CChan$ or $CChanDecl$. For $CChan$, we can have $\circchannel terminate$, whereas for $CChanDecl$, $\circchannel mget : NAME \cross BINDING$. Thus, we filter both cases into $x1$ for $CChan$ and $x2$ for $CChanDecl$, and then, display them accordingly.
 \begin{code}
 filter_channels_CChan :: [CDecl] -> [ZName]
-filter_channels_CChan [(CChan a)] = [a]
-filter_channels_CChan [_] = []
+filter_channels_CChan [] = []
 filter_channels_CChan ((CChan a):xs) = [a]++(filter_channels_CChan xs)
 filter_channels_CChan (_:xs) = (filter_channels_CChan xs)
 \end{code}
 \begin{code}
 filter_channels_CChanDecl :: [CDecl] -> [(ZName, ZExpr)]
-filter_channels_CChanDecl [(CChanDecl a b)] = [(a,b)]
-filter_channels_CChanDecl [_] = []
-filter_channels_CChanDecl ((CChanDecl a b):xs) = [(a,b)]++(filter_channels_CChanDecl xs)
+filter_channels_CChanDecl [] = []
+filter_channels_CChanDecl ((CChanDecl a b):xs)
+    = [(a,b)]++(filter_channels_CChanDecl xs)
 filter_channels_CChanDecl (_:xs) = (filter_channels_CChanDecl xs)
 \end{code}
 \begin{code}
-display_chann_CChan :: [ZName] -> String
-display_chann_CChan [] = ""
-display_chann_CChan x = "channel " ++ display_chann_CChan' x
+display_chann_CChan :: [ZPara] -> [ZName] -> String
+display_chann_CChan spec [] = ""
+display_chann_CChan spec x = "channel " ++ display_chann_CChan' spec x
 \end{code}
 \begin{code}
-display_chann_CChan' :: [ZName] -> String
-display_chann_CChan' [] = ""
-display_chann_CChan' [x] = x
-display_chann_CChan' (x:xs) = x ++ ", " ++ (display_chann_CChan' xs)
+display_chann_CChan' :: [ZPara] -> [ZName] -> String
+display_chann_CChan' spec  [] = ""
+display_chann_CChan' spec [x] = x
+display_chann_CChan' spec (x:xs) = x ++ ", " ++ (display_chann_CChan' spec xs)
 \end{code}
 \begin{code}
-display_chann_CChanDecl :: [(String, ZExpr)] -> String
-display_chann_CChanDecl [] = ""
-display_chann_CChanDecl [(a,b)]
+display_chann_CChanDecl :: [ZPara] -> [(String, ZExpr)] -> String
+display_chann_CChanDecl spec [] = ""
+display_chann_CChanDecl spec [(a,b)]
   = "channel " ++ a
-    ++ " : " ++ (get_channel_type b)
-display_chann_CChanDecl (x:xs)
-  = "channel " ++ display_chann_CChan' (map fst (x:xs))
-    ++ " : " ++ (get_channel_type (snd x))
+    ++ " : " ++ (mapping_ZExpr (get_delta_names1 spec) b)
+display_chann_CChanDecl spec (x:xs)
+  = "channel " ++ display_chann_CChan' spec (map fst (x:xs))
+    ++ " : " ++ (mapping_ZExpr (get_delta_names1 spec) (snd x))
 \end{code}
-Function $get_channel_type$ translates the AST syntax for type expressions into \CSPM.
-\begin{code}
-get_channel_type :: ZExpr -> String
-get_channel_type (ZVar ("\\nat",b,[])) = "NatValue"
-get_channel_type (ZVar ("\\nat_1",b,[])) = "NatValue"
-get_channel_type (ZVar (a,b,c)) = a
-get_channel_type (ZCall (ZVar ("\\power",[],[])) (ZVar (v,[],_))) = "Set("++v++")"
-get_channel_type (ZCross xs) = (get_channel_type_list xs)
-get_channel_type (ZTuple xls) = "(" ++ get_channel_type_tuple xls ++ ")"
-get_channel_type (ZSetComp [Choose (a,[],ta) (ZVar (at,[],tat)),
-              Choose (b,[],tb) (ZVar (bt,[],tbt))]
-                (Just (ZTuple [ZVar (a1,[],ta1),ZVar (b1,[],tb1)])))
-  = "(" ++ get_channel_type_tuple [ZVar (a1,[],ta1),ZVar (b1,[],tb1)] ++ ")"
-get_channel_type _ = ""
-
-get_channel_type_tuple :: [ZExpr] -> String
-get_channel_type_tuple [ZVar (a,[],_)] = a
-get_channel_type_tuple ((ZVar (a,[],_)):xs) = a ++ "," ++ (get_channel_type_tuple xs)
-
-get_channel_type_list :: [ZExpr] -> String
-get_channel_type_list [x] = (get_channel_type x)
-get_channel_type_list (x:xs) = (get_channel_type x) ++ "." ++ (get_channel_type_list xs)
-\end{code}
-
 \subsection{Mapping Circus channel sets}
 
 \begin{circus}

@@ -21,21 +21,16 @@ make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 \end{circus}
 \begin{code}
 make_get_com :: [ZVar] -> CAction -> CAction
-make_get_com [(x,y,z)] c
-  = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) c)
+make_get_com [] c = c
 make_get_com ((x,y,z):xs) c
   = (CSPCommAction (ChanComm "mget"
     [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) (make_get_com xs c))
-make_get_com x c = c
 \end{code}
 \subsection{$make\_set\_com$}
 This function updates the values of the $Memory$ process by generating a sequence of $mset$ communications and then it behaves like $f~c$, where $f$ may be the $omega\_CAction$ or $omega\_prime\_CAction$.
 \begin{code}
 make_set_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
-make_set_com f [(x,_,t)] [y] c
-  = (CSPCommAction (ChanComm "mset"
-    [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (f c))
+make_set_com f [] [] c = (f c)
 make_set_com f ((x,_,t):xs) (y:ys) c
   = (CSPCommAction (ChanComm "mset"
      [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_set_com f xs ys c))
@@ -1150,7 +1145,7 @@ rename_vars_Comm1 pn lst (ChanGenComm zn zexprls cpls)
 rename_vars_CParameter1 :: String ->  [(ZName, ZVar, ZExpr)] -> CParameter -> CParameter
 rename_vars_CParameter1 pn lst (ChanInp zn)
  = case (inListVar1 zn lst) of
-  True -> (ChanInp (join_name (get_proc_name zn lst) zn))
+  True -> (ChanInp $ nfst (rename_vars_ZVar1 pn lst (zn,[],"")))
   _ -> (ChanInp zn)
 rename_vars_CParameter1 pn lst (ChanInpPred zn zp)
  = case (inListVar1 zn lst) of
