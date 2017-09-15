@@ -1,0 +1,13 @@
+%Multi-synchronisation on events without communication
+%Syntactic Categories:
+%Action ::= Action |[ CSExpr ]| Action (at least 1x)
+%Action ::= Comm → Action (at least 2x)
+%Comm ::= N
+
+\begin{circus}
+\circchannel a5 \\
+\circprocess Roadtocoverage5 \circdef \circbegin
+	\circspot
+	  (a5 \then \Skip \lpar | \lchanset a5 \rchanset | \rpar a5 \then \Skip) \lpar | \lchanset a5 \rchanset | \rpar a5 \then \Skip \\
+	\circend
+\end{circus}

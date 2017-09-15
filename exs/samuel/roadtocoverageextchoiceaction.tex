@@ -1,0 +1,21 @@
+\begin{circus}
+\circchannel aec, bec, cec, dec \\
+\circchannel assynchextchoicenat : \nat \\
+\circchannel assynchcomplexcomm : \nat \cross \nat \\
+\circprocess Roadtocoverageextchoice \circdef \circbegin
+	\circspot
+	    (aec \then \Skip) \extchoice (bec \then \Skip) \\
+	\circend \\
+\circprocess Roadtocoverageextchoice2 \circdef \circbegin
+	\circspot
+	    (assynchextchoicenat?x \then \Skip) \extchoice (bec \then \Skip) \\ %Single sync and external choice
+	\circend \\
+\circprocess Roadtocoveragecomplexcommaqui \circdef \circbegin
+	\circspot
+	    assynchcomplexcomm?x.0 \then \Skip
+	\circend \\
+\circprocess Roadtocoveragecomplexcommaqui2 \circdef \circbegin
+	\circspot
+	    assynchcomplexcomm?x.0 \then \Skip
+	\circend \\
+\end{circus}

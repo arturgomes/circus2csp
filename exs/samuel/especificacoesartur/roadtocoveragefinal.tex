@@ -1,0 +1,278 @@
+%Program ::= CircusPara ∗ %COVERED
+%CircusPara ::= Para | channel CDecl | chanset N == CSExpr | ProcDecl %COVERED
+%CDecl ::= SimpleCDecl | SimpleCDecl; CDecl %(last syntactic category missed)
+%SimpleCDecl ::= N+ | N+ : Expr | [N+] N+ : Expr | Schema-Exp %(two last syntactic categories missed)
+%CSExpr ::= {|N ∗|} | N | CSExpr ∪ CSExpr | CSExpr ∩ CSExpr | CSExpr \ CSExpr | Appl %(Appl missed)
+%ProcDecl ::= process N = ProcDef | process N [N+] = ProcDef %Last missed
+%ProcDef ::= ParamProc | Proc %First missed
+%ParamProc ::= Decl @ Proc | Decl 0 Proc | μ N • ParamProc %A ultima categoria sintatica aparece na dissertaçao de Angela mas nao na tese de Marcel. Alem disso nao ha 
+%Proc ::=
+%	begin PPara∗ state Para PPara∗ • Action end
+%	Comm -> Proc | Pred & Proc | Proc \ CSExpr | Proc[N+ := N+] %(duas primeiras não aparecem na tese de Marcel e no Parser de Circus)
+%	Proc ; Proc | Proc [] Proc | Proc |~| Proc | Proc |[ CSExpr || CSExpr ]| Proc %A ultima nao eh suportada pelo tradutor...
+%	Proc |[ CSExpr ]| Proc | Proc ||| Proc | N | N(Expr+) | (Decl • Proc)(Expr+) %A ultima n eh suportada nem pelo parser
+%	(μ N • Decl • Proc)(Expr + ) | N Expr + | (Decl Proc) Expr+ %As duas ultimas categorias sintaticas tem um L abrindo e um L fechando...
+%	(μ N • Decl Proc) Expr + | N[Expr + ] | N[Expr + ](Expr + ) | N[Expr + ] Expr + % 
+%
+\begin{zed}
+   FREETYPEFINAL ::= ELEM1FINAL | ELEM2FINAL
+\end{zed}
+
+\begin{zed}
+   SETTYPEFINAL ::= V0FINAL | V1FINAL | V2FINAL
+\end{zed}
+
+%\begin{zed}
+%   SETTYPEFINALSET ::= \{0, 1, 2\}
+%\end{zed}
+
+%\begin{axdef}
+%  axvarfinal : \nat
+%\where
+%  axvarfinal = 1
+%\end{axdef}
+
+%\begin{axdef}
+%  axvarfinalprod: \power \nat% \cross \nat
+%\where
+%  axvarfinalprod = (1, 1)
+%\end{axdef}
+
+\begin{axdef}
+      fun : FREETYPEFINAL \pfun \nat
+    \where
+      fun~ELEM1FINAL = 0 \land
+      fun~ELEM2FINAL = 1
+\end{axdef}
+
+\begin{axdef}
+      funintfinal : \nat \pfun \nat
+    \where
+      funintfinal~0 = 1 \land
+      funintfinal~1 = 0
+\end{axdef}
+
+\begin{circus}
+ \circchannel syncchanfinal, renchanfinal \\
+ \circchannel pcawpacfinal \\
+ \circchannel syncchanfinaltwo, syncchanfinalthree \\
+ \circchannel simplesyncchanfinalonly : \nat \\
+ \circchannel intchanfinal : \nat \\
+ %\circchannel intchanaxdef : \nat \\
+ \circchannel funchanfinal : \nat \\
+ \circchannel axchanfinal : \nat \\
+ \circchannel intchanfinaltwo, intchanfinalthree : \nat \\
+% \circchannel emptysetchanfinal : \{ \} \\
+ \circchannel setchanfinal : SETTYPEFINAL \\
+ \circchannel setchanfinal2 : SETTYPEFINAL \cross SETTYPEFINAL \\
+ \circchannel freechanfinal : FREETYPEFINAL \\
+ \circchannel prodchanfinal : \nat \cross FREETYPEFINAL \\
+ \circchannel prodchanfinaltwo : \nat \cross FREETYPEFINAL \\
+ \circchannel prodchanfinalthree : \nat \cross \nat \cross \nat \\
+ \circchannel [X, Y] genchanfinal : X \cross Y \\
+\end{circus}
+
+\begin{circus}
+ \circchannelset Emptychanstwo == \lchanset \rchanset \\
+ \circchannelset Syncchanset == \lchanset syncchanfinal \rchanset \\
+ \circchannelset Unarychans == \lchanset intchanfinal, setchanfinal, freechanfinal \rchanset \\
+% \circchannelset Emptychans == \lchanset syncchanfinal \rchanset \\
+ \circchannelset Prodchans == \lchanset prodchanfinal \rchanset \\
+ \circchannelset Allchans == \lchanset intchanfinal, setchanfinal, freechanfinal, syncchanfinal, prodchanfinal \rchanset \\%Unarychans \cup Emptychans \cup Prodchans \\
+ \circchannelset Emptychanset == \lchanset \rchanset \\ %Unarychans \cap Emptychans \\
+ \circchannelset Diffchans == \lchanset freechanfinal \rchanset \\%Allchans \setminus Unarychans \\
+ %\circchannelset FALTOU A CATEGORIA SINTATICA APPL
+\end{circus}
+
+%Exercita a categoria sintática Decl @ Proc
+\begin{circus}
+% \circprocess BPParallelismPartitionTest \circdef \circbegin \\
+%    \circstate StPartition ~~==~~ [~ xisPartition, ypPartition : SETTYPEFINAL ~] \\
+%    APartition \circdef xisPartition, ypPartition := V0FINAL, V2FINAL \\
+%    BPartition \circdef xisPartition, ypPartition := V0FINAL, V2FINAL \\
+%    \circspot %xisPartition, ypPartition := V1FINAL, V1FINAL \circseq 
+%	(APartition \linter \{ xisPartition \} | \{ ypPartition \} \rinter BPartition) \circseq (setchanfinal2.xisPartition.ypPartition \then \Skip) \\
+% \circend \\
+
+%Exercita a categoria sintática uX @ Proc (isto porque a acao abaixo serah transformada numa acao recursiva na chamada)
+%QUANDO ESTE PROCESSO FOI DECLARADO MAIS EMBAIXO, DEU ERRO DE COMPILACAO (JPF_DRIVER INCLUIU LOGICA DO CANAL SYNCCHANAXDEF, O QUE NAO FAZIA SENTIDO ALGUM... 02/06/2017)
+% \circprocess MuProc \circdef \circbegin \\
+%    A \circdef intchanfinal!0 \then intchanfinal!(funintfinal~1) \then A \\
+%    \circspot A \\
+% \circend \\
+
+% \circprocess BPStopAction \circdef \circbegin \\
+%    \circspot \Stop \\
+% \circend \\
+ 
+% \circprocess BPPrefixingAction \circdef BPSimpleSyncChanfinal \\
+ 
+ %\circprocess BPGuardedAction \circdef \circbegin \\
+    %\circspot \lcircguard (3 > (1 + 1)) \rcircguard \circguard (syncchanfinal \then \Stop) %\\
+% \circend \\
+
+%FROM HERE BELOW EVERYTHING WAS COMMENTED...
+
+% \circprocess BPSeqAction \circdef \circbegin \\
+%    A \circdef setchanfinal.0 \then \Skip \\
+%    B \circdef setchanfinal.2 \then \Skip \\
+%    \circspot A \circseq B \\
+% \circend \\
+ 
+% \circprocess BPExtChoiceAction \circdef \circbegin \\
+%    A \circdef setchanfinal.0 \then \Skip \\
+%    B \circdef setchanfinal.2 \then \Skip \\
+%    \circspot A \extchoice B \\
+% \circend \\
+
+% \circprocess BPIntChoiceAction \circdef \circbegin \\
+%    A \circdef setchanfinal.0 \then \Skip \\
+%    B \circdef setchanfinal.2 \then \Skip \\
+%    \circspot A \intchoice B \\
+% \circend \\
+
+ \circprocess BPParallelismWithNameSetsAction \circdef \circbegin \\
+    \circstate St1 ~~==~~ [~ xis1, yp1 : SETTYPEFINAL ~] \\
+    A1 \circdef %xis1, yp1 := V0FINAL, V2FINAL \circseq %COMMENTED TO AVOID SCALABILITY PROBLEMS ON THE CONSTRUCTION OF REFINEMENT TREE
+      setchanfinal.xis1 \then \Skip \\
+    B1 \circdef %xis1, yp1 := V0FINAL, V2FINAL \circseq %COMMENTED TO AVOID SCALABILITY PROBLEMS ON THE CONSTRUCTION OF REFINEMENT TREE
+      setchanfinal.yp1 \then \Skip \\
+    \circspot xis1, yp1 := V1FINAL, V1FINAL \circseq (A1 \lpar \{ xis1 \} | Allchans | \{ yp1 \} \rpar B1) \\
+ \circend \\
+
+ \circprocess BPInterleavingWithNameSetsAction \circdef \circbegin \\
+    \circstate St2 ~~==~~ [~ xis2, yp2 : SETTYPEFINAL ~] \\
+    A2 \circdef %xis2, yp2 := V0FINAL, V2FINAL \circseq %COMMENTED TO AVOID SCALABILITY PROBLEMS ON THE CONSTRUCTION OF REFINEMENT TREE
+      setchanfinal.xis2 \then \Skip \\
+    B2 \circdef %xis2, yp2 := V0FINAL, V2FINAL \circseq %COMMENTED TO AVOID SCALABILITY PROBLEMS ON THE CONSTRUCTION OF REFINEMENT TREE
+      setchanfinal.yp2 \then \Skip \\
+    \circspot xis2, yp2 := V1FINAL, V1FINAL \circseq (A2 \linter \{ xis2 \} | \{ yp2 \} \rinter B2) \\
+ \circend \\
+
+ \circprocess BPParallelismAction \circdef \circbegin \\
+    \circstate St3 ~~==~~ [~ xis3, yp3 : SETTYPEFINAL ~] \\
+    A3 \circdef xis3, yp3 := V0FINAL, V2FINAL \circseq setchanfinal.xis3 \then \Skip \\
+    B3 \circdef xis3, yp3 := V0FINAL, V2FINAL \circseq setchanfinal.yp3 \then \Skip \\
+    \circspot xis3, yp3 := V1FINAL, V1FINAL \circseq (A3 \lpar \{\} | Allchans | \{\} \rpar B3) \\
+ \circend \\
+
+ \circprocess BPParallActionWithGuardedBranches \circdef \circbegin \\
+    \circspot (\lcircguard (\lnot (5 > 5)) \land true \rcircguard \circguard \Skip) \lpar | \lchanset intchanfinal, syncchanfinal \rchanset | \rpar (\lcircguard false \lor (\lnot (3 > 5)) \rcircguard \circguard \Skip) \\
+ \circend \\
+
+% \circprocess BPExtChoiceActionWithGuardedBranches \circdef \circbegin \\
+%    \circspot (\lcircguard (\lnot (5 > 5)) \land true \rcircguard \circguard \Skip) \extchoice (\lcircguard false \lor (\lnot (3 > 5)) \rcircguard \circguard (\lcircguard false \rcircguard \circguard \Skip)) \\
+% \circend \\
+
+ \circprocess BPStateInvariant \circdef \circbegin \\
+    \circstate St ~~==~~ [~ xis, yp : SETTYPEFINAL | true ~] \\
+    \circspot \Skip \\
+ \circend \\
+
+ \circprocess BPBindTry \circdef \circbegin \\
+    \circstate St ~~==~~ [~ xis, yp : SETTYPEFINAL | true ~] \\
+    %A ~~==~~ [~ \Delta St; x?: \nat | xis = V0FINAL \land yp = V1FINAL ~]
+    \circspot \Skip \\
+ \circend \\
+
+ \circprocess BPIffImpliesPredBranches \circdef \circbegin \\
+    \circspot (\lcircguard true \iff true \rcircguard \circguard \Skip) \lpar | \lchanset intchanfinal, syncchanfinal \rchanset | \rpar (\lcircguard false \iff false \lor (true \implies false) \rcircguard \circguard \Skip) \\
+ \circend \\
+
+ \circprocess BPExpressions \circdef \circbegin \\
+    \circspot intchanfinal.(\negate (\negate 1)) \then 
+      intchanfinal.(
+      (1 + (1 - (1 * (1 \div 1)))) \mod 2
+      ) 
+      \then \Skip \\
+ \circend \\
+
+ \circprocess BPBooleanExpressions \circdef \circbegin \\
+    \circspot \circif (5 > 5) \circthen intchanfinal.2 \then \Skip \circelse (5 < 5) \circthen intchanfinal.1 \then \Skip \circelse (5 \geq 5) \circthen intchanfinal.0 \then \Skip \circelse (5 \leq 5) \circthen intchanfinal.3 \then \Skip \circfi \\
+ \circend \\
+
+ \circprocess BPStackVarEnv \circdef \circbegin \\
+    \circspot intchanfinal?x \then (intchanfinal?x \then \Skip) \\
+ \circend \\
+
+ %[~ State~' | money' = 0 \land quantity' = cookieQuantity ~] 
+% \circprocess CallIndexedProcExpr \circdef IndexProc \lcircindex 1 + 1 \rcircindex \\
+% \circprocess [X] ProcessWithGenerics1 \circdef InterleaveProc \\
+% \circprocess [X] ProcessWithGenerics2 \circdef ParamProc (V1FINAL) \\
+% \circprocess [X] ProcessWithGenerics3 \circdef ProcessWithGenerics2 [\nat] \\
+ 
+% \circprocess BPExtChoiceVarDeclCommand \circdef \circbegin \\
+%    \circspot \circvar x : \nat \circspot syncchanfinal \then \Skip \extchoice \circvar x : \nat \circspot syncchanfinal \then \Skip\\
+% \circend \\
+ 
+% \circprocess BPVarDeclCommand \circdef \circbegin \\
+%    \circspot \circvar x : \nat \circspot syncchanfinal \then \Skip \\
+% \circend \\
+
+% \circprocess BPNoChannelProc \circdef \circbegin \\
+%  \circspot \Skip \\
+% \circend \\
+% \circprocess BPSSETTYPEFINALSET \circdef \circbegin \\
+%    \circstate St ~~==~~ [~x : SETTYPEFINALSET ~] \\
+%    \circspot setchanfinal2.0 \then \Skip \\
+% \circend \\
+ 
+% \circprocess BPConstDecl \circdef \circbegin \\
+%    \circspot \circvar x : \nat \circspot syncchanfinal \then \Skip \\
+% \circend \\
+ 
+% \circprocess BPConstDecl \circdef \circbegin \\
+%    \circspot \circcon h == 5 \circspot syncchanfinal \then \Skip \\
+% \circend \\
+ 
+% \circprocess BPHideAction \circdef \circbegin \\
+%    \circspot intchanfinal.0 \then \Skip \circhide Unarychans \\
+% \circend \\
+
+%  \circprocess HideProc \circdef BasicProc1 \circhide \lchanset syncchanfinal \rchanset \\%Emptychans \\
+ 
+
+% \circprocess BPCallActionWithParameters \circdef \circbegin \\
+%    A \circdef x : \nat; y : \nat \circspot intchanfinal.(x - y) \then \Skip \\
+%    \circspot A (3, 2) \\
+% \circend \\
+
+% \circprocess BPMuAction \circdef \circbegin \\
+%    A \circdef x : \nat ; y : \nat \circspot intchanfinal.(x - y) \then \Skip \\
+%    \circspot \circmu X \circspot A (3, 2) \circseq X \\
+% \circend \\
+
+ %\circprocess BPSeqActionIte \circdef \circbegin \\
+    %\circspot \Semi x : SETTYPEFINAL \circspot freechanfinal.x \then \Skip %\\
+ %\circend \\
+
+ %\circprocess BPExtChoiceActionIte \circdef \circbegin \\
+    %\circspot \Extchoice x : SETTYPEFINAL \circspot freechanfinal.x \then %\Skip \\
+ %\circend \\
+
+%\circprocess BPIntChoiceActionIte \circdef \circbegin \\
+    %\circspot \Intchoice x : FREETYPEFINAL \circspot freechanfinal.x \then %\Skip \\
+ %\circend \\
+
+%\circprocess BPParallelNameSetsActionIte \circdef \circbegin \\
+    %\circspot \lpar Emptychans \rpar x : FREETYPEFINAL \circspot \lpar %\{ \} \rpar freechanfinal.x \then \Skip \\
+ %\circend \\
+
+%\circprocess BPInterleaveActionIte \circdef \circbegin \\
+    %\circspot \Interleave x : FREETYPEFINAL \circspot freechanfinal.x \then %\Skip \\
+% \circend \\
+
+%Replicados
+% \circprocess ReplSeqProcess \circdef \Semi x : SETTYPEFINAL \circspot ParamProc (x) \\
+% \circprocess ReplExtChoiceProcess \circdef \Extchoice x : SETTYPEFINAL \circspot ParamProc (x) \\
+% \circprocess ReplIntChoiceProcess \circdef \Intchoice x : SETTYPEFINAL \circspot ParamProc (x) \\
+% \circprocess ReplParallelProcess \circdef \Parallel x : SETTYPEFINAL \lpar Emptychans \rpar \circspot ParamProc (x) \\
+% \circprocess ReplInterleaveProcess \circdef \Interleave x : SETTYPEFINAL \circspot ParamProc (x) \\
+
+\end{circus}
+
+%\begin{circus}
+% \circprocess BPGenericChanfinal \circdef \circbegin \\
+%  \circspot genchanfinal[FREETYPEFINAL, SETTYPEFINAL].ELEM1FINAL.V0FINAL \then \Skip \\
+% \circend \\
+%\end{circus}

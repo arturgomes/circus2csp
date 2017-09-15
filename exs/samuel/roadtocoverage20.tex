@@ -1,0 +1,12 @@
+%Basic Process with complex communications and call actions
+\begin{circus}
+\circchannel a : \nat \cross \nat \\
+\circprocess Prefproc \circdef 
+    px : \nat ; py : \nat \circspot 
+    \circbegin \\
+	\circstate St ~~==~~ [~ xis, ypsilon : \nat ~] \\
+	INIT \circdef ix : \nat; iy : \nat \circspot xis, ypsilon := ix, iy \\
+	\circspot INIT (px, py) \circseq
+	    a?x?y \then \Skip \\
+	\circend \\
+\end{circus}

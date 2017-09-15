@@ -1,0 +1,13 @@
+%Action parallelism with non-forced interleaving
+\begin{circus}
+\circchannel a, b, c : \nat \cross \nat \\
+\end {circus}
+\begin {circus}
+\circprocess Roadtocoverage24 \circdef \circbegin \\
+	%\circstate St ~~==~~ \[ xis, ypsilon : \nat \]
+	\circspot
+	  %(
+	    a \then \Skip \lpar | \lchanset c | \rchanset \rpar b \then \Skip \\
+	  %) \lpar | \lchanset a \rchanset | \rpar a?y \then \Skip \\
+	\circend
+\end{circus}

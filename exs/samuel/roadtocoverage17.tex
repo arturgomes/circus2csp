@@ -1,0 +1,13 @@
+%Process parallelism with forced Interleaving only
+\begin{circus}
+\circchannel a17 \\
+\end {circus}
+\begin {circus}
+\circprocess Prefproc17 \circdef \circbegin
+	\circspot
+	    a17 \then \Skip \\
+	\circend
+\end{circus}
+\begin{circus}
+\circprocess Roadtocoverage17 \circdef Prefproc17 \interleave Prefproc17 \\
+\end{circus}

@@ -1,0 +1,11 @@
+\begin{circus}
+\circchannel pt, psdb, psb \\
+\circprocess ALTERNANCIADEPODER \circdef \circbegin
+	\circspot
+	  (pt \then \Skip)
+	  \interleave ((psdb \then \Skip)
+	  %\interleave (psb \then \Skip) %With this, the Refinement Tree of ALTERNANCIADEPODER is exceeding the limit of memory...
+	  )
+	  \\
+\circend
+\end{circus}

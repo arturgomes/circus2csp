@@ -1,0 +1,13 @@
+%Process parallelism with forced Interleaving, synchronisation and complex communication
+\begin{circus}
+\circchannel a19 : \nat \cross \nat \\
+\end {circus}
+\begin {circus}
+\circprocess Prefproc19 \circdef \circbegin
+	\circspot
+	    a19?x?y \then \Skip \\
+	\circend
+\end{circus}
+\begin{circus}
+\circprocess Roadtocoverage19 \circdef (Prefproc19 \interleave Prefproc19) \lpar \lchanset a19 \rchanset \rpar Prefproc19 \\
+\end{circus}

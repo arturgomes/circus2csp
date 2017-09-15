@@ -1,0 +1,12 @@
+\begin{zed}
+[U\_A,U\_B]
+\also UNIVERSE ::= AAA \ldata U\_A \rdata | BBB \ldata U\_B \rdata
+\also U\_AAA ::= AAA \ldata U\_A \rdata
+\also U\_BBB ::= BBB \ldata U\_B \rdata
+\also NAME\_AAA ::= a1|a2
+\also NAME\_BBB ::= b1|b2
+\also NAME ::= NAME\_AAA | NAME\_BBB
+\also BINDINGS\_AAA == NAME\_AAA \cross U\_AAA
+\also BINDINGS\_BBB == NAME\_AAA \cross U\_BBB
+\also BINDINGS == BINDINGS\_BBB \cup BINDINGS\_AAA
+\end{zed}

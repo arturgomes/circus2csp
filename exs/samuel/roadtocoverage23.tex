@@ -1,0 +1,9 @@
+\begin{circus}
+\circchannel a23, b23 : \nat \cross \nat \\
+\end {circus}
+\begin {circus}
+\circprocess Roadtocoverage23 \circdef \circbegin
+	\circspot
+	    a23?x?y \then \Skip \extchoice b23?w?z \then \Skip \\
+	\circend
+\end{circus}

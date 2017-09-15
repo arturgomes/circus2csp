@@ -1,0 +1,33 @@
+\begin{zed}
+   FREETYPEITE ::= ELEM1ITE | ELEM2ITE
+\end{zed}
+
+\begin{zed}
+   SETTYPEITE ::= V0ITE | V1ITE | V2ITE
+\end{zed}
+
+\begin{axdef}
+  axvarite: \nat
+\where
+  axvarite = 1
+\end{axdef}
+
+\begin{circus}
+ \circchannel setchanprocessesite : SETTYPEITE \\
+ \circchannel setchanprocessesite2 : FREETYPEITE \\
+\end{circus}
+\begin{circus}
+\circprocess ParamProcIte \circdef x : SETTYPEITE \circspot \circbegin \\
+   \circspot setchanprocessesite!x \then \Skip \\
+\circend \\
+
+\circprocess ParamProcIte2 \circdef x : FREETYPEITE \circspot \circbegin \\ %IDENTICAL TO PARAMPROCITE, BUT THIS ONE IS CONSTRUCT UPON FREETYPEITE, WHICH HAS ONLY 2 ELEMENTS OF FREE TYPE
+   \circspot setchanprocessesite2!x \then \Skip \\
+\circend \\
+
+\circprocess ReplSeqProcess \circdef \Semi x : SETTYPEITE \circspot ParamProcIte (x) \\
+\circprocess ReplExtChoiceProcess \circdef \Extchoice x : SETTYPEITE \circspot ParamProcIte (x) \\
+\circprocess ReplIntChoiceProcess \circdef \Intchoice x : SETTYPEITE \circspot ParamProcIte (x) \\
+\circprocess ReplParallelProcess \circdef \Parallel x : FREETYPEITE \lpar \lchanset \rchanset \rpar \circspot ParamProcIte2 (x) \\
+\circprocess ReplInterleaveProcess \circdef \Interleave x : FREETYPEITE \circspot ParamProcIte2 (x) \\
+\end{circus}

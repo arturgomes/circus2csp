@@ -1,0 +1,12 @@
+%Multi-synchronisation on events with one-field communications (output and dot)
+\begin{circus}
+\circchannel a8 : \nat \\
+\circprocess Roadtocoverage8 \circdef \circbegin
+	\circspot
+	  %(
+	    a8!1 \then \Skip \lpar | \lchanset a8 \rchanset | \rpar a8.1 \then \Skip
+	    %a!1 \then \Skip \lpar | \lchanset a \rchanset | \rpar a.2 \then \Skip
+	    \\
+	  %) \lpar | \lchanset a \rchanset | \rpar a?y \then \Skip \\
+	\circend
+\end{circus}

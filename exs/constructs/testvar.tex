@@ -1,0 +1,17 @@
+
+\begin{circus}
+RANGE == 0 \upto 2
+\also \circchannel tick,time
+\also \circchannel out : \{min,sec : RANGE @ (min,sec)\}
+\end{circus}
+We start the construction of the \Circus\ process $AChrono$ with the
+definition of the state $AState$ with two state components: $sec$ and $min$,
+for seconds and minutes respectively.
+\begin{circus}
+\circprocess\ P \circdef\\
+\circbegin\\
+\circstate S \defs [ sec, min : RANGE ]\\
+A1 \circdef \circvar ms : RANGE \circspot (sec,min:=ms,xs)\\
+\circspot \circvar xs : RANGE \circspot A1\\
+\circend
+\end{circus}

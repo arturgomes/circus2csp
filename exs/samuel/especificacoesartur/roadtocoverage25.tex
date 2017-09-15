@@ -1,0 +1,10 @@
+%Action parallelism with forced Interleaving with multi-synchronisation, complex communications, call actions, assignments and namesets
+\begin{circus}
+\circchannel a, b : \nat \\% \cross \nat \\
+\circprocess Roadtocoverage25 \circdef \circbegin \\
+	\circstate St ~~==~~ [~ xis, ypsilon : \nat ~] \\
+	INIT \circdef xis, ypsilon := 1, 1 \\
+	\circspot ((xis, ypsilon := 0, 1) \lpar \{ xis \} | \lchanset a \rchanset | \{ ypsilon \} \rpar (xis, ypsilon := 1, 0)) %\circseq (a.(xis + ypsilon) \then \Skip) 
+	\\
+	\circend
+\end{circus}

@@ -1,0 +1,15 @@
+\begin{zed}[T]\end{zed}
+\begin{circus}
+\circprocess P\circdef\\
+ \circbegin\\
+ L\circdef \circvar x : T \circspot \Skip\\
+ ~\circspot (\circvar x : T \circspot \Skip) 
+ \circend
+\end{circus}
+\begin{circus}
+\circprocess Q\circdef\\ \circbegin\\ \circstate S \defs [ x : T ]\\ L \circdef \Skip \circspot \Skip \circend
+\end{circus}
+
+\circbegin~L(x : T)~\circspot (\circvar x : T \circspot MA) \circend
+\\=\\
+\circbegin (\circstate [ x : T ]) L(_) \circspot MA \circend

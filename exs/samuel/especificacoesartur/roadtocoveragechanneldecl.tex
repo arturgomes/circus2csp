@@ -1,0 +1,12 @@
+%Exercises Channel Decls with more than one declaration.
+%Ex: channel a : |N; c : |N
+\begin{circus}
+ \circchannel acdecl, bcdecl : \nat; ccdecl, dcdecl : \nat \\
+\end{circus}
+
+\begin{circus}
+ \circprocess ProcChannelDecl \circdef \circbegin \\
+ \circspot acdecl.0 \then bcdecl.0 
+      \then \Skip \\
+ \circend
+\end{circus}

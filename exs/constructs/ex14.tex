@@ -1,0 +1,16 @@
+\begin{schema}{StA}
+a1 : \nat\\
+a2 : \nat
+\where
+a1< a2
+\end{schema}
+
+\begin{zed}
+State1 \defs [ a: \nat; b:\nat | a < b]
+\also State2 \defs StA
+\end{zed}
+
+ZSchemaDef (ZSPlain "StA") (ZSchema [Choose ("a1",[]) (ZVar ("\\nat",[])),Choose ("a2",[]) (ZVar ("\\nat",[])),Check (ZMember (ZTuple [ZVar ("a1",[]),ZVar ("a2",[])]) (ZVar ("<",[])))])
+ZSchemaDef (ZSPlain "State1") (ZSchema [Choose ("a",[]) (ZVar ("\\nat",[])),Choose ("b",[]) (ZVar ("\\nat",[])),Check (ZMember (ZTuple [ZVar ("a",[]),ZVar ("b",[])]) (ZVar ("<",[])))])
+
+ZSchemaDef (ZSPlain "State2") (ZSRef (ZSPlain "StA") [] [])

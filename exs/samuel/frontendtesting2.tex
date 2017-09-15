@@ -1,0 +1,7 @@
+\begin{circus}
+\circchannel afe2 \\
+\circprocess FrontEndTesting2 \circdef \circbegin \\
+	%On this case, the first a is expected to have 2 alting barrier front ends (0, 1), and the other a's are expected to have only one front-end (0 or 1)
+	\circspot afe2 \then (afe2 \then \Skip \lpar | \lchanset afe2 \rchanset | \rpar afe2 \then \Skip) \\
+\circend \\
+\end{circus}

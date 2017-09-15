@@ -1,0 +1,26 @@
+\begin{zed}
+   CANAL ::= CARTOON | DISCOVERY | HISTORY | ESPN
+\end{zed}
+\begin{zed}
+   STATUS ::= DEFEITUOSO | NORMAL
+\end{zed}
+\begin{circus}
+ \circchannel relogio, acorda, dorme, seestv \\
+ \circchannel tv : CANAL \\
+ \circchannel papainoel : STATUS \\
+ \circprocess AUTISTAFELIZ \circdef \circbegin \\
+  \circspot %(
+    \circmu X \circspot acorda %\then X \Skip \circseq X \\
+    \then %(
+    %relogio \then \Skip \intchoice seestv \then \Skip %tv.CARTOON \then \Skip
+    %) 
+    %\circseq 
+      papainoel?x \then
+    (
+      \circif (x = DEFEITUOSO) \circthen \Skip%\Chaos
+      \circelse (x = NORMAL) \circthen dorme \then \Skip
+      \circfi
+    )
+    \circseq X%) %\intchoice seestv \then \Skip \\
+ \circend
+\end{circus}

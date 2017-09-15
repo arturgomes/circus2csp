@@ -1,0 +1,52 @@
+%Action parallelism with forced Interleaving with synchronisation, complex communications and call actions
+\begin{circus}
+\circchannel a15, b15 : \nat \cross \nat \\
+\circprocess Roadtocoverage15 \circdef \circbegin \\
+	IN1 \circdef y15 : \nat \circspot a15?x15.y15 \then \Skip \\
+	IN2 \circdef x15 : \nat \circspot a15.x15?y15 \then \Skip \\
+	IN12 \circdef x15 : \nat ; y15 : \nat \circspot a15.x15.y15 \then \Skip \\
+	\circspot
+	    (IN1(1) \lpar | \lchanset b15 \rchanset | \rpar IN2(1)) \lpar | \lchanset a15 \rchanset | \rpar IN12 (1, 0) \\
+	\circend
+\end{circus}
+*********THE COMPLETE TRANSITION SYSTEM**************
+
+Initial Node: n2
+
+Nodes (4):: n2, n25, n26, n1
+
+Transitions :: 3
+
+n2 --{a15.(w0 w4).(w1 w5)}--> n25
+n2 --{a15.(w2 w4).(w3 w5)}--> n26
+n1 --{tau}--> n2
+
+::::::: Node n2 :::::::  ::::::: 
+
+Configuration :: [
+[Constraint :: true  ∧  true  ∧  true  ∧  true  ∧  true]; 
+[State :: looseconstantssets = {}; assignments = {}; ]; 
+[Program Text :: (begin  @ ^= ((IN1 ( 1 ) |{b15}| IN2 ( 1 )) |{a15}| IN12 ( 1, 0 )) end)]];
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::: Node n25 :::::::  ::::::: 
+
+Configuration :: [
+[Constraint :: true  ∧  (w0  ∈  ℕ)  ∧  (w1 = 1)  ∧  true  ∧  true  ∧  (w4 = 1)  ∧  (w5 = 0)  ∧  (w0  ∈  ℕ)  ∧  (w4  ∈  ℕ)  ∧  (w1 = 1)  ∧  (w5 = 1)]; 
+[State :: looseconstantssets = {[w0, w4], [w1, w5]}; assignments = {  ∧  x15 := w0}; ]; 
+[Program Text :: (begin  @ ^= ((SKIP |{b15}| IN2 ( 1 )) |{a15}| SKIP) end)]];
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::: Node n26 :::::::  ::::::: 
+
+Configuration :: [
+[Constraint :: true  ∧  (w2 = 1)  ∧  (w3  ∈  ℕ)  ∧  true  ∧  true  ∧  (w4 = 1)  ∧  (w5 = 0)  ∧  (w2 = 1)  ∧  (w4 = 1)  ∧  (w3  ∈  ℕ)  ∧  (w5  ∈  ℕ)]; 
+[State :: looseconstantssets = {[w2, w4], [w3, w5]}; assignments = {  ∧  y15 := w3}; ]; 
+[Program Text :: (begin  @ ^= ((IN1 ( 1 ) |{b15}| SKIP) |{a15}| SKIP) end)]];
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::::::: Node n1 :::::::  ::::::: 
+
+Configuration :: [
+[Constraint :: true]; 
+[State :: looseconstantssets = {}; assignments = {}; ]; 
+[Program Text :: (begin  @ ^= ((IN1 ( 1 ) |{b15}| IN2 ( 1 )) |{a15}| IN12 ( 1, 0 )) end)]];
+
+

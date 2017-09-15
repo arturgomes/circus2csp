@@ -1,0 +1,12 @@
+%Action parallelism with forced Interleaving with synchronisation, complex communications, call actions, assignments and namesets
+\begin{circus}
+\circchannel a, b : \nat \cross \nat \\
+\circprocess Roadtocoverage16 \circdef \circbegin \\
+	\circstate St ~~==~~ [~ xis, ypsilon : \nat ~] \\
+	IN1 \circdef y : \nat \circspot \lcircguard y = 5 \rcircguard \circguard a?x.y \then \Skip \\
+	IN2 \circdef x : \nat \circspot a.x?y \then \Skip \intchoice a.x?y \then \Skip \\
+	IN12 \circdef x : \nat ; y : \nat \circspot \circif (x = 3) \circthen (a.x.y \then \Skip) \circelse (x \neq 3) \circthen \Skip \circfi \\
+	\circspot
+	    ((xis, ypsilon := 5, 5 \circseq IN1 (2)) \lpar \{ xis \} | \lchanset b \rchanset | \{ ypsilon \} \rpar (xis, ypsilon := 4, 4 \circseq IN2 (2))) \lpar | \lchanset a \rchanset | \rpar IN12 (2, 1) \\
+	\circend
+\end{circus}

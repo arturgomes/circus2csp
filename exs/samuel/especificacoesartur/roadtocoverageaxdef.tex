@@ -1,0 +1,190 @@
+\begin{zed}
+   FREETYPEAXDEF ::= ELEM1AXDEF | ELEM2AXDEF
+\end{zed}
+
+\begin{zed}
+   SETTYPEAXDEF ::= V0AXDEF | V1AXDEF | V2AXDEF
+\end{zed}
+
+\begin{axdef}
+  axvaraxdef: \nat
+\where
+  axvaraxdef = 1
+\end{axdef}
+
+\begin{axdef}
+      funintaxdef: \nat \pfun \nat
+    \where
+      funintaxdef~0 = 1 \land
+      funintaxdef~1 = 0
+\end{axdef}
+
+\begin{axdef}
+      fun: FREETYPEAXDEF \pfun \nat
+    \where
+      fun~ELEM1AXDEF = 0 \land
+      fun~ELEM2AXDEF = 1
+\end{axdef}
+
+\begin{circus}
+ \circchannel syncchanaxdef, renchanaxdef \\
+ \circchannel pcawpacaxdef \\
+ \circchannel syncchanaxdeftwo, syncchanaxdefthree \\
+ \circchannel simplesyncchanaxdefonly : \nat \\
+ \circchannel intchanaxdef : \nat \\
+ \circchannel funchanaxdef : \nat \\
+ \circchannel axchanaxdef : \nat \\
+ \circchannel intchanaxdeftwo, intchanaxdefthree : \nat \\
+
+ \circchannel setchanaxdef : SETTYPEAXDEF \\
+ \circchannel freechanaxdef : FREETYPEAXDEF \\
+ \circchannel prodchanaxdef : \nat \cross FREETYPEAXDEF \\
+ \circchannel prodchanaxdeftwo : \nat \cross FREETYPEAXDEF \\
+ \circchannel prodchanaxdefthree : \nat \cross \nat \cross \nat \\
+ \circchannel [X, Y] genchanaxdef : X \cross Y \\
+\end{circus}
+
+%%%%%%GROUP 1%%%%%%%%
+
+\begin{circus}
+  \circchannelset Syncchanset == \lchanset syncchanaxdef \rchanset \\
+\end{circus}
+
+\begin{circus}
+ \circprocess Axdefaxdef \circdef \circbegin \\
+    \circspot axchanaxdef.axvaraxdef \then \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+ \circprocess BPComplexComm \circdef \circbegin \\
+    \circspot prodchanaxdef?x?y \then prodchanaxdef!0!ELEM1AXDEF \then \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+\circprocess Proclocalconstantaxdef \circdef \circbegin \\
+\end{circus}
+ \begin{axdef}
+  axvaraxdefinner: \nat
+\where
+  axvaraxdefinner = 0
+\end{axdef}
+\begin{circusaction}
+\circspot intchanaxdef.axvaraxdefinner \then \Skip \\
+\end{circusaction}
+\begin{circus}
+ \circend
+\end{circus}
+
+\begin{circus}
+%Exercita a categoria sintática uX @ Proc (isto porque a acao abaixo serah transformada numa acao recursiva na chamada)
+ \circprocess MuProc \circdef \circbegin \\
+    A \circdef intchanaxdef!0 \then intchanaxdef!(funintaxdef~1) \then A \\
+    \circspot A \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+ \circprocess Funprocaxdef \circdef \circbegin \\
+    \circspot funchanaxdef!(funintaxdef~1) \then \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+ \circprocess BPSchBoxTryaxdef \circdef \circbegin \\
+    \circstate St ~~==~~ [~x, y : \nat | x \neq y~] \\
+    \circspot \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+\circprocess BPSpecialCallaxdef \circdef \circbegin \\
+    \circstate St ~~==~~ [~ xis, ypsilon : \nat ~] \\
+    A \circdef syncchanaxdef \then \Skip \\
+    \circspot A \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+ \circprocess BPSimpleSyncChanaxdef \circdef \circbegin \\
+    \circspot simplesyncchanaxdefonly?x \then \Skip \\
+ \circend \\
+\end{circus}
+\begin{circus}
+ \circprocess BPSimpleReadChanaxdef \circdef \circbegin \\
+    \circspot intchanaxdef?x \then \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus}
+ \circprocess BPSimpleWriteChanaxdef \circdef \circbegin \\
+    \circspot intchanaxdef!0 \then \Skip \\
+ \circend \\
+\end{circus}
+
+\begin{circus} 
+ \circprocess BPSimpleDotChanaxdef \circdef \circbegin \\
+    \circspot freechanaxdef.ELEM1AXDEF \then intchanaxdef!0 \then \Skip \\
+ \circend \\
+\end{circus}
+
+%%%%%%GROUP 2%%%%%%%%
+
+\begin{circus}
+ %\circprocess ParamProc \circdef x : SETTYPEAXDEF \circspot \circbegin \\ %PROBLEMATICO :: %DIGITE :: V0AXDEF
+ %   \circspot setchanaxdef!x \then \Skip \\
+ %\circend \\
+
+ %\circprocess ParamProc2 \circdef x : SETTYPEAXDEF; y : SETTYPEAXDEF \circspot \circbegin \\ %PROBLEMATICO :: %DIGITE :: V0AXDEF
+ %   \circspot setchanaxdef!x \then \Skip \\
+ %\circend \\
+
+ \circprocess BPParallelismVarDeclCommands \circdef \circbegin \\
+    \circspot (\circvar bv : \nat \circspot renchanaxdef \then \Skip) \lpar | \lchanset syncchanaxdef \rchanset | \rpar (\circvar bw : \nat \circspot renchanaxdef \then \Skip) \\
+ \circend \\
+
+ \circprocess BPMultiSyncChan \circdef \circbegin \\
+    \circspot (syncchanaxdef \then \Skip) \lpar | 
+    Syncchanset
+    | \rpar ((syncchanaxdef \then \Skip) \lpar | \lchanset syncchanaxdef \rchanset | \rpar (syncchanaxdef \then \Skip)) \\
+ \circend \\
+
+ \circprocess BPComplexComm2 \circdef \circbegin \\
+    \circspot prodchanaxdef!0?z \then \Skip \\
+\circend \\
+ 
+ \circprocess BPExtChoiceComplexComm \circdef \circbegin \\
+    \circspot (prodchanaxdef?x?y \then \Skip) \extchoice (prodchanaxdeftwo?x?y \then \Skip) \\
+\circend \\
+
+ \circprocess BPCommInputs \circdef \circbegin \\
+   \circspot (prodchanaxdefthree?x?y?t \then \Skip) \extchoice (prodchanaxdefthree?z?w.2 \then \Skip) \\
+ \circend \\
+
+ \circprocess ProcCallActionWithParametersAxdef \circdef \circbegin \\
+    A \circdef x : \nat ; y : \nat \circspot \circvar cx : \nat \circspot intchanaxdef!x \then intchanaxdef!y \then A (x - 1, y) \\
+    \circspot A (2, 2) \\
+ \circend \\
+ 
+ \circprocess ProcCallActionWithParametersAndCircguards \circdef \circbegin \\
+    A \circdef x : \nat ; y : \nat \circspot \lcircguard (\lnot (true \lor false)) \land x > y  \rcircguard \circguard pcawpacaxdef \then \lcircguard x > y \land x > y \rcircguard \circguard A (x - 1, y) \\
+    \circspot A (1, 0) \\
+ \circend \\
+
+%Exercita circguards em interleaving forçado
+ \circprocess ProcCircguardsForcedInterleaving \circdef \circbegin \\
+    \circspot 
+      (\lcircguard true \rcircguard \circguard pcawpacaxdef \then \Skip)
+      \interleave
+      (\lcircguard true \rcircguard \circguard pcawpacaxdef \then \Skip)
+      \\
+ \circend \\
+
+%Exercita param actions com call actions
+% \circprocess MuProc \circdef \circbegin \\
+%    A \circdef intchanaxdef!0 \then A \\
+%    B \circdef A
+%    \circspot B \\
+% \circend \\
+\end{circus}

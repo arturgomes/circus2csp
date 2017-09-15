@@ -1,0 +1,38 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+
+\begin{schema}{SysClockS}
+ time : \nat
+\end{schema}
+\begin{circus}%
+\circchannel getCurrentTime : \nat\\
+\circchannel tick\\
+  \circprocess\ ~SysClock ~\circdef~\circbegin
+  \circstate SysClockSt \defs SysClockS\\
+  ResetClock ~\circdef~ (time := 0) \circseq Clock\\
+  Clock ~\circdef~
+  \\\t2  \circmu~X \circspot 
+    (
+      (
+        (tick \then (time := time+1)) 
+        \interleave 
+        (getCurrentTime!time \then \Skip)
+        )
+      \circseq X)
+  Wait~\circdef~ \circvar n : \nat \circspot
+   \circif n> 0 \circthen (tick \then Wait (n-1))
+   \circelse n~=~0 \circthen \Skip
+   \circfi\\
+  \circspot ResetClock
+  \circend
+\end{circus}
+
+\end{document}

@@ -1,0 +1,146 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+--------------------------------
+-- GENERAL DEFINITIONS
+--------------------------------
+
+-- The maximum size of the buffer is a strictly positive constant.
+maxbuff = 3
+
+-- The values buffered are numbers.
+Value = {0..2}
+
+-- The ring is a circular array, modelled as a sequence whose two
+-- ends are considered to be joined.
+-- The constant maxring, defined as (maxbuff - 1), gives the bound for
+-- the ring.
+maxring = maxbuff - 1
+
+CellId = {1 .. maxring}
+
+--------------------------------
+-- THE ABSTRACT BUFFER
+--------------------------------
+
+ABuffer =
+  let BufferState(s)= #s > 0 & output!head(s) -> BufferState(tail(s))
+                      []
+                      #s < maxbuff & input?x -> BufferState(s ^ <x>)
+
+  within
+    BufferState(<>)
+
+
+--------------------------------
+-- BINDINGS
+--------------------------------
+
+--------------------------------
+-- Nat
+NatValue = {0..maxbuff}
+
+--------------------------------
+-- The universe of values
+datatype Universe = Boolean.Bool | Nat.NatValue | Val.Value | Cel.CellId
+
+--------------------------------
+-- Conversions
+subtype U_BOOL = Boolean.Bool
+subtype U_NAT = Nat.NatValue
+subtype U_VALUE = Val.Value
+subtype U_CELL = Cel.CellId
+
+value(Nat.v) = v
+-- value(Boolean.v) = v
+value(Val.v) = v
+value(Cel.v) = v
+
+type(x) = 
+    if x== RingCell_v then U_VALUE
+    else if x == Controller_top then U_CELL
+    else if x == Controller_bot then U_CELL
+    else if x == Controller_cache then U_VALUE
+    else if x == Controller_size then U_NAT
+    else {}
+
+tag(x) = 
+    if x== RingCell_v then Val
+    else if x == Controller_top then Cel
+    else if x == Controller_bot then Cel
+    else if x == Controller_cache then Val
+    else if x == Controller_size then Nat
+    else Nat
+
+--------------------------------
+-- All possible bidings
+NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
+BINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
+
+
+CtrI = {| rdi,wrti |}
+channel rrd, wrt : Direction.Value
+channel write, read, rdi, wrti : CellId.Direction.Value
+channel input, output : Value
+datatype Direction = req | ack
+datatype NAME = Controller_cache | Controller_size | Controller_top | Controller_bot | RingCell_v
+channel mget, mset : NAME.Universe
+channel terminate
+MEMi = {| mset,mget,terminate |}
+
+DBuffer = ( ( ControllerR [| Union({{| c |} | c <- CtrI }) |] DRing ) \ Union({{| c |} | c <- CtrI }) )
+
+ControllerR = Controller[[read <- rdi, write <- wrti]]
+
+Controller = 
+	let Memory(b) =( ( ( [] n : dom(b) @ mget.n!(apply(b,n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
+	within ( 
+		mget.Controller_cache?vController_cache -> 
+		mget.Controller_size?vController_size -> 
+		mget.Controller_top?vController_top -> 
+		mget.Controller_bot?vController_bot -> 
+		mset.Controller_cache.((tag(Controller_cache)).0) ->
+    	mset.Controller_size.((tag(Controller_size)).0) ->
+    	mset.Controller_top.((tag(Controller_top)).1) ->
+    	mset.Controller_bot.((tag(Controller_bot)).1) -> SKIP ; 
+		( let X = 
+			( ( 
+			mget.Controller_cache?vController_cache -> 
+			mget.Controller_size?vController_size -> 
+			mget.Controller_top?vController_top -> 
+			( ( value(vController_size) < maxbuff & 
+				input?x -> 
+				( value(vController_size) == 0 & 
+					( mset.Controller_cache.((tag(Controller_cache)).x) ->
+                                mset.Controller_size.((tag(Controller_size)).1) ->
+                                SKIP ) ) ) 
+				[] ( value(vController_size) > 0 & 
+					input?x -> 
+					write.(value(vController_top)).req!x -> 
+					mset.Controller_size.((tag(Controller_size)).((value(vController_size))+1)) ->
+                                mset.Controller_top.((tag(Controller_top)).(((value(vController_top)) % maxring)+1)) ->
+                                SKIP  )) 
+				[] mget.Controller_size?vController_size -> 
+					mget.Controller_bot?vController_bot -> 
+					( ( value(vController_size) > 0 & 
+					output!(value(vController_cache)) -> 
+					( value(vController_size) > 1 & 
+						( ( |~| dumb : Value @ 
+							read.Controller_bot.req.dumb -> read.Controller_bot.ack?x -> SKIP ) ; 
+							( mset.Controller_size!((1 - Controller_size)) -> SKIP ; mset.Controller_bot!((1 + maxring % Controller_bot)) -> SKIP ) ) ) ) 
+						[] ( value(vController_size) == 1 & 
+							mset.Controller_size!(0) -> SKIP ))) ; X ) within X ) )
+
+DRing = |||i : CellId @ IRCell(i)
+
+IRCell(i) = RingCell[[rrd <- rdi.i, wrt <- wrti.i]]
+
+RingCell = 
+	let Memory(b) =( ( ( [] n : dom(b) @ mget.n!(apply(b,n)) -> Memory(b) ) [] ( [] n : dom(b) @ mset.n?nv:type(n) -> Memory(over(b,n,nv)) )) [] terminate -> SKIP)
+	within ( ( |~| x : Value @ mget.RingCell_v?vRingCell_v -> mset.RingCell_v!x -> SKIP ) ; 
+	( let X = 
+		( mget.RingCell_v?vRingCell_v -> 
+		( ( wrt.req?x -> 
+			mset.RingCell_v!x -> wrt.ack.x -> SKIP ) 
+		[] rrd.req?dumb -> rrd.ack!RingCell_v -> SKIP) ; X ) 
+		within X ) )

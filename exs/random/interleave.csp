@@ -1,0 +1,5 @@
+channel c
+
+P = SKIP ||| c -> SKIP
+
+assert P [FD= c -> SKIP

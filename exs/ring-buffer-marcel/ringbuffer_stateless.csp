@@ -1,0 +1,226 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+--------------------------------
+-- GENERAL DEFINITIONS
+--------------------------------
+
+-- The maximum size of the buffer is a strictly positive constant.
+maxbuff = 2
+
+-- The values buffered are numbers.
+Value = {0..2}
+
+-- The ring is a circular array, modelled as a sequence whose two
+-- ends are considered to be joined.
+-- The constant maxring, defined as (maxbuff - 1), gives the bound for
+-- the ring.
+maxring = maxbuff - 1
+
+-- The communication is bi-directional
+datatype Direction = req | ack
+
+CellId = {1 .. maxring}
+
+--------------------------------
+-- THE ABSTRACT BUFFER
+--------------------------------
+
+-- It takes its inputs and supplies its outputs on two different
+-- typed channels.
+channel input, output: Value
+
+ABuffer =
+  let BufferState(s)= #s > 0 & output!head(s) -> BufferState(tail(s))
+                      []
+                      #s < maxbuff & input?x -> BufferState(s ^ <x>)
+
+  within
+    BufferState(<>)
+
+
+--------------------------------
+-- BINDINGS
+--------------------------------
+
+--------------------------------
+-- Set of names
+datatype NAME = RingCell_v | Controller_top | Controller_bot | Controller_cache | Controller_size
+
+--------------------------------
+-- Nat
+NatValue = {0..maxbuff}
+
+--------------------------------
+-- The universe of values
+datatype UNIVERSE =
+    Nat.NatValue | Val.Value | Cel.CellId
+
+--------------------------------
+-- Conversions
+subtype U_NAT = Nat.NatValue
+subtype U_VALUE = Val.Value
+subtype U_CELL = Cel.CellId
+
+value(Nat.v) = v
+value(Val.v) = v
+value(Cel.v) = v
+
+type(x) =
+    if x== RingCell_v then U_VALUE
+    else if x == Controller_top then U_CELL
+    else if x == Controller_bot then U_CELL
+    else if x == Controller_cache then U_VALUE
+    else if x == Controller_size then U_NAT
+    else {}
+
+tag(x) =
+    if x== RingCell_v then Val
+    else if x == Controller_top then Cel
+    else if x == Controller_bot then Cel
+    else if x == Controller_cache then Val
+    else if x == Controller_size then Nat
+    else Nat
+
+--------------------------------
+-- All possible bidings
+NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
+BINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
+
+--------------------------------
+-- MEMORY
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+MEM_I = {| mset, mget, terminate |}
+
+Memory(b) =
+    ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))
+    [] ([] n:dom(b) @ mset.n?x:type(n) -> Memory(over(b,n,x)))
+    [] terminate -> SKIP
+
+Memorise(P, b) =
+    ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
+
+--------------------------------
+-- STATELESS RING
+--------------------------------
+channel rd, wrt: Direction . Value
+
+RingCellMain =
+    (|~| v:Value @
+        mget.RingCell_v?vRingCell_v:(type(RingCell_v)) ->
+        mset.RingCell_v!((tag(RingCell_v)).v) ->
+        SKIP);
+    (let
+        MuCellX =
+            (mget.RingCell_v?vRingCell_v:(type(RingCell_v)) ->
+                (
+                rd.req?dumb ->
+                    rd.ack!(value(vRingCell_v)) ->
+                    SKIP
+                []
+                wrt.req?x ->
+                    mset.RingCell_v!((tag(RingCell_v)).x) ->
+                    wrt.ack?dumb ->
+                    SKIP
+            ));
+            MuCellX
+    within
+        MuCellX)
+
+MemoryRingCell =
+    let restrict(bs) = dres(bs,{RingCell_v})
+    within
+        |~| b:BINDINGS @ Memorise(RingCellMain, restrict(b))
+
+-- An indexed cell
+channel rd_i, wrt_i: CellId . Direction . Value
+
+MemoryIRCell(i) = MemoryRingCell [[rd <- rd_i.i, wrt <- wrt_i.i]]
+
+-- The distributed ring
+MemoryDRing = ||| i: CellId @ MemoryIRCell(i)
+
+--------------------------------
+-- STATELESS CONTROLLER
+--------------------------------
+channel write, read: CellId . Direction . Value
+
+ControllerMain =
+(mget.Controller_cache?vController_cache:(type(Controller_cache)) ->
+ mget.Controller_size?vController_size:(type(Controller_size)) ->
+ mget.Controller_top?vController_top:(type(Controller_top)) ->
+ mget.Controller_bot?vController_bot:(type(Controller_bot)) ->
+ mset.Controller_cache.((tag(Controller_cache)).0) ->
+ mset.Controller_size.((tag(Controller_size)).0) ->
+ mset.Controller_top.((tag(Controller_top)).1) ->
+ mset.Controller_bot.((tag(Controller_bot)).1) ->
+ SKIP);
+let
+    MuControllerX =
+        (
+        mget.Controller_cache?vController_cache:(type(Controller_cache)) ->
+        mget.Controller_size?vController_size:(type(Controller_size)) ->
+        mget.Controller_top?vController_top:(type(Controller_top)) ->
+        mget.Controller_bot?vController_bot:(type(Controller_bot)) ->
+            (
+               (value(vController_size) < maxbuff) &
+                    input?x ->
+        ---- THE READING BELOW BREAKS IT BECAUSE WE CAN NO LONGER GUARANTEEE THAT
+        ---- value(vController_size) < maxbuff. Hence, incrementing it may take its value
+        ---- outside the range of the channel.
+        --            mget.Controller_size?vController_size:(type(Controller_size)) ->
+            (
+                (value(vController_size) == 0) &
+                    mset.Controller_cache.((tag(Controller_cache)).x) ->
+                    mset.Controller_size.((tag(Controller_size)).1) ->
+                    SKIP
+                []
+                (value(vController_size) > 0) &
+                    write.(value(vController_top)).req!x ->
+                    write.(value(vController_top)).ack?dumb ->
+                    mset.Controller_size.((tag(Controller_size)).((value(vController_size))+1)) ->
+                    mset.Controller_top.((tag(Controller_top)).(((value(vController_top)) % maxring)+1)) ->
+                    SKIP
+            )
+       []
+       (value(vController_size) > 0) &
+            output!(value(vController_cache)) ->
+            (
+                (value(vController_size) > 1) &
+                    (|~| dumb:Value @
+                        read.(value(vController_bot)).req.dumb ->
+                        read.(value(vController_bot)).ack?x ->
+                        mset.Controller_cache.((tag(Controller_cache)).x) -> SKIP);
+                        (mset.Controller_size.((tag(Controller_size)).((value(vController_size)) - 1)) ->
+                         mset.Controller_bot.((tag(Controller_bot)).(((value(vController_bot)) % maxring)+1)) ->
+                                         SKIP)
+            []
+            (value(vController_size) == 1) &
+                mset.Controller_size.((tag(Controller_size)).0) ->
+                                            SKIP
+            )
+            )
+        );
+        MuControllerX
+within
+    MuControllerX
+
+MemoryController =
+    let restrict(bs) = dres(bs,{Controller_cache, Controller_size, Controller_top, Controller_bot})
+    within
+        |~| b:BINDINGS @ Memorise(ControllerMain, restrict(b))
+
+--------------------------------
+-- THE RING BUFFER
+--------------------------------
+MemoryControllerR = MemoryController[[ read <- rd_i, write <- wrt_i]]
+MemoryDBuffer = (MemoryControllerR [| {| rd_i, wrt_i |} |] MemoryDRing) \ {| rd_i, wrt_i |}
+
+--------------------------------
+-- VERIFICATION
+--------------------------------
+assert ABuffer [FD= MemoryDBuffer
+assert MemoryDBuffer [FD= ABuffer

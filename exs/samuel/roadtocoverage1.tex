@@ -1,0 +1,13 @@
+%roadtocoverage1.tex
+%Exercises condition 1 from the conditions for coverage
+%Simple synchronisation
+%	Syntactic Categories:
+%	Action ::= Comm → Action (1x)
+%	Comm ::= N (1x)
+
+\begin{circus}
+\circchannel a1 \\
+\circprocess Roadtocoverage1 \circdef \circbegin
+	\circspot a1 \then \Skip \\
+	\circend
+\end{circus}

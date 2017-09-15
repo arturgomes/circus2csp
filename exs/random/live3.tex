@@ -1,0 +1,43 @@
+\begin{zed}
+SWITCH ::= ON | OFF
+\also STATUS ::= START | RUNNING | IDLE | INTERRUPT
+\also NatValue == 0 \upto 3
+\end{zed}
+\begin{zed}
+SWITCHPARA == \{ val  : NatValue\\; switch:SWITCH  \\
+   | switch = ON \lor switch = OFF \\
+   @ (switch, val) \}\\
+\end{zed}
+\begin{circus}
+  \circchannel start,stop\\
+  \circchannel getCurrentTime~:~\nat\\
+  \circchannel tick
+\end{circus}
+
+\begin{schema}{SysCmdS}
+ time : NatValue\\
+ swi : SWITCHPARA\\
+ phase : \power STATUS
+\end{schema}
+\begin{circus}%
+  \circprocess\ ~RemLocVar ~\circdef~\circbegin
+  \circstate SysCmdSt \defs SysCmdS
+  Clock ~\circdef~
+  \\\t2 \circvar x : T \circspot tick \then \Skip\\
+  Start ~\circdef~ 
+  \\\t2 \circvar y : T \circspot tick \then Clock
+  \circspot Start
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess\ ~MakeTick ~\circdef~\circbegin
+\circspot tick \then \Skip
+\circend
+\end{circus}
+
+
+Clock = 
+  (SysCmd \ {|mget,mset,terminate,getCurrentTime|}) 
+  [| {|tick|} |] MakeTick 
+
+assert Clock [FD= MakeTick

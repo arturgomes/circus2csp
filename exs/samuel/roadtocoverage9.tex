@@ -1,0 +1,9 @@
+%Multi-synchronisation on events with one-field communications (input and input)
+\begin{circus}
+\circchannel a9 : \nat \\
+\circprocess Roadtocoverage9 \circdef \circbegin
+	\circspot
+	    a9?x \then \Skip \lpar | \lchanset a9 \rchanset | \rpar a9?y \then \Skip
+	    \\
+	\circend
+\end{circus}

@@ -1,0 +1,13 @@
+%Process parallelism with forced Interleaving with synchronisation
+\begin{circus}
+\circchannel a18 \\
+\end {circus}
+\begin {circus}
+\circprocess Prefproc18 \circdef \circbegin
+	\circspot
+	    a18 \then \Skip \\
+	\circend
+\end{circus}
+\begin{circus}
+\circprocess Roadtocoverage18 \circdef (Prefproc18 \interleave Prefproc18) \lpar \lchanset a18 \rchanset \rpar Prefproc18 \\
+\end{circus}

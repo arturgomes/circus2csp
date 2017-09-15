@@ -1,0 +1,21 @@
+\begin{zed}
+BROTHER ::= b1 | b2
+\end{zed}
+\begin{circus}
+\circchannel eat, share \\%\cross BROTHER \\
+\circprocess SPREADCHOCOLATE \circdef \circbegin \\
+    \circstate STATE \defs [~ bar1, bar2 : BROTHER ~] \\
+    SON1 \circdef ((bar1, bar2 := b1, b1) \circseq (eat \then \Skip)) \\
+    SON2 \circdef ((bar1, bar2 := b2, b2) \circseq (eat \then \Skip)) \\
+    \circspot SON1 \\
+%	\circspot share \then
+%	(SON1
+%	\lpar 
+%	  \{ bar1 \}
+%	  | \lchanset eat \rchanset
+%	  | \{ bar2 \} 
+%	\rpar
+%	SON2)
+%	\\
+\circend
+\end{circus}

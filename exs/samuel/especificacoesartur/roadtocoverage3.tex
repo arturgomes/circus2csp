@@ -1,0 +1,12 @@
+%Simple synchronisation with an output field communication
+%Syntactic Categories:
+%Action ::= Comm → Action (1x)
+%Comm ::= N CParam (1x)
+%CParam ::= !Expr (1x)
+
+\begin{circus}
+\circchannel a3 : \nat \\
+\circprocess Roadtocoverage3 \circdef \circbegin
+	\circspot a3?x \then a3!(x + 1 - 1) \then \Skip \\
+	\circend
+\end{circus}

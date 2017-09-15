@@ -1,0 +1,11 @@
+\begin{circus}
+ \circchannel aclassic \\
+\end{circus}
+
+\begin{circus}
+ \circprocess CLASSICPARALLELISMEXAMPLE1 \circdef \circbegin \\
+ %This example is from my MsC work, where I explain forced interleaving strategy...
+ \circspot (aclassic \then \Skip) \lpar | \lchanset aclassic \rchanset | \rpar
+    ((aclassic \then \Skip) \interleave (((aclassic \then \Skip) \interleave (aclassic \then \Skip)) \lpar | \lchanset aclassic \rchanset | \rpar (aclassic \then \Skip) \interleave (aclassic \then \Skip))) \\
+ \circend \\
+\end{circus}

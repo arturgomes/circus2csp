@@ -1,0 +1,79 @@
+\section{State-poor \Circus\ process after $\Omega$}
+
+\begin{circus}
+\circprocess P1
+\circdef\\ 
+\circbegin\\ 
+			\circstate S \defs [ v0 : T0;  vn : Tn ]\\ 
+			\circspot A(v0,vn)\\
+	\circend\\
+\end{circus}
+
+\begin{circus}
+\circprocess P2\circdef\\ 
+		\circbegin\\ 
+			\circstate S \defs [ v0 : T0;  vn : Tn ]\\ 
+			\circspot \circvar l0: U0; lm:Um \circspot A(v0,vn,l0,lm)\\
+	\circend\\
+\end{circus}
+
+\begin{circus}
+\circprocess P3\circdef\\ 
+		\circbegin\\ 
+			\circstate S \defs [ v0 : T0;  vn : Tn; l0: U0;  lm:Um ]\\ 
+			\circspot A(v0,vn,l0,lm)\\
+	\circend\\
+\end{circus}
+
+\begin{circus}
+\circprocess P4\circdef\\ 
+		\circbegin\\ 
+			\circstate S \defs 
+					[ b : BINDING | b(v0) \in T0 \land b(v1) \in T1 ]\\ 
+			\circspot A(b(v0),b(vn),b(l0),b(lm)) \\
+	\circend\\
+\end{circus}
+
+\begin{circus}
+\circprocess P5\circdef\\ 
+		\circbegin\\ 
+			\circstate S \defs [ b : BINDING | b(v0) \in T0 \land b(v1) \in T1]\\ 
+			Memory \circdef\\
+				\circvres b : BINDING \circspot \\
+				(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+				\extchoice 
+				(\Extchoice n: \dom\ b \circspot mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus \{n \mapsto nv\}))\\
+				\extchoice~terminate \then \Skip\\
+			\circspot \circvar b : 
+				\{
+				x : BINDING |  
+					x(v0) \in T0 \land x(v1) \in T1
+				\} \circspot\\
+				(((\OmegaA(A) \circseq (terminate \then \Skip ))
+									\lpar \emptyset | MEMI | {b} \rpar (Memory(b))) \circhide MEMI)
+	\circend\\
+\end{circus}
+
+\begin{circus}
+\circprocess P6\circdef\\ 
+		\circbegin\\ 
+			Memory \circdef\\
+				\circvres b : BINDING \circspot \\
+				(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+				\extchoice (
+				\Extchoice n: \dom\ b \circspot\\
+				mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus \{n \mapsto nv\})
+				)\\
+				\extchoice~terminate \then \Skip\\
+			\circspot \circvar b : 
+				\{
+				x : BINDING |  
+					x(v0) \in T0 \land x(v1) \in T1
+				\} \circspot\\
+					((
+						(
+							\OmegaA(A)\circseq\ (terminate \then \Skip)
+						)\\
+						\lpar \emptyset | MEMI | {b} \rpar (Memory(b)) ) \circhide MEMI)\\
+	\circend\\
+\end{circus}

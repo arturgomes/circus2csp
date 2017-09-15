@@ -1,0 +1,8 @@
+%Action parallelism with forced Interleaving with synchronisation and complex communications
+\begin{circus}
+\circchannel a14, b14 : \nat \cross \nat \\
+\circprocess Roadtocoverage14 \circdef \circbegin
+	\circspot
+	    (a14?x.1 \then \Skip \lpar | \lchanset b14 \rchanset | \rpar a14.1?y \then \Skip) \lpar | \lchanset a14 \rchanset | \rpar a14!1!0 \then \Skip \\
+	\circend
+\end{circus}

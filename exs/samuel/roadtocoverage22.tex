@@ -1,0 +1,10 @@
+%Communication with more than one field and mixed decorations on a basic process (no external choice)
+\begin{circus}
+\circchannel a22 : \nat \cross \nat \\
+\end {circus}
+\begin {circus}
+\circprocess Roadtocoverage22 \circdef \circbegin
+	\circspot
+	    a22?x?y \then \Skip \\
+	\circend
+\end{circus}

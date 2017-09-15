@@ -1,0 +1,10 @@
+%Multi-synchronisation on events with one-field communications (output and output)
+%The multi-sync occurs because the system is in parallel with the GUI of the process...
+\begin{circus}
+\circchannel a10, b10 : \nat \\
+\circprocess Roadtocoverage10 \circdef \circbegin
+	\circspot
+	    a10!1 \then \Skip \lpar | \lchanset a10 \rchanset | \rpar a10!1 \then \Skip
+	    \\
+	\circend
+\end{circus}

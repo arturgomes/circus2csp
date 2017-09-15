@@ -1,0 +1,39 @@
+\begin{zed}
+SWITCH ::= ON | OFF\\
+\also DIRECTION ::= IN | OUT\\
+\end{zed}
+
+\begin{circus}
+\circchannel endcycle, startcycle, switchoff
+\also \circchannel gettemp,preferredtemp,cooldown,readtemp : \nat
+\also \circchannel getplug : DIRECTION
+\also \circchannel getturn : SWITCH
+\also \circprocess CONTROLLER \circdef \circbegin
+\circstate ACST \defs [preferred : \nat]
+INIT \circdef (preferred := 25)\\
+CTR \circdef \circmu muX \circspot 
+	( switchoff \then \Skip
+					\extchoice (preferredtemp?np \then (preferred := np) \circseq muX)
+					\extchoice startcycle \then getplug?p \then getturn?t \then
+					gettemp?tp \then
+					((\lcircguard p = IN \land t = ON \land preferred < tp \rcircguard
+                  \circguard cooldown!preferred \then endcycle \then muX)
+                  \extchoice (\lcircguard p = IN \land t = ON \land tp \leq preferred \rcircguard
+                  \circguard cooldown!tp \then endcycle \then muX)
+                  \extchoice (\lcircguard p = OUT \land t = OFF \rcircguard
+                  \circguard endcycle \then muX)))
+\circspot INIT \circseq CTR
+\circend
+
+\also \circprocess SENSOR \circdef \circbegin
+\circstate SensorSt \defs [memory : \nat]
+INIT \circdef (memory := 0)\\
+SNSR \circdef \circmu muX \circspot 
+	((readtemp?nt \then (memory := nt) \circseq muX)
+	\extchoice gettemp!memory \then muX
+	\extchoice switchoff \then \Skip)
+\circspot INIT \circseq SNSR
+\circend
+\also \circprocess AIRCONTROLLER \circdef
+((CONTROLLER \lpar \lchanset gettemp,switchoff \rchanset \rpar SENSOR) \circhide \lchanset gettemp \rchanset)
+\end{circus}

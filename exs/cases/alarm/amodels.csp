@@ -1,0 +1,50 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+RANGE = {0..2}
+datatype ALARM = ON | OFF
+
+channel tick, time
+channel out : (RANGE,RANGE)
+channel inc, minsReq
+channel ans : RANGE
+channel snooze, radioOn, terminate
+
+nametype StChrono = (RANGE,RANGE)
+
+get_min(st) = let (min,sec) = st within min
+get_sec(st) = let (min,sec) = st within sec
+set_min(val,st) = let (min,sec) = st within (val,sec)
+set_sec(val,st) = let (min,sec) = st within (min,val)
+
+
+channel setMin, getMin : RANGE
+channel setSec, getSec : RANGE
+
+MEMSt = {|setMin,getMin,setSec,getSec|}
+
+AChrono(sta) =
+  let
+    AChronoSt(st) =
+      getMin!get_min(st) -> AChronoSt(st)
+      [] getSec!get_sec(st)-> AChronoSt(st)
+      [] setMin?min -> AChronoSt(set_min(min,st))
+      [] setSec?sec -> AChronoSt(set_sec(sec,st))
+      [] terminate -> SKIP
+    AInit = setMin.0 -> setSec.0 -> SKIP
+    IncSec = getSec?sec -> getMin?min -> (setMin.min -> setSec.((sec+1)%3) -> SKIP)
+    IncMin = getSec?sec -> getMin?min -> (setMin.((min+1)%3) -> setSec.sec -> SKIP)
+    Run =
+       ((tick -> IncSec ;
+        (getSec?sec -> getMin?min -> ((sec == 0 & IncMin)
+         [] (sec != 0 & SKIP)) ))
+       [] getSec?sec -> getMin?min -> (time -> out!(min, sec) -> SKIP)) ; terminate -> SKIP
+  within ((AInit ; (let X = (Run ; X) within X)) [| MEMSt |] AChronoSt(sta)) \ MEMSt
+
+Sync = {| inc,minsReq,ans |}
+
+assert AChrono((0,0))\{|tick,terminate|} :[deterministic [FD]]
+-- assert Chrono :[deterministic [FD]]
+-- assert AChrono [FD= Chrono
+-- assert Chrono [FD= AChrono

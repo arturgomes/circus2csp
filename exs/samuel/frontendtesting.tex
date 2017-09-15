@@ -1,0 +1,7 @@
+\begin{circus}
+\circchannel afe \\
+\circprocess FrontEndTesting \circdef \circbegin \\
+	%On this case, a is expected to be renamed (to a0 [] a1, a0 or a1) and is expected to have only one front-end...
+	\circspot (afe \then \Skip) \lpar | \lchanset afe \rchanset | \rpar ((afe \then \Skip) \interleave (afe \then \Skip)) \\
+\circend \\
+\end{circus}

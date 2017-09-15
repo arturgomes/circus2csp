@@ -1,0 +1,11 @@
+\begin{zed}
+BASTAO ::= P1 | P2
+\end{zed}
+\begin{circus}
+\circchannel corredor1corre, corredor2corre, corredor3corre \\
+\circchannel bastao : BASTAO \\
+\circprocess CORRIDADEBASTOES \circdef \circbegin
+	\circspot (corredor1corre \then bastao.P1 \then \Skip \lpar | \lchanset bastao \rchanset | \rpar bastao.P1 \then corredor2corre \then bastao.P2 \then \Skip) %\lpar | \lchanset bastao \rchanset | \rpar bastao.P2 \then corredor3corre \then \Skip
+	\\
+\circend
+\end{circus}

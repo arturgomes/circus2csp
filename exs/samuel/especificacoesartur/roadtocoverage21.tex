@@ -1,0 +1,13 @@
+%Process parallelism with Interleaving, synchronisation and call processes
+\begin{circus}
+\circchannel a21, b21 \\
+\end {circus}
+\begin {circus}
+\circprocess Prefproc21 \circdef \circbegin \\
+	\circspot
+	    a21 \then \Skip \\
+	\circend
+\end{circus}
+\begin{circus}
+\circprocess Roadtocoverage21 \circdef Prefproc21 \lpar \lchanset a21, b21 \rchanset \rpar Prefproc21 \\
+\end{circus}

@@ -1,4 +1,3 @@
-
 \chapter{Mapping Functions - Stateless Circus}
 Mapping Omega Functions from Circus to Circus
 
@@ -632,8 +631,9 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
 \end{code}
 
-
-
+\begin{code}
+omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAction b))
+\end{code}
 
 \begin{circus}
 \Omega_A (c!e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef

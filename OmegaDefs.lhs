@@ -1694,11 +1694,18 @@ def_sub_univ_set (_:xs) = (def_sub_univ_set xs)
 def_sub_bind [] = []
 def_sub_bind ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZAbbreviation (join_name "BINDINGS" tx,[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" tx,[],""),ZVar (join_name "U" tx ,[],"")]))):(def_sub_bind xs)
+def_sub_bind ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
+  = (ZAbbreviation (join_name "BINDINGS" (def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" (def_U_prefix ("P"++c)),[],""),ZVar (join_name "U" (def_U_prefix ("P"++c)) ,[],"")]))):(def_sub_bind xs)
+
+
 def_sub_bind (_:xs) = (def_sub_bind xs)
 
 def_sub_bindn [] = []
 def_sub_bindn ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZVar (join_name "BINDINGS" tx,[],"")):(def_sub_bindn xs)
+def_sub_bindn ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
+    = (ZVar (join_name "BINDINGS" (def_U_prefix ("P"++c)),[],"")):(def_sub_bindn xs)
+
 def_sub_bindn (_:xs) = (def_sub_bindn xs)
 
 def_sub_name :: [ZGenFilt] -> [ZPara]
@@ -2258,12 +2265,15 @@ mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
   [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
 mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
 \end{code}
-
 \section{Auxiliary for Ref3}
 \begin{code}
 def_bndg_lhs [] = []
 def_bndg_lhs ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (Choose (join_name "b" tx,[],[]) (ZVar (join_name "BINDING" tx,[],[]))):(def_bndg_lhs xs)
+def_bndg_lhs (Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_))):xs)
+  = (Choose (join_name "b" (def_U_prefix ("P"++c)),[],"")
+      (ZVar (join_name "BINDING" (def_U_prefix ("P"++c)),[],""))):
+      (def_bndg_lhs xs)
 def_bndg_lhs (_:xs) = (def_bndg_lhs xs)
 
 def_bndg_rhs :: [ZGenFilt] -> ZPred

@@ -1,0 +1,43 @@
+\begin{zed}
+   FREETYPEAXDEFMINI ::= ELEM1AXDEFMINI | ELEM2AXDEFMINI
+\end{zed}
+
+\begin{circus}
+  \circchannel prodchanminiaxdef : \nat \cross FREETYPEAXDEFMINI \\
+  \circchannel intchanaxdefmini : \nat \\
+  \circchannel intchanaxdefminisimplesync : \nat \\
+  \circchannel syncchanaxdefmini \\
+\end{circus}
+
+\begin{circus}
+ \circprocess BPComplexCommMini \circdef \circbegin
+    \circspot prodchanminiaxdef?x?y \then \Skip
+ \circend \\
+
+ \circprocess BPForcedInterleavingChanMini3 \circdef \circbegin \\
+    \circspot 
+      ((intchanaxdefmini?x \then \Skip) \lpar | \lchanset syncchanaxdefmini \rchanset | \rpar (intchanaxdefmini!1 \then \Skip))
+      \lpar | \lchanset intchanaxdefmini \rchanset | \rpar (intchanaxdefmini?x \then \Skip)
+    \\
+ \circend \\
+
+ \circprocess BPForcedInterleavingChanMini \circdef \circbegin \\
+    \circspot (intchanaxdefmini?x \then \Skip) \lpar | \lchanset syncchanaxdefmini \rchanset | \rpar (intchanaxdefmini!1 \then \Skip) \\
+ \circend \\
+
+ \circprocess BPForcedInterleavingChanMini2 \circdef \circbegin \\
+    \circspot (intchanaxdefmini?x \then \Skip) \interleave (intchanaxdefmini!1 \then \Skip) \\
+ \circend \\
+
+ \circprocess BPForcedInterleavingChanMiniSimpleSync \circdef \circbegin \\
+    \circspot (intchanaxdefminisimplesync?x \then \Skip) \interleave (intchanaxdefminisimplesync!1 \then \Skip) \\
+ \circend \\
+
+ \end{circus}
+
+
+%\begin{circus}
+% \circprocess BPComplexCommMini \circdef \circbegin \\
+%    \circspot prodchanminiaxdef?x?y \then \Skip%prodchanminiaxdef!0!ELEM1AXDEF \then \Skip \\
+% \circend \\
+%\end{circus}

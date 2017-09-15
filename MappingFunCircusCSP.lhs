@@ -1132,7 +1132,7 @@ get_channel_name_cont spec [] = ""
 get_channel_name_cont spec ((ChanOutExp v) : xs)
   = get_channel_name_cont spec ((ChanDotExp v) : xs)
 get_channel_name_cont spec ((ChanDotExp v) : xs)
-  = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
+  = "."++(mapping_ZExpr1 (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs)
   = "?"++v++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInpPred v x) : xs)
@@ -1198,8 +1198,10 @@ mapping_ZExpr_set (_:xs) = (mapping_ZExpr_set xs)
 mapping_ZExpr_def_f f [x] = (f x)
 mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
 
-mapping_ZExpr1 (ZVar (a,_,t)) = a
-mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1  a)++","++(mapping_ZExpr1  b)++")"
+mapping_ZExpr1 lst (ZVar (a,_,t)) = a
+mapping_ZExpr1 lst (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1 lst a)++","++(mapping_ZExpr1 lst b)++")"
+mapping_ZExpr1 lst x = mapping_ZExpr lst x 
+
 \end{code}
 
 \subsection{Mapping Function for Expressions}
@@ -1244,7 +1246,7 @@ mapping_ZExpr lst (ZCall (ZVar (b,[],_)) (ZVar (n,[],_))) = "apply("++b++","++n+
 mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
+mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f (mapping_ZExpr1 lst) x)++"}"
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZSeqDisplay []) = "<>"
 mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])

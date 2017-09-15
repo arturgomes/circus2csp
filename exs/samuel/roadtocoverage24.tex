@@ -1,0 +1,11 @@
+%Action parallelism with non-forced interleaving
+\begin{circus}
+\circchannel a24, b24 \\
+\end {circus}
+\begin {circus}
+\circprocess Roadtocoverage24 \circdef \circbegin \\
+  \circspot (a24 \then \Skip)
+    \interleave
+    (b24 \then \Skip) \\
+\circend
+\end{circus}

@@ -1,0 +1,96 @@
+\documentclass{llncs}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{epstopdf}
+\usepackage{hyperref}
+\usepackage{circus}
+
+\begin{document}
+\begin{zed}
+[NAME,TIME]\\
+REPORT ~~::=~~ ok | already\_known | not\_known\\
+\end{zed}
+\begin{circus}
+\circprocess ~SysClock ~\circdef~
+\circbegin\\
+  \circstate SysClockSt \defs [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  \circspot ResetClock\\
+  \circend
+\end{circus}
+\begin{circus}
+\circprocess ~Timer ~\circdef~
+\circbegin\\
+  \circstate TimerSt == [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  A1 ~\circdef~a \then b!2!3 \then c!3?x \then \Skip\\
+  A2 ~\circdef~a?x \then a \then \Skip\\
+  A3 ~\circdef~a \then \Skip\\
+  \circspot a \then A1 \intchoice A2 \circseq A3\\
+  \circend
+\end{circus}
+
+\begin{circus}
+\circprocess ~MyInsaneProcess2 ~\circdef~ \Semi insane: TIME \circspot \\
+		SysClock \extchoice Timer \circseq BothProcesses \intchoice BothProcesses1\\
+\end{circus}
+\begin{circus}
+
+\circprocess ~MyInsaneProcess3 ~\circdef~
+		Timer \lpar \lchanset \rchanset \rpar BothProcesses\\
+\end{circus}
+\begin{circus}
+
+\circprocess ~MyInsaneProcess4 ~\circdef~
+    SysClock \extchoice Timer \lpar \lchanset \rchanset \rpar BothProcesses \intchoice BothProcesses1\\
+\end{circus}
+
+\begin{circus}
+\circprocess ~GuardTest ~\circdef~
+\circbegin\\
+  \circstate TimerSt == [t : TIME]\\
+  ResetClock ~\circdef~\Skip\\
+  A1 ~\circdef~\lcircguard 5>4 \rcircguard \circguard a \then b!2!3 \then c!3?x \then \Skip\\
+  A2 ~\circdef~a?x \then a \then \Skip\\
+  A3 ~\circdef~\circmu X \circspot a \then \Skip \circseq X\\
+  A4 ~\circdef~\circmu X \circspot \circmu Y \circspot a \then \Skip \extchoice b \then \Skip \circseq Y \circseq X\\
+  \circspot a \then A1 \intchoice A2 \circseq A3\\
+  \circend
+\end{circus}
+
+% Process (
+%   CProcess "GuardTest" (
+%     ProcDef (
+%       ProcMain (ZSchemaDef (ZSPlain "TimerSt") (ZSchema [Choose ("t",[]) (ZVar ("TIME",[]))])) 
+%       [
+%         CParAction "ResetClock" (
+%           CircusAction CSPSkip
+%         ),
+%         CParAction "A1" (
+%           CircusAction (
+%             CSPGuard (ZMember (ZTuple [ZInt 5,ZInt 4]) (ZVar (">",[]))) 
+%             (CSPCommAction (ChanComm "a" []) 
+%               (CSPCommAction (ChanComm "b" [ChanOutExp (ZInt 2),ChanOutExp (ZInt 3)]) 
+%                 (CSPCommAction (ChanComm "c" [ChanOutExp (ZInt 3),ChanInp "x"])
+%                   CSPSkip)
+%               )
+%             )
+%           )
+%         ),
+%         CParAction "A2" (
+%           CircusAction (
+%             CSPCommAction (ChanComm "a" [ChanInp "x"]) 
+%               (CSPCommAction (ChanComm "a" []) CSPSkip))),
+%         CParAction "A3" (
+%           CircusAction (
+%             CSPCommAction (ChanComm "a" []) CSPSkip))
+%       ] 
+%       (CSPIntChoice (
+%         CSPCommAction (ChanComm "a" []) (CActionName "A1")) 
+%         (CSPSeq 
+%           (CActionName "A2") 
+%           (CActionName "A3"))))))
+
+\end{document}

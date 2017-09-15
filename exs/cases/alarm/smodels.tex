@@ -1,0 +1,63 @@
+\section{Models by Marcel Oliveira}
+
+We list a number of models derived from a simple example from
+Oliveira's PhD thesis~\cite{MV05}: a chronometer.
+
+\subsection{$AChrono$}
+
+A specification:
+\begin{circus}
+RANGE == 0 \upto 2
+\also \circchannel tick,time
+\also \circchannel out : \{min,sec : RANGE @ (min,sec)\}
+\also
+\circprocess\ AChrono \circdef\\
+\circbegin\\
+\circstate AState \defs [ sec, min : RANGE ]\\
+Memorise \circdef\\
+  (((P \circseq (terminate \then \Skip)) \lpar MEMI \rpar Memory(binds)) \circhide MEMI)\\
+AInit \circdef (sec,min:=0,0)\\
+IncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+IncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+Run \circdef \\
+
+   (tick \then IncSec \circseq \\
+    (\circif  sec = 0 \circthen IncMin
+        \circelse sec \neq 0 \circthen \Skip \circfi ))
+    \extchoice (time \then out!(min, sec) \then \Skip) \\
+\circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))\\
+\circend
+\end{circus}
+
+\subsection{$Chrono$}
+\begin{circus}
+\circchannel inc, minsReq
+\also \circchannel ans : RANGE
+\also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
+\also \circprocess Chrono \circdef\ \circbegin\\
+\circstate State \defs [ sec : RANGE; min : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+SecInit \circdef (sec:=0)\\
+IncSec \circdef (sec:=(sec+1)\mod 3)\\
+RunSec \circdef \t1
+(tick \then IncSec \circseq
+    (\circif  sec = 0 \circthen inc \then \Skip
+    \circelse sec \neq 0 \circthen \Skip \circfi)
+  \\\t3 \extchoice\\
+  \t3  time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip )  \\
+Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+MinInit \circdef (min:=0)\\
+IncMin \circdef (min:=(min+1)\mod 3)\\
+RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
+Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
+\circend
+\end{circus}
+
+\begin{assert}
+"assert AChrono :[deterministic [FD]]"\\
+\also"assert Chrono :[deterministic [FD]]"\\
+\also"assert AChrono [FD= Chrono"\\
+\also"assert Chrono [FD= AChrono"\\
+\end{assert}
