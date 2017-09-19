@@ -179,8 +179,13 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
       ++ "\ndatatype NAME = "++(mapping_ZBranch_list (remdups zbs))++"\n"
   | Subs.isPrefixOf "NAME" nm
       && (Data.List.length nm > Data.List.length "NAME")
-        = "\n-- Subtype definition for "++(lastN 3 nm)
-          ++ "\nsubtype "++nm ++ " = " ++(mapping_ZBranch_list (remdups zbs))++
+        = "\n-- Subtype definition for "++(lastN 3 nm)++
+        "\nb_"++(lastN 3 nm)++
+        "1 = {"++
+        (joinBy "," $ map (make_binding spec (lastN 3 nm)) (remdups $ map (\(ZBranch0 x) -> x) zbs))++
+        "}"++
+          "\nsubtype "++nm ++ " = "++
+          (mapping_ZBranch_list (remdups zbs))++
           "\n" ++ mk_NAME_VALUES_TYPE (lastN 3 nm) ++ "\n"
   | Subs.isPrefixOf "U_" nm
       && (Data.List.length nm > Data.List.length "U_")
@@ -309,7 +314,6 @@ mapping_ZBranch_cross ((ZVar (a,b,c)):xs) = a ++ "." ++ (mapping_ZBranch_cross x
 Then, the $mapping\_ZBranch\_list$ transforms the RHS of the equality, with the possible free types from a $ZBranch$ list.
 \begin{code}
 mapping_ZBranch_list :: [ZBranch] -> String
-mapping_ZBranch_list [] = ""
 mapping_ZBranch_list [x] = (mapping_ZBranch x)
 mapping_ZBranch_list (x:xs) = (mapping_ZBranch x) ++ " | " ++ (mapping_ZBranch_list  xs)
 \end{code}
@@ -1212,9 +1216,11 @@ mapping_ZExpr_set ((ZVar (a,b,x)):xs) = a++","++(mapping_ZExpr_set xs)
 mapping_ZExpr_set (_:xs) = (mapping_ZExpr_set xs)
 \end{code}
 \begin{code}
+mapping_ZExpr_def_f f [] = ""
 mapping_ZExpr_def_f f [x] = (f x)
 mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
 
+mapping_ZExpr1 (ZInt m) = show(fromIntegral m)
 mapping_ZExpr1 (ZVar (a,_,t)) = a
 mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1  a)++","++(mapping_ZExpr1  b)++")"
 \end{code}
@@ -1261,6 +1267,7 @@ mapping_ZExpr lst (ZCall (ZVar (b,[],_)) (ZVar (n,[],_))) = "apply("++b++","++n+
 mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
+mapping_ZExpr lst (ZSetDisplay []) = ""
 mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZSeqDisplay []) = "<>"
@@ -1307,4 +1314,43 @@ c_to_csp_CSPRepSeq spec [Choose (a,b,c) s]
 c_to_csp_CSPRepSeq spec ((Choose (a,b,c) s):xs)
   = " ; " ++a ++ " : " ++ (mapping_ZExpr (get_delta_names1 spec) s) ++ " @  "
   ++ c_to_csp_CSPRepSeq spec xs
+\end{code}
+
+
+
+\subsection{Making bindings for the spec}
+\begin{code}
+get_type_universe
+  :: String -> ZPara -> [ZVar]
+get_type_universe n (ZFreeTypeDef ("UNIVERSE",[],"") xs)
+  = concat $ map (get_type_universe' n) xs
+get_type_universe n _
+  = []
+
+get_type_universe'
+  :: String -> ZBranch -> [ZVar]
+get_type_universe' n (ZBranch1 (a,_,_) (ZCall (ZVar ("\\power",[],"")) (ZVar e@(x,y,z))))
+  | n == a = [e]
+get_type_universe' n (ZBranch1 (a,_,_) (ZVar e@(b,c,d)))
+  | n == a = [e]
+get_type_universe' _ _ = []
+
+get_min_val :: ZVar -> ZPara -> [ZExpr]
+get_min_val n (ZAbbreviation y (ZCall (ZVar ("\\upto",[],"")) (ZTuple xs)))
+  | (nfst n) == (nfst y) = [Data.List.head xs]
+  | otherwise = []
+get_min_val n (ZFreeTypeDef y xs)
+  | (nfst n) == (nfst y) = [ZVar (Data.List.head $ map (\(ZBranch0 x) -> x) xs)]
+  | otherwise = []
+get_min_val n _ = []
+
+make_binding :: [ZPara] -> ZName -> ZVar -> String
+make_binding spec n (a,b,c)
+  = "("++a++", "++ c++"."++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY" else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
+  where
+    rtype = Data.List.head $ concat (map (get_type_universe c) spec)
+    getMinVal = (concat $ map (get_min_val rtype) spec)
+
+
+
 \end{code}

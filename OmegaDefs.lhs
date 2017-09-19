@@ -2440,3 +2440,9 @@ restruct_state_proc spec (ZSRef (ZSPlain s) [] [])
   = restruct_state_proc spec $ get_state_from_spec spec s
 
 \end{code}
+\begin{code}
+getChanName (ChanDotExp (ZVar (e,f,g))) = e
+getChanName (ChanOutExp (ZVar (e,f,g))) = e
+getChanName (ChanInp e) = e
+getChanName (ChanInpPred e f) = e
+\end{code}

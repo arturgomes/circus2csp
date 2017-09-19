@@ -623,11 +623,21 @@ is written in Haskell as:
 \begin{code}
 omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_CAction a))
 omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction
+        (ChanComm c
+          ( (ChanInp (join_name "t" e)):
+            ( map (\e -> (ChanInp (join_name "t" e))) ( map getChanName xs))))
+            (make_set_com
+              omega_CAction
+              ((e,[],""):( map (\e -> (e,[],"")) ( map getChanName xs)))
+              ((ZVar ((join_name "t" e),[],"")):
+                (map (\e -> (ZVar ((join_name "t" e),[],"")))
+                  ( map getChanName xs))) a))
+
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
 \end{code}
 
@@ -1145,11 +1155,11 @@ is written in Haskell as:
 \begin{code}
 omega_prime_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_prime_CAction a))
 omega_prime_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com omega_prime_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_prime_CAction a))
 \end{code}
 
@@ -1567,11 +1577,11 @@ is written in Haskell as:
 \begin{code}
 gamma_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_CAction a))
 gamma_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_CAction a))
 
 \end{code}
@@ -2028,11 +2038,11 @@ is written in Haskell as:
 
 gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "v" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_prime_CAction a))
 gamma_prime_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "v" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "v" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_prime_CAction a))
 \end{code}
 

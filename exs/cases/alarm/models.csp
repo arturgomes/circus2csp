@@ -47,14 +47,16 @@ subtype U_ALA = ALA.ALARM
 -- subtypes of UNIVERSE for RAN
 subtype U_RAN = RAN.RANGE
 
--- definition of NAME for the entire spec
+-- definition of NAME for the entire spec 
 datatype NAME = sv_buzz | sv_sec | sv_min
 
 -- Subtype definition for RAN
+b_RAN1 = {(sv_sec, RAN.0),(sv_min, RAN.0)}
 subtype NAME_RAN = sv_sec | sv_min
 NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
 
 -- Subtype definition for ALA
+b_ALA1 = {(sv_buzz, ALA.ON)}
 subtype NAME_ALA = sv_buzz
 NAMES_VALUES_ALA = seq({seq({(n,v) | v <- typeALA(n)}) | n <- NAME_ALA})
 
@@ -66,13 +68,13 @@ BINDINGS_ALA = {set(b) | b <- set(distCartProd(NAMES_VALUES_ALA))}
 
 
 --------------------------------
- -- mget, mset and terminate --
+ -- mget, mset and terminate -- 
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEMI --
+ -- MEMI -- 
 --------------------------------
 MEMI = {| mset,mget,terminate |}
 channel lget, lset : NAME.UNIVERSE
@@ -102,8 +104,8 @@ WakeUpOK(b_RAN,b_ALA) =
       MemoryMerge(b_RAN,over(b_ALA,n,nv),ns) )))
       [] lterminate ->
       (  ; bd : < b_RAN>^< b_ALA> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
-  within
+     
+  within 
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
          restrictALA(bs) = dres(bs,{sv_buzz})
      within( ( ( mset.sv_sec.(RAN.0) ->
@@ -154,8 +156,8 @@ WakeUp(b_RAN,b_ALA) =
       MemoryMerge(b_RAN,over(b_ALA,n,nv),ns) )))
       [] lterminate ->
       (  ; bd : < b_RAN>^< b_ALA> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
-  within
+     
+  within 
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
          restrictALA(bs) = dres(bs,{sv_buzz})
      within( ( ( mset.sv_sec.(RAN.0) ->
@@ -198,8 +200,8 @@ Chrono(b_RAN) =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
-  within
+     
+  within 
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
      within( ( ( ( mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
@@ -216,16 +218,16 @@ Chrono(b_RAN) =
          SKIP)
       [] time ->
       minsReq ->
-      ans?v_sv_min ->
-      mset.sv_min.(RAN.v_sv_min) ->
+      ans?t_sv_min ->
+      mset.sv_min.(RAN.t_sv_min) ->
       mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
       out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
       X ) within X );
       terminate -> SKIP )
-      [| MEML |]
+      [| MEML |] 
       MemoryMerge({(sv_min,v_sv_min),(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
-      [| Sync |]
+      [| Sync |] 
       ( ( lset.sv_min.(RAN.0) ->
       ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       ( ( inc ->
@@ -234,7 +236,7 @@ Chrono(b_RAN) =
       ans.valueRAN(v_sv_min) -> SKIP);
       X ) within X );
       terminate -> SKIP )
-      [| MEML |]
+      [| MEML |] 
       MemoryMerge({(sv_min,v_sv_min),(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
       terminate -> SKIP )
       [| MEMI |] Memory(restrictRAN(b_RAN)))\MEMI )
@@ -255,8 +257,8 @@ AChrono(b_RAN) =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
-  within
+     
+  within 
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
      within( ( ( mset.sv_sec.(RAN.0) ->
       mset.sv_min.(RAN.0) ->
