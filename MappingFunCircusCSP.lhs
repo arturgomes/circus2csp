@@ -410,6 +410,23 @@ This is the translation rules for $ProcDecl$. Up to the date, we don't have a tr
 mapping_ProcDecl ::  [ZPara] -> ProcDecl -> String
 --mapping_ProcDecl procn spec (CGenProcess zn (x:xs) pd)
 --  = (show zn) ++ " = "
+mapping_ProcDecl spec (CProcess procn (ProcDef
+    (ProcStalessMain xs (CSPRepIntChoice bind (CSPHide a (CSExpr "MEMI"))))))
+  = "\n" ++ procn ++"("++ (mapping_ZGenFilt_list spec bind) ++ ") =" ++ ma
+  where
+    ma = (if (xs == [])
+          then ma1
+          else "\n  let" ++ (mapping_PPar_list procn spec xs) ++ "\n  within " ++ ma1)
+    ma1 = "\n     let "
+            ++ restr
+            ++"\n     within"
+            ++(mapping_CAction procn spec (CSPHide a (CSExpr "MEMI")))++"\n"
+    zn =  get_znames_from_NAME spec
+    znames = remdups $ map nfst (select_f_zbr zn)
+    ztypes = remdups $ map ntrd (select_f_zbr zn)
+    restr = mk_charll_to_charl "\n        " $
+       map (mk_restrict (concat $ map (\(va,b,c) -> (if (Subs.isPrefixOf ("sv"++"_") va) || (Subs.isPrefixOf ("lv"++"_") va) then [(va,b,c)] else [])) (select_f_zbr zn))) (get_binding_types bind)
+    restn = mk_charll_to_charl ", " $ map mk_restrict_name (get_binding_types bind)
 mapping_ProcDecl spec (CProcess p pd)
   = "\n" ++ p ++ (mapping_ProcessDef p spec pd)
 mapping_ProcDecl spec _
@@ -1132,7 +1149,7 @@ get_channel_name_cont spec [] = ""
 get_channel_name_cont spec ((ChanOutExp v) : xs)
   = get_channel_name_cont spec ((ChanDotExp v) : xs)
 get_channel_name_cont spec ((ChanDotExp v) : xs)
-  = "."++(mapping_ZExpr1 (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
+  = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs)
   = "?"++v++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInpPred v x) : xs)
@@ -1198,10 +1215,8 @@ mapping_ZExpr_set (_:xs) = (mapping_ZExpr_set xs)
 mapping_ZExpr_def_f f [x] = (f x)
 mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
 
-mapping_ZExpr1 lst (ZVar (a,_,t)) = a
-mapping_ZExpr1 lst (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1 lst a)++","++(mapping_ZExpr1 lst b)++")"
-mapping_ZExpr1 lst x = mapping_ZExpr lst x 
-
+mapping_ZExpr1 (ZVar (a,_,t)) = a
+mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1  a)++","++(mapping_ZExpr1  b)++")"
 \end{code}
 
 \subsection{Mapping Function for Expressions}
@@ -1246,7 +1261,7 @@ mapping_ZExpr lst (ZCall (ZVar (b,[],_)) (ZVar (n,[],_))) = "apply("++b++","++n+
 mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(show a)++".."++(show b)++"}"
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f (mapping_ZExpr1 lst) x)++"}"
+mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
 mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
 mapping_ZExpr lst (ZSeqDisplay []) = "<>"
 mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])

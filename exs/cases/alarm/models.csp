@@ -11,21 +11,23 @@ Sync = {| inc,minsReq,ans |}
 datatype ALARM = ON | OFF
 
 channel snooze, radioOn
-HAChrono = AChrono \{|time, tick|}
-HChrono = Chrono \{|time, tick|}
-HWakeUpOK = WakeUpOK \{|time, tick|}
-assert AChrono :[deterministic [FD]]
-assert Chrono :[deterministic [FD]]
+b_RAN1 = {(sv_sec, RAN.0), (sv_min, RAN.0)}
+b_ALA1 = {(sv_buzz, ALA.OFF)}
+HAChrono = AChrono(b_RAN1) \{|time, tick|}
+HChrono = Chrono(b_RAN1) \{|time, tick|}
+HWakeUpOK(b_RAN1,b_ALA1)= WakeUpOK(b_RAN1,b_ALA1)\{|time, tick|}
+assert AChrono(b_RAN1):[deterministic [FD]]
+assert Chrono(b_RAN1) :[deterministic [FD]]
 assert HAChrono [FD= HChrono
 assert HChrono [FD= HAChrono
-assert WakeUp :[deterministic [FD]]
-HWakeUp = WakeUp \ {|time, tick, snooze, radioOn |}
+assert WakeUp(b_RAN1,b_ALA1) :[deterministic [FD]]
+HWakeUp = WakeUp(b_RAN1,b_ALA1) \ {|time, tick, snooze, radioOn |}
 assert HWakeUp :[deterministic [FD]]
-assert AChrono [FD= HWakeUp
-assert HWakeUp [FD= AChrono
-assert WakeUpOK :[deterministic [FD]]
-assert AChrono [FD= WakeUpOK
-assert WakeUpOK [FD= AChrono
+assert AChrono(b_RAN1)[FD= HWakeUp
+assert HWakeUp [FD= AChrono(b_RAN1)
+assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]
+assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)
+assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)
 --------------------------------
 -- The universe of values
  datatype UNIVERSE = ALA.ALARM | RAN.RANGE
@@ -45,7 +47,7 @@ subtype U_ALA = ALA.ALARM
 -- subtypes of UNIVERSE for RAN
 subtype U_RAN = RAN.RANGE
 
--- definition of NAME for the entire spec 
+-- definition of NAME for the entire spec
 datatype NAME = sv_buzz | sv_sec | sv_min
 
 -- Subtype definition for RAN
@@ -64,20 +66,20 @@ BINDINGS_ALA = {set(b) | b <- set(distCartProd(NAMES_VALUES_ALA))}
 
 
 --------------------------------
- -- mget, mset and terminate -- 
+ -- mget, mset and terminate --
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEMI -- 
+ -- MEMI --
 --------------------------------
 MEMI = {| mset,mget,terminate |}
 channel lget, lset : NAME.UNIVERSE
 channel lterminate
 MEML = {| lset,lget,lterminate |}
 
-WakeUpOK = 
+WakeUpOK(b_RAN,b_ALA) =
   let
      Memory(b_RAN,b_ALA) =
         ( ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -100,12 +102,11 @@ WakeUpOK =
       MemoryMerge(b_RAN,over(b_ALA,n,nv),ns) )))
       [] lterminate ->
       (  ; bd : < b_RAN>^< b_ALA> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
          restrictALA(bs) = dres(bs,{sv_buzz})
-     within
-        |~| b_RAN : BINDINGS_RAN, b_ALA : BINDINGS_ALA @ ( ( ( mset.sv_sec.(RAN.0) ->
+     within( ( ( mset.sv_sec.(RAN.0) ->
       mset.sv_min.(RAN.0) ->
       mset.sv_buzz.(ALA.OFF) ->
       ( let X = mget.sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
@@ -130,7 +131,7 @@ WakeUpOK =
       [| MEMI |] Memory(restrictRAN(b_RAN),restrictALA(b_ALA)))\MEMI )
 
 
-WakeUp = 
+WakeUp(b_RAN,b_ALA) =
   let
      Memory(b_RAN,b_ALA) =
         ( ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -153,12 +154,11 @@ WakeUp =
       MemoryMerge(b_RAN,over(b_ALA,n,nv),ns) )))
       [] lterminate ->
       (  ; bd : < b_RAN>^< b_ALA> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
          restrictALA(bs) = dres(bs,{sv_buzz})
-     within
-        |~| b_RAN : BINDINGS_RAN, b_ALA : BINDINGS_ALA @ ( ( ( mset.sv_sec.(RAN.0) ->
+     within( ( ( mset.sv_sec.(RAN.0) ->
       mset.sv_min.(RAN.0) ->
       mset.sv_buzz.(ALA.OFF) ->
       ( let X = tick ->
@@ -183,7 +183,7 @@ WakeUp =
       [| MEMI |] Memory(restrictRAN(b_RAN),restrictALA(b_ALA)))\MEMI )
 
 
-Chrono = 
+Chrono(b_RAN) =
   let
      Memory(b_RAN) =
         ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -198,14 +198,15 @@ Chrono =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
-     within
-        |~| b_RAN : BINDINGS_RAN @ ( ( ( ( mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+     within( ( ( ( mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+      mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
       ( ( ( lset.sv_sec.(RAN.0) ->
       ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+      lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
       ( ( tick ->
       lset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 3) ->
@@ -215,13 +216,16 @@ Chrono =
          SKIP)
       [] time ->
       minsReq ->
-      ans?WakeUpOK_min ->
+      ans?v_sv_min ->
+      mset.sv_min.(RAN.v_sv_min) ->
+      mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+      mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
       out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
       X ) within X );
       terminate -> SKIP )
-      [| MEML |] 
-      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
-      [| Sync |] 
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
+      [| Sync |]
       ( ( lset.sv_min.(RAN.0) ->
       ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       ( ( inc ->
@@ -230,13 +234,13 @@ Chrono =
       ans.valueRAN(v_sv_min) -> SKIP);
       X ) within X );
       terminate -> SKIP )
-      [| MEML |] 
-      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
       terminate -> SKIP )
       [| MEMI |] Memory(restrictRAN(b_RAN)))\MEMI )
 
 
-AChrono = 
+AChrono(b_RAN) =
   let
      Memory(b_RAN) =
         ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -251,11 +255,10 @@ AChrono =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictRAN(bs) = dres(bs,{sv_sec, sv_min})
-     within
-        |~| b_RAN : BINDINGS_RAN @ ( ( ( mset.sv_sec.(RAN.0) ->
+     within( ( ( mset.sv_sec.(RAN.0) ->
       mset.sv_min.(RAN.0) ->
       ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
       mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
