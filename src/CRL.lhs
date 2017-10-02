@@ -1062,6 +1062,7 @@ endPrefWithSkip _ = False
 remPrefSkip :: CAction -> CAction -> CAction
 remPrefSkip a2 (CSPCommAction c CSPSkip) = (CSPCommAction c a2)
 remPrefSkip a2 (CSPCommAction c c1) = (CSPCommAction c (remPrefSkip a2 c1))
+remPrefSkip a2 _ = error "Unable to get the remPrefSkip"
 -- remPrefSkip a2 a1 = (CSPSeq a1 a2)
 
 crl_prefixSkip_backwards :: CAction -> Refinement CAction

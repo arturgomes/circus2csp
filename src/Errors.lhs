@@ -106,7 +106,7 @@ instance Functor ErrorOr where
 
 instance Applicative ErrorOr where
   pure v = Ok v
-  (<*>) = ap 
+  (<*>) = ap
 
 instance Monad ErrorOr where
   return = pure

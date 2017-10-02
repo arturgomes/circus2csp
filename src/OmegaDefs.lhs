@@ -310,6 +310,7 @@ get_ZVar_st x
 
 \begin{code}
 is_ZVar_st a = isPrefixOf "sv" a || isPrefixOf "lv" a
+is_Binding_var a = isPrefixOf "b_" a
 
 is_ZVar_st' a "" = False
 is_ZVar_st' a procn = isPrefixOf (join_name "sv" procn) a

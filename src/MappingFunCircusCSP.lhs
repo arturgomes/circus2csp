@@ -302,8 +302,8 @@ The function $mapping\_ZBranch$ transforms free types and composite free types i
 mapping_ZBranch :: ZBranch -> String
 mapping_ZBranch  (ZBranch0 (a,b,c)) = mapping_ZExpr [] (ZVar (a,b,c))
 mapping_ZBranch  (ZBranch1 (a,xb,c) (ZVar (b,[],t))) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] (ZVar (b,[],t))
-mapping_ZBranch  (ZBranch1 (a,xb,c) tt) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] tt
 mapping_ZBranch  (ZBranch1 (a,xb,c) (ZCross b)) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ (mapping_ZBranch_cross b)
+mapping_ZBranch  (ZBranch1 (a,xb,c) tt) = mapping_ZExpr [] (ZVar (a,xb,c)) ++ "." ++ mapping_ZExpr [] tt
 \end{code}
 
 \begin{code}
@@ -1085,25 +1085,6 @@ mapping_predicate lst x
 \subsection{Mapping Function for Channel Set Expressions}
 \begin{code}
 mapping_predicate_cs :: CSExp -> String
-{-
-The following one is not very well accepted by FDR as it may introduce differente type channels and therefore, it is incompatible.
-For instance,
-
-Couldn't match expected type Event with actual type Int=>Event
-    In the expression: getCurrentTime
-    In the expression: {tick, getCurrentTime}
-    In the statement of a comprehension: c <- {tick, getCurrentTime}
-    Relevant variable types:
-        getCurrentTime :: Int=>Event
-        tick :: Event
-        HDMachine :: Proc
-        SysClock :: Proc
-
-I think it would be rather correct if we define it as {| x,y,z|}
-
--}
--- mapping_predicate_cs cs = (mapping_set_cs_exp cs)
-
 mapping_predicate_cs (CSEmpty) = "{}"
 mapping_predicate_cs (CChanSet x) = "{| "++(mapping_ZExpr_def x)++" |}"
 mapping_predicate_cs (CSExpr x) = x
@@ -1278,32 +1259,9 @@ mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
 mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple xs)) ]) = joinBy "^" $ map (\x -> "< "++(mapping_ZExpr lst x)++">") xs
 mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
-mapping_ZExpr lst (ZELet _ _) = ""
-mapping_ZExpr lst (ZESchema _) = ""
-mapping_ZExpr lst (ZFree0 _) = ""
-mapping_ZExpr lst (ZFree1 _ _) = ""
-mapping_ZExpr lst (ZFreeType _ _) = ""
-mapping_ZExpr lst (ZFSet _) = ""
-mapping_ZExpr lst (ZFunc1 _) = ""
-mapping_ZExpr lst (ZFunc2 _) = ""
-mapping_ZExpr lst (ZFuncSet _ _ _ _ _ _ _ _ _) = ""
-mapping_ZExpr lst (ZGenerator _ _) = ""
-mapping_ZExpr lst (ZGiven _) = ""
-mapping_ZExpr lst (ZGivenSet _) = ""
-mapping_ZExpr lst (ZIf_Then_Else _ _ _) = ""
-mapping_ZExpr lst (ZIntSet _ _) = ""
-mapping_ZExpr lst (ZLambda _ _) = ""
-mapping_ZExpr lst (ZMu _ _) = ""
-mapping_ZExpr lst (ZPowerSet _ _ _) = ""
-mapping_ZExpr lst (ZReln _) = ""
-mapping_ZExpr lst (ZSelect _ _) = ""
 mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ filter_ZGenFilt_Choose a)++")"
-mapping_ZExpr lst (ZSetComp _ _ ) = ""
-
-mapping_ZExpr lst (ZStrange _) = ""
-mapping_ZExpr lst (ZTheta _) = ""
-mapping_ZExpr lst (ZUniverse) = ""
-mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
+mapping_ZExpr lst x = ""
+-- mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 
 \end{code}
 
@@ -1346,11 +1304,13 @@ get_min_val n _ = []
 
 make_binding :: [ZPara] -> ZName -> ZVar -> String
 make_binding spec n (a,b,c)
-  = "("++a++", "++ c++"."++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY" else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
+  | Subs.isPrefixOf "P" c
+      = "("++a++", "++ c++".{"++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
+                            else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++"})"
+  | otherwise = "("++a++", "++ c++"."++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
+                                    else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
   where
     rtype = Data.List.head $ concat (map (get_type_universe c) spec)
     getMinVal = (concat $ map (get_min_val rtype) spec)
-
-
 
 \end{code}

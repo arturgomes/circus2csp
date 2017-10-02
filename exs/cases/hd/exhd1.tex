@@ -4,9 +4,9 @@
 \begin{zed}
 NatValue == 0 \upto 1
 \also BUTTON ::= ON~|~OFF
-\also STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~|~endPhase
-\also ACTIVITY ::= ~applicationArterialBolus~|~rinsing~|~idle
-\also TIME ~==~\{~h:NatValue;~m:NatValue~@~(h,m)~\}
+% \also STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~|~endPhase
+% \also ACTIVITY ::= ~applicationArterialBolus~|~rinsing~|~idle
+% \also TIME ~==~\{~h:NatValue;~m:NatValue~@~(h,m)~\}
 \end{zed}
 
 \begin{circus}
@@ -35,13 +35,13 @@ NatValue == 0 \upto 1
   \circchannel senSADSensorFlow~:~NatValue\\
   \circchannel senHDMode~:~BUTTON\\
   \circchannel getCurrentTime~:~NatValue\\
-  \circchannel tick\\
+  \circchannel tick, connectThePatient, initPhase, prepPhase, endPhase, applicationArterialBolus, rinsing, idle\\
   \circchannel preparationPhase, connectingToPatient, therapyInitiation, therapyEnding\\
   \circchannel setRinsingParameters : NatValue \cross NatValue \cross NatValue \cross NatValue \cross NatValue \cross NatValue\\
   \circchannel setDFParameters : NatValue \cross BUTTON \cross NatValue \cross NatValue \cross NatValue \cross NatValue\\
   \circchannel setRinsingBPSpeed : NatValue\\
   \circchannel setUFParameters : NatValue \cross NatValue \cross NatValue \cross NatValue\\
-  \circchannel setHeparinParameters : TIME \cross NatValue \cross NatValue \cross BUTTON \cross NatValue\\
+  % \circchannel setHeparinParameters : TIME \cross NatValue \cross NatValue \cross BUTTON \cross NatValue\\
   \circchannel setMinUFRateTreat:~BUTTON\\
   \circchannel setArtBolusVol~:~NatValue\\
   \circchannel setBloodLines\\
@@ -69,8 +69,8 @@ NatValue == 0 \upto 1
     bloodFlowInEBC~:~NatValue\\
     bypassValve~:~BUTTON\\
     fflowDirect~:~BUTTON\\
-    hdActivity~:~\power~ACTIVITY\\
-    hdMachineState~:~\power~STATEPHASE\\
+    % hdActivity~:~\power~ACTIVITY\\
+    % hdMachineState~:~\power~STATEPHASE\\
     hdMode~:~BUTTON\\
     infSalineVol~:~NatValue\\
     lastNonZeroBF~:~NatValue\\
@@ -124,13 +124,13 @@ NatValue == 0 \upto 1
     lowHigh~:~NatValue\\
     extendedTMPLimitRange~:~BUTTON\\
 \end{schema}
-\begin{schema}{HeparinParameters}
-    heparinStopTime~:~TIME\\
-    heparinBolusVol~:~NatValue\\
-    heparinProfileRate~:~NatValue\\
-    treatmentWithoutHeparin~:~BUTTON\\
-    syringeType~:~NatValue
-\end{schema}
+% \begin{schema}{HeparinParameters}
+%     heparinStopTime~:~TIME\\
+%     heparinBolusVol~:~NatValue\\
+%     heparinProfileRate~:~NatValue\\
+%     treatmentWithoutHeparin~:~BUTTON\\
+%     syringeType~:~NatValue
+% \end{schema}
 \begin{circus}%
   \circprocess\ ~HDMachine ~\circdef~ \circbegin
 \circstate HDState \defs HDGenComp
@@ -138,7 +138,7 @@ NatValue == 0 \upto 1
             \\\t2\land~DFParameters
             \\\t2\land~UFParameters
             \\\t2\land~PressureParameters
-            \\\t2\land~HeparinParameters
+            % \\\t2\land~HeparinParameters
 
 HDGenCompInit \circdef
     (airVolLimit := 0)
@@ -148,8 +148,8 @@ HDGenCompInit \circdef
     \circseq (bloodFlowInEBC := 0)
     \circseq (bypassValve := OFF)
     \circseq (fflowDirect := ON)
-    \circseq (hdActivity := \{idle\})
-    \circseq (hdMachineState := \{initPhase\})
+    % \circseq (hdActivity := \{idle\})
+    % \circseq (hdMachineState := \{initPhase\})
     \circseq (infSalineVol := 0)
     \circseq (lastNonZeroBF := 0)
     \circseq (time := 0)
@@ -198,8 +198,8 @@ SensorReadings ~\circdef~
     \also DisconnectDF~\circdef~ disconnectDF \then \Skip
     \also StopCoagulantFlow~\circdef~ stopCoagulantFlow \then \Skip
   R1~\circdef~
-    (\lcircguard hdActivity~=~\{applicationArterialBolus\}\land infSalineVol~>~0 \rcircguard~\circguard~(StopBloodFlow~\interleave~RaiseAlarm))
-    \t2\extchoice (\lcircguard \lnot (hdActivity~=~\{applicationArterialBolus\}\land infSalineVol~>~400) \rcircguard \circguard ( R1))
+    (applicationArterialBolus \then (\lcircguard infSalineVol~>~0 \rcircguard~\circguard~(StopBloodFlow~\interleave~RaiseAlarm)))
+    \t2\extchoice (applicationArterialBolus \then (\lcircguard \lnot (infSalineVol~>~400) \rcircguard \circguard ( R1)))
 
   NoFlowWatchDog ~\circdef~ \\
       \t2\lcircguard time - lastNonZeroBF > 0 \rcircguard \circguard (tick \then StopBP \circseq RaiseAlarm)
@@ -215,8 +215,8 @@ SensorReadings ~\circdef~
   R2 ~\circdef~ NoFlowWatchDog \interleave BloodFlowSample
 
   R3~\circdef~
-    (\lcircguard hdMachineState~=~\{initPhase\}\land bloodFlowInEBC < ((dfFlow * 1) \div 1) \rcircguard ~\circguard~RaiseAlarm)\\
-    \t2\extchoice\lcircguard \lnot (hdMachineState~=~\{initPhase\}\land bloodFlowInEBC < ((dfFlow * 1) \div 1)) \rcircguard ~\circguard ( R3)
+    (initPhase \then (\lcircguard (bloodFlowInEBC < ((dfFlow * 1) \div 1)) \rcircguard ~\circguard~RaiseAlarm))\\
+    \extchoice (initPhase \then (\lcircguard (\lnot (bloodFlowInEBC < ((dfFlow * 1) \div 1)) )\rcircguard ~\circguard R3))
 
   ArterialBolusReq~\circdef~R1 \interleave R2 \interleave R3
 % \also BloodPumpReq~\circdef~ R2~\interleave~R3~\interleave~R4
@@ -277,16 +277,16 @@ SensorReadings ~\circdef~
   SetPressureParameters \circdef
     setPressureParameters?limitDeltaMinMaxAP.actualTMPMaxTMP.limitsTMP.lowHigh.extendedTMPLimitRange \then \Skip
 
-  SetHeparinParameters \circdef
-    setHeparinParameters?heparinStopTime.heparinBolusVol.heparinProfileRate.treatmentWithoutHeparin.syringeType \then \Skip
+  % SetHeparinParameters \circdef
+  %   setHeparinParameters?heparinStopTime.heparinBolusVol.heparinProfileRate.treatmentWithoutHeparin.syringeType \then \Skip
 
   SetTreatParameters~\circdef~ SetDFParameters \circseq SetUFParameters \circseq
-  \\\t4 SetPressureParameters \circseq SetHeparinParameters
+  \\\t4 SetPressureParameters %\circseq SetHeparinParameters
 
   RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\then~\Skip
 
   TherapyPreparation~\circdef
-    \\\t1 (hdMachineState:=prepPhase) \circseq AutomatedSelfTest \circseq
+    \\\t1 prepPhase \then AutomatedSelfTest \circseq
     \\\t1 ConnectingTheConcentrate \circseq SetRinsingParameters \circseq
     \\\t1 InsertingRinsingTestingTubSystem \circseq PrepHeparinPump \circseq
     \\\t1 SetTreatParameters \circseq RinsingDialyzer
@@ -296,7 +296,7 @@ SensorReadings ~\circdef~
   ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
   %SetStopBloodFlow~\circdef~setBloodFlowInEBC?bloodFlowInEBC~\then~\Skip
   ConnectPatientStartTherapy~\circdef~
-    \\\t2 (hdMachineState:=connectThePatient) \circseq
+    \\\t2 connectThePatient \then
     \\\t2 EnableUI \circseq
     \\\t2 ConnectPatientArterially \circseq
     %\\\t2 SetStopBloodFlow\circseq
@@ -316,7 +316,7 @@ SensorReadings ~\circdef~
               \interleave InterruptDialysis) \circseq
         \\\t2 CompletTreatment
   TherapyInitiation~\circdef
-  \\\t1(hdMachineState:=initPhase) \circseq ConnectPatientStartTherapy
+  \\\t1 initPhase \then ConnectPatientStartTherapy
     \circseq DuringTherapy
 
   Reinfusion~\circdef~\Skip
@@ -324,7 +324,7 @@ SensorReadings ~\circdef~
   EmptyingCartridge~\circdef~\Skip
   OverviewTherapy~\circdef~\Skip
   TherapyEnding~\circdef
-    (hdMachineState:=endPhase)~\circseq~ Reinfusion
+    endPhase~\then~ Reinfusion
     \circseq EmptyingDialyzer
     \circseq \\\t4\t3 EmptyingCartridge
     \circseq OverviewTherapy
@@ -335,15 +335,17 @@ SensorReadings ~\circdef~
     \circseq TherapyEnding
 
   HDMachineMain~\circdef %HDGenCompInit \circseq
-  ((MainTherapy
-          \interleave  SoftwareRequirements)
-          \interleave SensorReadings)
+  %(
+  %(
+  MainTherapy
+        %  \interleave  SoftwareRequirements)
+          %\interleave SensorReadings)
   \circspot HDMachineMain
   \circend
 \end{circus}
-\begin{circus}
-\circprocess HDEnv \circdef ((HDMachine \lpar \lchanset tick,getCurrentTime \rchanset \rpar SysClock) \circhide \lchanset tick,getCurrentTime \rchanset)
-\end{circus}
+% \begin{circus}
+% \circprocess HDEnv \circdef ((HDMachine \lpar \lchanset tick,getCurrentTime \rchanset \rpar SysClock) \circhide \lchanset tick,getCurrentTime \rchanset)
+% \end{circus}
 \begin{assert}
   % "b_BUT1 = {(sv_alarm, BUT.OFF),"
   % \also"(sv_bicarbonateAcetate, BUT.OFF),"
@@ -402,8 +404,9 @@ SensorReadings ~\circdef~
   % \also"b_PAC1 = {(sv_hdActivity, PAC.{idle})}"
   % \also"b_PST1 = {(sv_hdMachineState, PST.{initPhase})}"
   % \also"b_TIM1 = {(sv_heparinStopTime, TIM.(0,0))}"
-  "MyHDMACHINE = let X = HDMachine; X within X"
-  \also "assert HDMachine :[ deadlock free [FD] ]"
-  \also "assert HDMachine :[ livelock free ]"
-  \also "assert HDMachine :[ deterministic [F] ]"
+"HDEnv = ( ( HDMachine(b_NAT1,b_BUT1) [| {| tick,getCurrentTime |} |] SysClock(b_NAT1) ) \ {| tick,getCurrentTime |} )"
+\also "MyHDMACHINE = let X = HDMachine(b_NAT1,b_BUT1); X within X"
+\also "assert HDMachine(b_NAT1,b_BUT1) :[ deadlock free [FD] ]"
+\also "assert HDMachine(b_NAT1,b_BUT1) :[ livelock free ]"
+\also "assert HDMachine(b_NAT1,b_BUT1) :[ deterministic [F] ]"
 \end{assert}

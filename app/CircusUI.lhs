@@ -78,7 +78,7 @@ get_cmd2 cmd anim fn
 get_cmd3 :: String -> [String] -> Int -> Animator -> String -> IO ()
 -- 'sofar' is a list of the input lines for this command (in reverse order).
 -- The Int argument is the number of unclosed brackets in 'sofar'.
-get_cmd3 cmd sofar opened anim fn 
+get_cmd3 cmd sofar opened anim fn
     | opened <= 0
       = do_cmd cmd (dropWhile isSpace (concatMap ('\n':) (reverse sofar))) anim fn
     | otherwise
@@ -157,18 +157,18 @@ do_cmd cmd args anim fn
 
 
 done_cmd :: (Animator, Answer,String) -> IO ()
-done_cmd (anim, DoneUpsilon s f,args)   
+done_cmd (anim, DoneUpsilon s f,args)
   = do {putStrLn s; touch (args++".csp"); writeStr (args++".csp") s; get_cmd anim args}
-done_cmd (anim, DoneOmega s f,args) 
+done_cmd (anim, DoneOmega s f,args)
   = do {putStrLn s; touch (args++".csp"); writeStr (args++".hc") s; get_cmd anim args}
-done_cmd (anim, Done s,args) 
+done_cmd (anim, Done s,args)
   = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim args}
 done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
 done_cmd (anim, ErrorLocns es,args)= do {putStrLn (unlines (map fmtperr es));
            get_cmd anim args}
 
 -- done_cmd :: (Animator, Answer) -> IO ()
--- done_cmd (anim, DoneUpsilon s f)   
+-- done_cmd (anim, DoneUpsilon s f)
 --   = do {putStrLn s; touch (f++".csp"); writeStr (f++".csp") s; get_cmd anim}
 -- done_cmd (anim, DoneOmega s f)
 --   = do {putStrLn s; touch (f++".csp"); writeStr (f++".hc") s; get_cmd anim}

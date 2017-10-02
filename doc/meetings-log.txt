@@ -1,0 +1,32 @@
+Meeting with Andrew - 28/03/17
+----
+
+value, type and tag function for different kind of types. Ex:
+
+value of nat
+value of pair
+value of power set
+
+
+
+-----
+Meeting with Andrew - 21/03/17
+
+
+What's left:
+
+Implement two refinement laws for Processes and not Actions
+- Embed it into the Omega Process or make an entinre tool for it?
+
+Mechanism to apply the refinement laws into constructs such as
+[] i @ c_i -> A(i)
+
+
+
+
+Questions:
+
+How to fix the use of datatypes in the value/tag constructs?
+
+How to eliminate the use of parametrised actions within the main action, as any local variable is removed in the refinement process?
+
