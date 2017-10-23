@@ -32,9 +32,9 @@ Haskell line begins with a \verb.>. character.
 \begin{haskell*}
 
 > module FiniteSets
->  ( Set, 
+>  ( Set,
 >      set, emptyset, union, inter, diff, gen_union, gen_inter,
->      mem, not_mem, subset, psubset, disjoint, 
+>      mem, not_mem, subset, psubset, disjoint,
 >      card, set2list, powerset, upto, set_from_ordered_list,
 >    Pairable,
 >      is_pair, pair_fst, pair_snd, haskell_pair,
@@ -57,7 +57,7 @@ Haskell line begins with a \verb.>. character.
 \section{Finite Sets: ({\tt Set a})}
 
 This finite set type is derived from page 228 of Bird and
-Wadler~\cite{bird:intro-to-func-prog}. 
+Wadler~\cite{bird:intro-to-func-prog}.
 However, several functions are renamed and many functions are added so that
 all of the set operations of Z are supported.  Table \ref{table-set-ops}
 shows the relationship between Z set operators and the corresponding
@@ -94,7 +94,7 @@ e.g.}, \verb.a `mem` xs.).
   $\bigcap S$           & \verb.gen_inter S. \\
   $\disjoint [S1,\ldots,Sn]$
                         & \verb.disjoint [S1,..,Sn]. \\
-  $\{x:S \mid P(x) 
+  $\{x:S \mid P(x)
       \spot f(x)\}$     & \verb.set [f x | x <- set2list S, P x]. \\
 \hline
 \end{tabular}
@@ -207,8 +207,8 @@ using the \verb.set. function, giving
 
 The functions defined so far cover all of the set operations defined in the
 standard Z library \cite{spivey:z-notation}, except for some derived
-operators (such as the non-empty power set constructor: $\power_1$) 
-that are easily expressed using other functions.  
+operators (such as the non-empty power set constructor: $\power_1$)
+that are easily expressed using other functions.
 
 
 \subsection{Implementation}
@@ -228,7 +228,7 @@ class.  A consequence of this is that sets must also be totally
 ordered, since we want to allow sets to contain sets.
 However, the user will generally not be interested in this ordering
 over sets (it is not the same as the subset ordering), so we
-regard it as being a side effect of the current implementation rather 
+regard it as being a side effect of the current implementation rather
 than as a desired property of sets.
 
 \begin{haskell*}
@@ -242,7 +242,7 @@ than as a desired property of sets.
 > set_from_ordered_list xs = MkSet xs
 
 -->  | set2list(set xs) == xs = MkSet xs
--->  | otherwise             = error "set_from_ordered_list precondition broken" 
+-->  | otherwise             = error "set_from_ordered_list precondition broken"
 
 \end{haskell*}
 
@@ -286,7 +286,7 @@ definition for symmetry with intersection and difference.
 Rather than use the standard {\tt elem} function to implement {\tt
 mem} we give an implementation that takes advantage of the list being
 sorted.  This means that it is only necessary to search half the list
-on average.  
+on average.
 \begin{haskell*}
 
 > x `mem` (MkSet xs)   = x `mem_impl` xs
@@ -303,8 +303,8 @@ on average.
 
 > xs `psubset` ys     = xs `subset` ys && xs /= ys
 
-> disjoint xs 
->     = and [ a `inter` b == set [] 
+> disjoint xs
+>     = and [ a `inter` b == set []
 >               | (i,a) <- numxs, (j,b) <- numxs, i < j ]
 >       where
 >       numxs = zip [1..] xs
@@ -314,9 +314,9 @@ on average.
 The remaining functions have simple implementations, since
 our representation of sets does not contain duplicates and
 is already sorted in ascending order.  Note that \verb.upto.
-can avoid the overhead of sorting and removing duplicates, 
+can avoid the overhead of sorting and removing duplicates,
 because Haskell enumeration expressions \verb![a..b]! always
-generates results in strictly ascending order (this is not always 
+generates results in strictly ascending order (this is not always
 true of \verb![a,b..c]! however).
 \begin{haskell*}
 
@@ -333,7 +333,7 @@ true of \verb![a,b..c]! however).
 
 \end{haskell*}
 
-The following definitions 
+The following definitions
 allow sets to be printed and parsed as \verb.{a, b, c}..
 They are taken from the VDM \verb.SetMap. module by
 Nick North (email: \verb|ndn@seg.npl.co.uk|); available
@@ -439,7 +439,7 @@ elements must be pairs.
 We can now define the following operators on relations.
 The relationship between the Z operator names and the
 names used here is shown in table \ref{table-reln-ops}.
-Note that \verb.dom. is short for {\em domain} and 
+Note that \verb.dom. is short for {\em domain} and
 \verb.ran. is short for {\em range}.
 Be warned that \verb.iter. only accepts iterations of one
 or greater, because zero generates the identity relation
@@ -541,7 +541,7 @@ numbers of times (zero for \verb.identity., a given number for
 > iter rs (k+1) = rs `semi` iter rs k
 
 > transclosure rs = grow rs rs
->     where 
+>     where
 >     grow orig curr
 >         = if new == set []
 >           then curr
@@ -561,7 +561,7 @@ all the relation and set operators are applicable to functions
 Since functions are already available in Haskell, one could ask why it is
 useful to provide an ADT that represents functions explicitly?  The
 advantage of representing functions as data structures is that it becomes
-possible to perform operations such as calculating the domain and 
+possible to perform operations such as calculating the domain and
 range of a function, test two functions for equality and print
 the definition of a function.  The disadvantage is that we can only
 usefully represent finite functions.
@@ -573,7 +573,7 @@ function.  The \verb.is_injective. predicate tests a relation
 to see if it is a one-to-one function.  The \verb.func. operation
 constructs a function from a list of pairs---it is identical to
 \verb.reln., but generates an error message if the result is not a
-function. 
+function.
 
 \begin{haskell*}
 
@@ -587,8 +587,8 @@ function.
 
 > func :: Pairable p => [(a,b)] -> Func p
 > func ps
->    = if is_func rs 
->      then rs 
+>    = if is_func rs
+>      then rs
 >      else error "func: list contains duplicate domain elements."
 >      where rs = reln ps
 
@@ -606,7 +606,7 @@ domain of the function.
 % This can
 % easily be tested by calling {\tt in\_dom}, which is equivalent to
 % testing for membership in the domain of a function, but is provided
-% directly because it is such a common operation.  
+% directly because it is such a common operation.
 
 The {\tt fovr} and {\tt funion} operators (usually written infix) combine
 two functions into one.  The difference is that {\tt funion} requires the
@@ -621,7 +621,7 @@ The {\tt fclash} operator compares two functions
 and returns the domain elements that appear in both functions but are
 mapped to different range elements.  So, if {\tt fclash} returns an empty
 set, then {\tt funion} can be safely applied.  Although the \verb.funion.,
-\verb.fovr. and \verb.fclash. operations could be generalised to operate 
+\verb.fovr. and \verb.fclash. operations could be generalised to operate
 on relations rather than just on functions, the current implementations
 assume that the inputs are functions.
 
@@ -641,7 +641,7 @@ assume that the inputs are functions.
 \begin{haskell*}
 
 > fapply rs v
->    = fdefapply (error "fapply: argument is not in domain of function") 
+>    = fdefapply (error "fapply: argument is not in domain of function")
 >        rs v
 
 > fdefapply def (MkSet xs) v
@@ -696,24 +696,24 @@ All three operations have complexity of $O(\#xs + \#ys)$.
 
 \section{Sundry Useful Functions}
 
-\FUNC{Mergesort} 
+\FUNC{Mergesort}
 Sorts a list into ascending order with $O(N \times \ln N)$ worst case
 time, but with $O(N)$ best case performance when the list is already
 ordered.  The elements in the list must come from a type which is
 totally ordered.
 
 \begin{haskell*}
- 
+
 > mergesort :: Ord a => [a] -> [a]
-> mergesort xs 
+> mergesort xs
 >    = (head . while gt1 mergepairs . ascend_runs) xs
->      where 
+>      where
 >      gt1 [_] = False
 >      gt1 _   = True
 
 > merge []       ys    =  ys
 > merge xs@(_:_) []    =  xs
-> merge (x:xs)  (y:ys) 
+> merge (x:xs)  (y:ys)
 >        | x < y       =  x : merge xs (y:ys)
 >        | x == y      =  x : merge xs (y:ys)
 >        | x > y       =  y : merge (x:xs) ys
@@ -741,11 +741,11 @@ totally ordered.
 
 \end{haskell*}
 
-\FUNC{Remdups} 
+\FUNC{Remdups}
 Removes adjacent duplicates from a list.  A corollary
 of this is that if the input list is sorted (in ascending or
 descending order) then the output list will only contain unique
-values.  
+values.
 \begin{haskell*}
 
 > remdups :: (Eq a) => [a] -> [a]
@@ -765,7 +765,7 @@ to the standard Haskell operators \verb.&&., \verb.||. and \verb.not.,
 respectively.  Of course, the semantics of the Haskell operators
 is slightly more restricted than the Z operators, since the Haskell
 operators typically evaluate the left argument before the right,
-so they may be undefined (i.e., not terminate) in some cases where 
+so they may be undefined (i.e., not terminate) in some cases where
 the Z operators are defined.
 \begin{haskell*}
 

@@ -2,11 +2,11 @@ name:                c2c
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/c2c#readme
+homepage:            https://bitbucket.org/circusmodelcheck/jazaextended
 license:             BSD3
 license-file:        LICENSE
-author:              Artur Oliveira Gomes here
-maintainer:          example@example.com
+author:              Artur Oliveira Gomes
+maintainer:          gomesa@tcd.ie
 copyright:           2017 Artur Oliveira Gomes
 category:            Web
 build-type:          Simple
@@ -37,7 +37,7 @@ library
 
   default-language:    Haskell2010
 
-executable c2c-exe
+executable c2c
   hs-source-dirs:      app
   main-is:             CircusUI.lhs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
@@ -56,4 +56,4 @@ test-suite c2c-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/c2c
+  location: https://bitbucket.org/circusmodelcheck/jazaextended

@@ -41,11 +41,50 @@ channel setArtBolusVol : NatValue
 channel setBloodLines
 channel setPressureParameters : NatValue.NatValue.BUTTON.NatValue.BUTTON
 channel endTreatment
-HDEnv = ( ( HDMachine(b_NAT1,b_BUT1) [| {| tick,getCurrentTime |} |] SysClock(b_NAT1) ) \ {| tick,getCurrentTime |} )
-MyHDMACHINE = let X = HDMachine(b_NAT1,b_BUT1); X within X
-assert HDMachine(b_NAT1,b_BUT1) :[ deadlock free [FD] ]
-assert HDMachine(b_NAT1,b_BUT1) :[ livelock free ]
-assert HDMachine(b_NAT1,b_BUT1) :[ deterministic [F] ]
+
+INT_CHAN = {|autSelfTest, atrialTubing,
+              ventricularTubing, connectDialyzer,
+              stopBloodFlow, produceAlarmSound, stopBP,
+              disconnectDF, stopFlowDialyzer, stopCoagulantFlow,
+              fillArterialDrip, connPatientArterially, connPatientVenously,
+              insertHeparinSyringe, heparinLineIsVented,
+              connectingConcentrate,
+              salineBagLevel,
+              getRinsingBPRate, setRinsingBPRate,
+              getBloodFlowInEBC, setBloodFlowInEBC,
+              getMinUFRateTreat, setMinUFRateTreat,
+              getArtBolusVol, setArtBolusVol,
+              setBloodLines,
+              senAirVolLimit,
+              senAirVol,
+              senApTransdPress,
+              senBloodFlowInEBC,
+              senBypassVol,
+              senFflowDirect,
+              senHDMode,
+              senInfVol,
+              senLastNonZeroBF,
+              senNetFluidRemovalRate,
+              senNetFluidRemoval,
+              senRotDirectBP,
+              senRotDirectUFP,
+              senSADSensorFlow,
+              senVolInEBC,
+              senVpTransdPress
+              |}
+ HDEnv = ( ( (HDMachine(b_NAT1,b_BUT) \ INT_CHAN) [| {| tick,getCurrentTime |} |] SysClock(b_NAT1) ) \ {| tick,getCurrentTime |} )
+MyHDMACHINE = let X = HDMachine(b_NAT1,b_BUT); X within X
+assert (HDMachine(b_NAT1,b_BUT) \ INT_CHAN) :[ deadlock free [FD] ]
+assert (HDMachine(b_NAT1,b_BUT) \ INT_CHAN) :[ livelock free ]
+assert (HDMachine(b_NAT1,b_BUT) \ INT_CHAN) :[ deterministic [F] ]
+assert HDEnv :[ deadlock free [FD] ]
+assert HDEnv :[ livelock free ]
+assert HDEnv :[ deterministic [F] ]
+
+my_compress(p) =
+let
+transparent normal, diamond
+within normal(diamond(p))
 --------------------------------
 -- The universe of values
  datatype UNIVERSE = BUT.BUTTON | NAT.NatValue
@@ -65,7 +104,7 @@ subtype U_BUT = BUT.BUTTON
 -- subtypes of UNIVERSE for NAT
 subtype U_NAT = NAT.NatValue
 
--- definition of NAME for the entire spec 
+-- definition of NAME for the entire spec
 datatype NAME = sv_airVolLimit | sv_airVol | sv_alarm | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_bypassValve | sv_fflowDirect | sv_hdMode | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_netFluidRemoval | sv_rotDirectionBP | sv_rotDirectionUFP | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_bloodLines | sv_signalLamp | sv_minUFRateTreat | sv_fillingBPRate | sv_rinsingBPRate | sv_ufRateForRinsing | sv_ufVolForRinsing | sv_bloodFlowForConnectingPatient | sv_conductivity | sv_bicarbonateAcetate | sv_bicarbonateConductivity | sv_dfTemperature | sv_rinsingTime | sv_dfFlow | sv_ufVol | sv_therapyTime | sv_minUFRate | sv_maxUFRate | sv_limitDeltaMinMaxAP | sv_actualTMPMaxTMP | sv_limitsTMP | sv_lowHigh | sv_extendedTMPLimitRange | sv_time
 
 -- Subtype definition for NAT
@@ -86,13 +125,13 @@ BINDINGS_BUT = {set(b) | b <- set(distCartProd(NAMES_VALUES_BUT))}
 
 
 --------------------------------
- -- mget, mset and terminate -- 
+ -- mget, mset and terminate --
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEMI -- 
+ -- MEMI --
 --------------------------------
 MEMI = {| mset,mget,terminate |}
 channel lget, lset : NAME.UNIVERSE
@@ -122,8 +161,8 @@ HDMachine(b_NAT,b_BUT) =
       MemoryMerge(b_NAT,over(b_BUT,n,nv),ns) )))
       [] lterminate ->
       (  ; bd : < b_NAT>^< b_BUT> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictNAT(bs) = dres(bs,{sv_airVolLimit, sv_airVol, sv_artBolusVol, sv_apTransdPress, sv_bloodFlowInEBC, sv_infSalineVol, sv_lastNonZeroBF, sv_lowerPressureLimit, sv_netFluidRemovalRate, sv_safeUpperLimit, sv_timerIntervalR9, sv_timerIntervalR10, sv_timerIntervalR11, sv_timerIntervalR12, sv_timerIntervalR13, sv_upperPressureLimit, sv_volumeInEBC, sv_vpTransdPress, sv_sadSensorFlow, sv_fillingBPRate, sv_rinsingBPRate, sv_ufRateForRinsing, sv_ufVolForRinsing, sv_bloodFlowForConnectingPatient, sv_conductivity, sv_bicarbonateConductivity, sv_dfTemperature, sv_rinsingTime, sv_dfFlow, sv_ufVol, sv_therapyTime, sv_minUFRate, sv_maxUFRate, sv_limitDeltaMinMaxAP, sv_actualTMPMaxTMP, sv_lowHigh, sv_time})
          restrictBUT(bs) = dres(bs,{sv_alarm, sv_bypassValve, sv_fflowDirect, sv_hdMode, sv_netFluidRemoval, sv_rotDirectionBP, sv_rotDirectionUFP, sv_bloodLines, sv_signalLamp, sv_minUFRateTreat, sv_bicarbonateAcetate, sv_limitsTMP, sv_extendedTMPLimitRange})
      within( ( ( prepPhase ->
@@ -131,14 +170,7 @@ HDMachine(b_NAT,b_BUT) =
       mset.sv_signalLamp.(BUT.ON) ->
       connectingConcentrate?t_sv_bicarbonateAcetate ->
       mset.sv_bicarbonateAcetate.(BUT.t_sv_bicarbonateAcetate) ->
-      setRinsingParameters?t_sv_fillingBPRate?t_sv_rinsingBPRate?t_sv_rinsingTime?t_sv_ufRateForRinsing?t_sv_ufVolForRinsing?t_sv_bloodFlowForConnectingPatient ->
-      mset.sv_fillingBPRate.(NAT.t_sv_fillingBPRate) ->
-      mset.sv_rinsingBPRate.(NAT.t_sv_rinsingBPRate) ->
-      mset.sv_rinsingTime.(NAT.t_sv_rinsingTime) ->
-      mset.sv_ufRateForRinsing.(NAT.t_sv_ufRateForRinsing) ->
-      mset.sv_ufVolForRinsing.(NAT.t_sv_ufVolForRinsing) ->
-      mset.sv_bloodFlowForConnectingPatient.(NAT.t_sv_bloodFlowForConnectingPatient) ->
-      ( ( ( ( ( ( ( ( ( atrialTubing -> SKIP
+      ( (   ( ( ( ( ( atrialTubing -> SKIP
       ||| ventricularTubing -> SKIP );
       salineBagLevel?t_sv_infSalineVol ->
       mset.sv_infSalineVol.(NAT.t_sv_infSalineVol) -> SKIP );
@@ -148,45 +180,27 @@ HDMachine(b_NAT,b_BUT) =
       mset.sv_rinsingBPRate.(NAT.t_sv_rinsingBPRate) -> SKIP );
       insertHeparinSyringe ->
       heparinLineIsVented -> SKIP );
-      setDFParameters?t_sv_conductivity?t_sv_bicarbonateAcetate?t_sv_bicarbonateConductivity?t_sv_dfTemperature?t_sv_rinsingTime?t_sv_dfFlow ->
-      mset.sv_conductivity.(NAT.t_sv_conductivity) ->
-      mset.sv_bicarbonateAcetate.(BUT.t_sv_bicarbonateAcetate) ->
-      mset.sv_bicarbonateConductivity.(NAT.t_sv_bicarbonateConductivity) ->
-      mset.sv_dfTemperature.(NAT.t_sv_dfTemperature) ->
-      mset.sv_rinsingTime.(NAT.t_sv_rinsingTime) ->
-      mset.sv_dfFlow.(NAT.t_sv_dfFlow) ->
-      setUFParameters?t_sv_ufVol?t_sv_therapyTime?t_sv_minUFRate?t_sv_maxUFRate ->
-      mset.sv_ufVol.(NAT.t_sv_ufVol) ->
-      mset.sv_therapyTime.(NAT.t_sv_therapyTime) ->
-      mset.sv_minUFRate.(NAT.t_sv_minUFRate) ->
-      mset.sv_maxUFRate.(NAT.t_sv_maxUFRate) ->
-      setPressureParameters?t_sv_limitDeltaMinMaxAP?t_sv_actualTMPMaxTMP?t_sv_limitsTMP?t_sv_lowHigh?t_sv_extendedTMPLimitRange ->
-      mset.sv_limitDeltaMinMaxAP.(NAT.t_sv_limitDeltaMinMaxAP) ->
-      mset.sv_actualTMPMaxTMP.(NAT.t_sv_actualTMPMaxTMP) ->
-      mset.sv_limitsTMP.(BUT.t_sv_limitsTMP) ->
-      mset.sv_lowHigh.(NAT.t_sv_lowHigh) ->
-      mset.sv_extendedTMPLimitRange.(BUT.t_sv_extendedTMPLimitRange) -> SKIP );
       connectDialyzer ->
       fillArterialDrip ->
-      stopBP -> SKIP );
-      initPhase ->
+      stopBP -> initPhase ->
       connectThePatient ->
       mset.sv_signalLamp.(BUT.OFF) ->
       connPatientArterially ->
       connPatientVenously ->
       mset.sv_signalLamp.(BUT.ON) ->
-      mset.sv_hdMode.(BUT.ON) ->
-      ( ( ( ( ( SKIP
-      ||| setMinUFRateTreat?ON -> SKIP )
-      ||| SKIP )
-      ||| setArtBolusVol?t_sv_artBolusVol ->
-      mset.sv_artBolusVol.(NAT.t_sv_artBolusVol) -> SKIP )
-      ||| senHDMode.OFF ->
-      mset.sv_signalLamp.(BUT.OFF) -> SKIP );
-      endTreatment ->
-      mset.sv_signalLamp.(BUT.OFF) -> SKIP ) );
+      mset.sv_hdMode.(BUT.ON) ->SKIP
+      -- ( ( ( ( ( SKIP
+      -- ||| setMinUFRateTreat?ON -> SKIP )
+      -- ||| SKIP )
+      -- ||| setArtBolusVol?t_sv_artBolusVol ->
+      -- mset.sv_artBolusVol.(NAT.t_sv_artBolusVol) -> SKIP )
+      -- ||| senHDMode.OFF ->
+      -- mset.sv_signalLamp.(BUT.OFF) -> SKIP );
+      -- endTreatment ->
+      -- mset.sv_signalLamp.(BUT.OFF) -> SKIP )
+      );
       endPhase -> SKIP );
-      terminate -> SKIP )
+      terminate -> SKIP ) \ MEMI
       [| MEMI |] Memory(restrictNAT(b_NAT),restrictBUT(b_BUT)))\MEMI )
 
 
@@ -205,8 +219,8 @@ SysClock(b_NAT) =
       MemoryMerge(over(b_NAT,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_NAT> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-     
-  within 
+
+  within
      let  restrictNAT(bs) = dres(bs,{sv_airVolLimit, sv_airVol, sv_artBolusVol, sv_apTransdPress, sv_bloodFlowInEBC, sv_infSalineVol, sv_lastNonZeroBF, sv_lowerPressureLimit, sv_netFluidRemovalRate, sv_safeUpperLimit, sv_timerIntervalR9, sv_timerIntervalR10, sv_timerIntervalR11, sv_timerIntervalR12, sv_timerIntervalR13, sv_upperPressureLimit, sv_volumeInEBC, sv_vpTransdPress, sv_sadSensorFlow, sv_fillingBPRate, sv_rinsingBPRate, sv_ufRateForRinsing, sv_ufVolForRinsing, sv_bloodFlowForConnectingPatient, sv_conductivity, sv_bicarbonateConductivity, sv_dfTemperature, sv_rinsingTime, sv_dfFlow, sv_ufVol, sv_therapyTime, sv_minUFRate, sv_maxUFRate, sv_limitDeltaMinMaxAP, sv_actualTMPMaxTMP, sv_lowHigh, sv_time})
      within( ( ( mset.sv_time.(NAT.0) ->
       ( let X = ( ( tick ->

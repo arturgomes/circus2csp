@@ -106,7 +106,7 @@ sub_ZExpr (ZIntSet v1maybe_ZInt v2maybe_ZInt) = (ZIntSet v1maybe_ZInt v2maybe_ZI
 sub_ZExpr (ZGenerator vZReln vZExpr) = (ZGenerator vZReln vZExpr)
 sub_ZExpr (ZCross vZExpr_lst) = (ZCross vZExpr_lst)
 sub_ZExpr (ZFreeType vZVar vZBranch_lst) = (ZFreeType vZVar vZBranch_lst)
-sub_ZExpr (ZPowerSet{baseset=vZExpr, is_non_empty=v1Bool, is_finite=v2Bool}) 
+sub_ZExpr (ZPowerSet{baseset=vZExpr, is_non_empty=v1Bool, is_finite=v2Bool})
     = (ZPowerSet{baseset=vZExpr, is_non_empty=v1Bool, is_finite=v2Bool})
 sub_ZExpr (ZFuncSet{ domset=vZExpr,
     ranset=v1ZExpr,
@@ -189,21 +189,21 @@ is_var_bound_ZGenFilt v _ = False
   -- | Evaluate ZVar ZExpr ZExpr -- Yet to be defined (Artur, 22/02/2017)
 \end{code}
 \begin{code}
-is_var_bound_ZSExpr v (ZSchema vZGenFilt_lst) 
+is_var_bound_ZSExpr v (ZSchema vZGenFilt_lst)
     = member True (map is_var_bound_ZGenFilt vZGenFilt_lst)
 is_var_bound_ZSExpr v (ZS1 v vZSExpr) = (is_var_bound_ZSExpr vZSExpr)
-is_var_bound_ZSExpr v (ZS2 v v1ZSExpr v2ZSExpr) 
+is_var_bound_ZSExpr v (ZS2 v v1ZSExpr v2ZSExpr)
   = (is_var_bound_ZSExpr v1ZSExpr) || (is_var_bound_ZSExpr v2ZSExpr)
-is_var_bound_ZSExpr v (ZSHide vZSExpr vZVar_lst) 
-  = (is_var_bound_ZSExpr vZSExpr) 
-is_var_bound_ZSExpr v (ZSExists vZGenFilt_lst vZSExpr) 
+is_var_bound_ZSExpr v (ZSHide vZSExpr vZVar_lst)
+  = (is_var_bound_ZSExpr vZSExpr)
+is_var_bound_ZSExpr v (ZSExists vZGenFilt_lst vZSExpr)
   = if (member True (map is_var_bound_ZGenFilt v vZGenFilt_lst)) then True else (is_var_bound_ZSExpr v vZSExpr)
-is_var_bound_ZSExpr v (ZSExists_1 vZGenFilt_lst vZSExpr) 
+is_var_bound_ZSExpr v (ZSExists_1 vZGenFilt_lst vZSExpr)
   = if (member True (map is_var_bound_ZGenFilt v vZGenFilt_lst)) then True else (is_var_bound_ZSExpr v vZSExpr)
-is_var_bound_ZSExpr v (ZSForall vZGenFilt_lst vZSExpr) 
+is_var_bound_ZSExpr v (ZSForall vZGenFilt_lst vZSExpr)
   = if (member True (map is_var_bound_ZGenFilt v vZGenFilt_lst)) then True else (is_var_bound_ZSExpr v vZSExpr)
-is_var_bound_ZSExpr v _ = False 
--- is_var_bound_ZSExpr v (ZSRef ZSName [ZDecor] [ZReplace]) = 
+is_var_bound_ZSExpr v _ = False
+-- is_var_bound_ZSExpr v (ZSRef ZSName [ZDecor] [ZReplace]) =
 \end{code}
 
 \subsubsection{Z Schemas}

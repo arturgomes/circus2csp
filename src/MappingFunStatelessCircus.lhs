@@ -44,7 +44,12 @@ defined in the specification.
 \begin{circus}
     [UNIVERSE]
 \end{circus}%
-However, our approach differs as we introduce the same granularity used for the data in CSP. Therefore, instead of using a single $UNIVERSE$ given type, we define a datatype $UNIVERSE$ and, after preprocessing each type in the scope of the specification, we use its first three leters as a constructor. We illustrate our approach with an example: given that an arbitrary specification uses two types $RANGE$ and $ALARM$, the $UNIVERSE$ datatype is defined as
+However, our approach differs as we introduce the same granularity used for the
+data in CSP. Therefore, instead of using a single $UNIVERSE$ given type, we
+define a datatype $UNIVERSE$ and, after preprocessing each type in the scope
+of the specification, we use its first three leters as a constructor. We
+illustrate our approach with an example: given that an arbitrary specification
+uses two types $RANGE$ and $ALARM$, the $UNIVERSE$ datatype is defined as
 \begin{circus}
 UNIVERSE ::= RAN\ldata RANGE \rdata | ALA\ldata ALARM \rdata
 \end{circus}
@@ -205,54 +210,54 @@ second iteration of refinement strategy.
 \qquad\begin{array}{l}
 \circprocess P\circdef\\
 \qquad
-	\begin{array}{l}
-		\circbegin\\
-			\qquad
-			\begin{array}{l}
-			\circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
-			\ldots\\
-			\circspot A(v_0,\ldots,v_n)
-		\end{array}\\
-	\circend\\
-	\end{array}
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
+      \ldots\\
+      \circspot A(v_0,\ldots,v_n)
+    \end{array}\\
+  \circend\\
+  \end{array}
 \end{array}
 \\= & Action Refinement\\
 \end{argue}
 \begin{code}
 proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
-	= rest11
-	where
-		remRecAct = map recursive_PPar aclst
-		expAct = map (expand_action_names_PPar remRecAct) remRecAct
-		nomegaAC = (expand_action_names_CAction expAct ma)
-		refAC = isRefined' nomegaAC (runRefinement nomegaAC)
-		rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
 proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
-	= rest11
-	where
-		remRecAct = map recursive_PPar aclst
-		expAct = map (expand_action_names_PPar remRecAct) remRecAct
-		nomegaAC = (expand_action_names_CAction expAct ma)
-		refAC = isRefined' nomegaAC (runRefinement nomegaAC)
-		rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
 \end{code}
 \begin{argue}
-	\\= & Action Refinement\\
-	\qquad\begin{array}{l}
-	\circprocess P\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				\circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
-				\ldots\\
-				\circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
+  \\= & Action Refinement\\
+  \qquad\begin{array}{l}
+  \circprocess P\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
+        \ldots\\
+        \circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
 \end{argue}
 \begin{code}
 proc_ref2 :: ZPara -> ([ZGenFilt],ZPara)
@@ -274,51 +279,51 @@ proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
 proc_ref2 x = ([],x)
 \end{code}
 \begin{argue}
-	\\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
-	\qquad\begin{array}{l}
-	\circprocess P\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				\circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n; l_0: U_0; \ldots ; l_m;U_m | inv(v_0,\ldots,v_n) ]\\
-				\ldots\\
-				\circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\\= & Data Refinement\\
+  \\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
+  \qquad\begin{array}{l}
+  \circprocess P\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n; l_0: U_0; \ldots ; l_m;U_m | inv(v_0,\ldots,v_n) ]\\
+        \ldots\\
+        \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \\= & Data Refinement\\
 \end{argue}
 
 
 \begin{code}
 proc_ref3 (Process (CProcess p
   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma))))
-	=  proc_ref4 (Process (CProcess p
+  =  proc_ref4 (Process (CProcess p
     (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
-	where bst = data_refinement stv
+  where bst = data_refinement stv
 proc_ref3 x = proc_ref4 x
 \end{code}
 
 \begin{argue}
-	\\= & Data Refinement\\
-	\qquad\begin{array}{l}
-	\circprocess P\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				\circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
-				\ldots\\
-				\circspot A(b(v_0),\ldots,b(v_n),b(l_0),\ldots,b(l_m))
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\\= & Action Refinement\\
+  \\= & Data Refinement\\
+  \qquad\begin{array}{l}
+  \circprocess P\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        \circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
+        \ldots\\
+        \circspot A(b(v_0),\ldots,b(v_n),b(l_0),\ldots,b(l_m))
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \\= & Action Refinement\\
 \end{argue}
 \begin{code}
 proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
@@ -357,59 +362,59 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
-	\\= & Action Refinement\\
-	\qquad\begin{array}{l}
-	\circprocess P'\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				\circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
-				Memory \circdef\\
-				\qquad\begin{array}{l}
-					\circvres b : BINDING \circspot \\
-					\qquad \begin{array}{l}
-					(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
-					\extchoice \left(\begin{array}{l}
-					\Extchoice n: \dom\ b \circspot\\
-					\qquad
-					mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
-					\end{array}\right)\\
-					\extchoice~terminate \then \Skip
-					\end{array}
-					\end{array} \\
+  \\= & Action Refinement\\
+  \qquad\begin{array}{l}
+  \circprocess P'\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        \circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
+        Memory \circdef\\
+        \qquad\begin{array}{l}
+          \circvres b : BINDING \circspot \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b \circspot\\
+          \qquad
+          mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+          \end{array}\right)\\
+          \extchoice~terminate \then \Skip
+          \end{array}
+          \end{array} \\
         MemoryMerge \circdef\\
-				\qquad\begin{array}{l}
-					\circvres b : BINDING \\
-					\qquad \begin{array}{l}
-					(\Extchoice n: \dom\ b \circspot lget.n!b(n) \then MemoryMerge(b))\\
-					\extchoice \left(\begin{array}{l}
-					\Extchoice n: \dom\ b \circspot\\
-					\qquad
-					lset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv})
-					\end{array}\right)\\
-					\extchoice~lterminate \then \left(\begin{array}{l}\Semi n : ns \circspot\left(\begin{array}{l}\lcircguard n \in \dom\ b \rcircguard \circguard mset.n.b(n)\then \Skip\\\extchoice \\\lcircguard n \notin \dom\ b \rcircguard \circguard \Skip\end{array}\right)\end{array}\right)
-					\end{array}
-					\end{array}\\
+        \qquad\begin{array}{l}
+          \circvres b : BINDING \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b \circspot lget.n!b(n) \then MemoryMerge(b))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b \circspot\\
+          \qquad
+          lset.n?nv : (nv \in \delta(n)) \then MemoryMerge(b \oplus {n \mapsto nv})
+          \end{array}\right)\\
+          \extchoice~lterminate \then \left(\begin{array}{l}\Semi n : ns \circspot\left(\begin{array}{l}\lcircguard n \in \dom\ b \rcircguard \circguard mset.n.b(n)\then \Skip\\\extchoice \\\lcircguard n \notin \dom\ b \rcircguard \circguard \Skip\end{array}\right)\end{array}\right)
+          \end{array}
+          \end{array}\\
 
-				\circspot \circvar b :
-					\left\{\begin{array}{l}
-					x : BINDING | \begin{array}{l}
-						x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
-					\end{array}\end{array}\right\} \circspot\\
-					\qquad \left(\begin{array}{l}
-						\left(\begin{array}{l}
-							\Omega_A(A)\circseq\\terminate \then \Skip
-						\end{array}\right)\\
-						\lpar \emptyset | MEMI | \{b\} \rpar\\
-						Memory(b)
-					\end{array}\right) \circhide MEMI
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\\= & Process Refinement\\
+        \circspot \circvar b :
+          \left\{\begin{array}{l}
+          x : BINDING | \begin{array}{l}
+            x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
+          \end{array}\end{array}\right\} \circspot\\
+          \qquad \left(\begin{array}{l}
+            \left(\begin{array}{l}
+              \Omega_A(A)\circseq\\terminate \then \Skip
+            \end{array}\right)\\
+            \lpar \emptyset | MEMI | \{b\} \rpar\\
+            Memory(b)
+          \end{array}\right) \circhide MEMI
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \\= & Process Refinement\\
 \end{argue}
 \begin{code}
 proc_ref5 (Process (CProcess p (ProcDef (ProcMain x as ma)))) =
@@ -417,88 +422,88 @@ proc_ref5 (Process (CProcess p (ProcDef (ProcMain x as ma)))) =
 proc_ref5 x = proc_ref6 x
 \end{code}
 \begin{argue}
-	\\= & Process Refinement\\
-	\qquad\begin{array}{l}
-	\circprocess P'\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				Memory \circdef\\
-				\qquad\begin{array}{l}
-					\circvres b : BINDING \circspot \\
-					\qquad \begin{array}{l}
-					(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
-					\extchoice \left(\begin{array}{l}
-					\Extchoice n: \dom\ b \circspot\\
-					\qquad
-					mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
-					\end{array}\right)\\
-					\extchoice~terminate \then \Skip
-					\end{array}
-					\end{array} \\
-				\circspot \circvar b :
-					\left\{\begin{array}{l}
-					x : BINDING | \begin{array}{l}
-						x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
-					\end{array}\end{array}\right\} \circspot\\
-					\qquad \left(\begin{array}{l}
-						\left(\begin{array}{l}
-							\Omega_A(A)\circseq\\terminate \then \Skip
-						\end{array}\right)\\
-						\lpar \emptyset | MEMI | \{b\} \rpar\\
-						Memory(b)
-					\end{array}\right) \circhide MEMI
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\\= & Action Refinement\\
+  \\= & Process Refinement\\
+  \qquad\begin{array}{l}
+  \circprocess P'\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        Memory \circdef\\
+        \qquad\begin{array}{l}
+          \circvres b : BINDING \circspot \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b \circspot\\
+          \qquad
+          mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+          \end{array}\right)\\
+          \extchoice~terminate \then \Skip
+          \end{array}
+          \end{array} \\
+        \circspot \circvar b :
+          \left\{\begin{array}{l}
+          x : BINDING | \begin{array}{l}
+            x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
+          \end{array}\end{array}\right\} \circspot\\
+          \qquad \left(\begin{array}{l}
+            \left(\begin{array}{l}
+              \Omega_A(A)\circseq\\terminate \then \Skip
+            \end{array}\right)\\
+            \lpar \emptyset | MEMI | \{b\} \rpar\\
+            Memory(b)
+          \end{array}\right) \circhide MEMI
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \\= & Action Refinement\\
 \end{argue}
 \begin{code}
 proc_ref6 (Process (CProcess p (ProcDef
   (ProcStalessMain mem (CActionCommand (CVarDecl
     [Choose b (ZSetComp bst Nothing)] ma ))))))
-	= (Process (CProcess p (ProcDef (ProcStalessMain mem
+  = (Process (CProcess p (ProcDef (ProcStalessMain mem
     (CSPRepIntChoice (filter_ZGenFilt_Choose bst) ma)))))
 proc_ref6 x = x
 \end{code}
 \begin{argue}
-	\\= & Action Refinement\\
-	\qquad\begin{array}{l}
-	\circprocess P'\circdef\\
-	\qquad
-		\begin{array}{l}
-			\circbegin\\
-				\qquad
-				\begin{array}{l}
-				Memory \circdef\\
-				\qquad\begin{array}{l}
-					\circvres b : BINDING \circspot \\
-					\qquad \begin{array}{l}
-					(\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
-					\extchoice \left(\begin{array}{l}
-					\Extchoice n: \dom\ b \circspot\\
-					\qquad
-					mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
-					\end{array}\right)\\
-					\extchoice~terminate \then \Skip
-					\end{array}
-					\end{array} \\
-				\circspot \Intchoice b : BINDING \circspot\\
-					\qquad \left(\begin{array}{l}
-						\left(\begin{array}{l}
-							\Omega_A(A)\circseq\\terminate \then \Skip
-						\end{array}\right)\\
-						\lpar \emptyset | MEMI | \{b\} \rpar\\
-						Memory(b)
-					\end{array}\right) \circhide MEMI
-			\end{array}\\
-		\circend\\
-		\end{array}
-	\end{array}
-	\end{argue}
+  \\= & Action Refinement\\
+  \qquad\begin{array}{l}
+  \circprocess P'\circdef\\
+  \qquad
+    \begin{array}{l}
+      \circbegin\\
+        \qquad
+        \begin{array}{l}
+        Memory \circdef\\
+        \qquad\begin{array}{l}
+          \circvres b : BINDING \circspot \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b \circspot\\
+          \qquad
+          mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+          \end{array}\right)\\
+          \extchoice~terminate \then \Skip
+          \end{array}
+          \end{array} \\
+        \circspot \Intchoice b : BINDING \circspot\\
+          \qquad \left(\begin{array}{l}
+            \left(\begin{array}{l}
+              \Omega_A(A)\circseq\\terminate \then \Skip
+            \end{array}\right)\\
+            \lpar \emptyset | MEMI | \{b\} \rpar\\
+            Memory(b)
+          \end{array}\right) \circhide MEMI
+      \end{array}\\
+    \circend\\
+    \end{array}
+  \end{array}
+  \end{argue}
 
 
 \subsection{Mapping Circus Processes}

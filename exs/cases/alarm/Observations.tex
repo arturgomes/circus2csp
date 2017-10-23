@@ -1,0 +1,110 @@
+\section{Observations and Testings}
+\scriptsize
+\begin{tabular}{c | >{\ttfamily\scriptsize\catcode`_=10 }l |c |c |c |c}\hline
+  TestId & Assertion String &  States Visited &  Transitions Visited
+  &  Plys Visited & Result\\\hline\hline
+  1 & AChrono :[deadlock free [FD]] & 640 & 730 & 63 & \OK\\\hline
+  2 & AChrono :[deterministic [FD]] & 640 & 730 & 63 & \OK\\\hline
+  3 & AChrono :[divergence free [FD]] & 640 & 730 & 63 & \OK\\\hline
+  4 & AChronoAOG(b\_RAN1) :[deadlock free [FD]] & 71 & 81 & 62 & \OK\\\hline
+  5 & AChronoAOG(b\_RAN1) :[deterministic [FD]] & 71 & 81 & 62 & \OK\\\hline
+  6 & AChronoAOG(b\_RAN1) :[divergence free [FD]] & 71 & 81 & 62 & \OK\\\hline
+  7 & Chrono :[divergence free [FD]] & 6748 & 11032 & 140 & \OK\\\hline
+  8 & Chrono :[deadlock free [FD]] & 6748 & 11032 & 140 & \OK\\\hline
+  9 & Chrono \textbackslash \{|minsReq, out|\} :[deterministic [FD]] & 7774
+  & 12868 & 140 & \OK\\\hline
+  10 & ChronoAOG(b\_RAN1) :[deadlock free [FD]] & 757 & 1240 & 139 & \OK\\\hline
+  11 & ChronoAOG(b\_RAN1) :[deterministic [FD]] & 757 & 1240 & 139 & \OK\\\hline
+  12 & ChronoAOG(b\_RAN1) :[divergence free [FD]] & 757 & 1240 & 139 & \OK\\\hline
+  13 & ChronometerFull \textbackslash \{|minsReq, out|\} :[deterministic [FD]]
+  & 69949 & 117820 & 136 & \OK\\\hline
+  14 & ChronometerFull :[deadlock free [FD]] & 60715 & 101296 & 136 & \OK\\\hline
+  15 & ChronometerFull :[divergence free [FD]] & 60715 & 101296 & 136 & \OK\\\hline
+  16 & ChronometerFullAOG(b\_RAN1) :[deadlock free [FD]] & 754 & 1237 & 134 & \OK\\\hline
+  17 & ChronometerFullAOG(b\_RAN1) :[deterministic [FD]] & 754 & 1237 & 134 & \OK\\\hline
+  18 & ChronometerFullAOG(b\_RAN1) :[divergence free [FD]] & 754 & 1237 & 134 & \OK\\\hline
+  19 & Minutes :[deadlock free [FD]] & 115 & 151 & 11 & \OK\\\hline
+  20 & Minutes :[deterministic [FD]] & 115 & 151 & 11 & \OK\\\hline
+  21 & Minutes :[divergence free [FD]] & 115 & 151 & 11 & \OK\\\hline
+  22 & MinutesAOG(b\_RAN1) :[deadlock free [FD]] & 13 & 17 & 10 & \OK\\\hline
+  23 & MinutesAOG(b\_RAN1) :[deterministic [FD]] & 13 & 17 & 10 & \OK\\\hline
+  24 & MinutesAOG(b\_RAN1) :[divergence free [FD]] & 13 & 17 & 10 & \OK\\\hline
+  25 & Seconds :[deadlock free [FD]] & 1171 & 1423 & 30 & \OK\\\hline
+  26 & Seconds :[divergence free [FD]] & 1171 & 1423 & 30 & \OK\\\hline
+  27 & Seconds \textbackslash \{|minsReq, out|\} :[deterministic [FD]]
+  & 1321 & 1627 & 30 & \OK\\\hline
+  28 & SecondsAOG(b\_RAN1) :[deadlock free [FD]] & 130 & 158 & 29 & \OK\\\hline
+  29 & SecondsAOG(b\_RAN1) :[deterministic [FD]] & 130 & 158 & 29 & \OK\\\hline
+  30 & SecondsAOG(b\_RAN1) :[divergence free [FD]] & 130 & 158 & 29 & \OK\\\hline
+  31 & AChrono \textbackslash \{|tick|\} [FD= Chrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  32 & AChrono \textbackslash \{|tick|\} [FD= AChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  33 & AChrono \textbackslash \{|tick|\}  [FD= ChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  34 & AChrono \textbackslash \{|tick|\}  [FD= ChronometerFull \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  35 & AChrono \textbackslash \{|tick|\} [FD= ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  36 & AChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  37 & AChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= Chrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  38 & AChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= AChrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  39 & AChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronometerFull \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  40 & AChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  41 & ChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= AChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  42 & ChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= Chrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  43 & ChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= AChrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  44 & ChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronometerFull \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  45 & ChronoAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  46 & ChronometerFull \textbackslash \{|tick|\} [FD= AChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  47 & ChronometerFull \textbackslash \{|tick|\} [FD= ChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  48 & ChronometerFull \textbackslash \{|tick|\} [FD= Chrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  49 & ChronometerFull \textbackslash \{|tick|\} [FD= AChrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  50 & ChronometerFull \textbackslash \{|tick|\} [FD= ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  51 & ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= AChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  52 & ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronoAOG(b\_RAN1) \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  53 & ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= Chrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  54 & ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= AChrono \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+  55 & ChronometerFullAOG(b\_RAN1) \textbackslash \{|tick|\} [FD= ChronometerFull \textbackslash \{|tick|\}
+  & 1 & 1 & 1 & \OK\\\hline
+
+
+\end{tabular}
+
+
+\begin{table} \centering
+    \begin{tabular}{@{} cl*{6}c @{}}
+        & & \multicolumn{6}{c}{Processes} \\[2ex]
+        & Refinement \verb"[FD=" & \rot{$AChrono$} & \rot{$Chrono$} & \rot{$ChronometerFull$} & \rot{$AChronoAOG(b\_RAN1)$}
+        & \rot{$ChronoAOG(b\_RAN1)$} & \rot{$ChronometerFullAOG(b\_RAN1)$} \\
+        \cmidrule{2-8}
+        & $AChrono$             &  & \OK& \OK& \OK& \OK& \OK \\
+        & $Chrono$             & \OK & & \OK& \OK& \OK& \OK \\
+        & $ChronometerFull$             & \OK & \OK& & \OK& \OK& \OK \\
+        & $AChronoAOG(b\_RAN1)$             & \OK & \OK& \OK& & \OK& \OK \\
+        & $ChronoAOG(b\_RAN1)$             & \OK & \OK& \OK& \OK& & \OK \\
+        \rot{\rlap{~Processes}}
+        & $ChronometerFullAOG(b\_RAN1)$             & \OK & \OK& \OK& \OK& \OK&  \\
+        \cmidrule[1pt]{2-8}
+    \end{tabular}
+    \caption{Some caption}
+\end{table}

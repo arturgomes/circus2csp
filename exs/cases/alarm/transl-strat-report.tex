@@ -6,6 +6,7 @@
 \usepackage[color]{circus}
 \usepackage{listings}
 \usepackage{verbatim}
+\usepackage{array,booktabs,multirow}
 
 % \usepackage{lstlhs}
 \long\def\ignore#1{}
@@ -38,6 +39,9 @@
 \newenvironment{assert}
 {\endgraf\verbatim}%
 {\endverbatim}
+\newenvironment{block}
+{\left(\begin{array}{l}}%
+{\end{array}\right )}
 
 
 \def\Circus{{\sf\slshape{Circus}}}
@@ -49,7 +53,15 @@
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
 \newcommand{\CSPM}{$CSP_M$}
 
+% for tables
+\usepackage{array,graphicx}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage[table]{xcolor}
+\usepackage{xcolor,colortbl}
 
+\newcommand*\rot{\rotatebox{90}}
+\newcommand*\OK{\cellcolor{black!15}\color{green}\ding{51}}
 %et al. in italic
 \newcommand{\etal}{\textit{et al}. }
 \newcommand{\wrt}{\textit{w.r.t.}}
@@ -64,6 +76,16 @@
 \begin{document}
 \maketitle
 \tableofcontents
+\pagebreak
+% Model structure
+\input{basic-struct}
+% Example
+
+
 \input{models}
+\input{models-sl}
+\input{Observations}
+\bibliographystyle{plain}
+\bibliography{References}
 
 \end{document}

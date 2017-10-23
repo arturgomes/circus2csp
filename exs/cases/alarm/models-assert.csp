@@ -8,15 +8,16 @@ assert AChronoAOG(b_RAN1):[deadlock free [FD]]
 assert AChronoAOG(b_RAN1):[deterministic [FD]]
 assert AChronoAOG(b_RAN1):[livelock free [FD]]
 
-assert Chrono  :[livelock free [FD]]
+assert Chrono :[livelock free [FD]]
 assert Chrono :[deadlock free [FD]]
+assert Chrono  :[deterministic [FD]]
 assert Chrono \{|minsReq, out|} :[deterministic [FD]]
 
 assert ChronoAOG(b_RAN1) :[deadlock free [FD]]
 assert ChronoAOG(b_RAN1) :[deterministic [FD]]
 assert ChronoAOG(b_RAN1) :[livelock free [FD]]
 
-assert ChronometerFull \{|minsReq, out|} :[deterministic [FD]]
+assert ChronometerFull  :[deterministic [FD]]
 assert ChronometerFull :[deadlock free [FD]]
 assert ChronometerFull :[livelock free [FD]]
 
@@ -32,43 +33,15 @@ assert MinutesAOG(b_RAN1) :[deadlock free [FD]]
 assert MinutesAOG(b_RAN1) :[deterministic [FD]]
 assert MinutesAOG(b_RAN1) :[livelock free [FD]]
 
-assert Seconds  :[deadlock free [FD]]
-assert Seconds  :[livelock free [FD]]
-assert Seconds  \{|minsReq, out|}  :[deterministic [FD]]
+assert Seconds :[deadlock free [FD]]
+assert Seconds :[livelock free [FD]]
+assert Seconds :[deterministic [FD]]
 
 assert SecondsAOG(b_RAN1) :[deadlock free [FD]]
 assert SecondsAOG(b_RAN1) :[deterministic [FD]]
 assert SecondsAOG(b_RAN1) :[livelock free [FD]]
 
---
-
-assert AChrono  [FD= AChronoAOG(b_RAN1)  -- passed
-assert AChrono  [FD= ChronoAOG(b_RAN1) -- passed
-assert AChrono  [FD= ChronometerFull -- passed
-assert AChrono  [FD= ChronometerFullAOG(b_RAN1) -- passed
-
-assert AChronoAOG(b_RAN1) [FD= ChronoAOG(b_RAN1) -- passed
-assert AChronoAOG(b_RAN1) [FD= AChrono -- passed
-assert AChronoAOG(b_RAN1) [FD= ChronometerFull -- passed
-assert AChronoAOG(b_RAN1) [FD= ChronometerFullAOG(b_RAN1) -- passed
-
-assert ChronoAOG(b_RAN1) [FD= AChronoAOG(b_RAN1) -- passed
-assert ChronoAOG(b_RAN1) [FD= AChrono -- passed
-assert ChronoAOG(b_RAN1) [FD= ChronometerFull -- passed
-assert ChronoAOG(b_RAN1) [FD= ChronometerFullAOG(b_RAN1) -- passed
-
-assert ChronometerFull  [FD= AChronoAOG(b_RAN1) --passed
-assert ChronometerFull  [FD= ChronoAOG(b_RAN1) --passed
-assert ChronometerFull  [FD= AChrono --passed
-assert ChronometerFull  [FD= ChronometerFullAOG(b_RAN1) --passed
-
-assert ChronometerFullAOG(b_RAN1)  [FD= AChronoAOG(b_RAN1) --passed
-assert ChronometerFullAOG(b_RAN1)  [FD= ChronoAOG(b_RAN1) --passed
-assert ChronometerFullAOG(b_RAN1)  [FD= AChrono --passed
-assert ChronometerFullAOG(b_RAN1)  [FD= ChronometerFull --passed
-
---
-
+assert AChrono \ {|tick|} [FD= Chrono \ {|tick|}
 assert AChrono \ {|tick|} [FD= AChronoAOG(b_RAN1) \ {|tick|} -- passed
 assert AChrono \ {|tick|} [FD= ChronoAOG(b_RAN1) \ {|tick|}-- passed
 assert AChrono \ {|tick|} [FD= ChronometerFull \ {|tick|}-- passed
@@ -76,9 +49,11 @@ assert AChrono \ {|tick|} [FD= ChronometerFullAOG(b_RAN1) \ {|tick|}-- passed
 
 assert AChronoAOG(b_RAN1)\ {|tick|} [FD= ChronoAOG(b_RAN1) \ {|tick|}-- passed
 assert AChronoAOG(b_RAN1)\ {|tick|} [FD= AChrono \ {|tick|}-- passed
+assert AChronoAOG(b_RAN1)\ {|tick|} [FD= Chrono \ {|tick|}
 assert AChronoAOG(b_RAN1)\ {|tick|} [FD= ChronometerFull \ {|tick|}-- passed
 assert AChronoAOG(b_RAN1)\ {|tick|} [FD= ChronometerFullAOG(b_RAN1) \ {|tick|}-- passed
 
+assert ChronoAOG(b_RAN1)\ {|tick|} [FD= Chrono\ {|tick|}
 assert ChronoAOG(b_RAN1)\ {|tick|} [FD= AChronoAOG(b_RAN1)\ {|tick|} -- passed
 assert ChronoAOG(b_RAN1)\ {|tick|} [FD= AChrono \ {|tick|}-- passed
 assert ChronoAOG(b_RAN1)\ {|tick|} [FD= ChronometerFull\ {|tick|} -- passed
@@ -87,9 +62,41 @@ assert ChronoAOG(b_RAN1)\ {|tick|} [FD= ChronometerFullAOG(b_RAN1)\ {|tick|} -- 
 assert ChronometerFull \ {|tick|} [FD= AChronoAOG(b_RAN1) \ {|tick|}--passed
 assert ChronometerFull \ {|tick|} [FD= ChronoAOG(b_RAN1) \ {|tick|}--passed
 assert ChronometerFull \ {|tick|} [FD= AChrono \ {|tick|}--passed
+assert ChronometerFull \ {|tick|} [FD= Chrono \ {|tick|}
 assert ChronometerFull \ {|tick|} [FD= ChronometerFullAOG(b_RAN1) \ {|tick|}--passed
 
 assert ChronometerFullAOG(b_RAN1) \ {|tick|} [FD= AChronoAOG(b_RAN1) \ {|tick|}--passed
 assert ChronometerFullAOG(b_RAN1) \ {|tick|} [FD= ChronoAOG(b_RAN1) \ {|tick|}--passed
 assert ChronometerFullAOG(b_RAN1) \ {|tick|} [FD= AChrono \ {|tick|}--passed
+assert ChronometerFullAOG(b_RAN1) \ {|tick|} [FD= Chrono \ {|tick|}
 assert ChronometerFullAOG(b_RAN1) \ {|tick|} [FD= ChronometerFull \ {|tick|}--passed
+
+assert AChrono [FD= Chrono
+assert AChrono [FD= AChronoAOG(b_RAN1) -- passed
+assert AChrono \{|tick|}[FD= ChronoAOG(b_RAN1) -- passed
+assert AChrono \{|tick|}[FD= ChronometerFull -- passed
+assert AChrono \{|tick|}[FD= ChronometerFullAOG(b_RAN1) -- passed
+
+assert AChronoAOG(b_RAN1) \{|tick|}[FD= ChronoAOG(b_RAN1) -- passed
+assert AChronoAOG(b_RAN1) [FD= AChrono -- passed
+assert AChronoAOG(b_RAN1) [FD= Chrono
+assert AChronoAOG(b_RAN1) \{|tick|}[FD= ChronometerFull -- passed
+assert AChronoAOG(b_RAN1) \{|tick|}[FD= ChronometerFullAOG(b_RAN1) -- passed
+
+assert ChronoAOG(b_RAN1)\{|tick|} [FD= Chrono
+assert ChronoAOG(b_RAN1)\{|tick|} [FD= AChronoAOG(b_RAN1) -- passed
+assert ChronoAOG(b_RAN1)\{|tick|} [FD= AChrono -- passed
+assert ChronoAOG(b_RAN1)\{|tick|} [FD= ChronometerFull -- passed
+assert ChronoAOG(b_RAN1)\{|tick|} [FD= ChronometerFullAOG(b_RAN1) -- passed
+
+assert ChronometerFull \{|tick|} [FD= AChronoAOG(b_RAN1) --passed
+assert ChronometerFull \{|tick|} [FD= ChronoAOG(b_RAN1) --passed
+assert ChronometerFull \{|tick|} [FD= AChrono --passed
+assert ChronometerFull\{|tick|} [FD= Chrono
+assert ChronometerFull \{|tick|} [FD= ChronometerFullAOG(b_RAN1) --passed
+
+assert ChronometerFullAOG(b_RAN1)\{|tick|} [FD= AChronoAOG(b_RAN1) --passed
+assert ChronometerFullAOG(b_RAN1)\{|tick|} [FD= ChronoAOG(b_RAN1) --passed
+assert ChronometerFullAOG(b_RAN1)\{|tick|} [FD= AChrono --passed
+assert ChronometerFullAOG(b_RAN1)\{|tick|} [FD= Chrono
+assert ChronometerFullAOG(b_RAN1)\{|tick|} [FD= ChronometerFull --passed
