@@ -1,0 +1,24 @@
+\section{External Choice after Assignment}
+
+We want
+\[
+  AC = ( x:=1 ; a -> Skip ) [] (y:=2 ; b -> Skip)
+\]
+We expect
+\begin{eqnarray}
+   AC || (a -> Skip)  &=&  x:=1 ; a -> Skip
+\\ AC || (b -> Skip)  &=&  y:=2 ; b -> Skip
+\end{eqnarray}
+
+\begin{circus}
+RANGE == 0 \upto 2
+\also \circchannel a,b
+\also
+\circprocess\ AC \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ x, y : RANGE ]\\
+\t1 A \circdef (x := 1) \circseq (a \then \Skip) \\
+\t1 B \circdef (y := 2) \circseq (a \then \Skip) \\
+\t1 \circspot (A \extchoice B)\\
+\circend
+\end{circus}
