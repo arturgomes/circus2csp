@@ -1,0 +1,37 @@
+include "asgFirstThenChoose.csp"
+
+
+PA = (a -> SKIP [] b -> SKIP)
+
+
+-- assert AC(b_RAN1) :[deterministic [FD]]
+-- assert AC1(b_RAN1) :[deterministic [FD]]
+-- assert AC2(b_RAN1) :[deterministic [FD]]
+-- assert (AC(b_RAN1) [|{|a|}|] PA) :[deterministic [FD]]
+-- assert (AC1(b_RAN1) [|{|a|}|] PA) :[deterministic [FD]]
+-- MyP1 = (AC1(b_RAN1) [|{|a,b|}|] PA)
+-- MyP2 = (AC2(b_RAN1) [|{|a,b|}|] PA)
+-- MyP3 = (ACF(b_RAN1) [|{|a,b|}|] PA)
+-- assert AC1(b_RAN1) :[deterministic [FD]]
+-- assert ACF(b_RAN1) :[deterministic [FD]]
+-- assert (AC1(b_RAN1) [|{|a,b|}|] PA) :[deterministic [FD]]
+-- assert (AC1(b_RAN1) [|{|a,b|}|] PA) :[deterministic [FD]]
+-- assert (ACF(b_RAN1) [|{|a|}|] PA) :[deterministic [FD]]
+-- assert (ACF(b_RAN1) [|{|a|}|] PA) :[deterministic [FD]]
+-- assert AC1(b_RAN1) :[deadlock free [FD]]
+-- assert ACF(b_RAN1) :[deadlock free [FD]]
+-- assert (AC1(b_RAN1) [|{|a,b|}|] PA) :[deadlock free [FD]]
+-- assert (AC1(b_RAN1) [|{|a|}|] PA) :[deadlock free [FD]]
+-- assert (ACF(b_RAN1) [|{|a,b|}|] PA) :[deadlock free [FD]]
+-- assert (ACF(b_RAN1) [|{|a|}|] PA) :[deadlock free [FD]]
+
+assert ACF(b_RAN1) :[deadlock free [FD]]
+assert AC1(b_RAN1) :[deadlock free [FD]]
+assert AC2(b_RAN1) :[deadlock free [FD]]
+-- assert (AC(b_RAN1) [|{|a|}|] PA) :[deadlock free [FD]]
+-- assert (AC1(b_RAN1) [|{|a|}|] PA) :[deadlock free [FD]]
+--
+-- assert ACF(b_RAN1) [FD= AC2(b_RAN1)
+-- assert AC2(b_RAN1) [FD= ACF(b_RAN1)
+-- assert MyP3 [FD= ACF(b_RAN1)
+-- assert AC2(b_RAN1) [FD= AC1(b_RAN1)

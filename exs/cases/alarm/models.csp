@@ -15,7 +15,7 @@ Sync = {| inc,minsReq,ans |}
 
 --------------------------------
 -- The universe of values
- datatype UNIVERSE = RAN.RANGE
+datatype UNIVERSE = RAN.RANGE
 --Conversions
 valueRAN(RAN.v) = v
 
@@ -35,7 +35,7 @@ subtype NAME_RAN = sv_sec | sv_min
 NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
 
 -- Bindings definitions for RAN
-BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
+BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
 NAMES_VALUES = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME})
 
 -- Bindings definitions for RAN

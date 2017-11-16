@@ -91,35 +91,36 @@ datatype NAME = sv_airVolLimit | sv_airVol | sv_alarm | sv_artBolusVol | sv_apTr
 
 -- Subtype definition for NAT
 b_NAT1 = {(sv_airVolLimit, NAT.0),(sv_airVol, NAT.0),(sv_artBolusVol, NAT.0),(sv_apTransdPress, NAT.0),(sv_bloodFlowInEBC, NAT.0),(sv_infSalineVol, NAT.0),(sv_lastNonZeroBF, NAT.0),(sv_lowerPressureLimit, NAT.0),(sv_netFluidRemovalRate, NAT.0),(sv_safeUpperLimit, NAT.0),(sv_timerIntervalR9, NAT.0),(sv_timerIntervalR10, NAT.0),(sv_timerIntervalR11, NAT.0),(sv_timerIntervalR12, NAT.0),(sv_timerIntervalR13, NAT.0),(sv_time, NAT.0),(sv_upperPressureLimit, NAT.0),(sv_volumeInEBC, NAT.0),(sv_vpTransdPress, NAT.0),(sv_sadSensorFlow, NAT.0),(sv_conductivity, NAT.0),(sv_bicarbonateConductivity, NAT.0),(sv_dfTemperature, NAT.0),(sv_dfFlow, NAT.0),(sv_stime, NAT.0)}
+
 subtype NAME_NAT = sv_airVolLimit | sv_airVol | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_time | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_conductivity | sv_bicarbonateConductivity | sv_dfTemperature | sv_dfFlow | sv_stime
-NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+-- NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
 
 -- Subtype definition for BUT
 b_BUT1 = {(sv_alarm, BUT.ON),(sv_bypassValve, BUT.ON),(sv_fflowDirect, BUT.ON),(sv_hdMode, BUT.ON),(sv_netFluidRemoval, BUT.ON),(sv_rotDirectionBP, BUT.ON),(sv_rotDirectionUFP, BUT.ON),(sv_signalLamp, BUT.ON),(sv_bloodLines, BUT.ON),(sv_minUFRateTreat, BUT.ON),(sv_bicarbonateAcetate, BUT.ON)}
 subtype NAME_BUT = sv_alarm | sv_bypassValve | sv_fflowDirect | sv_hdMode | sv_netFluidRemoval | sv_rotDirectionBP | sv_rotDirectionUFP | sv_signalLamp | sv_bloodLines | sv_minUFRateTreat | sv_bicarbonateAcetate
-NAMES_VALUES_BUT = seq({seq({(n,v) | v <- typeBUT(n)}) | n <- NAME_BUT})
+-- NAMES_VALUES_BUT = seq({seq({(n,v) | v <- typeBUT(n)}) | n <- NAME_BUT})
 
 -- Subtype definition for PAC
 b_PAC1 = {(sv_hdActivity, PAC.{rinsingEBC})}
 subtype NAME_PAC = sv_hdActivity
-NAMES_VALUES_PAC = seq({seq({(n,v) | v <- typePAC(n)}) | n <- NAME_PAC})
+-- NAMES_VALUES_PAC = seq({seq({(n,v) | v <- typePAC(n)}) | n <- NAME_PAC})
 
 -- Subtype definition for PST
 b_PST1 = {(sv_hdMachineState, PST.{connectThePatient})}
 subtype NAME_PST = sv_hdMachineState
-NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME_PST})
-
--- Bindings definitions for NAT
-BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
-
--- Bindings definitions for BUT
-BINDINGS_BUT = {set(b) | b <- set(distCartProd(NAMES_VALUES_BUT))}
-
--- Bindings definitions for PAC
-BINDINGS_PAC = {set(b) | b <- set(distCartProd(NAMES_VALUES_PAC))}
-
--- Bindings definitions for PST
-BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
+-- NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME_PST})
+--
+-- -- Bindings definitions for NAT
+-- BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
+--
+-- -- Bindings definitions for BUT
+-- BINDINGS_BUT = {set(b) | b <- set(distCartProd(NAMES_VALUES_BUT))}
+--
+-- -- Bindings definitions for PAC
+-- BINDINGS_PAC = {set(b) | b <- set(distCartProd(NAMES_VALUES_PAC))}
+--
+-- -- Bindings definitions for PST
+-- BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
 
 
 --------------------------------

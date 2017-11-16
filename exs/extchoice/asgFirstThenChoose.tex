@@ -18,7 +18,33 @@ RANGE == 0 \upto 2
 \circbegin\\
 \t1 \circstate AState \defs [ x, y : RANGE ]\\
 \t1 A \circdef (x := 1) \circseq (a \then \Skip) \\
-\t1 B \circdef (y := 2) \circseq (a \then \Skip) \\
+\t1 B \circdef (y := 2) \circseq (b \then \Skip) \\
 \t1 \circspot (A \extchoice B)\\
+\circend
+\also
+\circprocess\ AC1 \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ x, y : RANGE ]\\
+\t1 A \circdef (a \then (x := 1))  \\
+\t1 B \circdef (b \then (y := 2)) \\
+\t1 \circspot (A \extchoice B)\\
+\circend
+\also
+\circprocess\ AC2 \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ x, y : RANGE ]\\
+\t1 A \circdef  (a \then \Skip) \circseq (x := 1) \\
+\t1 B \circdef  (b \then \Skip) \circseq (y := 1) \\
+\t1 \circspot (A \extchoice B)\\
+\circend
+\also
+\circprocess\ ACF \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ x, y : RANGE ]\\
+\t1 A \circdef  (a \then (x := 1)) \\
+\t1 B \circdef  (b \then (y := 1)) \\
+\t1 C \circdef  (a \then \Skip) \circseq (x := 1) \\
+\t1 D \circdef  (b \then \Skip) \circseq (y := 1) \\
+\t1 \circspot (A \extchoice B) \lpar \{x,y\} | \lchanset a,b \rchanset | \{x,y\} \rpar (C \extchoice D)\\
 \circend
 \end{circus}

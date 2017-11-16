@@ -1,0 +1,33 @@
+channel mset, mget : {0..1}
+channel terminate, a, b
+MEMI = {|mset,mget,terminate|}
+M1(x) =
+  let MA(x) = ((mset?y -> MA(y))
+                [] (mget.x -> MA(x))
+                [] terminate -> SKIP)
+  within (((mset.x -> a -> SKIP [] mset.x -> b -> SKIP); terminate -> SKIP)
+          [| MEMI |] MA(x)) \ MEMI
+
+M2(x) =
+  let MA(x) = ((mset?y -> MA(y))
+                [] (mget.x -> MA(x))
+                [] terminate -> SKIP)
+  within (((a -> mset.x -> SKIP [] b -> mset.x -> SKIP); terminate -> SKIP)
+          [| MEMI |] MA(x))
+M2A = ((a -> mset.1 -> SKIP)
+            [| {|mset,mget|} |] (([] y:{0..1} @ mset?y -> SKIP) [] ([] x:{0..1} @ mget.x -> SKIP)))
+
+--
+-- assert M1(0) :[deterministic [FD]]
+-- assert M2(0) :[deterministic [FD]]
+-- assert M2A :[deterministic [FD]]
+-- assert (a -> SKIP [] b -> SKIP) [|{|a,b|}|] M1(0) :[deterministic [FD]]
+-- assert (a -> SKIP [] b -> SKIP) [|{|a,b|}|] M2(0) :[deterministic [FD]]
+-- assert (a -> SKIP ) [|{|a|}|] M2A :[deterministic [FD]]
+assert M1(0) :[deadlock free]
+assert M2(0) :[deadlock free]
+assert M2A :[deadlock free]
+assert M3(0) :[deadlock free [F]]
+-- assert (a -> SKIP [] b -> SKIP) [|{|a,b|}|] M1(0) :[deadlock free]
+-- assert (a -> SKIP [] b -> SKIP) [|{|a,b|}|] M2(0) :[deadlock free]
+-- assert (a -> SKIP ) [|{|a|}|] M2A :[deadlock free]

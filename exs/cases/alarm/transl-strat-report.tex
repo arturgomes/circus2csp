@@ -1,13 +1,19 @@
 \documentclass[10pt]{article}
 \usepackage[a4paper,margin=0.5in]{geometry}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage[color]{circus}
 \usepackage{listings}
 \usepackage{verbatim}
 \usepackage{array,booktabs,multirow}
+% for tables
+\usepackage{array,graphicx}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{colortbl}
 
+\usepackage{lstlhs}
 % \usepackage{lstlhs}
 \long\def\ignore#1{}
 \parindent=0pt % I hate first line indentation
@@ -53,13 +59,6 @@
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
 \newcommand{\CSPM}{$CSP_M$}
 
-% for tables
-\usepackage{array,graphicx}
-\usepackage{booktabs}
-\usepackage{pifont}
-\usepackage[table]{xcolor}
-\usepackage{xcolor,colortbl}
-
 \newcommand*\rot{\rotatebox{90}}
 \newcommand*\OK{\cellcolor{black!15}\color{green}\ding{51}}
 %et al. in italic
@@ -85,6 +84,8 @@
 \input{models}
 \input{models-sl}
 \input{Observations}
+
+\input{SEC1.lhs}
 \bibliographystyle{plain}
 \bibliography{References}
 

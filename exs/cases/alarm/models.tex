@@ -33,35 +33,33 @@ RANGE == 0 \upto 2
 \end{circus}
 
 \subsection{$Chrono$}
-% \begin{circus}
-% \circchannel inc, minsReq
-% \also \circchannel ans : RANGE
-% \also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
-% \also \circprocess Chrono \circdef\ \circbegin\\
-% \circstate State \defs [ sec : RANGE; min : RANGE ]\\
-% % \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
-% SecInit \circdef (sec:=0)\\
-% IncSec \circdef (sec:=(sec+1)\mod 3)\\
-% RunSec \circdef \t1
-% (tick \then IncSec \circseq
-%     (\circif  sec = 0 \circthen inc \then \Skip
-%     \circelse sec \neq 0 \circthen \Skip \circfi)
-%   \\\t3 \extchoice\\
-%   \t3  time \then minsReq \then ans?min \then out!(min,sec)
-%       \then \Skip )  \\
-% Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
-% MinInit \circdef (min:=0)\\
-% IncMin \circdef (min:=(min+1)\mod 3)\\
-% RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
-% Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
-% \circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
-% \circend
-% \end{circus}
 \begin{circus}
 \circchannel inc, minsReq
 \also \circchannel ans : RANGE
 \also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
-\also \circprocess Seconds \circdef\ \\
+\also \circprocess Chrono \circdef\ \circbegin\\
+\circstate State \defs [ sec : RANGE; min : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+\qquad SecInit \circdef (sec:=0)\\
+\qquad IncSec \circdef (sec:=(sec+1)\mod 3)\\
+\qquad RunSec \circdef\\
+\qquad\qquad\begin{block}\begin{block}tick \then IncSec \circseq\\
+    \begin{block}\circif  sec = 0 \circthen inc \then \Skip\\
+    \circelse sec \neq 0 \circthen \Skip \circfi\end{block}\end{block}\\
+  \extchoice time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip \end{block}  \\
+\qquad Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+\qquad MinInit \circdef (min:=0)\\
+\qquad IncMin \circdef (min:=(min+1)\mod 3)\\
+\qquad RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
+\qquad Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
+\circend
+\end{circus}
+\subsection{Distributed processes - $ChronometerFull$}
+\subsubsection{$Seconds$}
+\begin{circus}
+\circprocess Seconds \circdef\ \\
 \circbegin\\
 \t1\circstate StateSeconds \defs [ sec : RANGE ]\\
 % \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
@@ -83,6 +81,7 @@ tick \then IncSec \circseq\\
  \t1\circspot SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
 \circend
 \end{circus}
+\subsubsection{$Minutes$}
 
 \begin{circus}
 \circprocess Minutes \circdef\\\ \circbegin\\
@@ -98,6 +97,8 @@ tick \then IncSec \circseq\\
  \t1\circspot MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
 \circend
 \end{circus}
+\subsubsection{$ChronometerFull$}
+
 \begin{circus}
   \circprocess ChronometerFull \circdef ((Seconds \lpar Sync \rpar Minutes) \circhide Sync)
 \end{circus}
