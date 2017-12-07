@@ -447,19 +447,33 @@ crl_recUnfold _ = None
  \label{law:parallelismExternalChoiceExpansion}
 
 \end{lawn}
+%
+% \begin{code}
+% crl_parallelismExternalChoiceExpansion :: CAction -> Refinement CAction
+% crl_parallelismExternalChoiceExpansion
+%   e@(CSPNSParal ns1 cs ns2
+%       (CSPRepExtChoice i (CSPCommAction ai aAi))
+%       (CSPRepExtChoice j (CSPCommAction bj aBj))) c aC
+%   = Done{orig = Just e, refined = Just (CSPNSParal ns1 cs ns2
+%       (CSPRepExtChoice i (CSPCommAction ai aAi))
+%       (CSPExtChoice (CSPRepExtChoice j
+%           (CSPCommAction bj aBj))
+%       (CSPCommAction c aC))),proviso=[]}
+% crl_parallelismExternalChoiceExpansion _ _ _ = None
+% \end{code}
 
 \begin{code}
-crl_parallelismExternalChoiceExpansion :: CAction -> Comm -> CAction -> Refinement CAction
-crl_parallelismExternalChoiceExpansion
-  (CSPNSParal ns1 cs ns2
-      (CSPRepExtChoice i (CSPCommAction ai aAi))
-      (CSPRepExtChoice j (CSPCommAction bj aBj))) c aC
-  = Just (CSPNSParal ns1 cs ns2
+crl_parallelismExternalChoiceExpansionB :: CAction -> Refinement CAction
+crl_parallelismExternalChoiceExpansionB
+  e@(CSPNSParal ns1 cs ns2
       (CSPRepExtChoice i (CSPCommAction ai aAi))
       (CSPExtChoice (CSPRepExtChoice j
           (CSPCommAction bj aBj))
       (CSPCommAction c aC)))
-crl_parallelismExternalChoiceExpansion _ _ _ = None
+  = Done{orig = Just e, refined = Just (CSPNSParal ns1 cs ns2
+  (CSPRepExtChoice i (CSPCommAction ai aAi))
+  (CSPRepExtChoice j (CSPCommAction bj aBj))),proviso=[]}
+crl_parallelismExternalChoiceExpansionB _ = None
 \end{code}
 
 
@@ -494,7 +508,7 @@ crl_parallelismIntroduction1b
           proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[])) (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay  ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (zname_to_zexpr $ wrtV a),ZSetDisplay  ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1b _ _ _ _ = None
 
 crl_parallelismIntroduction1a :: CAction -> [ZExpr] -> [ZName] -> [ZExpr] -> Refinement CAction
@@ -506,7 +520,7 @@ crl_parallelismIntroduction1a
                   (CSPCommAction (ChanComm c e) CSPSkip)),proviso=[p1,p2]}
     where
       p1 = (ZNot (ZMember (ZVar (c,[],[]))  (ZTuple [ZSetDisplay (usedC a)])))
-      p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay ns1]) (ZVar ("\\subseteq",[],[])))
+      p2 = (ZMember (ZTuple [ZSetDisplay (zname_to_zexpr $ wrtV a),ZSetDisplay ns1]) (ZVar ("\\subseteq",[],[])))
 crl_parallelismIntroduction1a _ _ _ _ = None
 \end{code}
 % \begin{code}
@@ -521,7 +535,7 @@ crl_parallelismIntroduction1a _ _ _ _ = None
 %       False -> None
 %     where
 %       p1 = (ZNot (ZMember (ZVar (c1,[])) (ZTuple [ZSetDisplay (usedC a)])))
-%       p2 = (ZMember (ZTuple [ZSetDisplay (getWrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
+%       p2 = (ZMember (ZTuple [ZSetDisplay (wrtV a),ZSetDisplay $ zname_to_zexpr ns1]) (ZVar ("\\subseteq",[],[])))
 % crl_parallelismIntroduction1b_backwards _ = None
 
 % crl_parallelismIntroduction1a_backwards :: CAction -> Refinement CAction
@@ -673,16 +687,15 @@ crl_parExtChoiceExchange _ = None
 
 \end{lawn}
 \begin{code}
+isJustToZPred True = ZTrue{reason=[]}
+isJustToZPred False = ZFalse{reason=[]}
 crl_parallelismExternalChoiceDistribution :: CAction -> Refinement CAction
 crl_parallelismExternalChoiceDistribution
-    (CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
-  = case p1 && p2 of
-      True  -> Just (CSPNSParal ns1
-                  (CChanSet cs) ns2 (CSPRepExtChoice i ai) a)
-      False -> None
-    where
-      p1 = (subset (initials a) cs)
-      p2 = isJust (deterministic a)
+    e@(CSPRepExtChoice i (CSPNSParal ns1 (CChanSet cs) ns2 ai a))
+  = Done{orig = Just e,
+        refined = Just (CSPNSParal ns1 (CChanSet cs) ns2 (CSPRepExtChoice i ai) a),
+        proviso=[-- (ZEqual ZTrue{reason=[]} $ isJustToZPred (isJust (deterministic a))), -- yet to be implemented
+                (ZMember (ZTuple [ZSetDisplay (initials a),ZSetDisplay $ zname_to_zexpr cs]) (ZVar ("\\subseteq",[],[])))]}
 crl_parallelismExternalChoiceDistribution _ = None
 \end{code}
 % Law 18 (External choice unit)
@@ -718,10 +731,10 @@ crl_extChoiceStopUnit _
 \end{lawn}
 \begin{code}
 crl_extChoiceSeqDist :: CAction -> Refinement CAction
-crl_extChoiceSeqDist (CSPSeq (CSPRepExtChoice i
+crl_extChoiceSeqDist e@(CSPSeq (CSPRepExtChoice i
                         (CSPGuard gi (CSPCommAction ci ai))) b)
-  = Just (CSPRepExtChoice i (CSPSeq
-          (CSPGuard gi (CSPCommAction ci ai)) b))
+  =  Done{orig = Just e, refined = Just (CSPRepExtChoice i (CSPSeq
+          (CSPGuard gi (CSPCommAction ci ai)) b)),proviso=[]}
 crl_extChoiceSeqDist _ = None
 \end{code}
 % Law 20 (Hiding/External choice---distribution$^*$)
@@ -1083,14 +1096,15 @@ crl_parallInterlEquiv _ = None
 
 \begin{code}
 crl_parSeqStep :: CAction -> Refinement CAction
-crl_parSeqStep (CSPNSParal ns1 cs ns2 (CSPSeq a1 a2) a3)
-    = Just (CSPSeq a1 (CSPNSParal ns1 cs ns2 a2 a3))
+crl_parSeqStep e@(CSPNSParal ns1 (CChanSet cs) ns2 (CSPSeq a1 a2) a3)
+    =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
-      p1 = (subset (initials a3) cs)
-      p2 = null $ cs `intersect` (usedC a1)
-      p3 = null $ (wrtV a1) `intersect` (wrtV a3)
+      ref =  (CSPSeq a1 (CSPNSParal ns1 (CChanSet cs) ns2 a2 a3))
+      p1 = (subset (initials a3) (zname_to_zexpr cs))
+      p2 = null $ (zname_to_zexpr cs) `intersect` (usedC a1)
+      p3 = null $ (zname_to_zexpr $ wrtV a1) `intersect` (zname_to_zexpr $ wrtV a3)
       p4 = True -- a3 is divergence-free -- implement that!!
-      p5 = (subset (wrtV a1) cs)
+      p5 = (subset (zname_to_zexpr $ wrtV a1) (zname_to_zexpr cs))
       pred = p1 && p2 && p3 && p4 && p5
 crl_parSeqStep _ = None
 \end{code}
@@ -1481,11 +1495,12 @@ crl_hidingCombination _ = None
 \begin{code}
 crl_parallelismDeadlocked3 :: CAction -> Refinement CAction
 crl_parallelismDeadlocked3
-  (CSPNSParal ns1 cs ns2
+  e@(CSPNSParal ns1 (CChanSet cs) ns2
       (CSPRepExtChoice i (CSPCommAction ci ai))
       (CSPRepExtChoice j (CSPCommAction cj aj)))
-  = Just (CSPNSParal ns1 cs ns2 CSPStop
-      (CSPRepExtChoice j (CSPCommAction cj aj)))
+  = Done{orig = Just e, refined = Just ref, proviso=[]}
+  where
+      ref = (CSPNSParal ns1 (CChanSet cs) ns2 CSPStop (CSPRepExtChoice j (CSPCommAction cj aj)))
 crl_parallelismDeadlocked3 _ = None
 \end{code}
 % Law 47 (Assignment Removal$^*$)
@@ -1735,6 +1750,33 @@ crl_guardComb e@(CSPGuard g1 (CSPGuard g2 c))
 crl_guardComb _ = None
 
 \end{code}
+
+\begin{lawn}[Assignment then choice]{3}\sl
+    \begin{zed}
+      (((x := a1) \circseq (a \then \Skip)) \extchoice ((y := a2) \circseq (b \then \Skip)))
+      \\=\\
+      ((a \then (x := a1)) \extchoice (b \then (x := a2)))
+    \end{zed}
+  \label{law:asgThenChoose}
+\end{lawn}
+
+\begin{code}
+crl_asgThenChoose :: CAction -> Refinement CAction
+crl_asgThenChoose e@(CSPExtChoice
+                    (CSPSeq (CActionCommand (CAssign [v1] [a1]))
+                            (CSPCommAction (ChanComm a []) CSPSkip))
+                    (CSPSeq (CActionCommand (CAssign [v2] [a2]))
+                            (CSPCommAction (ChanComm b []) CSPSkip)))
+  =  Done{orig = Just e, refined = Just ref, proviso=[]}
+    where
+      ref = (CSPExtChoice
+                (CSPCommAction (ChanComm a []) (CActionCommand (CAssign [v1] [a1])))
+                (CSPCommAction (ChanComm b []) (CActionCommand (CAssign [v2] [a2]))))
+crl_asgThenChoose _ = None
+
+\end{code}
+Process (CProcess "AC1" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("x",[],"") (ZVar ("RANGE",[],"")),Choose ("y",[],"") (ZVar ("RANGE",[],""))])) [CParAction "A" (CircusAction (CSPCommAction (ChanComm "a" []) (CActionCommand (CAssign [("x",[],"")] [ZInt 1])))),CParAction "B" (CircusAction (CSPCommAction (ChanComm "b" []) (CActionCommand (CAssign [("y",[],"")] [ZInt 2]))))] (CSPExtChoice (CActionName "A") (CActionName "B")))))
+
 \subsection{Auxiliary functions from Oliveira's PhD thesis}
 Function for $usedC(A)$
 \begin{code}
@@ -1964,6 +2006,7 @@ First I'm listing all the refinement laws currently available. Then I'm putting 
 reflawsCAction :: [CAction -> Refinement CAction]
 reflawsCAction
         = [crl_assignmentRemoval,
+           crl_asgThenChoose,
             -- ,
             -- crl_chanExt1,
             -- crl_hidingExpansion2,
@@ -2006,7 +2049,7 @@ reflawsCAction
             crl_parExtChoiceExchange,
             crl_prefixHiding,
             crl_prefixParDist,
-            crl_parallelismExternalChoiceExpansion,
+            crl_parallelismExternalChoiceExpansionB,
             -- crl_prefixSkip, -- This one is going into an infinite loop with crl_seqSkipUnit_a
             crl_prefixSkip_backwards, -- this one fixes the probl above
             crl_prefixSeq_backwards,

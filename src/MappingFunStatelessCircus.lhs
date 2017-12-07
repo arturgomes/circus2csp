@@ -316,7 +316,6 @@ proc_ref4 x = proc_ref5 x
           \extchoice~lterminate \then \left(\begin{array}{l}\Semi n : ns \circspot\left(\begin{array}{l}\lcircguard n \in \dom\ b \rcircguard \circguard mset.n.b(n)\then \Skip\\\extchoice \\\lcircguard n \notin \dom\ b \rcircguard \circguard \Skip\end{array}\right)\end{array}\right)
           \end{array}
           \end{array}\\
-
         \circspot \circvar b :
           \left\{\begin{array}{l}
           x : BINDING | \begin{array}{l}
@@ -381,43 +380,41 @@ proc_ref5 x = proc_ref6 x
   \\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref6 (Process (CProcess p (ProcDef
-  (ProcStalessMain mem (CActionCommand (CVarDecl
-    [Choose b (ZSetComp bst Nothing)] ma ))))))
-  = (Process (CProcess p (ProcDef (ProcStalessMain mem
-    (CSPRepIntChoice (filter_ZGenFilt_Choose bst) ma)))))
+proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose ("b",[],"") (ZSetComp bst Nothing)] ma ))))))
+  = Process (CProcess p (ProcDefSpot (filter_ZGenFilt_Choose bst) (ProcDef (ProcStalessMain mem ma))))
+
 proc_ref6 x = x
 \end{code}
 \begin{argue}
   \\= & Action Refinement\\
   \qquad\begin{array}{l}
-  \circprocess P'\circdef\\
-  \qquad
+  \circprocess P'\circdef b : BINDING\\
+  \quad
     \begin{array}{l}
       \circbegin\\
-        \qquad
+        \quad
         \begin{array}{l}
         Memory \circdef\\
-        \qquad\begin{array}{l}
+        \quad\begin{array}{l}
           \circvres b : BINDING \circspot \\
-          \qquad \begin{array}{l}
+          \quad \begin{array}{l}
           (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
           \extchoice \left(\begin{array}{l}
-          \Extchoice n: \dom\ b \circspot\\
-          \qquad
-          mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+          \Extchoice n: \dom\ b \circspot
+          \begin{block}
+            mset.n?nv : (nv \in \delta(n)) \then\\
+            Memory(b \oplus \{n \mapsto nv\})
+          \end{block}
           \end{array}\right)\\
           \extchoice~terminate \then \Skip
           \end{array}
           \end{array} \\
-        \circspot \Intchoice b : BINDING \circspot\\
-          \qquad \left(\begin{array}{l}
+        \circspot
+          \quad \left(\begin{array}{l}
             \left(\begin{array}{l}
               \Omega_A(A)\circseq\\terminate \then \Skip
-            \end{array}\right)\\
-            \lpar \emptyset | MEMI | \{b\} \rpar\\
-            Memory(b)
-          \end{array}\right) \circhide MEMI
+            \end{array}\right) \lpar \emptyset | MEMI | \{b\} \rpar Memory(b)
+          \end{array}\right) \circhide MEM_I
       \end{array}\\
     \circend\\
     \end{array}
@@ -619,7 +616,7 @@ x \in wrtV(A)
 is written in Haskell as:
 \begin{code}
 omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  = case not (elem x (getWrtV(a))) of
+  = case not (elem x (wrtV(a))) of
     True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
              (ChanComm c [ChanInpPred x p])
                  (omega_prime_CAction a)))
@@ -1619,7 +1616,7 @@ x \in wrtV(A)
 is written in Haskell as:
 \begin{code}
 gamma_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  = case not (elem x (getWrtV(a))) of
+  = case not (elem x (wrtV(a))) of
     True -> make_lget_com lsx (rename_vars_CAction (CSPCommAction
              (ChanComm c [ChanInpPred x p])
                  (gamma_prime_CAction a)))

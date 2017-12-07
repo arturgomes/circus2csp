@@ -1,50 +1,57 @@
-\section{External Choice after Assignment}
+\section{External Choice after Assignment - Ex1}
 
 We want
 \[
-  AC = ( x:=1 ; a -> Skip ) [] (y:=2 ; b -> Skip)
+  AC = ( x:=1 ; a -> Skip ) [] (y:=2 ; c -> Skip)
 \]
 We expect
 \begin{eqnarray}
    AC || (a -> Skip)  &=&  x:=1 ; a -> Skip
-\\ AC || (b -> Skip)  &=&  y:=2 ; b -> Skip
+\\ AC || (c -> Skip)  &=&  y:=2 ; c -> Skip
 \end{eqnarray}
 
 \begin{circus}
 RANGE == 0 \upto 2
-\also \circchannel a,b
+\also \circchannel a,c
+\also \circchannel a1,b1 : \nat
 \also
 \circprocess\ AC \circdef\\
 \circbegin\\
 \t1 \circstate AState \defs [ x, y : RANGE ]\\
 \t1 A \circdef (x := 1) \circseq (a \then \Skip) \\
-\t1 B \circdef (y := 2) \circseq (b \then \Skip) \\
+\t1 B \circdef (y := 2) \circseq (c \then \Skip) \\
 \t1 \circspot (A \extchoice B)\\
 \circend
 \also
 \circprocess\ AC1 \circdef\\
 \circbegin\\
 \t1 \circstate AState \defs [ x, y : RANGE ]\\
-\t1 A \circdef (a \then (x := 1))  \\
-\t1 B \circdef (b \then (y := 2)) \\
+\t1 B \circdef ((a \then (x := 0)) \extchoice (c \then (x := 1))) \\
+\t1 \circspot B\\
+\circend
+\also
+\circprocess\ ACOut1 \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ x, y : RANGE ]\\
+\t1 A \circdef (x := x+1) \circseq (a1!x \then \Skip) \\
+\t1 B \circdef (y := x-1) \circseq (b1!x \then \Skip) \\
 \t1 \circspot (A \extchoice B)\\
 \circend
 \also
-\circprocess\ AC2 \circdef\\
-\circbegin\\
-\t1 \circstate AState \defs [ x, y : RANGE ]\\
-\t1 A \circdef  (a \then \Skip) \circseq (x := 1) \\
-\t1 B \circdef  (b \then \Skip) \circseq (y := 1) \\
-\t1 \circspot (A \extchoice B)\\
-\circend
-\also
-\circprocess\ ACF \circdef\\
-\circbegin\\
-\t1 \circstate AState \defs [ x, y : RANGE ]\\
-\t1 A \circdef  (a \then (x := 1)) \\
-\t1 B \circdef  (b \then (y := 1)) \\
-\t1 C \circdef  (a \then \Skip) \circseq (x := 1) \\
-\t1 D \circdef  (b \then \Skip) \circseq (y := 1) \\
-\t1 \circspot (A \extchoice B) \lpar \{x,y\} | \lchanset a,b \rchanset | \{x,y\} \rpar (C \extchoice D)\\
-\circend
+\circprocess P \circdef b : BINDING\_RAN \circspot
+    \circbegin
+      Memory \circdef\\
+        \circvres b : BINDING\_RAN \circspot \\
+        ((\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+        \extchoice (
+        \Extchoice n: \dom\ b \circspot
+          mset.n?nv : (nv \in \delta(n)) \then\\
+          Memory(b \oplus \{n \mapsto nv\})
+        )\\
+        \extchoice~terminate \then \Skip)
+      \circspot (( (
+            (A \circseq (terminate \then \Skip))
+        ) \lpar \emptyset | MEMI | \{b\} \rpar Memory(b)
+        ) \circhide MEMI)
+  \circend\\
 \end{circus}

@@ -106,7 +106,8 @@ mk_sub_list ((a,b,c):xs) = [((a,b,c),(ZVar ("v_"++a,b,c)))]++(mk_sub_list xs)
 Prototype of $wrtV(A)$, from D24.1.
 \begin{code}
 -- TODO: Need to do it
-getWrtV xs = []
+wrtV :: CAction -> [ZName]
+wrtV xs = []
 \end{code}
 
 
@@ -1973,176 +1974,176 @@ Entire rewriting of the types within a ZVar
 
 
 upd_type_ZPara lst (Process _ProcDecl)
-	= (Process (upd_type_ProcDecl lst _ProcDecl))
+  = (Process (upd_type_ProcDecl lst _ProcDecl))
 upd_type_ZPara lst x
-	= x
+  = x
 
 --ProcDecl
 upd_type_ProcDecl lst (CProcess _ZName _ProcessDef)
-	= (CProcess _ZName  (upd_type_ProcessDef lst _ProcessDef))
+  = (CProcess _ZName  (upd_type_ProcessDef lst _ProcessDef))
 upd_type_ProcDecl lst (CParamProcess _ZName _ZName_lst _ProcessDef)
-	= (CParamProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
+  = (CParamProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
 upd_type_ProcDecl lst (CGenProcess _ZName _ZName_lst _ProcessDef)
-	= (CGenProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
+  = (CGenProcess _ZName _ZName_lst  (upd_type_ProcessDef lst _ProcessDef))
 
 --ProcessDef
 upd_type_ProcessDef lst (ProcDefSpot _ZGenFilt_lst _ProcessDef)
-	= (ProcDefSpot _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
+  = (ProcDefSpot _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
 upd_type_ProcessDef lst (ProcDefIndex _ZGenFilt_lst _ProcessDef)
-	= (ProcDefIndex _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
+  = (ProcDefIndex _ZGenFilt_lst  (upd_type_ProcessDef lst _ProcessDef))
 upd_type_ProcessDef lst (ProcDef _CProc)
-	= (ProcDef (upd_type_CProc lst _CProc))
+  = (ProcDef (upd_type_CProc lst _CProc))
 
 -- CProc
 upd_type_CProc lst (CRepSeqProc _ZGenFilt_lst _CProc)
-	= (CRepSeqProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+  = (CRepSeqProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
 upd_type_CProc lst (CRepExtChProc _ZGenFilt_lst _CProc)
-	= (CRepExtChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+  = (CRepExtChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
 upd_type_CProc lst (CRepIntChProc _ZGenFilt_lst _CProc)
-	= (CRepIntChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+  = (CRepIntChProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
 upd_type_CProc lst (CRepParalProc _CSExp _ZGenFilt_lst _CProc)
-	= (CRepParalProc _CSExp _ZGenFilt_lst (upd_type_CProc lst _CProc))
+  = (CRepParalProc _CSExp _ZGenFilt_lst (upd_type_CProc lst _CProc))
 upd_type_CProc lst (CRepInterlProc _ZGenFilt_lst _CProc)
-	= (CRepInterlProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
+  = (CRepInterlProc _ZGenFilt_lst (upd_type_CProc lst _CProc))
 upd_type_CProc lst (CHide _CProc _CSExp)
-	= (CHide (upd_type_CProc lst _CProc) _CSExp)
+  = (CHide (upd_type_CProc lst _CProc) _CSExp)
 upd_type_CProc lst (CExtChoice _CProc1 _CProc2)
-	= (CExtChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+  = (CExtChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
 upd_type_CProc lst (CIntChoice _CProc1 _CProc2)
-	= (CIntChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+  = (CIntChoice (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
 upd_type_CProc lst (CParParal _CSExp _CProc1 _CProc2)
-	= (CParParal _CSExp (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+  = (CParParal _CSExp (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
 upd_type_CProc lst (CInterleave _CProc1 _CProc2)
-	= (CInterleave (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+  = (CInterleave (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
 upd_type_CProc lst (CGenProc _ZName  _ZExpr_lst)
-	= (CGenProc _ZName  _ZExpr_lst)
+  = (CGenProc _ZName  _ZExpr_lst)
 upd_type_CProc lst (CParamProc _ZName  _ZExpr_lst)
-	= (CParamProc _ZName  _ZExpr_lst)
+  = (CParamProc _ZName  _ZExpr_lst)
 upd_type_CProc lst (CProcRename _ZName  _Comm_lst1  _Comm_lst2)
-	= (CProcRename _ZName  _Comm_lst1  _Comm_lst2)
+  = (CProcRename _ZName  _Comm_lst1  _Comm_lst2)
 upd_type_CProc lst (CSeq _CProc1 _CProc2)
-	= (CSeq (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
+  = (CSeq (upd_type_CProc lst _CProc1) (upd_type_CProc lst _CProc2))
 upd_type_CProc lst (CSimpIndexProc _ZName  _ZExpr_lst)
-	= (CSimpIndexProc _ZName  _ZExpr_lst)
+  = (CSimpIndexProc _ZName  _ZExpr_lst)
 upd_type_CProc lst (CircusProc _ZName)
-	= (CircusProc _ZName)
+  = (CircusProc _ZName)
 upd_type_CProc lst (ProcMain _ZPara _PPar_lst _CAction)
-	= (ProcMain _ZPara _PPar_lst (upd_type_CAction lst _CAction))
+  = (ProcMain _ZPara _PPar_lst (upd_type_CAction lst _CAction))
 upd_type_CProc lst (ProcStalessMain _PPar_lst _CAction)
-	= (ProcStalessMain _PPar_lst (upd_type_CAction lst _CAction))
+  = (ProcStalessMain _PPar_lst (upd_type_CAction lst _CAction))
 
 
 upd_type_PPar lst (CParAction _ZName p)
-	= (CParAction _ZName (upd_type_ParAction lst p))
+  = (CParAction _ZName (upd_type_ParAction lst p))
 upd_type_PPar lst x
-	= x
+  = x
 
 upd_type_ParAction lst (CircusAction _CAction)
-	= (CircusAction (upd_type_CAction lst _CAction))
+  = (CircusAction (upd_type_CAction lst _CAction))
 upd_type_ParAction lst (ParamActionDecl _ZGenFilt_lst _ParAction)
-	= (ParamActionDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_ParAction lst _ParAction))
+  = (ParamActionDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_ParAction lst _ParAction))
 
 
 
 upd_type_CAction lst (CActionCommand _CCommand)
-	= (CActionCommand (upd_type_CCommand lst _CCommand))
+  = (CActionCommand (upd_type_CCommand lst _CCommand))
 upd_type_CAction lst (CSPCommAction _Comm _CAction)
-	= (CSPCommAction (upd_type_Comm lst _Comm) (upd_type_CAction lst _CAction))
+  = (CSPCommAction (upd_type_Comm lst _Comm) (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPGuard _ZPred _CAction)
-	= (CSPGuard _ZPred (upd_type_CAction lst _CAction))
+  = (CSPGuard _ZPred (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPSeq _CAction1 _CAction2)
-	= (CSPSeq (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPSeq (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPExtChoice _CAction1 _CAction2)
-	= (CSPExtChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPExtChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPIntChoice _CAction1 _CAction2)
-	= (CSPIntChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPIntChoice (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPNSParal _NSExp1 _CSExp _NSExp2 _CAction1 _CAction2)
-	= (CSPNSParal _NSExp1 _CSExp _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPNSParal _NSExp1 _CSExp _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPParal _CSExp _CAction1 _CAction2)
-	= (CSPParal _CSExp (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPParal _CSExp (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPNSInter _NSExp1 _NSExp2 _CAction1 _CAction2)
-	= (CSPNSInter _NSExp1 _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPNSInter _NSExp1 _NSExp2 (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPInterleave _CAction1 _CAction2)
-	= (CSPInterleave (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
+  = (CSPInterleave (upd_type_CAction lst _CAction1) (upd_type_CAction lst _CAction2))
 upd_type_CAction lst (CSPHide _CAction _CSExp)
-	= (CSPHide (upd_type_CAction lst _CAction) _CSExp)
+  = (CSPHide (upd_type_CAction lst _CAction) _CSExp)
 upd_type_CAction lst (CSPParAction _ZName  _ZExpr_lst)
-	= (CSPParAction _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst))
+  = (CSPParAction _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst))
 upd_type_CAction lst (CSPRenAction _ZName _CReplace)
-	= (CSPRenAction _ZName (upd_type_CReplace lst _CReplace))
+  = (CSPRenAction _ZName (upd_type_CReplace lst _CReplace))
 upd_type_CAction lst (CSPRecursion _ZName _CAction)
-	= (CSPRecursion _ZName (upd_type_CAction lst _CAction))
+  = (CSPRecursion _ZName (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPUnfAction _ZName _CAction)
-	= (CSPUnfAction _ZName (upd_type_CAction lst _CAction))
+  = (CSPUnfAction _ZName (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPUnParAction _ZGenFilt_lst _CAction _ZName)
-	= (CSPUnParAction (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction) _ZName)
+  = (CSPUnParAction (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction) _ZName)
 upd_type_CAction lst (CSPRepSeq _ZGenFilt_lst _CAction)
-	= (CSPRepSeq (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CSPRepSeq (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepExtChoice _ZGenFilt_lst _CAction)
-	= (CSPRepExtChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CSPRepExtChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepIntChoice _ZGenFilt_lst _CAction)
-	= (CSPRepIntChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CSPRepIntChoice (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepParalNS _CSExp _ZGenFilt_lst _NSExp _CAction)
-	= (CSPRepParalNS _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
+  = (CSPRepParalNS _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepParal _CSExp _ZGenFilt_lst _CAction)
-	= (CSPRepParal _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CSPRepParal _CSExp (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepInterlNS _ZGenFilt_lst _NSExp _CAction)
-	= (CSPRepInterlNS (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
+  = (CSPRepInterlNS (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) _NSExp (upd_type_CAction lst _CAction))
 upd_type_CAction lst (CSPRepInterl _ZGenFilt_lst _CAction)
-	= (CSPRepInterl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CSPRepInterl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CAction lst x = x
 
 upd_type_Comm lst (ChanComm _ZName  _CParameter_lst)
-	= (ChanComm _ZName  (map (upd_type_CParameter lst) _CParameter_lst))
+  = (ChanComm _ZName  (map (upd_type_CParameter lst) _CParameter_lst))
 upd_type_Comm lst (ChanGenComm _ZName  _ZExpr_lst  _CParameter_lst)
-	= (ChanGenComm _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst)  (map (upd_type_CParameter lst) _CParameter_lst))
+  = (ChanGenComm _ZName  (map (upd_type_ZExpr lst) _ZExpr_lst)  (map (upd_type_CParameter lst) _CParameter_lst))
 
 
 upd_type_CParameter lst (ChanInpPred _ZName p1)
-	= (ChanInpPred _ZName (upd_type_ZPred lst p1))
+  = (ChanInpPred _ZName (upd_type_ZPred lst p1))
 upd_type_CParameter lst (ChanOutExp e)
-	= (ChanOutExp (upd_type_ZExpr lst e))
+  = (ChanOutExp (upd_type_ZExpr lst e))
 upd_type_CParameter lst (ChanDotExp e)
-	= (ChanDotExp (upd_type_ZExpr lst e))
+  = (ChanDotExp (upd_type_ZExpr lst e))
 upd_type_CParameter lst x
-	= x
+  = x
 
 
 upd_type_CCommand lst (CAssign _ZVar_lst  _ZExpr_lst)
-	= (CAssign (map (upd_type_ZVar lst) _ZVar_lst)  (map (upd_type_ZExpr lst) _ZExpr_lst))
+  = (CAssign (map (upd_type_ZVar lst) _ZVar_lst)  (map (upd_type_ZExpr lst) _ZExpr_lst))
 upd_type_CCommand lst (CIf _CGActions)
-	= (CIf (upd_type_CGActions lst _CGActions))
+  = (CIf (upd_type_CGActions lst _CGActions))
 upd_type_CCommand lst (CVarDecl _ZGenFilt_lst _CAction)
-	= (CVarDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CVarDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CCommand lst (CValDecl _ZGenFilt_lst _CAction)
-	= (CValDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CValDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CCommand lst (CResDecl _ZGenFilt_lst _CAction)
-	= (CResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CCommand lst (CVResDecl _ZGenFilt_lst _CAction)
-	= (CVResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
+  = (CVResDecl (map (upd_type_ZGenFilt lst) _ZGenFilt_lst) (upd_type_CAction lst _CAction))
 upd_type_CCommand lst (CAssumpt _ZName_lst _ZPred1 _ZPred2)
-	= (CAssumpt _ZName_lst (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
+  = (CAssumpt _ZName_lst (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
 upd_type_CCommand lst (CAssumpt1 _ZName_lst _ZPred)
-	= (CAssumpt1 _ZName_lst _ZPred)
+  = (CAssumpt1 _ZName_lst _ZPred)
 upd_type_CCommand lst (CPrefix _ZPred1 _ZPred2)
-	= (CPrefix (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
+  = (CPrefix (upd_type_ZPred lst _ZPred1) (upd_type_ZPred lst _ZPred2))
 upd_type_CCommand lst (CPrefix1 _ZPred)
-	= (CPrefix1 (upd_type_ZPred lst _ZPred))
+  = (CPrefix1 (upd_type_ZPred lst _ZPred))
 upd_type_CCommand lst (CommandBrace _ZPred)
-	= (CommandBrace (upd_type_ZPred lst _ZPred))
+  = (CommandBrace (upd_type_ZPred lst _ZPred))
 upd_type_CCommand lst (CommandBracket _ZPred)
-	= (CommandBracket (upd_type_ZPred lst _ZPred))
+  = (CommandBracket (upd_type_ZPred lst _ZPred))
 
 
 upd_type_CGActions lst (CircGAction _ZPred _CAction)
-	= (CircGAction (upd_type_ZPred lst _ZPred) (upd_type_CAction lst _CAction))
+  = (CircGAction (upd_type_ZPred lst _ZPred) (upd_type_CAction lst _CAction))
 upd_type_CGActions lst (CircThenElse _CGActions1 _CGActions2)
-	= (CircThenElse (upd_type_CGActions lst _CGActions1) (upd_type_CGActions lst _CGActions2))
+  = (CircThenElse (upd_type_CGActions lst _CGActions1) (upd_type_CGActions lst _CGActions2))
 
 upd_type_CReplace lst (CRename _ZVar_lst1 _ZVar_lst2)
-	= (CRename (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
+  = (CRename (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
 upd_type_CReplace lst (CRenameAssign _ZVar_lst1 _ZVar_lst2)
-	= (CRenameAssign (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
+  = (CRenameAssign (map ( upd_type_ZVar lst) _ZVar_lst1) (map ( upd_type_ZVar lst) _ZVar_lst2))
 
 upd_type_ZPred lst (ZFalse{reason=a})
  = (ZFalse{reason=a})
@@ -2446,4 +2447,44 @@ getChanName (ChanDotExp (ZVar (e,f,g))) = e
 getChanName (ChanOutExp (ZVar (e,f,g))) = e
 getChanName (ChanInp e) = e
 getChanName (ChanInpPred e f) = e
+\end{code}
+
+\section{Prefixed Actions}
+\begin{code}
+prefixAction (CActionCommand c) = prefixActionCCommand c
+prefixAction (CSPSeq ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction CSPSkip = True
+prefixAction CSPStop = True
+prefixAction CSPChaos = True
+prefixAction (CSPCommAction _ ca) = prefixAction ca
+prefixAction (CSPExtChoice ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction (CSPIntChoice ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction (CSPNSParal _ _ _ ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction (CSPNSInter _ _ ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction (CSPHide ca cs) = prefixAction ca
+prefixAction (CSPRecursion _ ca) = prefixAction ca
+prefixAction (CSPRepSeq _ ca) = prefixAction ca
+prefixAction (CSPRepExtChoice _ ca) = prefixAction ca
+prefixAction (CSPRepIntChoice _ ca) = prefixAction ca
+prefixAction (CSPRepParalNS _ _ _ ca) = prefixAction ca
+prefixAction (CSPRepInterlNS _ _ ca) = prefixAction ca
+-- prefixAction (CActionName zn)
+-- prefixAction (CSPParal cs ca1 ca2) prefixAction ca1 && prefixAction ca2
+-- prefixAction (CSPInterleave ca1 ca2) = prefixAction ca1 && prefixAction ca2
+prefixAction (CSPParAction zn ze) = True
+-- prefixAction (CSPRenAction zn r)
+-- prefixAction (CSPUnfAction zn ca) = prefixAction ca
+-- prefixAction (CSPUnParAction zgf ca zn) = prefixAction ca
+-- prefixAction (CSPRepParal cs zgf ca) = prefixAction ca
+-- prefixAction (CSPRepInterl zgf ca ) = prefixAction ca
+-- prefixAction (CSPGuard p ca)  = prefixAction ca
+-- prefixAction (CActionCommand (CVarDecl zgf ca)) = prefixAction ca
+prefixAction _ = False
+
+prefixActionCCommand (CIf g) = prefixActionCGActions g
+prefixActionCCommand (CVarDecl _ ca) = prefixAction ca
+prefixActionCCommand _ = False
+
+prefixActionCGActions (CircGAction p ca) = prefixAction ca
+prefixActionCGActions (CircThenElse g1 g2) = prefixActionCGActions g1 && prefixActionCGActions g2
 \end{code}
