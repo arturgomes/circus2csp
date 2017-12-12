@@ -109,8 +109,9 @@ omega_ProcDecl spec (CProcess zn pd)
   = (CProcess zn (omega_ProcessDef zn spec pd))
 \end{code}
 \end{omegaenv}
-\begin{omegaenv}
 \section{Mapping Circus Processes Definition}
+\begin{omegaenv}
+
 \begin{code}
 omega_ProcessDef :: ZName -> [ZPara] -> ProcessDef -> ProcessDef
 omega_ProcessDef zn spec (ProcDefSpot xl pd)

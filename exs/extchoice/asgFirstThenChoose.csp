@@ -5,19 +5,6 @@ include "function_aux.csp"
 RANGE = {0..2}
 channel a, c
 channel a1, b1 : RANGE
-
-P(b) =
-  let
-     Memory(b) =
-        ( ( ( [] n : dom(b) @ mget.n.apply(b,n) ->
-      Memory(b) )
-      [] ( [] n : dom(b) @ mset.n?nv:typeRAN(n) ->
-      Memory(over(b,n,nv)) ))
-      [] terminate -> SKIP)
-
-  within ( ( ( SKIP;
-      terminate -> SKIP )
-      [| MEMI |] Memory(b))\MEMI )
 --------------------------------
 -- The universe of values
  datatype UNIVERSE = RAN.RANGE
@@ -31,7 +18,7 @@ tagRAN(x) = RAN
 -- subtypes of UNIVERSE for RAN
 subtype U_RAN = RAN.RANGE
 
--- definition of NAME for the entire spec
+-- definition of NAME for the entire spec 
 datatype NAME = sv_x | sv_y
 
 -- Subtype definition for RAN
@@ -44,20 +31,20 @@ BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
 
 
 --------------------------------
- -- mget, mset and terminate --
+ -- mget, mset and terminate -- 
 --------------------------------
 channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 --------------------------------
- -- MEMI --
+ -- MEMI -- 
 --------------------------------
 MEMI = {| mset,mget,terminate |}
 channel lget, lset : NAME.UNIVERSE
 channel lterminate
 MEML = {| lset,lget,lterminate |}
 
-ACOut1(b_RAN) =
+AD(b_RAN) = 
   let
      Memory(b_RAN) =
         ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -72,19 +59,15 @@ ACOut1(b_RAN) =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
+     
   within ( ( ( mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
-      mget.sv_y?v_sv_y:(typeRAN(sv_y)) ->
-      ( mset.sv_x.(RAN.(valueRAN(v_sv_x) + 1)) ->
-      mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
-      a1.valueRAN(v_sv_x) -> SKIP
-      [] mset.sv_y.(RAN.(valueRAN(v_sv_x) - 1)) ->
-      mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
-      b1.valueRAN(v_sv_x) -> SKIP);
+      ( a ->
+      mset.sv_x.(RAN.1) -> SKIP
+      [] c -> SKIP);
       terminate -> SKIP )
       [| MEMI |] Memory(b_RAN))\MEMI )
 
-AC1(b_RAN) =
+AC(b_RAN) = 
   let
      Memory(b_RAN) =
         ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -99,7 +82,36 @@ AC1(b_RAN) =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
+  within ( ( ( mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
+      mget.sv_y?v_sv_y:(typeRAN(sv_y)) ->
+      ( a ->
+      mset.sv_x.(RAN.1) ->
+      mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
+      a1.valueRAN(v_sv_x) -> SKIP
+      [] c ->
+      mset.sv_y.(RAN.2) ->
+      mget.sv_y?v_sv_y:(typeRAN(sv_y)) ->
+      b1.valueRAN(v_sv_y) -> SKIP);
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
 
+AB(b_RAN) = 
+  let
+     Memory(b_RAN) =
+        ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
+      Memory(b_RAN) )
+      [] ( [] n : dom(b_RAN) @ mset.n?nv:typeRAN(n) ->
+      Memory(over(b_RAN,n,nv)) ))
+      [] terminate -> SKIP)
+     MemoryMerge(b_RAN,ns) =
+        ( ( ( [] n : dom(b_RAN) @ lget.n.apply(b_RAN,n) ->
+      MemoryMerge(b_RAN,ns) )
+      [] ( [] n : dom(b_RAN) @ lset.n?nv:typeRAN(n) ->
+      MemoryMerge(over(b_RAN,n,nv),ns) ))
+      [] lterminate ->
+      (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
   within ( ( ( mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
       ( a ->
       mset.sv_x.(RAN.0) -> SKIP
@@ -108,7 +120,7 @@ AC1(b_RAN) =
       terminate -> SKIP )
       [| MEMI |] Memory(b_RAN))\MEMI )
 
-AC(b_RAN) =
+AA(b_RAN) = 
   let
      Memory(b_RAN) =
         ( ( ( [] n : dom(b_RAN) @ mget.n.apply(b_RAN,n) ->
@@ -123,7 +135,7 @@ AC(b_RAN) =
       MemoryMerge(over(b_RAN,n,nv),ns) ))
       [] lterminate ->
       (  ; bd : <b_RAN> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
-
+     
   within ( ( ( mget.sv_x?v_sv_x:(typeRAN(sv_x)) ->
       mget.sv_y?v_sv_y:(typeRAN(sv_y)) ->
       ( a ->

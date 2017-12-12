@@ -1,0 +1,219 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+NUMBER = {ZInt 0..ZInt 1}
+datatype STATEPHASE = connectThePatient | initPhase | prepPhase
+
+datatype ACTIVITY = rinsingEBC | applicationArterialBolus | reinfProcess | rinsing
+
+channel preparationPhase, therapyInitiation
+channel connectingToPatient, duringTherapy, therapyEnding
+channel autSelfTest, atrialTubing
+channel ventricularTubing, connectDialyzer, setBloodLines, endTreatment
+channel lampOn, lampOff
+channel stopBloodFlow, produceAlarmSound, stopBP
+channel disconnectDF, stopFlowDialyzer, stopCoagulantFlow
+channel fillArterialDrip, connPatientArterially, connPatientVenously
+channel insertHeparinSyringe, heparinLineIsVented
+channel connectingConcentrate : NUMBER
+channel salineBagLevel : NUMBER
+channel senAirVol : NUMBER
+channel senApTransdPress : NUMBER
+channel senBloodFlowInEBC : NUMBER
+channel senBypassVol : NUMBER
+channel senFflowDirect : NUMBER
+channel senInfVol : NUMBER
+channel senLastNonZeroBF : NUMBER
+channel senNetFluidRemoval : NUMBER
+channel senNetFluidRemovalRate : NUMBER
+channel senRotDirectBP : NUMBER
+channel senRotDirectUFP : NUMBER
+channel senVolInEBC : NUMBER
+channel senVpTransdPress : NUMBER
+channel senSADSensorFlow : NUMBER
+channel senHDMode : NUMBER
+channel setBloodFlow : NUMBER
+TherapyPhaseChanSet = {| preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
+SensorReadingsComm = {| senAirVol,senApTransdPress,senBloodFlowInEBC,senHDMode,senSADSensorFlow,senVpTransdPress |}
+HDGenCompStChanSet = {| preparationPhase,connectingToPatient,therapyInitiation,therapyEnding |}
+assert HDMachine(b_PAC1,b_PST1,b_NUM1,b_BOO1) :[deadlock free]
+assert HDMachine(b_PAC1,b_PST1,b_NUM1,b_BOO1) :[deterministic]
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = PAC.Set(ACTIVITY) | PST.Set(STATEPHASE) | NUM.NUMBER
+--Conversions
+valuePAC(PAC.v) = v
+valuePST(PST.v) = v
+valueNUM(NUM.v) = v
+
+typePAC(x) = U_PAC
+typePST(x) = U_PST
+typeNUM(x) = U_NUM
+
+tagPAC(x) = PAC
+tagPST(x) = PST
+tagNUM(x) = NUM
+
+-- subtypes of UNIVERSE for PAC
+subtype U_PAC = PAC.Set(ACTIVITY)
+
+-- subtypes of UNIVERSE for PST
+subtype U_PST = PST.Set(STATEPHASE)
+
+-- subtypes of UNIVERSE for NUM
+subtype U_NUM = NUM.NUMBER
+
+-- definition of NAME for the entire spec 
+datatype NAME = sv_airVolLimit | sv_airVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_hdActivity | sv_hdMachineState | sv_infSalineVol | sv_lowerPressureLimit | sv_upperPressureLimit | sv_vpTransdPress
+
+-- Subtype definition for NUM
+b_NUM1 = {(sv_airVolLimit, NUM.DO_IT_MANUALLY),(sv_airVol, NUM.DO_IT_MANUALLY),(sv_apTransdPress, NUM.DO_IT_MANUALLY),(sv_bloodFlowInEBC, NUM.DO_IT_MANUALLY),(sv_infSalineVol, NUM.DO_IT_MANUALLY),(sv_lowerPressureLimit, NUM.DO_IT_MANUALLY),(sv_upperPressureLimit, NUM.DO_IT_MANUALLY),(sv_vpTransdPress, NUM.DO_IT_MANUALLY)}
+subtype NAME_NUM = sv_airVolLimit | sv_airVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_infSalineVol | sv_lowerPressureLimit | sv_upperPressureLimit | sv_vpTransdPress
+NAMES_VALUES_NUM = seq({seq({(n,v) | v <- typeNUM(n)}) | n <- NAME_NUM})
+
+-- Subtype definition for PAC
+b_PAC1 = {(sv_hdActivity, PAC.{rinsingEBC})}
+subtype NAME_PAC = sv_hdActivity
+NAMES_VALUES_PAC = seq({seq({(n,v) | v <- typePAC(n)}) | n <- NAME_PAC})
+
+-- Subtype definition for PST
+b_PST1 = {(sv_hdMachineState, PST.{connectThePatient})}
+subtype NAME_PST = sv_hdMachineState
+NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME_PST})
+
+-- Bindings definitions for NUM
+BINDINGS_NUM = {set(b) | b <- set(distCartProd(NAMES_VALUES_NUM))}
+
+-- Bindings definitions for PAC
+BINDINGS_PAC = {set(b) | b <- set(distCartProd(NAMES_VALUES_PAC))}
+
+-- Bindings definitions for PST
+BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI -- 
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+HDMachine(b_PAC,b_PST,b_NUM) = 
+  let
+     Memory(b_PAC,b_PST,b_NUM) =
+        ( ( ( ( [] n : dom(b_PAC) @ mget.n.apply(b_PAC,n) ->
+      Memory(b_PAC,b_PST,b_NUM) )
+      [] ( ( [] n : dom(b_PST) @ mget.n.apply(b_PST,n) ->
+      Memory(b_PAC,b_PST,b_NUM) )
+      [] ( [] n : dom(b_NUM) @ mget.n.apply(b_NUM,n) ->
+      Memory(b_PAC,b_PST,b_NUM) )))
+      [] ( ( [] n : dom(b_PAC) @ mset.n?nv:typePAC(n) ->
+      Memory(over(b_PAC,n,nv),b_PST,b_NUM) )
+      [] ( ( [] n : dom(b_PST) @ mset.n?nv:typePST(n) ->
+      Memory(b_PAC,over(b_PST,n,nv),b_NUM) )
+      [] ( [] n : dom(b_NUM) @ mset.n?nv:typeNUM(n) ->
+      Memory(b_PAC,b_PST,over(b_NUM,n,nv)) ))))
+      [] terminate -> SKIP)
+     MemoryMerge(b_PAC,b_PST,b_NUM,ns) =
+        ( ( ( ( [] n : dom(b_PAC) @ lget.n.apply(b_PAC,n) ->
+      MemoryMerge(b_PAC,b_PST,b_NUM,ns) )
+      [] ( ( [] n : dom(b_PST) @ lget.n.apply(b_PST,n) ->
+      MemoryMerge(b_PAC,b_PST,b_NUM,ns) )
+      [] ( [] n : dom(b_NUM) @ lget.n.apply(b_NUM,n) ->
+      MemoryMerge(b_PAC,b_PST,b_NUM,ns) )))
+      [] ( ( [] n : dom(b_PAC) @ lset.n?nv:typePAC(n) ->
+      MemoryMerge(over(b_PAC,n,nv),b_PST,b_NUM,ns) )
+      [] ( ( [] n : dom(b_PST) @ lset.n?nv:typePST(n) ->
+      MemoryMerge(b_PAC,over(b_PST,n,nv),b_NUM,ns) )
+      [] ( [] n : dom(b_NUM) @ lset.n?nv:typeNUM(n) ->
+      MemoryMerge(b_PAC,b_PST,over(b_NUM,n,nv),ns) ))))
+      [] lterminate ->
+      (  ; bd : < b_PAC>^< b_PST>^< b_NUM> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
+  within ( ( ( ( preparationPhase ->
+      autSelfTest ->
+      lampOn ->
+      ( ( ( ( ( ( ( atrialTubing -> SKIP
+      ||| ventricularTubing -> SKIP );
+      salineBagLevel?t_sv_infSalineVol ->
+      mset.sv_infSalineVol.(NUM.t_sv_infSalineVol) -> SKIP );
+      setBloodLines -> SKIP );
+      insertHeparinSyringe ->
+      heparinLineIsVented -> SKIP );
+      connectDialyzer ->
+      fillArterialDrip ->
+      stopBP -> SKIP );
+      therapyInitiation ->
+      mset.sv_hdMachineState.(PST.connectThePatient) ->
+      lampOff ->
+      connPatientArterially ->
+      setBloodFlow?t_sv_bloodFlowInEBC ->
+      mset.sv_bloodFlowInEBC.(NUM.t_sv_bloodFlowInEBC) ->
+      connPatientVenously ->
+      lampOn ->
+      ( ( ( ( ( SKIP
+      ||| SKIP )
+      ||| SKIP )
+      ||| SKIP )
+      ||| senHDMode.0 ->
+      lampOff -> SKIP );
+      endTreatment ->
+      lampOff -> SKIP ) );
+      therapyEnding -> SKIP )
+      ||| ( let X = ( ( ( ( ( ( ( ( ( ( let muR1 = mget.sv_hdActivity?v_sv_hdActivity:(typePAC(sv_hdActivity)) ->
+      mget.sv_infSalineVol?v_sv_infSalineVol:(typeNUM(sv_infSalineVol)) ->
+      ( ( valuePAC(v_sv_hdActivity) == {applicationArterialBolus} and valueNUM(v_sv_infSalineVol) > 400 & ( stopBloodFlow -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePAC(v_sv_hdActivity) == {applicationArterialBolus} and valueNUM(v_sv_infSalineVol) > 400 & muR1 )) within muR1 )
+      ||| ( let muR5 = mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      mget.sv_upperPressureLimit?v_sv_upperPressureLimit:(typeNUM(sv_upperPressureLimit)) ->
+      mget.sv_vpTransdPress?v_sv_vpTransdPress:(typeNUM(sv_vpTransdPress)) ->
+      ( ( valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_vpTransdPress) > valueNUM(v_sv_upperPressureLimit) & ( stopBP -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_vpTransdPress) > valueNUM(v_sv_upperPressureLimit) & muR5 )) within muR5 ) )
+      ||| ( let muR6 = mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      mget.sv_lowerPressureLimit?v_sv_lowerPressureLimit:(typeNUM(sv_lowerPressureLimit)) ->
+      mget.sv_vpTransdPress?v_sv_vpTransdPress:(typeNUM(sv_vpTransdPress)) ->
+      ( ( valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_vpTransdPress) < valueNUM(v_sv_lowerPressureLimit) & ( stopBP -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_vpTransdPress) < valueNUM(v_sv_lowerPressureLimit) & muR6 )) within muR6 ) )
+      ||| ( let muR7 = mget.sv_apTransdPress?v_sv_apTransdPress:(typeNUM(sv_apTransdPress)) ->
+      mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      mget.sv_upperPressureLimit?v_sv_upperPressureLimit:(typeNUM(sv_upperPressureLimit)) ->
+      ( ( valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_apTransdPress) > valueNUM(v_sv_upperPressureLimit) & ( stopBP -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_apTransdPress) > valueNUM(v_sv_upperPressureLimit) & muR7 )) within muR7 ) )
+      ||| ( let muR8 = mget.sv_apTransdPress?v_sv_apTransdPress:(typeNUM(sv_apTransdPress)) ->
+      mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      mget.sv_lowerPressureLimit?v_sv_lowerPressureLimit:(typeNUM(sv_lowerPressureLimit)) ->
+      ( ( valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_apTransdPress) < valueNUM(v_sv_lowerPressureLimit) & ( stopBP -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePST(v_sv_hdMachineState) == {initPhase} and valueNUM(v_sv_apTransdPress) < valueNUM(v_sv_lowerPressureLimit) & muR8 )) within muR8 ) )
+      ||| ( let muR14 = mget.sv_bloodFlowInEBC?v_sv_bloodFlowInEBC:(typeNUM(sv_bloodFlowInEBC)) ->
+      mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      ( ( valuePST(v_sv_hdMachineState) == {connectThePatient} and valueNUM(v_sv_bloodFlowInEBC) == 0 & ( stopBP -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valuePST(v_sv_hdMachineState) == {connectThePatient} and valueNUM(v_sv_bloodFlowInEBC) == 0 & muR14 )) within muR14 ) )
+      ||| connectingToPatient ->
+      therapyInitiation -> SKIP )
+      ||| ( let muR27 = senAirVol?t_sv_airVol ->
+      mset.sv_airVol.(NUM.t_sv_airVol) ->
+      muR27 within muR27 ) )
+      ||| ( let muR2832 = mget.sv_airVol?v_sv_airVol:(typeNUM(sv_airVol)) ->
+      mget.sv_airVolLimit?v_sv_airVolLimit:(typeNUM(sv_airVolLimit)) ->
+      mget.sv_hdActivity?v_sv_hdActivity:(typePAC(sv_hdActivity)) ->
+      mget.sv_hdMachineState?v_sv_hdMachineState:(typePST(sv_hdMachineState)) ->
+      ( ( valueNUM(v_sv_airVol) > valueNUM(v_sv_airVolLimit) and valuePAC(v_sv_hdActivity) == {rinsingEBC} and valuePST(v_sv_hdMachineState) == {prepPhase} or valuePAC(v_sv_hdActivity) == {applicationArterialBolus,reinfProcess} or valuePST(v_sv_hdMachineState) == {connectThePatient,initPhase} & ( stopBloodFlow -> SKIP
+      ||| produceAlarmSound -> SKIP ) )
+      [] ( not valueNUM(v_sv_airVol) > valueNUM(v_sv_airVolLimit) and valuePAC(v_sv_hdActivity) == {rinsingEBC} and valuePST(v_sv_hdMachineState) == {prepPhase} or valuePAC(v_sv_hdActivity) == {applicationArterialBolus,reinfProcess} or valuePST(v_sv_hdMachineState) == {connectThePatient,initPhase} & muR2832 )) within muR2832 ) );
+      X ) within X ) );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_PAC,b_PST,b_NUM))\MEMI )

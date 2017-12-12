@@ -18,6 +18,7 @@ library
   exposed-modules:     AST
                      , Errors
                      , Animate
+                     , PrintTex
                      , CRL
                      , EParseLib
                      , FiniteSets

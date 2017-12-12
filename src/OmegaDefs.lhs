@@ -439,6 +439,7 @@ rename_vars_CParameter (ChanDotExp ze)
 \subsection{$CParameter$}
 Renaming any variable in a channel parameter.
 \begin{code}
+rename_vars_Comm (ChanComm zn []) = (ChanComm zn [])
 rename_vars_Comm (ChanComm zn (x:xs))
   | zn == "mget" = (ChanComm zn (x:(map rename_vars_CParameter xs)))
   | zn == "mset" = (ChanComm zn (x:(map rename_vars_CParameter xs)))

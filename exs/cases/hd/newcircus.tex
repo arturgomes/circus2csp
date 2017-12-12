@@ -1,0 +1,946 @@
+%\section{Circus Specification - Safety Requirements}
+%\subsection{Types and state variables - To be continued}
+%<*zedtypes>
+\begin{zed}
+NUMBER == \{0 \upto 1\}
+\also STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~
+\also ACTIVITY ::= rinsingEBC~|~applicationArterialBolus~\\
+\t4 |~reinfProcess~|~rinsing~
+\end{zed}
+
+
+%<*hdchannels>
+\begin{circus}
+  \circchannel preparationPhase, therapyInitiation\\
+  \circchannel connectingToPatient, duringTherapy, therapyEnding\\
+  \circchannel autSelfTest, atrialTubing\\
+  \circchannel ventricularTubing, connectDialyzer, setBloodLines, endTreatment\\
+  \circchannel lampOn, lampOff
+\end{circus}
+
+%--responses to requirements
+\begin{circus}
+  \circchannel stopBloodFlow, produceAlarmSound, stopBP\\
+  \circchannel disconnectDF, stopFlowDialyzer, stopCoagulantFlow
+\end{circus}
+
+\begin{circus}
+  \circchannel fillArterialDrip, connPatientArterially, connPatientVenously\\
+  \circchannel insertHeparinSyringe, heparinLineIsVented\\
+  \circchannel connectingConcentrate~:~NUMBER\\
+  \circchannel salineBagLevel~:~NUMBER
+\end{circus}
+
+\begin{circus}
+  \circchannel senAirVol~:~NUMBER\\
+  % \circchannel senAirVolLimit~:~NUMBER\\
+  \circchannel senApTransdPress~:~NUMBER\\
+  \circchannel senBloodFlowInEBC~:~NUMBER\\
+  \circchannel senBypassVol~:~NUMBER\\
+  \circchannel senFflowDirect~:~NUMBER\\
+  \circchannel senInfVol~:~NUMBER\\
+  \circchannel senLastNonZeroBF~:~NUMBER\\
+  \circchannel senNetFluidRemoval~:~NUMBER\\
+  \circchannel senNetFluidRemovalRate~:~NUMBER\\
+  \circchannel senRotDirectBP~:~NUMBER~\\
+  \circchannel senRotDirectUFP~:~NUMBER~\\
+  \circchannel senVolInEBC~:~NUMBER\\
+  \circchannel senVpTransdPress~:~NUMBER\\
+  \circchannel senSADSensorFlow~:~NUMBER\\
+  \circchannel senHDMode~:~NUMBER\\
+  \circchannel setBloodFlow~:~NUMBER
+  % \circchannel setMinUFRateTreat~:~NUMBER
+\end{circus}
+
+%</zedtypes>
+\begin{circus}\circchannelset TherapyPhaseChanSet ==
+\\ \lchanset preparationPhase, therapyInitiation, connectingToPatient,
+\\\t3 duringTherapy, therapyEnding \rchanset
+\end{circus}
+\begin{circus}
+  \circchannelset SensorReadingsComm ==\\
+  \\\t3 \lchanset~senAirVol, senApTransdPress, \\
+      senBloodFlowInEBC, senHDMode, \\
+      senSADSensorFlow, senVpTransdPress~\rchanset
+\end{circus}
+% \begin{circus}
+%   \circchannelset HDComm ==\\
+%   \\\t3 \lchanset~getApTransdPress, getBloodFlowInEBC, \\
+%     getCurrentTime, getDfFlow, getHdActivity, \\
+%     getHdMachineState,getFflowDirect, \\
+%     getInfSalineVol, getVolInEBC,\\
+%     getLowerPressureLimit, getRotDirectUFP, \\
+%     getUpperPressureLimit, getDfTemperature, \\
+%     getVpTransdPress, senBloodFlowInEBC, \\
+%     senSADSensorFlow, setAirVol, \\
+%     setBloodFlowInEBC, setLastNonZeroBF, \\
+%     therapyInitiation, senVpTransdPress, \\
+%     getTimerIntervalR9, setTimerIntervalR9, \\
+%     getTimerIntervalR10,setTimerIntervalR10,\\
+%     getTimerIntervalR9~\rchanset
+% \end{circus}
+
+\begin{circus}
+  \circchannelset HDGenCompStChanSet ==\\
+  \\\t3 \lchanset~%getAirVolLimit, getAirVol,
+  % getApTransdPress, getArtBolusVol,
+  % getBloodFlowInEBC, getBypassValve,
+  % getFflowDirect, getHdActivity,
+  % getHDMode, getInfSalineVol,
+  % getLastNonZeroBF, getLowerPressureLimit,
+  % getMinUFRateTreat, getNetFluidRemoval,
+  % getNetFluidRemovalRate, getSADSensorFlow,
+  % getSafeUpperLimit, getSignalNUMBER,
+  % getTimerIntervalR10, getTimerIntervalR11,
+  % getTimerIntervalR12, getTimerIntervalR13,
+  % getTimerIntervalR9, getUpperPressureLimit,
+  % getVolInEBC, getVpTransdPress,
+  % getBloodLines, setAirVolLimit,
+  % setAirVol,
+  % % setAlarm,
+  % setBloodFlowInEBC, setLastNonZeroBF,
+  % setTimerIntervalR10, setTimerIntervalR11,
+  % setTimerIntervalR12, setTimerIntervalR13,
+  % setTimerIntervalR9, getRotDirectBP,
+  % getRotDirectUFP,
+  preparationPhase,
+  connectingToPatient, therapyInitiation,
+  therapyEnding~\rchanset
+\end{circus}
+% \begin{circus}
+%   \circchannelset RinsingParametersStChanSet ==\\
+%   \\\t3 \lchanset~
+%   setFillingBPRate, setRinsingBPRate,
+%   setRinsingTime, setUfVolForRinsing,
+%   setBloodFlowForConnectingPatient,
+%   getRinsingBPRate, getRinsingTime,
+%   setUfRateForRinsing, getUfRateForRinsing,
+%   getUfVolForRinsing,
+%   getBloodFlowForConnectingPatient,
+%   getFillingBPRate~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset PressureParametersStChanSet ==\\
+%   \\\t3 \lchanset~setLimitDeltaMinMaxAP, %setActualTMPMaxTMP,
+%   setLimitsTMP, setLowHigh,
+%   setExtendedTMPLimitRange, getLimitDeltaMinMaxAP,
+%   % getActualTMPMaxTMP,
+%    getLimitsTMP,
+%   getLowHigh, getExtendedTMPLimitRange ~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset HeparinParametersStChanSet ==\\
+%   \\\t3 \lchanset~setTreatmentWithoutHeparin,
+%   setHeparinBolusVol, setHeparinProfileRate,
+%   getHeparinBolusVol, getHeparinProfileRate,
+%   getTreatmentWithoutHeparin, setSyringeType,
+%   getSyringeType~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset UFParametersStChanSet ==\\
+%   \\\t3 \lchanset~setMaxUFRate, setMinUFRate,
+%   setTherapyTime, setUfVol,
+%   getMaxUFRate, getMinUFRate,
+%   getTherapyTime, getUfVol~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset DFParametersStChanSet ==\\
+%   \\\t3 \lchanset~setBicarbonateAcetate,
+%   setBicarbonateConductivity, setDfFlow,
+%   setDfTemperature, setConductivity,
+%   getBicarbonateAcetate, getConductivity,
+%   getDfFlow, getDfTemperature,
+%   getBicarbonateConductivity~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset DFParametersStComm ==\\
+%   \\\t3 \lchanset~setConductivity,setBicarbonateAcetate,\\
+%       setBicarbonateConductivity,\\
+%       setDfTemperature,setDfFlow~\rchanset
+% \end{circus}
+%
+% \begin{circus}
+%   \circchannelset UFParametersStComm ==\\
+%   \\\t3 \lchanset~setUfVol,setTherapyTime,\\
+%       setMinUFRate,setMaxUFRate~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset PressureParametersStComm ==\\
+%   \\\t3 \lchanset~setLimitDeltaMinMaxAP,%setActualTMPMaxTMP,\\
+%       setLimitsTMP,setLowHigh,setExtendedTMPLimitRange~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset HeparinParametersStComm ==\\
+%   \\\t3 \lchanset~setHeparinStopTime,\\
+%       setHeparinBolusVol,\\
+%       setHeparinProfileRate,\\
+%       setTreatmentWithoutHeparin,\\
+%       setSyringeType~\rchanset
+% \end{circus}
+% \begin{circus}
+%   \circchannelset RinsingParametersStComm ==\\
+%   \\\t3 \lchanset~setFillingBPRate,setRinsingBPRate,\\
+%     setRinsingTime,setUfRateForRinsing,\\
+%     setUfVolForRinsing,setBloodFlowForConnectingPatient\rchanset
+% \end{circus}
+%
+% \begin{circus}
+%   \circchannelset MainTherapyChanSet ==
+%   \\\t3 \lchanset~%setActualTMPMaxTMP,
+%   setArtBolusVol,\\
+%     setBicarbonateAcetate, setBicarbonateConductivity,\\
+%     setBloodFlowForConnectingPatient, setBloodFlowInEBC,\\
+%     setBloodLines, setConductivity, setDfFlow,\\
+%     setDfTemperature,\\
+%     setExtendedTMPLimitRange, setFillingBPRate,\\
+%     setHDMode, setHeparinBolusVol,\\
+%      setHeparinProfileRate,\\
+%     setHeparinStopTime, setInfSalineVol,\\
+%     setLimitDeltaMinMaxAP, setLimitsTMP, setLowHigh,\\
+%     setMaxUFRate, setMinUFRate, setMinUFRateTreat,\\
+%     setRinsingBPRate,\\
+%     setRinsingTime, setSignalNUMBER,\\
+%     setSyringeType, setTherapyTime,\\
+%     setTreatmentWithoutHeparin,\\
+%     setUfRateForRinsing, setUfVol,\\
+%     setUfVolForRinsing,preparationPhase, therapyInitiation,\\
+%         connectingToPatient, duringTherapy,\\
+%         therapyEnding~\rchanset
+% \end{circus}
+
+% \begin{circus}%
+%   \circprocess\ ~SysClock ~\circdef~\circbegin
+% \end{circus}%
+%
+% \begin{schema}{SysClockSt}
+%  time : NUMBER
+% \end{schema}
+% %\begin{circusaction}
+%   ResetClock ~\circdef~
+%   \\time:=0 \circseq Clock\\
+% %\end{circusaction}
+% %\begin{circusaction}
+%   Clock ~\circdef~
+%   \\ \circmu~X \circspot  (tick \then time:=time+1 \interleave getCurrentTime!time \then \Skip)\circseq X
+% %\end{circusaction}
+% %\begin{circusaction}
+%   Wait~\circdef~ \circvar n : NUMBER \circspot
+%    \circif n> 0 \circthen (tick \then Wait (n-1))
+%    \circelse n~=~0 \circthen \Skip
+%    \circfi\\
+% %\end{circusaction}
+% %\begin{circusaction}
+%   \circspot ResetClock
+% %\end{circusaction}%
+% \vspace{-1cm}
+% \begin{circus}
+%   \circend
+% \end{circus}
+
+\begin{schema}{HDGenComp}
+    airVolLimit~:~NUMBER\\
+    airVol~:~NUMBER\\
+    % alarm~:~NUMBER\\
+    % artBolusVol~:~NUMBER\\
+    apTransdPress~:~NUMBER\\
+    bloodFlowInEBC~:~NUMBER\\
+    % bypassValve~:~NUMBER\\
+    % fflowDirect~:~NUMBER\\
+    hdActivity~:~\power~ACTIVITY\\
+    hdMachineState~:~\power~STATEPHASE\\
+    % hdMode~:~NUMBER\\
+    infSalineVol~:~NUMBER\\
+    % lastNonZeroBF~:~NUMBER\\
+    lowerPressureLimit~:~NUMBER\\
+    % netFluidRemovalRate~:~NUMBER\\
+    % netFluidRemoval~:~NUMBER\\
+    % rotDirectionBP~:~NUMBER\\
+    % rotDirectionUFP~:~NUMBER~\\
+    % signalLamp~:~NUMBER\\
+    % safeUpperLimit~:~NUMBER\\
+    % timerIntervalR9~:~NUMBER\\
+    % timerIntervalR10~:~NUMBER\\
+    % timerIntervalR11~:~NUMBER\\
+    % timerIntervalR12~:~NUMBER\\
+    % timerIntervalR13~:~NUMBER\\
+    % time~:~NUMBER\\
+    upperPressureLimit~:~NUMBER\\
+    % volumeInEBC~:~NUMBER\\
+    vpTransdPress~:~NUMBER\\
+    % sadSensorFlow~:~NUMBER\\
+    % bloodLines~:~NUMBER\\
+    % minUFRateTreat~:~NUMBER
+\end{schema}
+
+% \begin{schema}{RinsingParameters}
+%     % fillingBPRate~:~NUMBER\\
+%     % rinsingBPRate~:~NUMBER\\
+%     % rinsingTime~:~NUMBER\\
+%     % ufRateForRinsing~:~NUMBER\\
+%     % ufVolForRinsing~:~NUMBER\\
+%     % bloodFlowForConnectingPatient~:~NUMBER
+%   \where
+%     % fillingBPRate~\in~\{~x~:~NUMBER | 0~\leq~x~\leq~6000\}\\
+%     % rinsingBPRate~\in~\{~x~:~NUMBER | 50~\leq~x~\leq~300\}\\
+%     % rinsingTime~\in~\{~x~:~NUMBER | 0~\leq~x~\leq~59\}\\
+%     % ufRateForRinsing~\in~\{~x~:~NUMBER | 50~\leq~x~\leq~3000\}\\
+%     % ufVolForRinsing~\in~\{~x~:~NUMBER | 50~\leq~x~\leq~2940\}\\
+%     % bloodFlowForConnectingPatient~\in~\{~x~:~NUMBER | 50~\leq~x~\leq~600\}\\
+% \end{schema}
+% \begin{schema}{DFParameters}
+%     % conductivity~:~NUMBER\\
+%     % bicarbonateAcetate~:~NUMBER\\% \comment{I don't see invariants for this one}\\
+%     % bicarbonateConductivity~:~NUMBER\\
+%     % dfTemperature~:~NUMBER\\
+%     % rinsingTime~:~NUMBER\\
+%     % dfFlow~:~NUMBER\\
+%   % \where
+%     % conductivity~\in~\{~x~:~NUMBER | 125~\leq~x~\leq~160\}\\
+%     % bicarbonateConductivity~\in~\{~x~:~NUMBER | 2~\leq~x~\leq~4\}\\
+%     % dfTemperature~\in~\{~x~:~NUMBER | 33~\leq~x~\leq~40\}\\
+%     % rinsingTime~\in~\{~x~:~NUMBER | 0~\leq~x~\leq~59\}\\
+%     % dfFlow~\in~\{~x~:~NUMBER | 300~\leq~x~\leq~800\}~\cup~\{~x~:~NUMBER | 50~\leq~x~\leq~300\}\\
+% \end{schema}
+% \begin{schema}{UFParameters}
+%     % ufVol~:~NUMBER\\
+%     % therapyTime~:~NUMBER\\
+%     % minUFRate~:~NUMBER\\
+%     % maxUFRate~:~NUMBER\\
+%   \where
+%     % ufVol~\in~\{~x~:~NUMBER | 100~\leq~x~\leq~20000\}\\
+%     % therapyTime~\in~\{~x~:~NUMBER | 10~\leq~x~\leq~600\}\\
+%     % minUFRate~\in~\{~x~:~NUMBER | 0~\leq~x~\leq~500\}\\
+%     % maxUFRate~\in~\{~x~:~NUMBER | 0~\leq~x~\leq~4000\}\\
+% \end{schema}
+% \begin{schema}{PressureParameters}
+%     % limitDeltaMinMaxAP~:~NUMBER\\
+%     % actualTMPMaxTMP~:~NUMBER\\
+%     % limitsTMP~:~NUMBER\\
+%     % lowHigh~:~NUMBER\\
+%     % extendedTMPLimitRange~:~NUMBER\\
+% \where
+%     % limitDeltaMinMaxAP~\in~\{~x~:~NUMBER | 10~\leq~x~\leq~100\}\\
+%     % actualTMPMaxTMP~\in~\{~x~:~NUMBER | 300~\leq~x~\leq~700\}\\
+%     % lowHigh~\in~\{~x~:~NUMBER | 2~\leq~x~\leq~99\}\\
+% \end{schema}
+%
+% \begin{schema}{HeparinParameters}
+%     % heparinStopTime~:~TIME\\
+%     % heparinBolusVol~:~NUMBER\\
+%     % heparinProfileRate~:~NUMBER\\
+%     % treatmentWithoutHeparin~:~NUMBER\\
+%     % syringeType~:~NUMBER
+%   \where
+%     % heparinStopTime~\in~\{\,h,m:NUMBER | (h,m) \in TIME \land m<60~\land~h\leq10\,\}\\
+%     % heparinBolusVol~\in~\{~x~:~NUMBER | 1~\leq~x~\leq~100\}\\
+%     % heparinProfileRate~\in~\{~x~:~NUMBER | 1~\leq~x~\leq~100\}\\
+%     % syringeType~\in~\{10,20,30\}
+% \end{schema}
+%</zedstate>
+%<*hdstate>
+%  \begin{zed}
+% HDState == HDGenComp \land~DFParameters
+% % \\\land~RinsingParameters
+% % \\\land~UFParameters
+% % \\\land~PressureParameters
+% % \\\land~HeparinParameters
+% \end{zed}
+%</hdstate>
+%
+% \begin{schema}{HDGenCompInit}
+% HDState~'
+% \where
+% airVolLimit'~=~0
+% \\airVol'~=~0
+% % \\alarm'~=~0
+% \\apTransdPress'~=~0
+% \\bloodFlowInEBC'~=~0
+% \\bypassValve'~=~0
+% \\fflowDirect'~=~1
+% \\hdActivity'~=~\{idle\}
+% \\hdMachineState'~=~\{initPhase\}
+% \\infSalineVol'~=~0
+% \\lastNonZeroBF'~=~0
+% \\time'~=~0
+% \\netFluidRemovalRate'~=~0
+% \\netFluidRemoval'~=~0
+% \\rotDirectionBP'~=~1
+% \\rotDirectionUFP'~=~1
+% \\safeUpperLimit'~=~0
+% \\timerIntervalR9'~=~0
+% \\timerIntervalR10'~=~0
+% \\timerIntervalR11'~=~0
+% \\timerIntervalR12'~=~0
+% \\timerIntervalR13'~=~0
+% \\lowerPressureLimit'~=~0
+% \\upperPressureLimit'~=~0
+% \\volumeInEBC'~=~0
+% \\vpTransdPress'~=~0
+% \\hdMode'~=~1
+% % \\bloodLines'~=~0
+% % \\minUFRateTreat'=0
+% \end{schema}
+%
+%
+% \begin{schema}{RinsingParametersInit}
+% RinsingParameters~'
+% \end{schema}
+%
+% \begin{schema}{DFParametersInit}
+% DFParameters~'
+% \end{schema}
+%
+% \begin{schema}{UFParametersInit}
+% UFParameters~'
+% \end{schema}
+%
+% \begin{schema}{PressureParametersInit}
+% PressureParameters~'
+% \end{schema}
+%
+% \begin{schema}{HeparinParametersInit}
+% HeparinParameters~'
+% \end{schema}
+%
+% \begin{circus}
+% HDStateInit~=~HDGenCompInit
+% \\\land~RinsingParametersInit
+% \\\land~DFParametersInit
+% \\\land~UFParametersInit
+% \\\land~PressureParametersInit
+% \\\land~HeparinParametersInit
+% \end{circus}
+
+%
+% \begin{schema}{SetDFParameters}
+%     % setConductivity?~:~NUMBER\\
+%     setBicarbonateAcetate? : NUMBER\\
+%     % setBicarbonateConductivity?~:~NUMBER\\
+%     setDFTemperature?~:~NUMBER\\
+%     % setRinsingTime?~:~NUMBER\\
+%     setDFFlow?~:~NUMBER\\
+%     \Delta HDSt\\
+%   \where
+%     % conductivity'~=~setConductivity?\\
+%     bicarbonateAcetate'~=~setBicarbonateAcetate?\\
+%     % bicarbonateConductivity'~=~setBicarbonateConductivity?\\
+%     dfTemperature'~=~setDFTemperature?\\
+%     % rinsingTime'~=~setRinsingTime?\\
+%     dfFlow'~=~setDFFlow?\\
+% \end{schema}
+
+\begin{circus}%
+  \circprocess\ ~HDMachine ~\circdef~ \circbegin
+  \circstate HDSt \defs HDGenComp %\land~DFParameters\\
+
+
+  StatePhase \circdef
+          (preparationPhase \then (hdMachineState:=prepPhase) \circseq StatePhase\\
+          \extchoice connectingToPatient \then (hdMachineState:=connectThePatient) \circseq StatePhase\\
+          \extchoice therapyInitiation \then (hdMachineState:=initPhase) \circseq StatePhase\\
+          \extchoice therapyEnding \then (hdMachineState:=endPhase) \circseq StatePhase)
+
+    InitState ~\circdef~ %HDGenCompInit \circseq
+          SensorReadings
+
+StopBloodFlow~\circdef~ stopBloodFlow \then \Skip
+\also RaiseAlarm~\circdef~ %[~\Delta~HDState | alarm'~=~1 ~]\circseq
+                        produceAlarmSound \then \Skip
+\also StopBP~\circdef~stopBP \then \Skip
+\also StopBP~\circdef~ stopBP \then \Skip
+\also StopFlowDialyzer~\circdef~ stopFlowDialyzer \then \Skip
+\also DisconnectDF~\circdef~ disconnectDF \then \Skip
+\also StopCoagulantFlow~\circdef~ stopCoagulantFlow \then \Skip
+%<*ZR1>
+%<*ZR1>
+
+
+  R1~\circdef~(\lcircguard hdActivity~=~\{applicationArterialBolus\} \land infSalineVol~>~400 \rcircguard \circguard~(StopBloodFlow~\interleave~RaiseAlarm))
+  \\\extchoice \lcircguard \lnot (hdActivity~=~\{applicationArterialBolus\} \land infSalineVol~>~400) \rcircguard
+  % \circguard Wait(CheckInterval) \circseq R1
+  \circguard \Skip \circseq R1
+%</ZR1>
+
+%
+% %<*R2>
+% NoFlowWatchDog ~\circdef~ \\
+%     \lcircguard time - lastNonZeroBF > 120000 \rcircguard \circguard (tick \then StopBP \circseq RaiseAlarm)
+%     \\\extchoice~\lcircguard time - lastNonZeroBF \leq 120000 \rcircguard \circguard (tick \then NoFlowWatchDog)
+% BloodFlowSample  ~\circdef~  \\ %second approach for R2
+%     ~senBloodFlowInEBC?bloodFlowInEBC \then
+%     ((\circif bloodFlowInEBC \neq 0
+%                   \circthen (lastNonZeroBF := time)\\
+%                   \circelse bloodFlowInEBC~=~0 \circthen \Skip
+%                  \circfi) \circseq \\BloodFlowSample)
+%
+% R2 ~\circdef~ NoFlowWatchDog \interleave BloodFlowSample
+%</R2>
+
+
+%<*ZR3>
+  %
+  % R3~\circdef~(\lcircguard hdMachineState~=~\{initPhase\} \land bloodFlowInEBC < ((dfFlow * 70) \div 100) \rcircguard \circguard~RaiseAlarm)\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\} \land bloodFlowInEBC < ((dfFlow * 70) \div 100)) \rcircguard
+  % \circguard \Skip \circseq R3
+  % \circguard Wait(CheckInterval)\circseq R3
+%</ZR3>
+
+%<*ZR4>
+  %
+  % R4~\circdef~(\lcircguard hdMachineState~=~\{initPhase\} \land rotDirectionBP~=~0 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\} \land rotDirectionBP~=~0) \rcircguard
+  % \circguard \Skip \circseq R4
+  % \circguard Wait(CheckInterval)\circseq R4
+
+  R5~\circdef~(\lcircguard hdMachineState~=~\{initPhase\} \land vpTransdPress~>~upperPressureLimit \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\} \land vpTransdPress~>~upperPressureLimit) \rcircguard
+  \circguard \Skip\circseq R5
+  % \circguard Wait(CheckInterval)\circseq R5
+
+  R6~\circdef~(\lcircguard hdMachineState~=~\{initPhase\} \land vpTransdPress < lowerPressureLimit \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\} \land vpTransdPress < lowerPressureLimit) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R6
+
+  R7~\circdef~(\lcircguard hdMachineState~=~\{initPhase\} \land apTransdPress~>~upperPressureLimit \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\} \land apTransdPress~>~upperPressureLimit) \rcircguard \circguard \Skip\circseq R7%\circguard Wait(CheckInterval)\circseq R7
+
+  R8~\circdef~(\lcircguard hdMachineState~=~\{initPhase\}\land apTransdPress < lowerPressureLimit \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\}\land apTransdPress < lowerPressureLimit) \rcircguard \circguard \Skip\circseq R8%\circguard Wait(CheckInterval)\circseq R8
+%
+% TrackTimerVPTransdPressR9 ~\circdef~
+% \\(
+%
+%      (
+%    tick \then senVpTransdPress?x \then
+%      (
+%   \circif x > 450 \circthen( timerIntervalR9 := timerIntervalR9+1)
+%             \\\circelse x \leq 450\circthen (timerIntervalR9 := 0) \circfi
+%       )
+%     )
+%       \\ \circseq TrackTimerVPTransdPressR9
+%      )
+%
+%   R9~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land vpTransdPress~>~450\land timerIntervalR9~>~3000 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))
+%   \\\extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land vpTransdPress~>~450\land timerIntervalR9~>~3000) \rcircguard \circguard Wait(CheckInterval) \circseq R9
+%
+% TrackTimerVPTransdPressR10 ~\circdef~
+% \\(
+%
+%      (
+%    tick \then senVpTransdPress?x \then
+% \\ (
+%   \circif x < lowerPressureLimit
+%                   \circthen (timerIntervalR10 := timerIntervalR10+1)
+%                   \\ \circelse x \geq lowerPressureLimit \circthen (timerIntervalR10 := 0)
+%                  \circfi)) \circseq \\
+%             TrackTimerVPTransdPressR10)
+%   R10~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land vpTransdPress < lowerPressureLimit\land timerIntervalR10~>~3000 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land vpTransdPress < lowerPressureLimit\land timerIntervalR10~>~3000) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R10
+% TrackTimerAPTransdPressR11 ~\circdef~
+% \\ (
+%   (
+%    tick \then senVpTransdPress?x \then
+% \\ (
+%   \circif x < lowerPressureLimit
+%                   \circthen (timerIntervalR11 := timerIntervalR11+1)
+%                   \\ \circelse x \geq lowerPressureLimit \circthen (timerIntervalR11 := 0)
+%                  \circfi)) \circseq \\
+%             TrackTimerAPTransdPressR11)
+%   R11~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land apTransdPress < lowerPressureLimit\land timerIntervalR11~>~1000 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land apTransdPress < lowerPressureLimit\land timerIntervalR11~>~1000) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R11
+%
+% TrackTimerVPTransdPressR12 ~\circdef~
+% \\ (
+%   (
+%    tick \then senVpTransdPress?x \then
+% \\ (
+%   \circif x > 350
+%                   \circthen (timerIntervalR12 := timerIntervalR12+1)
+%                   \\ \circelse x \leq 350 \circthen (timerIntervalR12 := 0)
+%                  \circfi)) \circseq \\
+%             TrackTimerVPTransdPressR12)
+%   R12~\circdef~(\lcircguard hdActivity~=~\{reinfProcess\}\land vpTransdPress~>~350 \land timerIntervalR12~>~3000 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdActivity~=~\{reinfProcess\}\land vpTransdPress~>~350 \land timerIntervalR12~>~3000) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R12
+%
+% TrackTimerAPTransdPressR13 ~\circdef~
+% \\ (
+%   (
+%    tick \then senVpTransdPress?x \then
+% \\ (
+%   \circif x < 350
+%                   \circthen (timerIntervalR13 := timerIntervalR13+1)
+%                   \\ \circelse x \geq 350 \circthen (timerIntervalR13 := 0)
+%                  \circfi)) \circseq \\
+%             TrackTimerAPTransdPressR13)
+%   R13~\circdef~(\lcircguard hdActivity~=~\{reinfProcess\}\land apTransdPress~<~350\land timerIntervalR13~>~1000 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdActivity~=~\{reinfProcess\}\land apTransdPress~<~350\land timerIntervalR13~>~1000) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R13
+
+  R14~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land bloodFlowInEBC~=~0 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land bloodFlowInEBC~=~0) \rcircguard \circguard \Skip\circseq R14%\circguard Wait(CheckInterval)\circseq R14
+
+  % R15~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land volumeInEBC~>~400 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land volumeInEBC~>~400) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R15
+
+% R16~\circdef~((connectingToPatient~\then~Wait(310000))~\circseq (therapyInitiation~\then~\Skip))
+R16~\circdef~((connectingToPatient~\then~\Skip)~\circseq (therapyInitiation~\then~\Skip))
+%
+%   R17~\circdef~(\lcircguard hdMachineState~=~\{connectThePatient\}\land rotDirectionUFP~=~0 \rcircguard \circguard~(StopFlowDialyzer~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{connectThePatient\}\land rotDirectionUFP~=~0) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R17
+%
+%   R18~\circdef~(\lcircguard hdActivity~=~\{preparationOfDF\}\land bicarbonateAcetate~=~1 \rcircguard \circguard~(DisconnectDF~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdActivity~=~\{preparationOfDF\}\land bicarbonateAcetate~=~1) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R18
+%
+%   R19~\circdef~(\lcircguard hdActivity~=~\{preparationOfDF\}\land bicarbonateAcetate~=~0 \rcircguard \circguard~(DisconnectDF~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdActivity~=~\{preparationOfDF\}\land bicarbonateAcetate~=~0) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R19
+%
+%   R20~\circdef~(\lcircguard hdMachineState~=~\{prepPhase\}\land (hdActivity~=~\{priming, rinsing\}\lor~dfTemperature~>~41) \rcircguard \circguard~(DisconnectDF~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{prepPhase\}\land (hdActivity~=~\{priming, rinsing\}\lor~dfTemperature~>~41)) \rcircguard \circguard (Wait(CheckInterval)\circseq R20)
+% %</ZR20>
+%
+% %<*ZR21>
+%
+%   R21~\circdef~(\lcircguard hdMachineState~=~\{initPhase\}\land dfTemperature < 33 \rcircguard \circguard~(DisconnectDF~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\}\land dfTemperature < 33) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R21
+%
+%   R22~\circdef~(\lcircguard hdMachineState~=~\{prepPhase\}\land hdActivity~=~\{anticoagDelivRun\}\land fflowDirect~=~0 \rcircguard \circguard~(StopBloodFlow~\interleave~StopCoagulantFlow~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (hdMachineState~=~\{prepPhase\}\land hdActivity~=~\{anticoagDelivRun\}\land fflowDirect~=~0) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R22
+  %
+  % MonitorSADSensorFlow~\circdef~(\lcircguard sadSensorFlow~>~1200 \rcircguard \circguard~(StopBP~\interleave~RaiseAlarm))\\
+  % \extchoice \lcircguard \lnot (sadSensorFlow~>~1200) \rcircguard \circguard R23
+  %
+  % R23~\circdef~(\lcircguard hdMachineState~=~\{prepPhase, initPhase, connectThePatient\} \land hdActivity~=~\{rinsingEBC, reinfProcess, anticoagDelivRun\}\land fflowDirect~=~0 \rcircguard \circguard~MonitorSADSensorFlow)\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{prepPhase, initPhase, connectThePatient\} \land hdActivity~=~\{rinsingEBC, reinfProcess, anticoagDelivRun\}\land fflowDirect~=~0) \rcircguard \circguard \Skip\circseq R23%\circguard Wait(CheckInterval)\circseq R23
+%</ZR23>
+%
+% %<*ZR24>
+% \begin{schema}{R24}
+%  \Delta HDState
+% \where
+%   sadSensorFlow~\in~\{x~:~NUMBER~|~0~\leq~x~\leq~200\}\land airVolLimit'~=~2
+% \end{schema}
+% %</ZR24>
+%
+% %<*ZR25>
+% \begin{schema}{R25}
+%  \Delta HDState
+% \where
+%   sadSensorFlow~\in~\{x~:~NUMBER~|~200~<~x~\leq~400\}\land airVolLimit'~=~3
+% \end{schema}
+%  %</ZR25>
+%
+% %<*ZR26>
+% \begin{schema}{R26}
+%  \Delta HDState
+% \where
+%   sadSensorFlow~>~400\land airVolLimit'~=~5
+% \end{schema}
+%</ZR26>
+%<*R27>
+% %\begin{circusaction}
+R27 ~\circdef~\\ senAirVol?airVol \then R27
+    % R27 ~\circdef~\\ tick \then senAirVol?airVol \then R27
+% %\end{circusaction}
+%</R27>
+
+%<*ZR2832>
+
+
+%\begin{circusaction}
+  R2832~\circdef~(\lcircguard   airVol~>~airVolLimit\land (hdActivity~=~\{rinsingEBC\} \land hdMachineState~=~\{prepPhase\} \lor hdActivity~=~\{applicationArterialBolus,reinfProcess\} \lor hdMachineState~=~\{connectThePatient,initPhase\}) \rcircguard \circguard~(StopBloodFlow~\interleave~RaiseAlarm))\\
+  \extchoice \lcircguard \lnot (  airVol~>~airVolLimit\land (hdActivity~=~\{rinsingEBC\} \land hdMachineState~=~\{prepPhase\} \lor hdActivity~=~\{applicationArterialBolus,reinfProcess\} \lor hdMachineState~=~\{connectThePatient,initPhase\})) \rcircguard \circguard \Skip\circseq R2832%\circguard Wait(CheckInterval)\circseq R2832
+%\end{circusaction}
+%</ZR2832>
+
+% \subsubsection{Ultrafiltration.}
+
+%<*ZR33>
+%\begin{circusaction}
+%   R33~\circdef~(\lcircguard netFluidRemovalRate~>~safeUpperLimit \rcircguard \circguard~(StopFlowDialyzer~\interleave~RaiseAlarm))\\
+%   \extchoice \lcircguard \lnot (netFluidRemovalRate~>~safeUpperLimit) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R33
+% %\end{circusaction}
+%</ZR33>
+%<*ZR34>
+
+%\begin{circusaction}
+  % R34~\circdef~(\lcircguard hdMachineState~=~\{initPhase\}\land netFluidRemoval~=~1\land rotDirectionUFP~=~0\land hdMode~=~0 \rcircguard \circguard~(StopFlowDialyzer~\interleave~RaiseAlarm))\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\}\land netFluidRemoval~=~1\land rotDirectionUFP~=~0\land hdMode~=~0) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R34
+%\end{circusaction}
+%</ZR34>
+
+%<*ZR35>
+%\begin{schema}{PreR35}
+% \Delta HDState
+%\where
+%  hdMachineState~=~\{initPhase\}\\
+ % netFluidRemovalRate~>~safeUpperLimit
+%\end{schema}
+
+%\begin{zed}
+%  R35~\circdef~(\lcircguard PreR35 \rcircguard \circguard~(Bypass~\interleave~RaiseAlarm))~\extchoice~\Skip
+%\end{zed}
+%</ZR35>
+
+
+%<*ZR36>
+%\begin{circusaction}
+  % R36~\circdef~(\lcircguard hdMachineState~=~\{initPhase\}\land netFluidRemoval~=~1\land bypassValve=1 \rcircguard \circguard~(StopFlowDialyzer~\interleave~RaiseAlarm))\\
+  % \extchoice \lcircguard \lnot (hdMachineState~=~\{initPhase\}\land netFluidRemoval~=~1\land bypassValve=1) \rcircguard \circguard \Skip\circseq R6%\circguard Wait(CheckInterval)\circseq R36
+%\end{circusaction}
+%</ZR36>
+
+%\begin{circusaction}
+% ArterialBolusReq~\circdef~R1
+% \also BloodPumpReq~\circdef~ R2~\interleave~R3~\interleave~R4
+% \also BloodEntryPressureReq~\circdef~(
+%                 R5~\interleave~R6~\interleave~ R7~\interleave~
+%                 \\R8~\interleave~ R9 \interleave~R10~\interleave~
+%                 \\R11~\interleave~R12~\interleave~ R13)
+% \also ConnPatientReq~\circdef~R14~\interleave~R15~\interleave~R16~\interleave~R17
+% \also FlowCarbMixChambReq~\circdef~R18~\interleave~R19
+% \also HeatDegasDFWaterReq~\circdef~R20~\interleave~R21
+% \also HeparinReq~\circdef~R22
+% \also SafetyAirDetectorReq~\circdef~(
+%                 R23~\interleave~
+%                 % R24~\interleave~
+%                 % R25~\interleave~
+%                 % \\R26~\interleave~
+%                 R27 \interleave~
+%                 R2832)
+% \also UltrafiltrationReq~\circdef~(
+%                 R33~\interleave~
+%                 R34~\interleave~
+%                 % \\R35~\interleave~
+%                 R36)
+
+%\end{circusaction}
+%\begin{circusaction}
+SoftwareRequirements~\circdef~
+    \circmu~X \circspot
+              ( R1 \interleave
+                R5 \interleave
+                R6 \interleave
+                R7 \interleave
+                R8 \interleave
+                R14 \interleave
+                R16 \interleave
+                % R23 \interleave
+                % R24 \interleave
+                % R25 \interleave
+                % R26 \interleave
+                R27 \interleave
+                R2832% \interleave
+                % R34 \interleave R35
+                )
+              %(ArterialBolusReq
+              % \\\interleave~BloodPumpReq
+              % \\\interleave~BloodEntryPressureReq
+              % \\\interleave~ConnPatientReq
+              % \\\interleave~FlowCarbMixChambReq
+              % \\\interleave~HeatDegasDFWaterReq
+              % \\\interleave~HeparinReq
+              % \\\interleave~SafetyAirDetectorReq
+              %\\\interleave~UltrafiltrationReq)
+              \circseq X\\
+%\end{circusaction}
+
+%\section{Therapy Processes}
+
+%\subsection{Therapy Preparation}
+
+%\begin{circusaction}
+AutomatedSelfTest~\circdef~autSelfTest \then lampOn \then \Skip
+%\end{circusaction}
+
+%\begin{circusaction}
+ConnectingTheConcentrate~\circdef~\Skip
+% \\\t3 connectingConcentrate?bicarbonateAcetate \then \Skip
+%\end{circusaction}
+%
+% \begin{schema}{SetRinsingParameters}
+%     % setFBPRate?~:~NUMBER\\
+%     % setRBPRate?~:~NUMBER\\
+%     % setRTime?~:~NUMBER\\
+%     % setUFRFRinsing?~:~NUMBER\\
+%     % setUFVFRinsing?~:~NUMBER\\
+%     % setBFFCPatient?~:~NUMBER\\
+%     \Delta HDState
+%   \where
+%     % fillingBPRate'~=~setFBPRate?\\
+%     % rinsingBPRate'~=~setRBPRate?\\
+%     % rinsingTime'~=~setRTime?\\
+%     % ufRateForRinsing'~=~setUFRFRinsing?\\
+%     % ufVolForRinsing'~=~setUFVFRinsing?\\
+%     % bloodFlowForConnectingPatient'~=~setBFFCPatient?\\
+% \end{schema}
+
+%\begin{circusaction}
+StdAtrialTubing~\circdef~atrialTubing~\then~\Skip
+\also StdVentricularTubing~\circdef~ventricularTubing~\then~\Skip
+\also InsertRinsingTubingSystem~\circdef~StdAtrialTubing \interleave StdVentricularTubing
+\also SalineBagLevels~\circdef~salineBagLevel?infSalineVol~\then~\Skip
+\also BloodLines~\circdef~setBloodLines \then \Skip%bloodLines:=1
+\also RinsingTesting~\circdef~\Skip%setRinsingBPSpeed?rinsingBPRate~\then~\Skip
+\also InsertingRinsingTestingTubSystem~\circdef~
+  \\ InsertRinsingTubingSystem\circseq
+  \\ SalineBagLevels\circseq
+  \\ BloodLines\circseq
+  \\ RinsingTesting
+%\end{circusaction}
+
+%\begin{circusaction}
+PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\Skip%\end{circusaction}
+
+%
+% \begin{schema}{SetUFParameters}
+%     % setUFVol?~:~NUMBER\\
+%     % setTherapyTime?~:~NUMBER\\
+%     % setMinUFRate?~:~NUMBER\\
+%     % MaxUFRat?~:~NUMBER\\
+%     \Delta HDState
+%   \where
+%     % ufVol'~=~setUFVol?\\
+%     % therapyTime'~=~setTherapyTime?\\
+%     % minUFRate'~=~setMinUFRate?\\
+%     % maxUFRate'~=~MaxUFRat?
+% \end{schema}
+%
+% \begin{schema}{SetPressureParameters}
+%     % setLimitDeltaMinMaxAP?~:~NUMBER\\
+%     % setActualTMPMaxTMP?~:~NUMBER\\
+%     % setLimitsTMP?~:~NUMBER\\
+%     % setLowHigh?~:~NUMBER\\
+%     % setExtendedTMPLimitRange?~:~NUMBER\\
+%     \Delta HDState
+% \where
+%     % limitDeltaMinMaxAP'~=~setLimitDeltaMinMaxAP?\\
+%     % actualTMPMaxTMP'~=~setActualTMPMaxTMP?\\
+%     % limitsTMP'~=~setLimitsTMP?\\
+%     % lowHigh'~=~setLowHigh?\\
+%     % extendedTMPLimitRange'~=~setExtendedTMPLimitRange?
+% \end{schema}
+%
+% \begin{schema}{SetHeparinParameters}
+%     % setHSTime?~:~TIME\\
+%     % setHBVol?~:~NUMBER\\
+%     % setHPRate?~:~NUMBER\\
+%     % setTWHeparin?~:~NUMBER\\
+%     % setSType?~:~NUMBER\\
+%     \Delta HDState
+%   \where
+%     % heparinStopTime'~=~setHSTime?\\
+%     % heparinBolusVol'~=~setHBVol?\\
+%     % heparinProfileRate'~=~setHPRate?\\
+%     % treatmentWithoutHeparin'~=~setTWHeparin?\\
+%     % syringeType'~=~setSType?
+% \end{schema}
+
+%\begin{circusaction}
+% SetTreatmentParameters~\circdef~ SetDFParameters %\circseq
+  % SetUFParameters \circseq
+  % SetPressureParameters \circseq
+  % SetHeparinParameters
+%\end{circusaction}
+
+%\begin{circusaction}
+RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\then~\Skip
+%\end{circusaction}
+
+%\begin{circusaction}
+TherapyPreparation~\circdef
+  \\ preparationPhase \then AutomatedSelfTest \circseq
+  \\ ConnectingTheConcentrate \circseq %SetRinsingParameters \circseq
+  \\ InsertingRinsingTestingTubSystem \circseq PrepHeparinPump \circseq
+  % \\ SetTreatParameters \circseq
+  RinsingDialyzer
+%\end{circusaction}
+
+%\subsection{Therapy Initiation}
+%\begin{circusaction}
+EnableUI~\circdef~lampOff \then \Skip
+\also ConnectPatientArterially~\circdef~connPatientArterially~\then~\Skip
+\also ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
+\also SetStopBloodFlow~\circdef~setBloodFlow?bloodFlowInEBC~\then~\Skip
+\also ConnectPatientStartTherapy~\circdef~
+  \\ ((hdMachineState:=connectThePatient) \circseq
+  \\ EnableUI \circseq
+  \\ ConnectPatientArterially \circseq
+  \\ SetStopBloodFlow\circseq
+  \\ ConnectPatientVenously \circseq
+  \\ (lampOn \then \Skip))%(signalLamp:=1)
+  % \\ (signalLamp,hdMode:=1,1)
+%\end{circusaction}
+
+%\begin{circusaction}
+MonitorBPLimits ~\circdef~\Skip
+\also TreatMinUFRate ~\circdef~ \Skip%setMinUFRateTreat?ON \then \Skip
+\also HeparinBolus ~\circdef~\Skip
+\also ArterialBolus~\circdef~\Skip%setArtBolusVol?artBolusVol \then \Skip
+\also InterruptDialysis~\circdef~ senHDMode!0 \then lampOff \then \Skip%(signalLamp:=0)
+\also CompletTreatment~\circdef~ endTreatment \then lampOff \then \Skip%(signalLamp:=0)
+\also DuringTherapy~\circdef~
+      \\ (MonitorBPLimits\\
+            \interleave TreatMinUFRate\\
+            \interleave HeparinBolus\\
+            \interleave ArterialBolus\\
+            \interleave InterruptDialysis) \circseq
+      \\ CompletTreatment
+%\end{circusaction}
+
+%\begin{circusaction}
+TherapyInitiation~\circdef
+\\therapyInitiation \then ConnectPatientStartTherapy
+  \circseq DuringTherapy
+%\end{circusaction}
+
+%\subsection{Therapy Ending}
+%\begin{circusaction}
+Reinfusion~\circdef~\Skip
+%\end{circusaction}
+%\begin{circusaction}
+EmptyingDialyzer~\circdef~ \Skip
+%\end{circusaction}
+%\begin{circusaction}
+EmptyingCartridge~\circdef~\Skip
+%\end{circusaction}
+%\begin{circusaction}
+OverviewTherapy~\circdef~\Skip
+%\end{circusaction}
+
+%\begin{circusaction}
+TherapyEnding~\circdef
+  therapyEnding~\then~
+  Reinfusion
+  \circseq EmptyingDialyzer
+  \circseq \\\t4\t3 EmptyingCartridge
+  \circseq OverviewTherapy
+%\end{circusaction}
+
+%\begin{circusaction}
+MainTherapy~\circdef
+  TherapyPreparation
+  \circseq TherapyInitiation
+  \circseq TherapyEnding
+%\end{circusaction}
+
+%\begin{circusaction}
+HDMachine~\circdef %HDGenCompInit \circseq
+% (
+   % (
+   (MainTherapy \interleave  SoftwareRequirements)
+        % (MainTherapy \lpar \emptyset | HDMachineChanSet | \emptyset \rpar  SoftwareRequirements)
+    % \lpar TherapyPhaseChanSet\rpar StatePhase)
+% \lpar HDMachineChanSet \rpar SensorReadings)
+
+%\end{circusaction}
+
+% \begin{circus}
+  \circspot HDMachine
+% \end{circus}%
+% \vspace{-1cm}
+% \begin{circus}
+  \circend
+\end{circus}
+
+\begin{assert}
+  "assert HDMachine(b_PAC1,b_PST1,b_NUM1,b_BOO1) :[deadlock free]"
+  \also "assert HDMachine(b_PAC1,b_PST1,b_NUM1,b_BOO1) :[deterministic]"
+\end{assert}

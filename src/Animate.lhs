@@ -18,7 +18,8 @@ module Animate
   showCircus,       -- similar to showspec but with DoneCirc -- Artur Gomes
   SyntaxError,       -- from Errors module
   omegaCircus,       -- Omega function for the Circus translator
-  upslonCircus       -- Upslon function for the Circus translator
+  upslonCircus,       -- Upslon function for the Circus translator
+  latexCircus        -- pretty print in Latex
 )
 where
 
@@ -32,6 +33,7 @@ import Data.Char
 import Data.List
 import MappingFunStatelessCircus
 import MappingFunCircusCSP
+import PrintTex
 
 
 
@@ -83,6 +85,7 @@ animator0
 
 data Answer
   = Done String
+  | DoneLatex String String
   | DoneUpsilon String String
   | DoneOmega String String
   | ErrorMsg ErrorMsg
@@ -103,6 +106,7 @@ isUndefMsg _     = False
 isDone :: Answer -> Bool
 isDone (Done _) = True
 isDone (DoneUpsilon _ _) = True
+isDone (DoneLatex _ _) = True
 isDone (DoneOmega _ _) = True
 isDone _        = False
 
@@ -135,6 +139,9 @@ getspecHC args s@(Anim{spec=x}) = DoneOmega (unlines ( map fmtpara ( reverse x))
 
 getspecCSP :: String -> String -> Answer
 getspecCSP args s = DoneUpsilon s args
+
+getspecLatex :: String -> String -> Answer
+getspecLatex args s = DoneLatex s args
 -- reverse example:
 -- Input: reverse [1..5]
 -- Output: [5,4,3,2,1]
@@ -167,6 +174,11 @@ applyUpslon anim
   = upslonHeader ++ (mapping_Circus (reverse (map origpara (spec anim))) (reverse (map origpara (spec anim))))
 
 upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
+
+latexCircus anim args = getspecLatex args (applyLatex anim)
+
+applyLatex anim
+  = (print_tex_Circus (reverse (map origpara (spec anim))))
 
 resetanimator :: Animator -> (Animator,Answer,String)
 resetanimator anim

@@ -1762,18 +1762,15 @@ crl_guardComb _ = None
 
 \begin{code}
 crl_asgThenChoose :: CAction -> Refinement CAction
-crl_asgThenChoose e@(CSPExtChoice
-                    (CSPSeq (CActionCommand (CAssign [v1] [a1]))
-                            (CSPCommAction (ChanComm a []) CSPSkip))
-                    (CSPSeq (CActionCommand (CAssign [v2] [a2]))
-                            (CSPCommAction (ChanComm b []) CSPSkip)))
+crl_asgThenChoose e@(CSPExtChoice e1 e2)
   =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
-      ref = (CSPExtChoice
-                (CSPCommAction (ChanComm a []) (CActionCommand (CAssign [v1] [a1])))
-                (CSPCommAction (ChanComm b []) (CActionCommand (CAssign [v2] [a2]))))
+      ref = (CSPExtChoice (crl_asgThenChoose_aux e1) (crl_asgThenChoose_aux e2))
 crl_asgThenChoose _ = None
 
+crl_asgThenChoose_aux (CSPSeq (CActionCommand (CAssign [v1] [a1])) (CSPCommAction (ChanComm a []) na))
+  = (CSPCommAction (ChanComm a []) (CSPSeq (CActionCommand (CAssign [v1] [a1])) na))
+crl_asgThenChoose_aux x = x
 \end{code}
 Process (CProcess "AC1" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("x",[],"") (ZVar ("RANGE",[],"")),Choose ("y",[],"") (ZVar ("RANGE",[],""))])) [CParAction "A" (CircusAction (CSPCommAction (ChanComm "a" []) (CActionCommand (CAssign [("x",[],"")] [ZInt 1])))),CParAction "B" (CircusAction (CSPCommAction (ChanComm "b" []) (CActionCommand (CAssign [("y",[],"")] [ZInt 2]))))] (CSPExtChoice (CActionName "A") (CActionName "B")))))
 

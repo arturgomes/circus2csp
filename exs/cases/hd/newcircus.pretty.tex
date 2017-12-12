@@ -1,0 +1,442 @@
+
+\begin{zed}
+\end{zed}
+
+\begin{circus}
+\circchannel preparationPhase\\
+\circchannel therapyInitiation\\
+\circchannel connectingToPatient\\
+\circchannel duringTherapy\\
+\circchannel therapyEnding\\
+\circchannel autSelfTest\\
+\circchannel atrialTubing\\
+\circchannel ventricularTubing\\
+\circchannel connectDialyzer\\
+\circchannel setBloodLines\\
+\circchannel endTreatment\\
+\circchannel lampOn\\
+\circchannel lampOff\\
+\circchannel stopBloodFlow\\
+\circchannel produceAlarmSound\\
+\circchannel stopBP\\
+\circchannel disconnectDF\\
+\circchannel stopFlowDialyzer\\
+\circchannel stopCoagulantFlow\\
+\circchannel fillArterialDrip\\
+\circchannel connPatientArterially\\
+\circchannel connPatientVenously\\
+\circchannel insertHeparinSyringe\\
+\circchannel heparinLineIsVented\\
+\circchannel connectingConcentrate : NUMBER\\
+\circchannel salineBagLevel : NUMBER\\
+\circchannel senAirVol : NUMBER\\
+\circchannel senApTransdPress : NUMBER\\
+\circchannel senBloodFlowInEBC : NUMBER\\
+\circchannel senBypassVol : NUMBER\\
+\circchannel senFflowDirect : NUMBER\\
+\circchannel senInfVol : NUMBER\\
+\circchannel senLastNonZeroBF : NUMBER\\
+\circchannel senNetFluidRemoval : NUMBER\\
+\circchannel senNetFluidRemovalRate : NUMBER\\
+\circchannel senRotDirectBP : NUMBER\\
+\circchannel senRotDirectUFP : NUMBER\\
+\circchannel senVolInEBC : NUMBER\\
+\circchannel senVpTransdPress : NUMBER\\
+\circchannel senSADSensorFlow : NUMBER\\
+\circchannel senHDMode : NUMBER\\
+\circchannel setBloodFlow : NUMBER\\
+\circchannelset TherapyPhaseChanSet == \lchanset preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding \rchanset\\
+\circchannelset SensorReadingsComm == \lchanset senAirVol,senApTransdPress,senBloodFlowInEBC,senHDMode,senSADSensorFlow,senVpTransdPress \rchanset\\
+\circchannelset HDGenCompStChanSet == \lchanset preparationPhase,connectingToPatient,therapyInitiation,therapyEnding \rchanset\\
+\end{circus}
+
+\begin{circus}
+\circprocess HDMachine \circdef \circbegin 
+\circstate HDSt == 
+StatePhase \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\\
+					\begin{block}
+						preparationPhase \then \\
+							\begin{block}
+								\\
+								\begin{block}
+									
+								\end{block}\\
+								 \circseq StatePhase
+							\end{block}\\
+							 \extchoice connectingToPatient \then \\
+							\begin{block}
+								\\
+								\begin{block}
+									
+								\end{block}\\
+								 \circseq StatePhase
+							\end{block}\\
+							
+					\end{block}\\
+					 \extchoice therapyInitiation \then \\
+					\begin{block}
+						\\
+						\begin{block}
+							
+						\end{block}\\
+						 \circseq StatePhase
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice therapyEnding \then \\
+			\begin{block}
+				\\
+				\begin{block}
+					
+				\end{block}\\
+				 \circseq StatePhase
+			\end{block}\\
+			
+	\end{block}\\
+	
+	InitState \circdef SensorReadings
+	StopBloodFlow \circdef stopBloodFlow \then \Skip\\
+	RaiseAlarm \circdef produceAlarmSound \then \Skip\\
+	StopBP \circdef stopBP \then \Skip\\
+	StopBP \circdef stopBP \then \Skip\\
+	StopFlowDialyzer \circdef stopFlowDialyzer \then \Skip\\
+	DisconnectDF \circdef disconnectDF \then \Skip\\
+	StopCoagulantFlow \circdef stopCoagulantFlow \then \Skip\\
+	R1 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdActivity = {applicationArterialBolus}) \land ((infSalineVol, 400) \in >)) \rcircguard \circguard \\
+					\begin{block}
+						StopBloodFlow \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdActivity = {applicationArterialBolus}) \land ((infSalineVol, 400) \in >))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R1
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R5 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdMachineState = {initPhase}) \land ((vpTransdPress, upperPressureLimit) \in >)) \rcircguard \circguard \\
+					\begin{block}
+						StopBP \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdMachineState = {initPhase}) \land ((vpTransdPress, upperPressureLimit) \in >))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R5
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R6 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdMachineState = {initPhase}) \land ((vpTransdPress, lowerPressureLimit) \in <)) \rcircguard \circguard \\
+					\begin{block}
+						StopBP \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdMachineState = {initPhase}) \land ((vpTransdPress, lowerPressureLimit) \in <))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R6
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R7 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdMachineState = {initPhase}) \land ((apTransdPress, upperPressureLimit) \in >)) \rcircguard \circguard \\
+					\begin{block}
+						StopBP \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdMachineState = {initPhase}) \land ((apTransdPress, upperPressureLimit) \in >))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R7
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R8 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdMachineState = {initPhase}) \land ((apTransdPress, lowerPressureLimit) \in <)) \rcircguard \circguard \\
+					\begin{block}
+						StopBP \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdMachineState = {initPhase}) \land ((apTransdPress, lowerPressureLimit) \in <))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R8
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R14 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard ((hdMachineState = {connectThePatient}) \land (bloodFlowInEBC = 0)) \rcircguard \circguard \\
+					\begin{block}
+						StopBP \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot (((hdMachineState = {connectThePatient}) \land (bloodFlowInEBC = 0))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R14
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	R16 \circdef \\
+	\begin{block}
+		connectingToPatient \then \Skip\\ \circseq therapyInitiation \then \Skip\\
+	\end{block}\\
+	
+	R27 \circdef senAirVol?airVol \then R27
+	R2832 \circdef \\
+	\begin{block}
+		\\
+			\begin{block}
+				\lcircguard (((airVol, airVolLimit) \in >) \land ((((hdActivity = {rinsingEBC}) \land (hdMachineState = {prepPhase})) \lor (hdActivity = {applicationArterialBolus, reinfProcess})) \lor (hdMachineState = {connectThePatient, initPhase}))) \rcircguard \circguard \\
+					\begin{block}
+						StopBloodFlow \interleave RaiseAlarm
+					\end{block}\\
+					
+			\end{block}\\
+			 \extchoice \\
+			\begin{block}
+				\lcircguard \lnot ((((airVol, airVolLimit) \in >) \land ((((hdActivity = {rinsingEBC}) \land (hdMachineState = {prepPhase})) \lor (hdActivity = {applicationArterialBolus, reinfProcess})) \lor (hdMachineState = {connectThePatient, initPhase})))) \rcircguard \circguard \\
+					\begin{block}
+						\Skip\\ \circseq R2832
+					\end{block}\\
+					
+			\end{block}\\
+			
+	\end{block}\\
+	
+	SoftwareRequirements \circdef \\
+	\begin{block}
+		\circmu X \circspot \\
+			\begin{block}
+				\\
+				\begin{block}
+					\\
+						\begin{block}
+							\\
+								\begin{block}
+									\\
+										\begin{block}
+											\\
+												\begin{block}
+													\\
+														\begin{block}
+															\\
+																\begin{block}
+																	\\
+																		\begin{block}
+																			R1 \interleave R5
+																		\end{block}\\
+																		 \interleave R6
+																\end{block}\\
+																 \interleave R7
+														\end{block}\\
+														 \interleave R8
+												\end{block}\\
+												 \interleave R14
+										\end{block}\\
+										 \interleave R16
+								\end{block}\\
+								 \interleave R27
+						\end{block}\\
+						 \interleave R2832
+				\end{block}\\
+				 \circseq X
+			\end{block}\\
+			
+	\end{block}\\
+	
+	AutomatedSelfTest \circdef autSelfTest \then lampOn \then \Skip\\
+	ConnectingTheConcentrate \circdef \Skip\\
+	StdAtrialTubing \circdef atrialTubing \then \Skip\\
+	StdVentricularTubing \circdef ventricularTubing \then \Skip\\
+	InsertRinsingTubingSystem \circdef \\
+	\begin{block}
+		StdAtrialTubing \interleave StdVentricularTubing
+	\end{block}\\
+	
+	SalineBagLevels \circdef salineBagLevel?infSalineVol \then \Skip\\
+	BloodLines \circdef setBloodLines \then \Skip\\
+	RinsingTesting \circdef \Skip\\
+	InsertingRinsingTestingTubSystem \circdef \\
+	\begin{block}
+		\\
+		\begin{block}
+			\\
+			\begin{block}
+				InsertRinsingTubingSystem \circseq SalineBagLevels
+			\end{block}\\
+			 \circseq BloodLines
+		\end{block}\\
+		 \circseq RinsingTesting
+	\end{block}\\
+	
+	PrepHeparinPump \circdef insertHeparinSyringe \then heparinLineIsVented \then \Skip\\
+	RinsingDialyzer \circdef connectDialyzer \then fillArterialDrip \then stopBP \then \Skip\\
+	TherapyPreparation \circdef preparationPhase \then \\
+	\begin{block}
+		\\
+		\begin{block}
+			\\
+			\begin{block}
+				\\
+				\begin{block}
+					AutomatedSelfTest \circseq ConnectingTheConcentrate
+				\end{block}\\
+				 \circseq InsertingRinsingTestingTubSystem
+			\end{block}\\
+			 \circseq PrepHeparinPump
+		\end{block}\\
+		 \circseq RinsingDialyzer
+	\end{block}\\
+	
+	EnableUI \circdef lampOff \then \Skip\\
+	ConnectPatientArterially \circdef connPatientArterially \then \Skip\\
+	ConnectPatientVenously \circdef connPatientVenously \then \Skip\\
+	SetStopBloodFlow \circdef setBloodFlow?bloodFlowInEBC \then \Skip\\
+	ConnectPatientStartTherapy \circdef \\
+	\begin{block}
+		\\
+		\begin{block}
+			\\
+			\begin{block}
+				\\
+				\begin{block}
+					\\
+					\begin{block}
+						\\
+						\begin{block}
+							
+						\end{block}\\
+						 \circseq EnableUI
+					\end{block}\\
+					 \circseq ConnectPatientArterially
+				\end{block}\\
+				 \circseq SetStopBloodFlow
+			\end{block}\\
+			 \circseq ConnectPatientVenously
+		\end{block}\\
+		 \circseq lampOn \then \Skip\\
+	\end{block}\\
+	
+	MonitorBPLimits \circdef \Skip\\
+	TreatMinUFRate \circdef \Skip\\
+	HeparinBolus \circdef \Skip\\
+	ArterialBolus \circdef \Skip\\
+	InterruptDialysis \circdef senHDMode!0 \then lampOff \then \Skip\\
+	CompletTreatment \circdef endTreatment \then lampOff \then \Skip\\
+	DuringTherapy \circdef \\
+	\begin{block}
+		\\
+		\begin{block}
+			\\
+				\begin{block}
+					\\
+						\begin{block}
+							\\
+								\begin{block}
+									MonitorBPLimits \interleave TreatMinUFRate
+								\end{block}\\
+								 \interleave HeparinBolus
+						\end{block}\\
+						 \interleave ArterialBolus
+				\end{block}\\
+				 \interleave InterruptDialysis
+		\end{block}\\
+		 \circseq CompletTreatment
+	\end{block}\\
+	
+	TherapyInitiation \circdef therapyInitiation \then \\
+	\begin{block}
+		ConnectPatientStartTherapy \circseq DuringTherapy
+	\end{block}\\
+	
+	Reinfusion \circdef \Skip\\
+	EmptyingDialyzer \circdef \Skip\\
+	EmptyingCartridge \circdef \Skip\\
+	OverviewTherapy \circdef \Skip\\
+	TherapyEnding \circdef therapyEnding \then \\
+	\begin{block}
+		\\
+		\begin{block}
+			\\
+			\begin{block}
+				Reinfusion \circseq EmptyingDialyzer
+			\end{block}\\
+			 \circseq EmptyingCartridge
+		\end{block}\\
+		 \circseq OverviewTherapy
+	\end{block}\\
+	
+	MainTherapy \circdef \\
+	\begin{block}
+		\\
+		\begin{block}
+			TherapyPreparation \circseq TherapyInitiation
+		\end{block}\\
+		 \circseq TherapyEnding
+	\end{block}\\
+	
+	HDMachine \circdef \\
+	\begin{block}
+		MainTherapy \interleave SoftwareRequirements
+	\end{block}\\
+	
+	\circspot HDMachine
+\circend
+\\
+\end{circus}

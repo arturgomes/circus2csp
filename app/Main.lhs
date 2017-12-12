@@ -106,6 +106,7 @@ help =
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "show"                   "Display a summary of whole spec.",
    fmtcmd "tocsp"                   "Map the whole spec into CSP.",
+   fmtcmd "latex"                   "Pretty print into LaTeX.",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
@@ -145,6 +146,8 @@ do_cmd cmd args anim fn
       done_cmd (anim, showC,fn)
   | cmd == "tocsp" =
       done_cmd (anim, upslonCircus anim fn, fn)
+  | cmd == "latex" =
+      done_cmd (anim, latexCircus anim fn, fn)
   | cmd == "omega" =
       done_cmd (omegaCircus anim fn)
   | otherwise =
@@ -159,6 +162,8 @@ do_cmd cmd args anim fn
 done_cmd :: (Animator, Answer,String) -> IO ()
 done_cmd (anim, DoneUpsilon s f,args)
   = do {putStrLn s; touch (args++".csp"); writeStr (args++".csp") s; get_cmd anim args}
+done_cmd (anim, DoneLatex s f,args)
+  = do {putStrLn s; writeStr (args++".pretty.tex") s; get_cmd anim args}
 done_cmd (anim, DoneOmega s f,args)
   = do {putStrLn s; touch (args++".csp"); writeStr (args++".hc") s; get_cmd anim args}
 done_cmd (anim, Done s,args)
