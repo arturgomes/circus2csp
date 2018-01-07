@@ -42,7 +42,6 @@ crl_prom_var_state :: ZPara -> Refinement ZPara
 crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
-        ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs))))
         fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
         fvs2 = free_var_CAction ma2
         ffvs = diff_varset fvs2 fvs1
@@ -50,6 +49,18 @@ crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlai
         nl = rename_list_lv p (varset_to_zvars ffvs) va2
         subs = make_subinfo nl fvs2
         finalsubs = sub_CAction subs ma2
+        ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs))))
+crl_prom_var_state e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2)))))))
+  = Done{orig = Just e, refined = Just ref, proviso = []}
+      where
+        fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
+        fvs2 = free_var_CAction ma2
+        ffvs = diff_varset fvs2 fvs1
+        gfs = rename_genfilt_lv p va2
+        nl = rename_list_lv p (varset_to_zvars ffvs) va2
+        subs = make_subinfo nl fvs2
+        finalsubs = sub_CAction subs ma2
+        ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs)))))
 crl_prom_var_state _ = None
 \end{code}
 
@@ -75,10 +86,22 @@ crl_prom_var_state _ = None
 \begin{code}
 
 crl_prom_var_state2 :: ZPara -> Refinement ZPara
+
 crl_prom_var_state2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst (CActionCommand (CVarDecl va2 ma2))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
   ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p)) (ZSchema gfs)) aclst finalsubs))))
+  fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
+  fvs2 = free_var_CAction ma2
+  ffvs = diff_varset fvs2 fvs1
+  nl = rename_list_lv p (varset_to_zvars ffvs) va2
+  gfs = rename_genfilt_lv p va2
+  subs = make_subinfo nl fvs2
+  finalsubs = sub_CAction subs ma2
+crl_prom_var_state2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst (CActionCommand (CVarDecl va2 ma2)))))))
+  = Done{orig = Just e, refined = Just ref, proviso = []}
+      where
+  ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p)) (ZSchema gfs)) aclst finalsubs)))))
   fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
   fvs2 = free_var_CAction ma2
   ffvs = diff_varset fvs2 fvs1

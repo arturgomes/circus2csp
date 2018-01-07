@@ -59,6 +59,7 @@ omega_Circus spec =
 \section{Omega functions}
 \begin{omegaenv}
 \begin{code}
+
 omega_Circus_aux' :: [ZPara] -> ([ZGenFilt],[ZPara])
 omega_Circus_aux' spec
   = (zb,para)
@@ -66,27 +67,52 @@ omega_Circus_aux' spec
     res =(omega_Circus_aux spec spec)
     zb = concat (map fst res)
     para = (map snd res)
+
 omega_Circus_aux :: [ZPara] -> [ZPara] -> [([ZGenFilt],ZPara)]
+-- [x]
+omega_Circus_aux _ [] = []
 omega_Circus_aux spec
-  [e@(Process (CProcess p (ProcDef (ProcMain _ _ _))))]
+  [e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _)))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
 omega_Circus_aux spec
-  [e@(Process (CProcess p (ProcDef (ProcStalessMain _ _))))]
+  [e@(Process (CProcess _ (ProcDef (ProcMain _ _ _))))]
+  = [(zb,res)]
+  where
+    (zb,res) = proc_ref1 e
+omega_Circus_aux spec
+  [e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcStalessMain _ _)))))]
+  = [(zb,res)]
+  where
+    (zb,res) = proc_ref1 e
+omega_Circus_aux spec
+  [e@(Process (CProcess _ (ProcDef (ProcStalessMain _ _))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
 omega_Circus_aux spec [(Process cp)]
   = [([],(Process (omega_ProcDecl spec cp)))]
 omega_Circus_aux spec [x] = [([],x)]
+-- e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _)))))
+-- x:xs
 omega_Circus_aux spec
-  (e@(Process (CProcess p (ProcDef (ProcMain _ _ _)))):xs)
+  (e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _))))):xs)
   = [(zb,res)]++(omega_Circus_aux spec xs)
   where
     (zb,res) = proc_ref1 e
 omega_Circus_aux spec
-  ((e@(Process (CProcess p (ProcDef (ProcStalessMain _ _))))):xs)
+  (e@(Process (CProcess _ (ProcDef (ProcMain _ _ _)))):xs)
+  = [(zb,res)]++(omega_Circus_aux spec xs)
+  where
+    (zb,res) = proc_ref1 e
+omega_Circus_aux spec
+  ((e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcStalessMain _ _)))))):xs)
+  = [(zb,res)]++(omega_Circus_aux spec xs)
+    where
+      (zb,res) = proc_ref1 e
+omega_Circus_aux spec
+  ((e@(Process (CProcess _ (ProcDef (ProcStalessMain _ _))))):xs)
   = [(zb,res)]++(omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
@@ -153,6 +179,7 @@ proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
     nomegaAC = (expand_action_names_CAction expAct ma)
     refAC = isRefined' nomegaAC (runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
+
 proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
   = rest11
   where
@@ -161,6 +188,25 @@ proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
     nomegaAC = (expand_action_names_CAction expAct ma)
     refAC = isRefined' nomegaAC (runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
+
+proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st aclst ma)))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st [] refAC)))))
+
+proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain aclst ma)))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain [] refAC)))))
+proc_ref1 _ = error "procref1"
 \end{code}
 \begin{argue}
   \\= & Action Refinement\\
@@ -196,6 +242,22 @@ proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
         (xzs,(proc_ref3 xe))
       Nothing ->([],(proc_ref3 e))
   where ref = runRefinementZp e
+proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef
+      (ProcMain (ZSchemaDef (ZSPlain x) (ZSchema zs)) aclst ma)))))
+  = case ref of
+      Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
+          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
+        (xzs,(proc_ref3 xe))
+      Nothing -> (zs,(proc_ref3 e))
+  where ref = runRefinementZp e
+proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst ma)))))
+  = case ref of
+      Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
+          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
+        (xzs,(proc_ref3 xe))
+      Nothing ->([],(proc_ref3 e))
+  where ref = runRefinementZp e
+proc_ref2 _ = error "procref2"
 proc_ref2 x = ([],x)
 \end{code}
 \begin{argue}
@@ -216,14 +278,18 @@ proc_ref2 x = ([],x)
   \end{array}
   \\= & Data Refinement\\
 \end{argue}
-
-
 \begin{code}
 proc_ref3 (Process (CProcess p
-  (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma))))
+   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma))))
   =  proc_ref4 (Process (CProcess p
-    (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
+   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
   where bst = data_refinement stv
+proc_ref3 (Process (CProcess p
+  (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma)))))
+  =  proc_ref4 (Process (CProcess p
+    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
+  where bst = data_refinement stv
+proc_ref3 _ = error "procref3"
 proc_ref3 x = proc_ref4 x
 \end{code}
 
@@ -279,6 +345,40 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
             (head $ filter_ZGenFilt_Check bst)
     nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
     nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
+proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
+  =  proc_ref5 (Process (CProcess p
+    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
+      [CParAction "Memory" (CircusAction (CActionCommand
+        (CVResDecl (remdups $ filter_ZGenFilt_Choose bst)
+  (CSPExtChoice
+    (CSPExtChoice
+      (mk_mget_mem_CSPRepExtChoice nbst nbst)
+      (mk_mset_mem_CSPRepExtChoice nbst nbst))
+    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),
+    CParAction "MemoryMerge" (CircusAction (CActionCommand
+      (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++
+      [Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
+    (CSPExtChoice (CSPExtChoice
+      (mk_lget_mem_merg_CSPRepExtChoice nbst nbst)
+      (mk_lset_mem_merg_CSPRepExtChoice nbst nbst))
+    (CSPCommAction (ChanComm "lterminate" [])
+    (CSPRepSeq [Choose ("bd",[],"")
+      (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),
+      Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
+    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
+      ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))]
+    (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
+    (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
+      (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+       (CSPParAction "Memory" nbst)) (CSExpr "MEMI")))))))))
+  where
+    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
+    ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
+            (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
+            (head $ filter_ZGenFilt_Check bst)
+    nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
+proc_ref4 _ = error "procref4"
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
@@ -338,6 +438,9 @@ proc_ref4 x = proc_ref5 x
 \begin{code}
 proc_ref5 (Process (CProcess p (ProcDef (ProcMain x as ma)))) =
   proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain as ma))))
+proc_ref5 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain x as ma))))) =
+  proc_ref6 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcStalessMain as ma)))))
+proc_ref5 _ = error "procref5"
 proc_ref5 x = proc_ref6 x
 \end{code}
 \begin{argue}
@@ -383,7 +486,9 @@ proc_ref5 x = proc_ref6 x
 \begin{code}
 proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose ("b",[],"") (ZSetComp bst Nothing)] ma ))))))
   = Process (CProcess p (ProcDefSpot (filter_ZGenFilt_Choose bst) (ProcDef (ProcStalessMain mem ma))))
-
+proc_ref6 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose ("b",[],"") (ZSetComp bst Nothing)] ma )))))))
+  = Process (CProcess p (ProcDefSpot ((filter_ZGenFilt_Choose bst)++xa) (ProcDef (ProcStalessMain mem ma))))
+proc_ref6 _ = error "procref6"
 proc_ref6 x = x
 \end{code}
 \begin{argue}
