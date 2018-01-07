@@ -1,0 +1,77 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+INDEX = NatValue
+MONEY = {ZInt 0..ZInt 5}
+channel pay : INDEX.INDEX.MONEY
+channel transfer : INDEX.INDEX.MONEY
+channel accept : INDEX
+channel reject : INDEX
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = NAT.NatValue
+--Conversions
+valueNAT(NAT.v) = v
+
+typeNAT(x) = U_NAT
+
+tagNAT(x) = NAT
+
+-- subtypes of UNIVERSE for NAT
+subtype U_NAT = NAT.NatValue
+
+-- definition of NAME for the entire spec 
+datatype NAME = sv_value
+
+-- Subtype definition for NAT
+b_NAT1 = {(sv_value, NAT.DO_IT_MANUALLY)}
+subtype NAME_NAT = sv_value
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+
+-- Bindings definitions for NAT
+BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI -- 
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+Card(b_NAT) = 
+  let
+     Memory(b_NAT) =
+        ( ( ( [] n : dom(b_NAT) @ mget.n.apply(b_NAT,n) ->
+      Memory(b_NAT) )
+      [] ( [] n : dom(b_NAT) @ mset.n?nv:typeNAT(n) ->
+      Memory(over(b_NAT,n,nv)) ))
+      [] terminate -> SKIP)
+     MemoryMerge(b_NAT,ns) =
+        ( ( ( [] n : dom(b_NAT) @ lget.n.apply(b_NAT,n) ->
+      MemoryMerge(b_NAT,ns) )
+      [] ( [] n : dom(b_NAT) @ lset.n?nv:typeNAT(n) ->
+      MemoryMerge(over(b_NAT,n,nv),ns) ))
+      [] lterminate ->
+      (  ; bd : <b_NAT> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     
+  within ( ( ( mset.sv_value.(NAT.0) ->
+      ( let muCycle = mget.sv_value?v_sv_value:(typeNAT(sv_value)) ->
+      ( ( pay.i?j?n ->
+      ( ( n > valueNAT(v_sv_value) & reject.i -> SKIP )
+      [] ( n <= valueNAT(v_sv_value) & transfer.i.j.n ->
+      accept.i ->
+      Debit(n) ))
+      [] transfer?j.i?n ->
+      Credit(n));
+      muCycle ) within muCycle );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_NAT))\MEMI )

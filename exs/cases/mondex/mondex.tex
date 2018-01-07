@@ -1,0 +1,33 @@
+
+\begin{circus}
+INDEX == \nat %-- {* Card identifiers *}
+\also MONEY == \{0 \upto 5\} %-- {* Monetary amounts. *}
+\end{circus}
+In the paper money is represented as a nat, here we use an int so that we
+have the option of modelling negative balances. This also eases proof as
+integers form an algebraic ring.
+
+\begin{circus}
+\circchannel pay : INDEX \cross INDEX \cross MONEY\\ % -- {* Request a payment between two cards *}
+\circchannel transfer : INDEX \cross INDEX \cross MONEY\\ % -- {* Effect the transfer *}
+\circchannel accept : INDEX\\ %| -- {* Accept the payment *}
+\circchannel reject : INDEX %-- {* Reject it *}
+\end{circus}
+% type_synonym action_mdx = "(st_mdx, ch_mdx) action"
+\begin{circus}
+
+\circprocess Card \circdef  i : INDEX \circspot\\
+\circbegin\\
+\circstate SCard \defs[value: INDEX]\\
+Init \circdef (value := 0)\\
+Credit \circdef \circvar n: INDEX \circspot(value := (value + n))\\
+Debit \circdef \circvar n: INDEX \circspot \lcircguard n \leq value \rcircguard \circguard (value := (value - n))\\
+Transfer \circdef\\
+  pay.i?j?n \then\\
+    ( \lcircguard n > value \rcircguard \circguard reject!i \then \Skip\\
+    \extchoice \lcircguard n \leq value \rcircguard \circguard transfer.i.j!n \then accept!i \then Debit(n) )\\
+Receive \circdef transfer?j.i?n \then Credit(n)\\
+Cycle \circdef ( Transfer \extchoice Receive ) \circseq Cycle\\
+\circspot Init \circseq Cycle\\
+\circend
+\end{circus}
