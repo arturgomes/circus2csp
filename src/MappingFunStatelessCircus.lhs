@@ -116,8 +116,8 @@ omega_Circus_aux spec
   = [(zb,res)]++(omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
-omega_Circus_aux spec ((Process cp):xs)
-  = [([],(Process (omega_ProcDecl spec cp)))]++(omega_Circus_aux spec xs)
+-- omega_Circus_aux spec ((Process cp):xs)
+--   = [([],(Process (omega_ProcDecl spec cp)))]++(omega_Circus_aux spec xs)
 omega_Circus_aux spec (x:xs)
   = [([],x)]++(omega_Circus_aux spec xs)
 \end{code}
@@ -171,30 +171,12 @@ second iteration of refinement strategy.
 \\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
-  = rest11
-  where
-    remRecAct = map recursive_PPar aclst
-    expAct = map (expand_action_names_PPar remRecAct) remRecAct
-    nomegaAC = (expand_action_names_CAction expAct ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
-    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
-
-proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
-  = rest11
-  where
-    remRecAct = map recursive_PPar aclst
-    expAct = map (expand_action_names_PPar remRecAct) remRecAct
-    nomegaAC = (expand_action_names_CAction expAct ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
-    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
-
 proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st aclst ma)))))
   = rest11
   where
     remRecAct = map recursive_PPar aclst
-    expAct = map (expand_action_names_PPar remRecAct) remRecAct
-    nomegaAC = (expand_action_names_CAction expAct ma)
+    expAct = map (expand_action_names_PPar remRecAct []) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct [] ma)
     refAC = isRefined' nomegaAC (runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st [] refAC)))))
 
@@ -202,10 +184,28 @@ proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain aclst ma
   = rest11
   where
     remRecAct = map recursive_PPar aclst
-    expAct = map (expand_action_names_PPar remRecAct) remRecAct
-    nomegaAC = (expand_action_names_CAction expAct ma)
+    expAct = map (expand_action_names_PPar remRecAct []) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct [] ma)
     refAC = isRefined' nomegaAC (runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain [] refAC)))))
+proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct []) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct [] ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
+
+proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
+  = rest11
+  where
+    remRecAct = map recursive_PPar aclst
+    expAct = map (expand_action_names_PPar remRecAct []) remRecAct
+    nomegaAC = (expand_action_names_CAction expAct [] ma)
+    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
+
 proc_ref1 _ = error "procref1"
 \end{code}
 \begin{argue}
@@ -289,7 +289,6 @@ proc_ref3 (Process (CProcess p
   =  proc_ref4 (Process (CProcess p
     (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
   where bst = data_refinement stv
-proc_ref3 _ = error "procref3"
 proc_ref3 x = proc_ref4 x
 \end{code}
 
@@ -530,7 +529,7 @@ proc_ref6 x = x
 
 \section{Mapping Circus Processes}
 So far we have no other mapping functions for these constructs. They are basically translated directly into CSP.
-Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
+% Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
 \begin{code}
 omega_CProc :: ZName -> [ZPara] -> CProc -> CProc
 omega_CProc zn spec (CExtChoice a b)

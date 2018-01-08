@@ -20,8 +20,8 @@ integers form an algebraic ring.
 \circbegin\\
 \circstate SCard \defs[value: INDEX]\\
 Init \circdef (value := 0)\\
-Credit \circdef \circvar n: INDEX \circspot(value := (value + n))\\
-Debit \circdef \circvar n: INDEX \circspot \lcircguard n \leq value \rcircguard \circguard (value := (value - n))\\
+Credit \circdef  n: INDEX \circspot(value := (value + n))\\
+Debit \circdef n: INDEX \circspot \lcircguard n \leq value \rcircguard \circguard (value := (value - n))\\
 Transfer \circdef\\
   pay.i?j?n \then\\
     ( \lcircguard n > value \rcircguard \circguard reject!i \then \Skip\\
