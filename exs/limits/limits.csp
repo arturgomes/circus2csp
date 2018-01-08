@@ -1,0 +1,262 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+datatype L1 = a1
+datatype L2 = b1 | b2
+datatype L3 = c1 | c2 | c3
+datatype L4 = d1 | d2 | d3 | d4
+datatype L5 = e1 | e2 | e3 | e4 | e5
+datatype L6 = f1 | f2 | f3 | f4 | f5 | f6
+datatype L7 = g1 | g2 | g3 | g4 | g5 | g6 | g7
+datatype L8 = h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8
+datatype L9 = i1 | i2 | i3 | i4 | i5 | i6 | i7 | i8 | i9 | i10
+datatype L10 = j1 | j2 | j3 | j4 | j5 | j6 | j7
+                  | j8 | j9 | j10 | j11 | j12
+datatype L11 = k1 | k2 | k3 | k4 | k5 | k6 | k7
+                  | k8 | k9 | k10 | k11 | k12 | k13 | k14
+
+RANGE = {0..2}
+--------------------------------
+-- The universe of values
+datatype UNIVERSE = RAN.RANGE
+--Conversions
+valueRAN(RAN.v) = v
+
+typeRAN(x) = U_RAN
+
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec
+
+-- Subtype definition for b_*
+b_L1 = {(a1, RAN.0)}
+b_L2 = {(b1, RAN.0),(b2, RAN.0)}
+b_L3 = {(c1, RAN.0),(c2, RAN.0),(c3, RAN.0)}
+b_L4 = {(d1, RAN.0),(d2, RAN.0),(d3, RAN.0),(d4, RAN.0)}
+b_L5 = {(e1, RAN.0),(e2, RAN.0),(e3, RAN.0),(e4, RAN.0),(e5, RAN.0)}
+b_L6 = {(f1, RAN.0),(f2, RAN.0),(f3, RAN.0),(f4, RAN.0),(f5, RAN.0),(f6, RAN.0)}
+b_L7 = {(g1, RAN.0),(g2, RAN.0),(g3, RAN.0),(g4, RAN.0),(g5, RAN.0),(g6, RAN.0),(g7, RAN.0)}
+b_L8 = {(h1, RAN.0),(h2, RAN.0),(h3, RAN.0),(h4, RAN.0),(h5, RAN.0),(h6, RAN.0),(h7, RAN.0),(h8, RAN.0)}
+b_L9 = {(i1, RAN.0),(i2, RAN.0),(i3, RAN.0),(i4, RAN.0),(i5, RAN.0),(i6, RAN.0),(i7, RAN.0),(i8, RAN.0),(i9, RAN.0),(i10, RAN.0)}
+b_L10 = {(j1, RAN.0),(j2, RAN.0),(j3, RAN.0),(j4, RAN.0),(j5, RAN.0),(j6, RAN.0),(j7, RAN.0),(j8, RAN.0),(j9, RAN.0),(j10, RAN.0),(j11, RAN.0),(j12, RAN.0)}
+b_L11 = {(k1, RAN.0),(k2, RAN.0),(k3, RAN.0),(k4, RAN.0),(k5, RAN.0),(k6, RAN.0),(k7, RAN.0),(k8, RAN.0),(k9, RAN.0),(k10, RAN.0),(k11, RAN.0),(k12, RAN.0),(k13, RAN.0),(k14, RAN.0)}
+
+
+L1_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L1})
+L1_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L1_VALUES_RAN))}
+
+L2_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L2})
+L2_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L2_VALUES_RAN))}
+
+L3_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L3})
+L3_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L3_VALUES_RAN))}
+
+L4_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L4})
+L4_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L4_VALUES_RAN))}
+
+L5_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L5})
+L5_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L5_VALUES_RAN))}
+
+L6_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L6})
+L6_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L6_VALUES_RAN))}
+
+L7_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L7})
+L7_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L7_VALUES_RAN))}
+
+L8_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L8})
+L8_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L8_VALUES_RAN))}
+
+L9_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L9})
+L9_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L9_VALUES_RAN))}
+
+L10_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L10})
+L10_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L10_VALUES_RAN))}
+
+L11_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L11})
+L11_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L11_VALUES_RAN))}
+
+
+
+--------------------------------
+ -- mget, mset and terminate --
+--------------------------------
+channel mget1, mset1 : L1.UNIVERSE
+channel mget2, mset2 : L2.UNIVERSE
+channel mget3, mset3 : L3.UNIVERSE
+channel mget4, mset4 : L4.UNIVERSE
+channel mget5, mset5 : L5.UNIVERSE
+channel mget6, mset6 : L6.UNIVERSE
+channel mget7, mset7 : L7.UNIVERSE
+channel mget8, mset8 : L8.UNIVERSE
+channel mget9, mset9 : L9.UNIVERSE
+channel mget10, mset10 : L10.UNIVERSE
+channel mget11, mset11 : L11.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI --
+--------------------------------
+MEMI1 = {| mset1,mget1,terminate |}
+MEMI2 = {| mset2,mget2,terminate |}
+MEMI3 = {| mset3,mget3,terminate |}
+MEMI4 = {| mset4,mget4,terminate |}
+MEMI5 = {| mset5,mget5,terminate |}
+MEMI6 = {| mset6,mget6,terminate |}
+MEMI7 = {| mset7,mget7,terminate |}
+MEMI8 = {| mset8,mget8,terminate |}
+MEMI9 = {| mset9,mget9,terminate |}
+MEMI10 = {| mset10,mget10,terminate |}
+MEMI11 = {| mset11,mget11,terminate |}
+
+A1(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget1.n.apply(b_L1,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset1.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget1.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset1.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI1 |] Memory(b_L))\MEMI1 )
+
+A2(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget2.n.apply(b_L2,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset2.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget2.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset2.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI2 |] Memory(b_L))\MEMI2 )
+
+A3(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget3.n.apply(b_L3,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset3.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget3.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset3.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI3 |] Memory(b_L))\MEMI3 )
+
+A4(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget4.n.apply(b_L4,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset4.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget4.n?v_n:(typeRAN(n)) -> SKIP);
+    ([] n : dom(b_L) @ mset4.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI4 |] Memory(b_L))\MEMI4 )
+
+
+A5(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget5.n.apply(b_L5,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset5.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget5.n?v_n:(typeRAN(n)) -> SKIP);
+    ([] n : dom(b_L) @ mset5.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI5 |] Memory(b_L))\MEMI5 )
+
+A6(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget6.n.apply(b_L6,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset6.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget6.n?v_n:(typeRAN(n)) -> SKIP);
+    ([] n : dom(b_L) @ mset6.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI6 |] Memory(b_L))\MEMI6 )
+
+A7(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget7.n.apply(b_L7,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset7.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget7.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset7.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI7 |] Memory(b_L))\MEMI7 )
+
+A8(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget8.n.apply(b_L8,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset8.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget8.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset8.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI8 |] Memory(b_L))\MEMI8 )
+
+A9(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget9.n.apply(b_L9,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset9.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget9.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset9.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI9 |] Memory(b_L))\MEMI9 )
+
+A10(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget10.n.apply(b_L10,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset10.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI10 |] Memory(b_L))\MEMI10 )
+
+A11(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget11.n.apply(b_L11,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset11.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
+
+
+
+-- Testing
+
+assert A1(b_L1) :[deterministic [FD]]
+assert A2(b_L2) :[deterministic [FD]]
+assert A3(b_L3) :[deterministic [FD]]
+assert A4(b_L4) :[deterministic [FD]]
+assert A5(b_L5) :[deterministic [FD]]
+assert A6(b_L6) :[deterministic [FD]]
+assert A7(b_L7) :[deterministic [FD]]
+assert A8(b_L8) :[deterministic [FD]]
+assert A9(b_L9) :[deterministic [FD]] -- 17 minutes to run until here.
+assert A10(b_L10) :[deterministic [FD]] -- segmentation fault
+assert A11(b_L11) :[deterministic [FD]] -- not even tested
