@@ -246,17 +246,39 @@ A11(b_L) =
       [| MEMI11 |] Memory(b_L))\MEMI11 )
 
 
+A11a(b_L) =
+  let
+     MemoryA(n,v) =
+       ( ( ( mget11.n.v -> MemoryA(n,v) )
+      [] ( mset11.n?nv -> MemoryA(n,nv) ))
+      [] terminate -> SKIP)
+    Memory(b_L) = ||| n: dom(b_L), v: ran(b_L) @ MemoryA(n,v)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
+
+A11b(b_L) =
+  let
+     MemoryA(n,v) =
+       ( ( ( mget11.n.v -> MemoryA(n,v) )
+      [] ( mset11.n?nv -> MemoryA(n,nv) ))
+      [] terminate -> SKIP)
+    Memory(b_L) = [] n: dom(b_L), v: ran(b_L) @ MemoryA(n,v)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
 
 -- Testing
 
-assert A1(b_L1) :[deterministic [FD]]
-assert A2(b_L2) :[deterministic [FD]]
-assert A3(b_L3) :[deterministic [FD]]
-assert A4(b_L4) :[deterministic [FD]]
-assert A5(b_L5) :[deterministic [FD]]
-assert A6(b_L6) :[deterministic [FD]]
-assert A7(b_L7) :[deterministic [FD]]
-assert A8(b_L8) :[deterministic [FD]]
-assert A9(b_L9) :[deterministic [FD]] -- 17 minutes to run until here.
-assert A10(b_L10) :[deterministic [FD]] -- segmentation fault
-assert A11(b_L11) :[deterministic [FD]] -- not even tested
+-- assert A11(b_L11) :[deterministic [FD]] -- not even tested
+
+-- assert A11(b_L11) [FD= A11a(b_L11)
+-- assert A11(b_L11) [FD= A11b(b_L11)
+-- assert A11a(b_L11) [FD= A11(b_L11) -- failed
+assert A11a(b_L11) [FD= A11b(b_L11)
+-- assert A11b(b_L11) [FD= A11(b_L11) -- failed
+assert A11b(b_L11) [FD= A11a(b_L11)

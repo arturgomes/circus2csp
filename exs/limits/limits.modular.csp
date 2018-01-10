@@ -3,12 +3,8 @@ include "function_aux.csp"
 
 
 
-datatype L8 = h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8
-datatype L9 = i1 | i2 | i3 | i4 | i5 | i6 | i7 | i8 | i9 | i10
 datatype L10 = j1 | j2 | j3 | j4 | j5 | j6 | j7
                   | j8 | j9 | j10 | j11 | j12
-datatype L11 = k1 | k2 | k3 | k4 | k5 | k6 | k7
-                  | k8 | k9 | k10 | k11 | k12 | k13 | k14
 
 RANGE = {0..2}
 --------------------------------
@@ -28,84 +24,22 @@ subtype U_RAN = RAN.RANGE
 
 -- Subtype definition for b_*
 
-b_L8 = {(h1, RAN.0),(h2, RAN.0),(h3, RAN.0),(h4, RAN.0),(h5, RAN.0),(h6, RAN.0),(h7, RAN.0),(h8, RAN.0)}
-b_L9 = {(i1, RAN.0),(i2, RAN.0),(i3, RAN.0),(i4, RAN.0),(i5, RAN.0),(i6, RAN.0),(i7, RAN.0),(i8, RAN.0),(i9, RAN.0),(i10, RAN.0)}
-b_L11 = {(k1, RAN.0),(k2, RAN.0),(k3, RAN.0),(k4, RAN.0),(k5, RAN.0),(k6, RAN.0),(k7, RAN.0),(k8, RAN.0),(k9, RAN.0),(k10, RAN.0),(k11, RAN.0),(k12, RAN.0),(k13, RAN.0),(k14, RAN.0)}
-
-
-L8_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L8})
-L8_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L8_VALUES_RAN))}
-
-L9_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L9})
-L9_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L9_VALUES_RAN))}
-
 L10_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L10})
 L10_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L10_VALUES_RAN))}
-
-L11_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L11})
-L11_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L11_VALUES_RAN))}
 
 
 
 --------------------------------
  -- mget, mset and terminate --
 --------------------------------
-channel mget8, mset8 : L8.UNIVERSE
-channel mget9, mset9 : L9.UNIVERSE
 channel mget10, mset10 : L10.UNIVERSE
-channel mget11, mset11 : L11.UNIVERSE
 channel terminate
 
 --------------------------------
  -- MEMI --
 --------------------------------
-MEMI8 = {| mset8,mget8,terminate |}
-MEMI9 = {| mset9,mget9,terminate |}
 MEMI10 = {| mset10,mget10,terminate |}
-MEMI11 = {| mset11,mget11,terminate |}
 
-
-
-A8(b_L) =
-  let
-     Memory(b_L) =
-       ( ( ( [] n : dom(b_L) @ mget8.n.apply(b_L8,n) -> Memory(b_L) )
-      [] ( [] n : dom(b_L) @ mset8.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
-      [] terminate -> SKIP)
-  within ( (
-    ( (([] n : dom(b_L) @ mget8.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset8.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI8 |] Memory(b_L))\MEMI8 )
-
-A8a(b_L) =
-  let
-    Memoryh1(x) = ( ( ( mget8.h1.x -> Memoryh1(x) ) [] ( mset8.h1?nv:typeRAN(h1) -> Memoryh1(nv) )) [] terminate -> SKIP)
-    Memoryh2(x) = ( ( ( mget8.h2.x -> Memoryh2(x) ) [] ( mset8.h2?nv:typeRAN(h2) -> Memoryh2(nv) )) [] terminate -> SKIP)
-    Memoryh3(x) = ( ( ( mget8.h3.x -> Memoryh3(x) ) [] ( mset8.h3?nv:typeRAN(h3) -> Memoryh3(nv) )) [] terminate -> SKIP)
-    Memoryh4(x) = ( ( ( mget8.h4.x -> Memoryh4(x) ) [] ( mset8.h4?nv:typeRAN(h4) -> Memoryh4(nv) )) [] terminate -> SKIP)
-    Memoryh5(x) = ( ( ( mget8.h5.x -> Memoryh5(x) ) [] ( mset8.h5?nv:typeRAN(h5) -> Memoryh5(nv) )) [] terminate -> SKIP)
-    Memoryh6(x) = ( ( ( mget8.h6.x -> Memoryh6(x) ) [] ( mset8.h6?nv:typeRAN(h6) -> Memoryh6(nv) )) [] terminate -> SKIP)
-    Memoryh7(x) = ( ( ( mget8.h7.x -> Memoryh7(x) ) [] ( mset8.h7?nv:typeRAN(h7) -> Memoryh7(nv) )) [] terminate -> SKIP)
-    Memoryh8(x) = ( ( ( mget8.h8.x -> Memoryh8(x) ) [] ( mset8.h8?nv:typeRAN(h8) -> Memoryh8(nv) )) [] terminate -> SKIP)
-    Memory = (Memoryh1(RAN.0) ||| Memoryh2(RAN.0) ||| Memoryh3(RAN.0) ||| Memoryh4(RAN.0) ||| Memoryh5(RAN.0) ||| Memoryh6(RAN.0) ||| Memoryh7(RAN.0) ||| Memoryh8(RAN.0))
-  within ( (
-    ( (([] n : dom(b_L) @ mget8.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset8.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI8 |] Memory)\MEMI8 )
-
-A9(b_L) =
-  let
-     Memory(b_L) =
-       ( ( ( [] n : dom(b_L) @ mget9.n.apply(b_L9,n) -> Memory(b_L) )
-      [] ( [] n : dom(b_L) @ mset9.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
-      [] terminate -> SKIP)
-  within ( (
-    ( (([] n : dom(b_L) @ mget9.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset9.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI9 |] Memory(b_L))\MEMI9 )
 
 b_L10 = {(j1, RAN.0),(j2, RAN.0),(j3, RAN.0),(j4, RAN.0),(j5, RAN.0),(j6, RAN.0),
          (j7, RAN.0),(j8, RAN.0),(j9, RAN.0),(j10, RAN.0),(j11, RAN.0),(j12, RAN.0)}
@@ -113,14 +47,11 @@ b_L10 = {(j1, RAN.0),(j2, RAN.0),(j3, RAN.0),(j4, RAN.0),(j5, RAN.0),(j6, RAN.0)
 A10(b_L) =
   let
      Memory(b_L) =
-       ( ( ( [] n : dom(b_L) @ mget10.n.apply(b_L10,n) -> Memory(b_L) )
+       ( ( ( [] n : dom(b_L) @ mget10.n.apply(b_L,n) -> Memory(b_L) )
       [] ( [] n : dom(b_L) @ mset10.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
       [] terminate -> SKIP)
-  within ( (
-    ( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI10 |] Memory(b_L))\MEMI10 )
+  within
+    ((( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[] ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP)); terminate -> SKIP ) [| MEMI10 |] Memory(b_L))\MEMI10 )
 
 A10a(b_L) =
   let
@@ -138,18 +69,67 @@ A10a(b_L) =
     Memoryj12(x) = ( ( ( mget10.j12.x -> Memoryj12(x) ) [] ( mset10.j12?nv:typeRAN(j12) -> Memoryj12(nv) )) [] terminate -> SKIP)
     Memory = (Memoryj1(RAN.0) ||| Memoryj2(RAN.0) ||| Memoryj3(RAN.0) ||| Memoryj4(RAN.0) ||| Memoryj5(RAN.0) ||| Memoryj6(RAN.0) |||
               Memoryj7(RAN.0) ||| Memoryj8(RAN.0) ||| Memoryj9(RAN.0) ||| Memoryj10(RAN.0) ||| Memoryj11(RAN.0) ||| Memoryj12(RAN.0)  )
-  within ( (
-    ( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI10 |] Memory)\MEMI10 )
+  within
+    ((( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[] ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP)); terminate -> SKIP ) [| MEMI10 |] Memory)\MEMI10 )
 
 
--- Testing
---
+A10b(b_L) =
+  let
+    Memoryj1(x) = ( ( ( mget10.j1.x -> Memoryj1(x) ) [] ( mset10.j1?nv:typeRAN(j1) -> Memoryj1(nv) )) [] terminate -> SKIP)
+    Memoryj2(x) = ( ( ( mget10.j2.x -> Memoryj2(x) ) [] ( mset10.j2?nv:typeRAN(j2) -> Memoryj2(nv) )) [] terminate -> SKIP)
+    Memoryj3(x) = ( ( ( mget10.j3.x -> Memoryj3(x) ) [] ( mset10.j3?nv:typeRAN(j3) -> Memoryj3(nv) )) [] terminate -> SKIP)
+    Memoryj4(x) = ( ( ( mget10.j4.x -> Memoryj4(x) ) [] ( mset10.j4?nv:typeRAN(j4) -> Memoryj4(nv) )) [] terminate -> SKIP)
+    Memoryj5(x) = ( ( ( mget10.j5.x -> Memoryj5(x) ) [] ( mset10.j5?nv:typeRAN(j5) -> Memoryj5(nv) )) [] terminate -> SKIP)
+    Memoryj6(x) = ( ( ( mget10.j6.x -> Memoryj6(x) ) [] ( mset10.j6?nv:typeRAN(j6) -> Memoryj6(nv) )) [] terminate -> SKIP)
+    Memoryj7(x) = ( ( ( mget10.j7.x -> Memoryj7(x) ) [] ( mset10.j7?nv:typeRAN(j7) -> Memoryj7(nv) )) [] terminate -> SKIP)
+    Memoryj8(x) = ( ( ( mget10.j8.x -> Memoryj8(x) ) [] ( mset10.j8?nv:typeRAN(j8) -> Memoryj8(nv) )) [] terminate -> SKIP)
+    Memoryj9(x) = ( ( ( mget10.j9.x -> Memoryj9(x) ) [] ( mset10.j9?nv:typeRAN(j9) -> Memoryj9(nv) )) [] terminate -> SKIP)
+    Memoryj10(x) = ( ( ( mget10.j10.x -> Memoryj10(x) ) [] ( mset10.j10?nv:typeRAN(j10) -> Memoryj10(nv) )) [] terminate -> SKIP)
+    Memoryj11(x) = ( ( ( mget10.j11.x -> Memoryj11(x) ) [] ( mset10.j11?nv:typeRAN(j11) -> Memoryj11(nv) )) [] terminate -> SKIP)
+    Memoryj12(x) = ( ( ( mget10.j12.x -> Memoryj12(x) ) [] ( mset10.j12?nv:typeRAN(j12) -> Memoryj12(nv) )) [] terminate -> SKIP)
+    Memory = (Memoryj1(RAN.0) ||| Memoryj2(RAN.0) ||| Memoryj3(RAN.0) ||| Memoryj4(RAN.0) ||| Memoryj5(RAN.0) ||| Memoryj6(RAN.0) |||
+              Memoryj7(RAN.0) ||| Memoryj8(RAN.0) ||| Memoryj9(RAN.0) ||| Memoryj10(RAN.0) ||| Memoryj11(RAN.0) ||| Memoryj12(RAN.0)  )
+  within
+    ((( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[] ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP)); terminate -> SKIP ) [| MEMI10 |] Memory)\MEMI10 )
 
--- assert A8(b_L8) :[deterministic [FD]]
-assert A8a(b_L8) :[deterministic [FD]]
--- assert A9(b_L9) :[deterministic [FD]] -- 17 minutes to run until here.
--- assert A10(b_L10) :[deterministic [FD]] -- segmentation fault
-assert A10a(b_L10) :[deterministic [FD]] -- segmentation fault
+A10c(b_L) =
+  let
+     MemoryA(x,v) =
+       ( ( (  mget10.x.v -> MemoryA(x,v) )
+      [] ( mset10.x?nv:typeRAN(x) -> MemoryA(x,nv) ))
+      [] terminate -> SKIP)
+    Memory(b) = ||| n: dom(b) @ MemoryA(n,RAN.0)
+  within
+    ((( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[] ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP)); terminate -> SKIP ) [| MEMI10 |] Memory(b_L))\MEMI10 )
+
+A10d(b_L) =
+  let
+     MemoryA(x,v) =
+       ( ( (  mget10.x.v -> MemoryA(x,v) )
+      [] ( mset10.x?nv:typeRAN(x) -> MemoryA(x,nv) ))
+      [] terminate -> SKIP)
+    Memory(b) = [] n: dom(b) @ MemoryA(n,RAN.0)
+  within
+    ((( (([] n : dom(b_L) @ mget10.n?v_n:(typeRAN(n)) -> SKIP)[] ([] n : dom(b_L) @ mset10.n.(RAN.1) -> SKIP)); terminate -> SKIP ) [| MEMI10 |] Memory(b_L))\MEMI10 )
+
+
+assert A10a(b_L10) [FD= A10b(b_L10)
+assert A10a(b_L10) [FD= A10c(b_L10)
+assert A10a(b_L10) [FD= A10d(b_L10)
+assert A10b(b_L10) [FD= A10a(b_L10)
+assert A10b(b_L10) [FD= A10c(b_L10)
+assert A10b(b_L10) [FD= A10d(b_L10)
+assert A10c(b_L10) [FD= A10a(b_L10)
+assert A10c(b_L10) [FD= A10b(b_L10)
+assert A10c(b_L10) [FD= A10d(b_L10)
+assert A10d(b_L10) [FD= A10a(b_L10)
+assert A10d(b_L10) [FD= A10b(b_L10)
+assert A10d(b_L10) [FD= A10c(b_L10)
+assert A10a(b_L10) :[deterministic [FD]]
+assert A10b(b_L10) :[deterministic [FD]]
+assert A10c(b_L10) :[deterministic [FD]]
+assert A10d(b_L10) :[deterministic [FD]]
+assert A10a(b_L10) :[deadlock free]
+assert A10b(b_L10) :[deadlock free]
+assert A10c(b_L10) :[deadlock free]
+assert A10d(b_L10) :[deadlock free]

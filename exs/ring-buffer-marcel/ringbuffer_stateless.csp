@@ -222,5 +222,7 @@ MemoryDBuffer = (MemoryControllerR [| {| rd_i, wrt_i |} |] MemoryDRing) \ {| rd_
 --------------------------------
 -- VERIFICATION
 --------------------------------
+assert (|~| b: BINDINGS @ Memory(b)) :[deadlock free]
+assert RingCellMain :[deadlock free]
 assert ABuffer [FD= MemoryDBuffer
 assert MemoryDBuffer [FD= ABuffer

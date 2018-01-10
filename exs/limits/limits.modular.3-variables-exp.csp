@@ -1,0 +1,99 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+--------------------------------
+-- GENERAL DEFINITIONS
+--------------------------------
+
+-- The maximum size of the buffer is a strictly positive constant.
+maxbuff = 2
+
+-- The values buffered are numbers.
+Value = {0..2}
+
+-- The ring is a circular array, modelled as a sequence whose two
+-- ends are considered to be joined.
+-- The constant maxring, defined as (maxbuff - 1), gives the bound for
+-- the ring.
+maxring = maxbuff - 1
+
+-- The communication is bi-directional
+datatype Direction = req | ack
+
+CellId = {1 .. maxring}
+
+
+
+--------------------------------
+-- BINDINGS
+--------------------------------
+
+--------------------------------
+-- Set of names
+datatype NAME = a1 | a2 | a3
+
+--------------------------------
+-- Nat
+NatValue = {0..maxbuff}
+
+--------------------------------
+-- The universe of values
+datatype UNIVERSE =
+    Nat.NatValue | Val.Value | Cel.CellId
+
+--------------------------------
+-- Conversions
+subtype U_NAT = Nat.NatValue
+subtype U_VALUE = Val.Value
+subtype U_CELL = Cel.CellId
+
+value(Nat.v) = v
+value(Val.v) = v
+value(Cel.v) = v
+
+type(x) =
+    if x== a1 then U_VALUE
+    else if x == a2 then U_CELL
+    else if x == a3 then U_CELL
+    else {}
+
+tag(x) =
+    if x== a1 then Val
+    else if x == a2 then Cel
+    else if x == a3 then Cel
+    else Nat
+
+--------------------------------
+-- All possible bidings
+NAMES_VALUES = seq({seq({(n,v) | v <- type(n)}) | n <- NAME})
+BINDINGS = {set(b) | b <- set(distCartProd(NAMES_VALUES))}
+
+--------------------------------
+-- MEMORY
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+MEM_I = {| mset, mget, terminate |}
+
+Memory(b) =
+    ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))
+    [] ([] n:dom(b) @ mset.n?x:type(n) -> Memory(over(b,n,x)))
+    [] terminate -> SKIP
+
+Memorise(P, b) =
+    ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
+
+
+A3Current = let X = (mget.a1?va:(type(a1)) -> SKIP [] mset.a1.((tag(a1)).1) -> SKIP) ; X within X
+
+A3C1 =
+    let restrict(bs) = dres(bs,{a1})
+    within
+        |~| b:BINDINGS @ Memorise(A3Current, restrict(b))
+
+--------------------------------
+-- VERIFICATION
+--------------------------------
+assert A3Current :[deadlock free]
+assert A3C1 :[deadlock free]

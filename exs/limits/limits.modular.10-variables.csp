@@ -1,0 +1,156 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+datatype L11 = k1 | k2 | k3 | k4 | k5 | k6 | k7 | k8 | k9 | k10 | k11 | k12 | k13 | k14
+
+RANGE = {0..1}
+--------------------------------
+-- The universe of values
+datatype UNIVERSE = RAN.RANGE
+--Conversions
+valueRAN(RAN.v) = v
+
+typeRAN(x) = U_RAN
+
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec
+
+-- Subtype definition for b_*
+b_L11 = {(k1, RAN.0),(k2, RAN.0),(k3, RAN.0),(k4, RAN.0),(k5, RAN.0),(k6, RAN.0),(k7, RAN.0),(k8, RAN.0),(k9, RAN.0),(k10, RAN.0),(k11, RAN.0),(k12, RAN.0),(k13, RAN.0),(k14, RAN.0)}
+
+L11_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L11})
+L11_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L11_VALUES_RAN))}
+
+
+
+--------------------------------
+ -- mget, mset and terminate --
+--------------------------------
+channel mget11, mset11 : L11.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI --
+--------------------------------
+MEMI11 = {| mset11,mget11,terminate |}
+
+
+A11(b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget11.n.apply(b_L,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset11.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
+
+A11a1(b_L) =
+  let
+    Memoryk1(x) = ( ( ( mget11.k1.x -> Memoryk1(x) ) [] ( mset11.k1?nv:typeRAN(k1) -> Memoryk1(nv) )) [] terminate -> SKIP)
+    Memoryk2(x) = ( ( ( mget11.k2.x -> Memoryk2(x) ) [] ( mset11.k2?nv:typeRAN(k2) -> Memoryk2(nv) )) [] terminate -> SKIP)
+    Memoryk3(x) = ( ( ( mget11.k3.x -> Memoryk3(x) ) [] ( mset11.k3?nv:typeRAN(k3) -> Memoryk3(nv) )) [] terminate -> SKIP)
+    Memoryk4(x) = ( ( ( mget11.k4.x -> Memoryk4(x) ) [] ( mset11.k4?nv:typeRAN(k4) -> Memoryk4(nv) )) [] terminate -> SKIP)
+    Memoryk5(x) = ( ( ( mget11.k5.x -> Memoryk5(x) ) [] ( mset11.k5?nv:typeRAN(k5) -> Memoryk5(nv) )) [] terminate -> SKIP)
+    Memoryk6(x) = ( ( ( mget11.k6.x -> Memoryk6(x) ) [] ( mset11.k6?nv:typeRAN(k6) -> Memoryk6(nv) )) [] terminate -> SKIP)
+    Memoryk7(x) = ( ( ( mget11.k7.x -> Memoryk7(x) ) [] ( mset11.k7?nv:typeRAN(k7) -> Memoryk7(nv) )) [] terminate -> SKIP)
+    Memoryk8(x) = ( ( ( mget11.k8.x -> Memoryk8(x) ) [] ( mset11.k8?nv:typeRAN(k8) -> Memoryk8(nv) )) [] terminate -> SKIP)
+    Memoryk9(x) = ( ( ( mget11.k9.x -> Memoryk9(x) ) [] ( mset11.k9?nv:typeRAN(k9) -> Memoryk9(nv) )) [] terminate -> SKIP)
+    Memoryk10(x) = ( ( ( mget11.k10.x -> Memoryk10(x) ) [] ( mset11.k10?nv:typeRAN(k10) -> Memoryk10(nv) )) [] terminate -> SKIP)
+    Memoryk11(x) = ( ( ( mget11.k11.x -> Memoryk11(x) ) [] ( mset11.k11?nv:typeRAN(k11) -> Memoryk11(nv) )) [] terminate -> SKIP)
+    Memoryk12(x) = ( ( ( mget11.k12.x -> Memoryk12(x) ) [] ( mset11.k12?nv:typeRAN(k12) -> Memoryk12(nv) )) [] terminate -> SKIP)
+    Memoryk13(x) = ( ( ( mget11.k13.x -> Memoryk13(x) ) [] ( mset11.k13?nv:typeRAN(k13) -> Memoryk13(nv) )) [] terminate -> SKIP)
+    Memoryk14(x) = ( ( ( mget11.k14.x -> Memoryk14(x) ) [] ( mset11.k14?nv:typeRAN(k14) -> Memoryk14(nv) )) [] terminate -> SKIP)
+    Memory = (Memoryk1(RAN.1) ||| Memoryk2(RAN.1) ||| Memoryk3(RAN.1) ||| Memoryk4(RAN.1) ||| Memoryk5(RAN.1)
+                          ||| Memoryk6(RAN.1) ||| Memoryk7(RAN.1) ||| Memoryk8(RAN.1) ||| Memoryk9(RAN.1)
+                          ||| Memoryk10(RAN.1) ||| Memoryk11(RAN.1) ||| Memoryk12(RAN.1)
+                          ||| Memoryk13(RAN.1) ||| Memoryk14(RAN.1))
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory)\MEMI11 )
+
+A11a2(b_L) =
+  let
+    MemoryA(x,v) =
+      ( ( (  mget11.x.v -> MemoryA(x,v) )
+     [] ( mset11.x?nv:typeRAN(x) -> MemoryA(x,nv) ))
+     [] terminate -> SKIP)
+   Memory(b) = ||| n: dom(b) @ MemoryA(n,RAN.0)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
+
+A11b1(b_L) =
+  let
+    Memoryk1(x) = ( ( ( mget11.k1.x -> Memoryk1(x) ) [] ( mset11.k1?nv:typeRAN(k1) -> Memoryk1(nv) )) [] terminate -> SKIP)
+    Memoryk2(x) = ( ( ( mget11.k2.x -> Memoryk2(x) ) [] ( mset11.k2?nv:typeRAN(k2) -> Memoryk2(nv) )) [] terminate -> SKIP)
+    Memoryk3(x) = ( ( ( mget11.k3.x -> Memoryk3(x) ) [] ( mset11.k3?nv:typeRAN(k3) -> Memoryk3(nv) )) [] terminate -> SKIP)
+    Memoryk4(x) = ( ( ( mget11.k4.x -> Memoryk4(x) ) [] ( mset11.k4?nv:typeRAN(k4) -> Memoryk4(nv) )) [] terminate -> SKIP)
+    Memoryk5(x) = ( ( ( mget11.k5.x -> Memoryk5(x) ) [] ( mset11.k5?nv:typeRAN(k5) -> Memoryk5(nv) )) [] terminate -> SKIP)
+    Memoryk6(x) = ( ( ( mget11.k6.x -> Memoryk6(x) ) [] ( mset11.k6?nv:typeRAN(k6) -> Memoryk6(nv) )) [] terminate -> SKIP)
+    Memoryk7(x) = ( ( ( mget11.k7.x -> Memoryk7(x) ) [] ( mset11.k7?nv:typeRAN(k7) -> Memoryk7(nv) )) [] terminate -> SKIP)
+    Memoryk8(x) = ( ( ( mget11.k8.x -> Memoryk8(x) ) [] ( mset11.k8?nv:typeRAN(k8) -> Memoryk8(nv) )) [] terminate -> SKIP)
+    Memoryk9(x) = ( ( ( mget11.k9.x -> Memoryk9(x) ) [] ( mset11.k9?nv:typeRAN(k9) -> Memoryk9(nv) )) [] terminate -> SKIP)
+    Memoryk10(x) = ( ( ( mget11.k10.x -> Memoryk10(x) ) [] ( mset11.k10?nv:typeRAN(k10) -> Memoryk10(nv) )) [] terminate -> SKIP)
+    Memoryk11(x) = ( ( ( mget11.k11.x -> Memoryk11(x) ) [] ( mset11.k11?nv:typeRAN(k11) -> Memoryk11(nv) )) [] terminate -> SKIP)
+    Memoryk12(x) = ( ( ( mget11.k12.x -> Memoryk12(x) ) [] ( mset11.k12?nv:typeRAN(k12) -> Memoryk12(nv) )) [] terminate -> SKIP)
+    Memoryk13(x) = ( ( ( mget11.k13.x -> Memoryk13(x) ) [] ( mset11.k13?nv:typeRAN(k13) -> Memoryk13(nv) )) [] terminate -> SKIP)
+    Memoryk14(x) = ( ( ( mget11.k14.x -> Memoryk14(x) ) [] ( mset11.k14?nv:typeRAN(k14) -> Memoryk14(nv) )) [] terminate -> SKIP)
+    Memory = (Memoryk1(RAN.1) [] Memoryk2(RAN.1) [] Memoryk3(RAN.1) [] Memoryk4(RAN.1) [] Memoryk5(RAN.1)
+                          [] Memoryk6(RAN.1) [] Memoryk7(RAN.1) [] Memoryk8(RAN.1) [] Memoryk9(RAN.1)
+                          [] Memoryk10(RAN.1) [] Memoryk11(RAN.1) [] Memoryk12(RAN.1)
+                          [] Memoryk13(RAN.1) [] Memoryk14(RAN.1))
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory)\MEMI11 )
+
+A11b2(b_L) =
+  let
+   MemoryA(x,v) =
+      ( ( (  mget11.x.v -> MemoryA(x,v) ) [] ( mset11.x?nv:typeRAN(x) -> MemoryA(x,nv) )) [] terminate -> SKIP)
+   Memory(b) = [] n: dom(b) @ MemoryA(n,RAN.0)
+  within ( (
+    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+      terminate -> SKIP )
+      [| MEMI11 |] Memory(b_L))\MEMI11 )
+
+-- assert A11(b_L11) [FD= A11a1(b_L11)
+-- assert A11(b_L11) [FD= A11a2(b_L11)
+-- assert A11(b_L11) [FD= A11b1(b_L11)
+-- assert A11(b_L11) [FD= A11b2(b_L11)
+-- assert A11a1(b_L11) [FD= A11(b_L11) -- failed
+-- assert A11a2(b_L11) [FD= A11(b_L11) -- failed
+-- assert A11b1(b_L11) [FD= A11(b_L11) -- failed
+-- assert A11b2(b_L11) [FD= A11(b_L11) -- failed
+assert A11a1(b_L11) [FD= A11a2(b_L11)
+assert A11a2(b_L11) [FD= A11a1(b_L11)
+assert A11b1(b_L11) [FD= A11b2(b_L11)
+assert A11b2(b_L11) [FD= A11b1(b_L11)
+assert A11a1(b_L11) [FD= A11b2(b_L11)
+assert A11a2(b_L11) [FD= A11b1(b_L11)
+assert A11b1(b_L11) [FD= A11a2(b_L11)
+assert A11b2(b_L11) [FD= A11a1(b_L11)
+-- assert A11(b_L11) :[deadlock free]-- failed
+-- assert A11(b_L11) :[deterministic [FD]]-- failed
+assert A11a1(b_L11) :[deadlock free]-- failed
+assert A11a1(b_L11) :[deterministic [FD]]
+assert A11a2(b_L11) :[deadlock free] -- failed
+assert A11a2(b_L11) :[deterministic [FD]]
+assert A11b1(b_L11) :[deadlock free]-- failed
+assert A11b1(b_L11) :[deterministic [FD]]
+assert A11b2(b_L11) :[deadlock free] -- failed
+assert A11b2(b_L11) :[deterministic [FD]]

@@ -1,0 +1,209 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+
+datatype L3 = a1 | a2 | a3
+datatype L8 = h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8
+datatype L9 = i1 | i2 | i3 | i4 | i5 | i6 | i7 | i8 | i9 | i10
+datatype L10 = j1 | j2 | j3 | j4 | j5 | j6 | j7
+                  | j8 | j9 | j10 | j11 | j12
+datatype L11 = k1 | k2 | k3 | k4 | k5 | k6 | k7
+              | k8 | k9 | k10 | k11 | k12 | k13 | k14
+              | ka1 | ka2 | ka3 | ka4 | ka5 | ka6 | ka7
+              | ka8 | ka9 | ka10 | ka11 | ka12 | ka13 | ka14
+              | kb1 | kb2 | kb3 | kb4 | kb5 | kb6 | kb7
+              | kb8 | kb9 | kb10 | kb11 | kb12 | kb13 | kb14
+
+RANGE = {0..1}
+--------------------------------
+-- The universe of values
+datatype UNIVERSE = RAN.RANGE
+--Conversions
+valueRAN(RAN.v) = v
+
+typeRAN(x) = U_RAN
+
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec
+
+-- Subtype definition for b_*
+
+b_L3 = {(a1, RAN.0),(a2, RAN.0),(a3, RAN.0)}
+
+L3_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- L3})
+L3_BINDINGS_RAN = {set(b) | b <- set(distCartProd(L3_VALUES_RAN))}
+
+
+--------------------------------
+ -- mget, mset and terminate --
+--------------------------------
+channel mget3, mset3 : L3.UNIVERSE
+channel terminate
+channel hello
+
+--------------------------------
+ -- MEMI --
+--------------------------------
+MEMI3 = {| mset3,mget3,terminate |}
+
+
+-- Proc examples
+MyProc = ( ([] n : dom(b_L3) @ mget3.n?v_n:(typeRAN(n)) -> MyProc)
+           []
+           ([] n : dom(b_L3) @ mset3.n.(RAN.1) -> MyProc) )
+
+NewProc = ( ([] n : dom(b_L3) @ mget3.n?v_n:(typeRAN(n)) -> hello -> NewProc)
+           []
+           ([] n : dom(b_L3) @ mset3.n.(RAN.1) -> hello -> NewProc) )
+
+StopProc = mget3.a1?x:(typeRAN(a1)) -> mset3.a2.(RAN.1) -> HELLO
+
+HELLO = hello -> HELLO
+
+-- assertions on Proc Examples
+assert MyProc :[divergence free]
+assert MyProc :[deadlock free]
+assert MyProc :[deterministic]
+
+assert StopProc :[divergence free]
+assert StopProc :[deadlock free]
+assert StopProc :[deterministic]
+
+assert NewProc :[divergence free]
+assert NewProc :[deadlock free]
+assert NewProc :[deterministic]
+
+-----------------
+
+-- Memory Model original
+A3Current(pr,b_L) =
+  let
+     Memory(b_L) =
+       ( ( ( [] n : dom(b_L) @ mget3.n.apply(b_L,n) -> Memory(b_L) )
+      [] ( [] n : dom(b_L) @ mset3.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+      [] terminate -> SKIP)
+  within ( ( ( pr ; terminate -> SKIP ) [| MEMI3 |] Memory(b_L))\MEMI3 )
+
+-- Memory model with Interleaving
+A3Interleaving(pr,b_L) =
+  let
+    Memorya1(x) = ( ( ( mget3.a1.x -> Memorya1(x) ) [] ( mset3.a1?nv:typeRAN(a1) -> Memorya1(nv) )) [] terminate -> SKIP)
+    Memorya2(x) = ( ( ( mget3.a2.x -> Memorya2(x) ) [] ( mset3.a2?nv:typeRAN(a2) -> Memorya2(nv) )) [] terminate -> SKIP)
+    Memorya3(x) = ( ( ( mget3.a3.x -> Memorya3(x) ) [] ( mset3.a3?nv:typeRAN(a3) -> Memorya3(nv) )) [] terminate -> SKIP)
+    Memory = (Memorya1(RAN.0) ||| Memorya2(RAN.0) ||| Memorya3(RAN.0))
+  within ( (
+  ( pr ; terminate -> SKIP )
+      [| MEMI3 |] Memory)\MEMI3 )
+
+A3RepInterleaving(pr,b_L) =
+  let
+    MemoryA(x,v) =
+      ( ( (  mget3.x.v -> MemoryA(x,v) )
+     [] ( mset3.x?nv:typeRAN(x) -> MemoryA(x,nv) ))
+     [] terminate -> SKIP)
+   Memory(b) = ||| n: dom(b) @ MemoryA(n,RAN.0)
+  within ( (
+  ( pr ; terminate -> SKIP )
+      [| MEMI3 |] Memory(b_L))\MEMI3 )
+
+-- Checks
+assert A3Current(MyProc,b_L3) [FD= A3Interleaving(MyProc,b_L3)
+assert A3Current(MyProc,b_L3) [FD= A3RepInterleaving(MyProc,b_L3)
+assert A3Interleaving(MyProc,b_L3) [FD= A3Current(MyProc,b_L3)
+assert A3Interleaving(MyProc,b_L3) [FD= A3RepInterleaving(MyProc,b_L3)
+assert A3RepInterleaving(MyProc,b_L3) [FD= A3Current(MyProc,b_L3)
+assert A3RepInterleaving(MyProc,b_L3) [FD= A3Interleaving(MyProc,b_L3)
+-- assert A3Current(MyProc,b_L3) :[deadlock free]
+-- assert A3Current(MyProc,b_L3) :[deterministic [FD]]
+-- assert A3Interleaving(MyProc,b_L3) :[deadlock free]
+-- assert A3Interleaving(MyProc,b_L3) :[deterministic [FD]]
+-- assert A3RepInterleaving(MyProc,b_L3) :[deadlock free]
+-- assert A3RepInterleaving(MyProc,b_L3) :[deterministic [FD]]
+
+
+assert A3Current(StopProc,b_L3) [FD= A3Interleaving(StopProc,b_L3)
+assert A3Current(StopProc,b_L3) [FD= A3RepInterleaving(StopProc,b_L3)
+assert A3Interleaving(StopProc,b_L3) [FD= A3Current(StopProc,b_L3)
+assert A3Interleaving(StopProc,b_L3) [FD= A3RepInterleaving(StopProc,b_L3)
+assert A3RepInterleaving(StopProc,b_L3) [FD= A3Current(StopProc,b_L3)
+assert A3RepInterleaving(StopProc,b_L3) [FD= A3Interleaving(StopProc,b_L3)
+assert A3Current(StopProc,b_L3) :[deadlock free]
+assert A3Current(StopProc,b_L3) :[deterministic [FD]]
+assert A3Interleaving(StopProc,b_L3) :[deadlock free]
+assert A3Interleaving(StopProc,b_L3) :[deterministic [FD]]
+assert A3RepInterleaving(StopProc,b_L3) :[deadlock free]
+assert A3RepInterleaving(StopProc,b_L3) :[deterministic [FD]]
+
+assert A3Current(NewProc,b_L3) [FD= A3Interleaving(NewProc,b_L3)
+assert A3Current(NewProc,b_L3) [FD= A3RepInterleaving(NewProc,b_L3)
+assert A3Interleaving(NewProc,b_L3) [FD= A3Current(NewProc,b_L3)
+assert A3Interleaving(NewProc,b_L3) [FD= A3RepInterleaving(NewProc,b_L3)
+assert A3RepInterleaving(NewProc,b_L3) [FD= A3Current(NewProc,b_L3)
+assert A3RepInterleaving(NewProc,b_L3) [FD= A3Interleaving(NewProc,b_L3)
+assert A3Current(NewProc,b_L3) :[deadlock free]
+assert A3Current(NewProc,b_L3) :[deterministic [FD]]
+assert A3Interleaving(NewProc,b_L3) :[deadlock free]
+assert A3Interleaving(NewProc,b_L3) :[deterministic [FD]]
+assert A3RepInterleaving(NewProc,b_L3) :[deadlock free]
+assert A3RepInterleaving(NewProc,b_L3) :[deterministic [FD]]
+
+-- Taking into account only the Memory models,
+-- where Memory is the original
+--       MemoryExtChoice_ is external choice of memories for each variables
+--       MemoryRepExtChoice_ is the replicated external choice more general
+
+
+Memory(b_L) =
+  ( ( ( [] n : dom(b_L) @ mget3.n.apply(b_L,n) -> Memory(b_L) )
+ [] ( [] n : dom(b_L) @ mset3.n?nv:typeRAN(n) -> Memory(over(b_L,n,nv)) ))
+ [] terminate -> SKIP)
+Memory_ = |~| b:L3_BINDINGS_RAN @ Memory(b)
+MemoryExtChoice_a1(x) = ( ( ( mget3.a1.x -> MemoryExtChoice_a1(x) ) [] ( mset3.a1?nv:typeRAN(a1) -> MemoryExtChoice_a1(nv) )) [] terminate -> SKIP)
+MemoryExtChoice_a2(x) = ( ( ( mget3.a2.x -> MemoryExtChoice_a2(x) ) [] ( mset3.a2?nv:typeRAN(a2) -> MemoryExtChoice_a2(nv) )) [] terminate -> SKIP)
+MemoryExtChoice_a3(x) = ( ( ( mget3.a3.x -> MemoryExtChoice_a3(x) ) [] ( mset3.a3?nv:typeRAN(a3) -> MemoryExtChoice_a3(nv) )) [] terminate -> SKIP)
+MemoryExtChoice_ = (MemoryExtChoice_a1(RAN.0) ||| MemoryExtChoice_a2(RAN.0) ||| MemoryExtChoice_a3(RAN.0))
+
+
+MemoryRepExtChoice_A(x,v) =
+  ( ( (  mget3.x.v -> MemoryRepExtChoice_A(x,v) )
+  [] ( mset3.x?nv:typeRAN(x) -> MemoryRepExtChoice_A(x,nv) ))
+  [] terminate -> SKIP)
+MemoryRepExtChoice_(b) = (||| n: dom(b),v:ran(b) @ MemoryRepExtChoice_A(n,v))
+
+--
+-- assert Memory(b_L3) [FD= MemoryExtChoice_
+-- assert Memory(b_L3) [FD= MemoryRepExtChoice_(b_L3)
+-- assert MemoryExtChoice_ [FD= Memory(b_L3)
+-- assert MemoryExtChoice_ [FD= MemoryRepExtChoice_(b_L3)
+-- assert MemoryRepExtChoice_(b_L3) [FD= Memory(b_L3)
+-- assert MemoryRepExtChoice_(b_L3) [FD= MemoryExtChoice_
+--
+--
+-- assert Memory(b_L3) :[deadlock free]
+-- assert Memory(b_L3) :[deterministic [FD]]
+-- assert MemoryExtChoice_ :[deadlock free]
+-- assert MemoryExtChoice_ :[deterministic [FD]]
+-- assert MemoryRepExtChoice_(b_L3) :[deadlock free]
+-- assert MemoryRepExtChoice_(b_L3) :[deterministic [FD]]
+
+-- Testing the interaction between the three Memory models with MyProc
+-- assert (((( ( ( MyProc ; terminate -> SKIP )
+--             [| MEMI3 |] Memory(b_L3))
+--             [| MEMI3 |] MemoryExtChoice_))
+--             [| MEMI3 |] MemoryRepExtChoice_(b_L3))\MEMI3 )
+--             [FD= A3Current(MyProc,b_L3)
+-- assert (((( ( ( MyProc ; terminate -> SKIP )
+--             [| MEMI3 |] Memory(b_L3))
+--             [| MEMI3 |] MemoryExtChoice_))
+--             [| MEMI3 |] MemoryRepExtChoice_(b_L3))\MEMI3 )
+--             [FD= A3Interleaving(MyProc,b_L3)
+-- assert (((( ( ( MyProc ; terminate -> SKIP )
+--             [| MEMI3 |] Memory(b_L3))
+--             [| MEMI3 |] MemoryExtChoice_))
+--             [| MEMI3 |] MemoryRepExtChoice_(b_L3))\MEMI3 )
+--             [FD= A3RepInterleaving(MyProc,b_L3)
