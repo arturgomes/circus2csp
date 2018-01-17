@@ -908,7 +908,7 @@ get_if lst param (CircThenElse (CircGAction p a) gb)
 
 \begin{code}
 get_action :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> CAction
-get_action _ _ _ [] = error "Action list is empty"
+-- get_action _ _ _ [] = error "Action list is empty"
 get_action name lst param [(CParAction n (CircusAction a))]
   | name == n = expand_action_names_CAction lst param a
   | otherwise = error ("Action "++(name)++" not found")
@@ -923,6 +923,7 @@ get_action name lst param ((CParAction n (ParamActionDecl p (CircusAction a))):x
   | otherwise = get_action name lst param xs
 get_action name lst param (_:xs)
   = get_action name lst param xs
+get_action n _ _ [] = error ("Action list is empty"++n)
 \end{code}
 
 \begin{code}

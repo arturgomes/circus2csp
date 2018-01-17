@@ -72,14 +72,14 @@ NatValue == 0 \upto 2
 \end{circus}
 \begin{circus}
   \circchannelset MainTherapyChanSet ==
-  \\\t3  \lchanset~\\
+  \\ \lchanset
      preparationPhase, therapyInitiation,\\
         connectingToPatient, duringTherapy,\\
-        therapyEnding\rchanset
+        therapyEnding \rchanset
 \end{circus}
-\begin{circus}   
+\begin{circus}
 \circchannelset HDMachineStChanSet ==
-\\\t3  \lchanset~ 
+\\\t3  \lchanset~
  getHdMachineState, preparationPhase,
 connectingToPatient, therapyInitiation, therapyEnding\rchanset
 \end{circus}
@@ -98,9 +98,9 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
 \end{circusaction}
 \begin{circusaction}
   Clock ~\circdef~
-  \\\t2 \circmu~X \circspot 
+  \\\t2 \circmu~X \circspot
     ((\circif time \leq 3 \circthen (tick \then (time := time+1) \interleave (getCurrentTime!time \then \Skip))
-        \circelse time > 2 \circthen ((time := 0) \circseq \Skip) 
+        \circelse time > 2 \circthen ((time := 0) \circseq \Skip)
         \circfi) \circseq X)
 \end{circusaction}
 
@@ -277,7 +277,7 @@ connectingToPatient, therapyInitiation, therapyEnding\rchanset
     \t2 \extchoice setMinUFRateTreat?minUFRateTreat \then SensorReadings
 \end{circusaction}
 \begin{circusaction}
-  StatePhase \circdef\\\t1 
+  StatePhase \circdef\\\t1
   (preparationPhase \then (hdMachineState := prepPhase) \circseq StatePhase\\
           \extchoice connectingToPatient \then
           \\\t2 (hdMachineState := connectThePatient) \circseq StatePhase\\
@@ -333,19 +333,19 @@ R2 ~\circdef~ NoFlowWatchDog \interleave BloodFlowSample
 %</R2>%<*ZR3>
 
 \begin{circusaction}
-  R3~\circdef~\circif hdMachineState~=~\{initPhase\}\land 
+  R3~\circdef~\circif hdMachineState~=~\{initPhase\}\land
   bloodFlowInEBC < ((dfFlow * 70) \div 100)~\circthen~RaiseAlarm\\
-  \t2 \circelse \lnot hdMachineState~=~\{initPhase\}\land 
+  \t2 \circelse \lnot hdMachineState~=~\{initPhase\}\land
   bloodFlowInEBC < ((dfFlow * 70) \div 100) \circthen Wait(chkInterval)\circseq R3\circfi
 \end{circusaction}
 %</ZR3>
 
 % %<*ZR4>\begin{circusaction}
   R4~\circdef
-    \circif hdMachineState~=~\{initPhase\}\land rotDirectionBP~=~BACKWARDS 
+    \circif hdMachineState~=~\{initPhase\}\land rotDirectionBP~=~BACKWARDS
       ~\circthen~(StopBP~\interleave~RaiseAlarm)
-    \circelse \lnot (hdMachineState~=~\{initPhase\}\land rotDirectionBP~=~BACKWARDS) 
-        \circthen (Wait(chkInterval)\circseq R4) 
+    \circelse \lnot (hdMachineState~=~\{initPhase\}\land rotDirectionBP~=~BACKWARDS)
+        \circthen (Wait(chkInterval)\circseq R4)
     \circfi
 \end{circusaction}
 % %</ZR4>
@@ -841,7 +841,7 @@ SoftwareRequirements~\circdef~
 \end{circusaction}
 
 % \section{Therapy Processes}
-% 
+%
 % \subsection{Therapy Preparation}
 
 \begin{circusaction}
@@ -878,12 +878,12 @@ RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\th
 \end{circusaction}
 \begin{circusaction}
 SetRinsingParameters~\circdef
-  \\\t1 inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient \then 
-  \\\t1 setFillingBPRate!sFBPRate \then 
-  \\\t1 setRinsingBPRate!sRBPRate \then 
-  \\\t1 setRinsingTime!sRTime \then 
-  \\\t1 setUfRateForRinsing!sUFRFRinsing \then 
-  \\\t1 setUfVolForRinsing!sUFVFRinsing \then 
+  \\\t1 inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient \then
+  \\\t1 setFillingBPRate!sFBPRate \then
+  \\\t1 setRinsingBPRate!sRBPRate \then
+  \\\t1 setRinsingTime!sRTime \then
+  \\\t1 setUfRateForRinsing!sUFRFRinsing \then
+  \\\t1 setUfVolForRinsing!sUFVFRinsing \then
   \\\t1 setBloodFlowForConnectingPatient!sBFFCPatient \then \Skip
 
 \end{circusaction}
@@ -1002,9 +1002,7 @@ TherapyEnding~\circdef
 
 \begin{circusaction}
 MainTherapy~\circdef
-  TherapyPreparation
-  \circseq TherapyInitiation
-  \circseq TherapyEnding
+  TherapyPreparation \circseq TherapyInitiation \circseq TherapyEnding
 \end{circusaction}
 
 \begin{circusaction}
@@ -1013,15 +1011,10 @@ HDMachineMain~\circdef HDGenCompInit \circseq
         \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
         \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
         \lpar \emptyset | HDMachineChanSet | \emptyset \rpar SensorReadings)
-
 \end{circusaction}
 
 \begin{circus}
-  \circspot HDGenCompInit \circseq
-(((MainTherapy
-        \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
-        \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
-        \lpar \emptyset | HDMachineChanSet | \emptyset \rpar SensorReadings)
+  \circspot HDMachineMain
 
 \circend
 \end{circus}

@@ -187,6 +187,17 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
           "\nsubtype "++nm ++ " = "++
           (mapping_ZBranch_list (remdups zbs))++
           "\n" ++ mk_NAME_VALUES_TYPE (lastN 3 nm) ++ "\n"
+  | Subs.isPrefixOf "NAME_NAT" nm
+      && (Data.List.length nm > Data.List.length "NAME")
+        = "\n-- Subtype definition for "++(lastN 3 nm)++
+        "\nb_"++(lastN 3 nm)++
+        "1 = {"++
+        (joinBy "," $ map (make_binding spec (lastN 3 nm)) (remdups $ map (\(ZBranch0 x) -> x) zbs))++
+        "}"++
+          "\nsubtype "++nm ++ " = "++
+          (mapping_ZBranch_list (remdups zbs))++
+          "\n" ++ mk_NAME_VALUES_TYPE (lastN 3 nm) ++ "\n"
+
   | Subs.isPrefixOf "U_" nm
       && (Data.List.length nm > Data.List.length "U_")
         = "\n-- subtypes of UNIVERSE for "++(lastN 3 nm)
@@ -1200,8 +1211,9 @@ mapping_ZTuple _ = ""
 
 \begin{code}
 mapping_ZCross [ZVar ("\\int",_,[])] = "Int"
+mapping_ZCross [ZVar ("\\nat",_,[])] = "NatValue"
 mapping_ZCross [ZVar (v,_,_)] = v
-mapping_ZCross ((ZVar (v,_,_)):xs) = (v) ++ "." ++ (mapping_ZCross xs)
+mapping_ZCross ((ZVar x):xs) = (mapping_ZCross [ZVar x]) ++ "." ++ (mapping_ZCross xs)
 mapping_ZCross _ = ""
 \end{code}
 
@@ -1314,6 +1326,7 @@ get_type_universe' n (ZBranch1 (a,_,_) (ZVar e@(b,c,d)))
 get_type_universe' _ _ = []
 
 get_min_val :: ZVar -> ZPara -> [ZExpr]
+
 get_min_val n (ZAbbreviation y (ZCall (ZVar ("\\upto",[],"")) (ZTuple xs)))
   | (nfst n) == (nfst y) = [Data.List.head xs]
   | otherwise = []
@@ -1327,8 +1340,10 @@ make_binding spec n (a,b,c)
   | Subs.isPrefixOf "P" c
       = "("++a++", "++ c++".{"++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
                             else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++"})"
+  | "NAT" == c
+      = "("++a++", "++ c++".0)"
   | otherwise = "("++a++", "++ c++"."++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
-                                    else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
+                            else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
   where
     rtype = Data.List.head $ concat (map (get_type_universe c) spec)
     getMinVal = (concat $ map (get_min_val rtype) spec)
