@@ -123,7 +123,22 @@ A1(b_L) =
     ([] n : dom(b_L) @ mset1.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI1 |] Memory(b_L))\MEMI1 )
+A1RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget1.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mget1.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget1.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mget1.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI1 |] MemoryPAC(b_L))\MEMI1 )
 
+-- assert A1(b_L1) :[deterministic [FD]] -- 0m0.668s
+
+-- assert A1RepInterleaving(b_L1) :[deterministic [FD]] -- 0m0.121s
 A2(b_L) =
   let
      Memory(b_L) =
@@ -135,7 +150,22 @@ A2(b_L) =
     ([] n : dom(b_L) @ mset2.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI2 |] Memory(b_L))\MEMI2 )
+A2RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget2.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mget2.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget2.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mget2.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI2 |] MemoryPAC(b_L))\MEMI2 )
 
+-- assert A2(b_L2) :[deterministic [FD]] -- 0m0.668s
+
+-- assert A2RepInterleaving(b_L2) :[deterministic [FD]] -- 0m0.122s
 A3(b_L) =
   let
      Memory(b_L) =
@@ -147,6 +177,21 @@ A3(b_L) =
     ([] n : dom(b_L) @ mset3.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI3 |] Memory(b_L))\MEMI3 )
+A3RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget3.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mget3.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget3.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mget3.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI3 |] MemoryPAC(b_L))\MEMI3 )
+
+-- assert A3(b_L3) :[deterministic [FD]] -- 0m0.156s
+-- assert A3RepInterleaving(b_L3) :[deterministic [FD]] -- 0m0.148s
 
 A4(b_L) =
   let
@@ -159,6 +204,20 @@ A4(b_L) =
     ([] n : dom(b_L) @ mset4.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI4 |] Memory(b_L))\MEMI4 )
+A4RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget4.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mget4.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget4.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mget4.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI4 |] MemoryPAC(b_L))\MEMI4 )
+-- assert A4(b_L4) :[deterministic [FD]] -- 0m0.320s
+-- assert A4RepInterleaving(b_L4) :[deterministic [FD]] -- 0m0.140s
 
 
 A5(b_L) =
@@ -172,6 +231,22 @@ A5(b_L) =
     ([] n : dom(b_L) @ mset5.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI5 |] Memory(b_L))\MEMI5 )
+A5RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget5.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mget5.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget5.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mget5.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI5 |] MemoryPAC(b_L))\MEMI5 )
+
+-- assert A5(b_L5) :[deterministic [FD]] -- 0m0.668s
+
+-- assert A5RepInterleaving(b_L5) :[deterministic [FD]] -- 0m0.124s
 
 A6(b_L) =
   let
@@ -184,6 +259,22 @@ A6(b_L) =
     ([] n : dom(b_L) @ mset6.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI6 |] Memory(b_L))\MEMI6 )
+A6RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget6.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mset6.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget6.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mset6.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI6 |] MemoryPAC(b_L))\MEMI6 )
+
+-- assert A6(b_L6) :[deterministic [FD]] -- 0m2.088s
+
+-- assert A6RepInterleaving(b_L6) :[deterministic [FD]] -- 0m0.128s
 
 A7(b_L) =
   let
@@ -197,6 +288,24 @@ A7(b_L) =
       terminate -> SKIP )
       [| MEMI7 |] Memory(b_L))\MEMI7 )
 
+
+
+A7RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget7.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mset7.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget7.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mset7.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI7 |] MemoryPAC(b_L))\MEMI7 )
+
+-- assert A7(b_L7) :[deterministic [FD]] -- 0m8.160s
+-- assert A7RepInterleaving(b_L7) :[deterministic [FD]] -- 0m0.116s
+
 A8(b_L) =
   let
      Memory(b_L) =
@@ -208,7 +317,21 @@ A8(b_L) =
     ([] n : dom(b_L) @ mset8.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI8 |] Memory(b_L))\MEMI8 )
+A8RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget8.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mset8.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget8.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mset8.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI8 |] MemoryPAC(b_L))\MEMI8 )
 
+-- assert A8(b_L8) :[deterministic [FD]] -- 0m27.824s
+-- assert A8RepInterleaving(b_L8) :[deterministic [FD]] -- 0m0.176s
 A9(b_L) =
   let
      Memory(b_L) =
@@ -220,7 +343,21 @@ A9(b_L) =
     ([] n : dom(b_L) @ mset9.n.(RAN.1) -> SKIP));
       terminate -> SKIP )
       [| MEMI9 |] Memory(b_L))\MEMI9 )
+A9RepInterleaving(b_L) =
+  let
+    MemoryPACV(n,b_PAC) =
+      (mget9.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mset9.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget9.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mset9.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI9 |] MemoryPAC(b_L))\MEMI9 )
 
+-- assert A9(b_L9) :[deterministic [FD]] -- 0m9.160s
+-- assert A9RepInterleaving(b_L9) :[deterministic [FD]] -- 0m0.116s
 A10(b_L) =
   let
      Memory(b_L) =
@@ -246,31 +383,21 @@ A11(b_L) =
       [| MEMI11 |] Memory(b_L))\MEMI11 )
 
 
-A11a(b_L) =
+A11RepInterleaving(b_L) =
   let
-     MemoryA(n,v) =
-       ( ( ( mget11.n.v -> MemoryA(n,v) )
-      [] ( mset11.n?nv -> MemoryA(n,nv) ))
-      [] terminate -> SKIP)
-    Memory(b_L) = ||| n: dom(b_L), v: ran(b_L) @ MemoryA(n,v)
-  within ( (
-    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI11 |] Memory(b_L))\MEMI11 )
+    MemoryPACV(n,b_PAC) =
+      (mget11.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+      [] (mset11.n?nv:typeRAN(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+      [] terminate -> SKIP
+    MemoryPAC(b_PAC) =
+      [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+  within
+  ((( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
+  ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
+    terminate -> SKIP ) [| MEMI11 |] MemoryPAC(b_L))\MEMI11 )
 
-A11b(b_L) =
-  let
-     MemoryA(n,v) =
-       ( ( ( mget11.n.v -> MemoryA(n,v) )
-      [] ( mset11.n?nv -> MemoryA(n,nv) ))
-      [] terminate -> SKIP)
-    Memory(b_L) = [] n: dom(b_L), v: ran(b_L) @ MemoryA(n,v)
-  within ( (
-    ( (([] n : dom(b_L) @ mget11.n?v_n:(typeRAN(n)) -> SKIP)[]
-    ([] n : dom(b_L) @ mset11.n.(RAN.1) -> SKIP));
-      terminate -> SKIP )
-      [| MEMI11 |] Memory(b_L))\MEMI11 )
+-- assert A1(b_L9) :[deterministic [FD]] -- 0m9.160s
+assert A11RepInterleaving(b_L11) :[deterministic [FD]] -- 0m0.116s
 
 -- Testing
 
@@ -279,6 +406,6 @@ A11b(b_L) =
 -- assert A11(b_L11) [FD= A11a(b_L11)
 -- assert A11(b_L11) [FD= A11b(b_L11)
 -- assert A11a(b_L11) [FD= A11(b_L11) -- failed
-assert A11a(b_L11) [FD= A11b(b_L11)
+-- assert A11a(b_L11) [FD= A11b(b_L11)
 -- assert A11b(b_L11) [FD= A11(b_L11) -- failed
-assert A11b(b_L11) [FD= A11a(b_L11)
+-- assert A11b(b_L11) [FD= A11a(b_L11)

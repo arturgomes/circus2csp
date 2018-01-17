@@ -137,36 +137,8 @@ channel lget, lset : NAME.UNIVERSE
 channel lterminate
 MEML = {| lset,lget,lterminate |}
 
-HDMachine(b_PAC,b_PST,b_BUT,b_NAT) =
-  let
-      MemoryPACV(n,b_PAC) =
-        (mget.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
-        [] (mset.n?nv:typePAC(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
-        [] terminate -> SKIP
-      MemoryPAC(b_PAC) =
-        ||| n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
-      MemoryPSTV(n,b_PST) =
-        (mget.n.apply(b_PST,n) -> MemoryPSTV(n,b_PST))
-        [] (mset.n?nv:typePST(n) -> MemoryPSTV(n,over(b_PST,n,nv)) )
-        [] terminate -> SKIP
-      MemoryPST(b_PST) =
-        ||| n : dom(b_PST) @ MemoryPSTV(n,b_PST)
-      MemoryBUTV(n,b_BUT) =
-        (mget.n.apply(b_BUT,n) -> MemoryBUTV(n,b_BUT))
-        [] (mset.n?nv:typeBUT(n) -> MemoryBUTV(n,over(b_BUT,n,nv)) )
-        [] terminate -> SKIP
-      MemoryBUT(b_BUT) =
-        ||| n : dom(b_BUT) @ MemoryBUTV(n,b_BUT)
-      MemoryNATV(n,b_NAT) =
-        (mget.n.apply(b_NAT,n) -> MemoryNATV(n,b_NAT))
-        [] (mset.n?nv:typeNAT(n) -> MemoryNATV(n,over(b_NAT,n,nv)) )
-        [] terminate -> SKIP
-      MemoryNAT(b_NAT) =
-        ||| n : dom(b_NAT) @ MemoryNATV(n,b_NAT)
-      Memory(b_PAC,b_PST,b_BUT,b_NAT) =
-        MemoryPAC(b_PAC) ||| MemoryPST(b_PST) ||| MemoryBUT(b_BUT) ||| MemoryNAT(b_NAT)
 
-  within
+HDMachine(b_PAC,b_PST,b_BUT,b_NAT) =
      let  restrictPAC(bs) = dres(bs,{sv_hdActivity})
          restrictPST(bs) = dres(bs,{sv_hdMachineState})
          restrictBUT(bs) = dres(bs,{sv_alarm, sv_bypassValve, sv_fflowDirect, sv_hdMode, sv_netFluidRemoval, sv_rotDirectionBP, sv_rotDirectionUFP, sv_signalLamp, sv_bloodLines, sv_minUFRateTreat, sv_bicarbonateAcetate})
@@ -314,3 +286,63 @@ SysClock(b_NAT) =
       X ) within X );
       terminate -> SKIP )
       [| MEMI |] Memory(restrictNAT(b_NAT)))\MEMI )
+
+
+
+
+
+
+
+
+MemoryPACV(n,b_PAC) =
+  (mget.n.apply(b_PAC,n) -> MemoryPACV(n,b_PAC))
+  [] (mset.n?nv:typePAC(n) -> MemoryPACV(n,over(b_PAC,n,nv)) )
+  [] terminate -> SKIP
+MemoryPAC(b_PAC) =
+  [|{|terminate|}|] n : dom(b_PAC) @ MemoryPACV(n,b_PAC)
+MemoryPSTV(n,b_PST) =
+  (mget.n.apply(b_PST,n) -> MemoryPSTV(n,b_PST))
+  [] (mset.n?nv:typePST(n) -> MemoryPSTV(n,over(b_PST,n,nv)) )
+  [] terminate -> SKIP
+MemoryPST(b_PST) =
+  [|{|terminate|}|] n : dom(b_PST) @ MemoryPSTV(n,b_PST)
+MemoryBUTV(n,b_BUT) =
+  (mget.n.apply(b_BUT,n) -> MemoryBUTV(n,b_BUT))
+  [] (mset.n?nv:typeBUT(n) -> MemoryBUTV(n,over(b_BUT,n,nv)) )
+  [] terminate -> SKIP
+MemoryBUT(b_BUT) =
+  [|{|terminate|}|] n : dom(b_BUT) @ MemoryBUTV(n,b_BUT)
+MemoryNATV(n,b_NAT) =
+  (mget.n.apply(b_NAT,n) -> MemoryNATV(n,b_NAT))
+  [] (mset.n?nv:typeNAT(n) -> MemoryNATV(n,over(b_NAT,n,nv)) )
+  [] terminate -> SKIP
+MemoryNAT(b_NAT) =
+  [|{|terminate|}|] n : dom(b_NAT) @ MemoryNATV(n,b_NAT)
+Memory1(b_PAC,b_PST,b_BUT,b_NAT) =
+  ((MemoryPAC(b_PAC) [|{|terminate|}|] MemoryPST(b_PST)) [|{|terminate|}|] MemoryBUT(b_BUT) )[|{|terminate|}|] MemoryNAT(b_NAT)
+
+
+
+Memory(b_PAC,b_PST,b_BUT,b_NAT) =
+   ( ( ( ( [] n : dom(b_PAC) @ mget.n.apply(b_PAC,n) ->
+ Memory(b_PAC,b_PST,b_BUT,b_NAT) )
+ [] ( ( [] n : dom(b_PST) @ mget.n.apply(b_PST,n) ->
+ Memory(b_PAC,b_PST,b_BUT,b_NAT) )
+ [] ( ( [] n : dom(b_BUT) @ mget.n.apply(b_BUT,n) ->
+ Memory(b_PAC,b_PST,b_BUT,b_NAT) )
+ [] ( [] n : dom(b_NAT) @ mget.n.apply(b_NAT,n) ->
+ Memory(b_PAC,b_PST,b_BUT,b_NAT) ))))
+ [] ( ( [] n : dom(b_PAC) @ mset.n?nv:typePAC(n) ->
+ Memory(over(b_PAC,n,nv),b_PST,b_BUT,b_NAT) )
+ [] ( ( [] n : dom(b_PST) @ mset.n?nv:typePST(n) ->
+ Memory(b_PAC,over(b_PST,n,nv),b_BUT,b_NAT) )
+ [] ( ( [] n : dom(b_BUT) @ mset.n?nv:typeBUT(n) ->
+ Memory(b_PAC,b_PST,over(b_BUT,n,nv),b_NAT) )
+ [] ( [] n : dom(b_NAT) @ mset.n?nv:typeNAT(n) ->
+ Memory(b_PAC,b_PST,b_BUT,over(b_NAT,n,nv)) )))))
+ [] terminate -> SKIP)
+
+assert Memory(b_PAC1,b_PST1,b_BUT1,b_NAT1)
+         [FD= Memory1(b_PAC1,b_PST1,b_BUT1,b_NAT1)
+assert Memory1(b_PAC1,b_PST1,b_BUT1,b_NAT1)
+         [FD= Memory(b_PAC1,b_PST1,b_BUT1,b_NAT1)
