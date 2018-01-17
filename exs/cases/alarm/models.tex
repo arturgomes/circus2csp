@@ -18,16 +18,16 @@ RANGE == 0 \upto 2
 \t1 IncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
 \t1 IncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
 \t1 Run \circdef \\
-\t2 \begin{block}
-\begin{block}
+\t2 (
+(
   tick \then IncSec \circseq \\
-      \begin{block}
+      (
         \circif sec = 0 \circthen IncMin\\
         \circelse sec \neq 0 \circthen \Skip \circfi
-      \end{block}
-\end{block}\\
+      )
+)\\
     \extchoice~ time \then out!(min, sec) \then \Skip \\
-\end{block}\\
+)\\
 \t1 \circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))\\
 \circend
 \end{circus}
@@ -40,19 +40,19 @@ RANGE == 0 \upto 2
 \also \circprocess Chrono \circdef\ \circbegin\\
 \circstate State \defs [ sec : RANGE; min : RANGE ]\\
 % \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
-\qquad SecInit \circdef (sec:=0)\\
-\qquad IncSec \circdef (sec:=(sec+1)\mod 3)\\
-\qquad RunSec \circdef\\
-\qquad\qquad\begin{block}\begin{block}tick \then IncSec \circseq\\
-    \begin{block}\circif  sec = 0 \circthen inc \then \Skip\\
-    \circelse sec \neq 0 \circthen \Skip \circfi\end{block}\end{block}\\
+ SecInit \circdef (sec:=0)\\
+ IncSec \circdef (sec:=(sec+1)\mod 3)\\
+ RunSec \circdef\\
+((tick \then IncSec \circseq\\
+    (\circif  sec = 0 \circthen inc \then \Skip\\
+    \circelse sec \neq 0 \circthen \Skip \circfi))\\
   \extchoice time \then minsReq \then ans?min \then out!(min,sec)
-      \then \Skip \end{block}  \\
-\qquad Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
-\qquad MinInit \circdef (min:=0)\\
-\qquad IncMin \circdef (min:=(min+1)\mod 3)\\
-\qquad RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
-\qquad Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+      \then \Skip )  \\
+ Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+ MinInit \circdef (min:=0)\\
+ IncMin \circdef (min:=(min+1)\mod 3)\\
+ RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
+ Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
 \circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
 \circend
 \end{circus}
@@ -67,17 +67,17 @@ RANGE == 0 \upto 2
 \t1 IncSec \circdef (sec:=(sec+1)\mod 3)\\
 \t1 RunSec \circdef
 \\\t2
-\begin{block}
-\begin{block}
+(
+(
 tick \then IncSec \circseq\\
-    \begin{block}
+    (
       \circif  sec = 0 \circthen inc \then \Skip\\
       \circelse sec \neq 0 \circthen \Skip \circfi
-    \end{block}\\
-    \end{block}\\
+    )\\
+    )\\
   \extchoice~time \then minsReq \then ans?min \then out!(min,sec)
       \then \Skip
-\end{block}\\
+)\\
  \t1\circspot SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
 \circend
 \end{circus}
@@ -90,10 +90,10 @@ tick \then IncSec \circseq\\
 \t1 MinInit \circdef (min:=0)\\
 \t1 IncMin \circdef (min:=(min+1)\mod 3)\\
 \t1 RunMin \circdef\\\t2
-\begin{block}
+(
   (inc \then IncMin)\\
   \extchoice (minsReq \then ans!min \then \Skip)\\
-\end{block}\\
+)\\
  \t1\circspot MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
 \circend
 \end{circus}
@@ -103,54 +103,70 @@ tick \then IncSec \circseq\\
   \circprocess ChronometerFull \circdef ((Seconds \lpar Sync \rpar Minutes) \circhide Sync)
 \end{circus}
 %
-% \section{Models by Artur Gomes}
-%
-% \subsection{$WakeUp$}
-%
-% \begin{circus}
-% ALARM ::= ON | OFF\\
-% \circchannel snooze,radioOn\\
-%
-% \circprocess\ WakeUp \circdef\\
-% \circbegin\\
-% \circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
-% WInit \circdef (sec,min,buzz:=0,0,OFF)\\
-% WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
-% WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
-% WRun \circdef \\
-% ((tick \then WIncSec \circseq \\
-%     ( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
-%     \extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip\\
-%     \extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
-%     \extchoice (time \then out!(min, sec) \then \Skip)\\
-%     \extchoice (snooze \then (buzz:=OFF)))) \circhide \lchanset tick \rchanset)
-% \\
-% \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
-% \circend
-% \end{circus}
-% \begin{circus}
-%
-%   \circprocess\ WakeUpOK \circdef\\
-%   \circbegin\\
-%   \circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
-%   WInit \circdef (sec,min,buzz:=0,0,OFF)\\
-%   WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
-%   WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
-%   WRun \circdef \\
-%   ((tick \then WIncSec \circseq \\
-%   		( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
-%   		\extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip))\\
-%   		\extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
-%   		\extchoice (time \then out!(min, sec) \then \Skip)\\
-%   		\extchoice (snooze \then (buzz:=OFF)) \circhide \lchanset tick \rchanset)
-%   \\
-%   \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
-%   \circend
-% % \end{circus}
-% \begin{assert}
+\section{Models by Artur Gomes}
+
+\subsection{$WakeUp$}
+
+\begin{circus}
+ALARM ::= ON | OFF\\
+\circchannel snooze,radioOn\\
+
+\circprocess\ WakeUp \circdef\\
+\circbegin\\
+\circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
+WInit \circdef (sec,min,buzz:=0,0,OFF)\\
+WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+WRun \circdef \\
+((tick \then WIncSec \circseq \\
+    ( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
+    \extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip\\
+    \extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
+    \extchoice (time \then out!(min, sec) \then \Skip)\\
+    \extchoice (snooze \then (buzz:=OFF)))) \circhide \lchanset tick \rchanset)
+\\
+\circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
+\circend
+\end{circus}
+\begin{circus}
+
+  \circprocess\ WakeUpOK \circdef\\
+  \circbegin\\
+  \circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
+  WInit \circdef (sec,min,buzz:=0,0,OFF)\\
+  WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+  WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+  WRun \circdef \\
+  ((tick \then WIncSec \circseq \\
+  		( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
+  		\extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip))\\
+  		\extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
+  		\extchoice (time \then out!(min, sec) \then \Skip)\\
+  		\extchoice (snooze \then (buzz:=OFF)) \circhide \lchanset tick \rchanset)
+  \\
+  \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
+  \circend
+\end{circus}
+\begin{assert}
 % "b_RAN1 = {(sv_sec, RAN.0), (sv_min, RAN.0)}"\\
+"HAChrono = AChrono(b_RAN1) \{|time, tick|}"\\
+\also "HChrono = Chrono(b_RAN1) \{|time, tick|}"\\
+\also "assert AChrono(b_RAN1):[deterministic [FD]]"\\
+\also "assert Chrono(b_RAN1) :[deterministic [FD]]"\\
+\also "assert HAChrono [FD= HChrono"\\
+\also "assert HChrono [FD= HAChrono"\\
+\also "assert WakeUp(b_RAN1,b_ALA1) :[deterministic [FD]]"\\
+\also "HWakeUp = WakeUp(b_RAN1,b_ALA1) \ {|time, tick, snooze, radioOn |}"\\
+\also "assert HWakeUp :[deterministic [FD]]"\\
+\also "assert AChrono(b_RAN1)[FD= HWakeUp"\\
+\also "assert HWakeUp [FD= AChrono(b_RAN1)"\\
+\also "assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]"\\
+\also "assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)"\\
+\also "assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)"\\
+% \also "b_ALA1 = {(sv_buzz, ALA.OFF)}"\\
 % \also "HAChrono = AChrono(b_RAN1) \{|time, tick|}"\\
 % \also "HChrono = Chrono(b_RAN1) \{|time, tick|}"\\
+% \also "HWakeUpOK(b_RAN1,b_ALA1)= WakeUpOK(b_RAN1,b_ALA1)\{|time, tick|}"\\
 % \also "assert AChrono(b_RAN1):[deterministic [FD]]"\\
 % \also "assert Chrono(b_RAN1) :[deterministic [FD]]"\\
 % \also "assert HAChrono [FD= HChrono"\\
@@ -163,20 +179,4 @@ tick \then IncSec \circseq\\
 % \also "assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]"\\
 % \also "assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)"\\
 % \also "assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)"\\
-% % \also "b_ALA1 = {(sv_buzz, ALA.OFF)}"\\
-% % \also "HAChrono = AChrono(b_RAN1) \{|time, tick|}"\\
-% % \also "HChrono = Chrono(b_RAN1) \{|time, tick|}"\\
-% % \also "HWakeUpOK(b_RAN1,b_ALA1)= WakeUpOK(b_RAN1,b_ALA1)\{|time, tick|}"\\
-% % \also "assert AChrono(b_RAN1):[deterministic [FD]]"\\
-% % \also "assert Chrono(b_RAN1) :[deterministic [FD]]"\\
-% % \also "assert HAChrono [FD= HChrono"\\
-% % \also "assert HChrono [FD= HAChrono"\\
-% % \also "assert WakeUp(b_RAN1,b_ALA1) :[deterministic [FD]]"\\
-% % \also "HWakeUp = WakeUp(b_RAN1,b_ALA1) \ {|time, tick, snooze, radioOn |}"\\
-% % \also "assert HWakeUp :[deterministic [FD]]"\\
-% % \also "assert AChrono(b_RAN1)[FD= HWakeUp"\\
-% % \also "assert HWakeUp [FD= AChrono(b_RAN1)"\\
-% % \also "assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]"\\
-% % \also "assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)"\\
-% % \also "assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)"\\
-% \end{assert}
+\end{assert}

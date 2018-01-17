@@ -1,5 +1,5 @@
 name:                c2c
-version:             0.1.0.0
+version:             0.8b
 -- synopsis:
 -- description:
 homepage:            https://bitbucket.org/circusmodelcheck/jazaextended
@@ -7,7 +7,7 @@ license:             BSD3
 -- license-file:        LICENSE
 author:              Artur Oliveira Gomes
 maintainer:          gomesa@tcd.ie
-copyright:           2017 Artur Oliveira Gomes
+copyright:           2018 Artur Oliveira Gomes
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
