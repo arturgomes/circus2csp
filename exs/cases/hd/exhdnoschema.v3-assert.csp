@@ -1,0 +1,5 @@
+include "exhdnoschema.v3.csp"
+
+-- HDEnv = ( ( HDMachine(b_PAC1,b_PST1,b_HDM1,b_CON1,b_TIM1,b_BUT1,b_NAT1) [| {| tick,getCurrentTime |} |] SysClock(b_NAT1) ) \ {| tick,getCurrentTime |} )
+assert HDMachine(b_PAC1,b_PST1,b_HDM1,b_CON1,b_TIM1,b_BUT1,b_NAT1) :[deadlock free]
+-- assert HDEnv :[deadlock free]

@@ -684,7 +684,7 @@ mapping_CAction procn args spec (CSPCommAction (ChanComm c [ChanInp x]) CSPSkip)
     ++ " -> SKIP"
 mapping_CAction procn args spec (CSPCommAction (ChanComm c [ChanInp x]) a)
   = (get_channel_name spec (ChanComm c [ChanInp x]))
-    ++ " -> "
+    ++ " ->\n    "
     ++ mapping_CAction procn args spec (a)
 \end{code}
 
@@ -697,7 +697,7 @@ mapping_CAction procn args spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,
     ++ " -> SKIP"
 mapping_CAction procn args spec (CSPCommAction (ChanComm c [ChanOutExp (ZVar (x,[],tx))]) a)
   = (get_channel_name spec (ChanComm c [ChanOutExp (ZVar (x,[],tx))]))
-    ++ " -> "
+    ++ " ->\n    "
     ++ mapping_CAction procn args spec (a) ++ ""
 
 mapping_CAction procn args spec (CSPCommAction (ChanComm c lst) CSPSkip)
@@ -705,7 +705,7 @@ mapping_CAction procn args spec (CSPCommAction (ChanComm c lst) CSPSkip)
     ++ " -> SKIP"
 mapping_CAction procn args spec (CSPCommAction (ChanComm c lst) a)
   = (get_channel_name spec (ChanComm c lst))
-    ++ " -> "
+    ++ " ->\n    "
     ++ mapping_CAction procn args spec (a)
 \end{code}
 
@@ -1148,7 +1148,7 @@ get_channel_name spec  (ChanComm "mget" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (
 get_channel_name spec (ChanComm "mset" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "mset."++n++".apply("++b++","++n1++")"
 get_channel_name spec (ChanComm "mget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1]) = "mget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"
 get_channel_name spec (ChanComm "mset" ((ChanDotExp (ZVar (x,[],t))):xs)) = "mset."++x++".("++(def_U_prefix t)++(get_channel_name_cont spec xs)++")"
-get_channel_name spec (ChanComm "lset" [ChanDotExp (ZVar (n,[],x)),ChanInpPred nv1 (ZMember (ZVar (nv2,[],_)) (ZCall (ZVar ("\\delta",[],xtp)) (ZVar (nv3,[],_))))]) = "lset."++n++"?"++nv1++":type"++(lastN 3 x)++"("++n++")"
+get_channel_name spec (ChanComm "lset" [ChanDotExp (ZVar (n,[],x)),ChanInpPred nv1 (ZMember (ZVar (nv2,[],_)) (ZCall (ZVar ("\\delta",[],xtp)) (ZVar (nv3,[],_))))]) = "lset."++n++"?"++nv1++":type"++xtp++"("++n++")"
 get_channel_name spec  (ChanComm "lget" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "lget."++n++".apply("++b++","++n1++")"
 get_channel_name spec (ChanComm "lset" [ChanDotExp (ZVar (n,[],x)),ChanOutExp (ZCall (ZVar (b,[],_)) (ZVar (n1,[],_)))]) = "lset."++n++".apply("++b++","++n1++")"
 get_channel_name spec (ChanComm "lget" [ChanDotExp (ZVar (x,[],t)),ChanInp v1]) = "lget."++x++"?"++v1++":(type"++(def_U_prefix t)++"("++x++"))"

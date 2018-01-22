@@ -835,10 +835,38 @@ setMinUFRateTreat\rchanset\\
   \\\t2 RinsingTesting
 
 \\PrepHeparinPump~\circdef~insertHeparinSyringe~\then~heparinLineIsVented~\then~\Skip
+
+% \subsection{Therapy Initiation}
+
+\\EnableUI~\circdef~(signalBUTTON := OFF)
+\\ConnectPatientArterially~\circdef~connPatientArterially~\then~\Skip
+\\ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
+\\SetStopBloodFlow~\circdef~setBloodFlow?bloodFlowInEBC~\then~\Skip
+\\ConnectPatientStartTherapy~\circdef~
+  \\\t2 connectingToPatient \then
+  \\\t2 EnableUI \circseq
+  \\\t2 ConnectPatientArterially \circseq
+  \\\t2 SetStopBloodFlow\circseq
+  \\\t2 ConnectPatientVenously \circseq
+  \\\t2 (signalBUTTON,hdMode := ON,RUN)
+
+\\MonitorBPLimits~\circdef~\Skip
+\\TreatMinUFRate~\circdef~ setMinUFRateTreat?ON \then \Skip
+\\HeparinBolus~\circdef~\Skip
+\\ArterialBolus~\circdef~setArtBolusVol?artBolusVol \then \Skip
+\\InterruptDialysis~\circdef~ senHDMode!BYPASS \then (signalBUTTON := OFF)
+\\CompletTreatment~\circdef~ endTreatment \then (signalBUTTON := OFF)
+\\DuringTherapy~\circdef~
+      \\\t2 (MonitorBPLimits\\
+            \interleave TreatMinUFRate\\
+            \interleave HeparinBolus\\
+            \interleave ArterialBolus\\
+            \interleave InterruptDialysis) \circseq
+      \\\t2 CompletTreatment
+
 \\SetTreatmentParameters~\circdef~ SetDFParameters \circseq SetUFParameters \circseq
 \\\t4  SetPressureParameters \circseq SetHeparinParameters
 
-\\RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\then~\Skip
 \\SetRinsingParameters~\circdef
   \\\t1 inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient \then
   (fillingBPRate:=sFBPRate)\circseq \\
@@ -869,42 +897,21 @@ setMinUFRateTreat\rchanset\\
     \\\t1 SetDFParameters \circseq SetUFParameters \circseq
     \\\t1 SetPressureParameters \circseq SetHeparinParameters
 
+
+\\RinsingDialyzer~\circdef~connectDialyzer~\then~fillArterialDrip~\then~stopBP~\then~\Skip
+
+
 \\TherapyPreparation~\circdef
   \\\t1 preparationPhase \then (AutomatedSelfTest \circseq
-    \\\t1 ConnectingTheConcentrate \circseq SetRinsingParameters \circseq
+    \\\t1 ConnectingTheConcentrate \circseq
+    SetRinsingParameters \circseq
     \\\t1 InsertingRinsingTestingTubSystem \circseq PrepHeparinPump \circseq
-    \\\t1 SetTreatmentParameters \circseq RinsingDialyzer)
-% \subsection{Therapy Initiation}
-
-\\EnableUI~\circdef~(signalBUTTON := OFF)
-\\ConnectPatientArterially~\circdef~connPatientArterially~\then~\Skip
-\\ConnectPatientVenously~\circdef~connPatientVenously~\then~\Skip
-\\SetStopBloodFlow~\circdef~setBloodFlow?bloodFlowInEBC~\then~\Skip
-\\ConnectPatientStartTherapy~\circdef~
-  \\\t2 (hdMachineState := connectThePatient) \circseq
-  \\\t2 EnableUI \circseq
-  \\\t2 ConnectPatientArterially \circseq
-  \\\t2 SetStopBloodFlow\circseq
-  \\\t2 ConnectPatientVenously \circseq
-  \\\t2 (signalBUTTON,hdMode := ON,RUN)
-
-\\MonitorBPLimits~\circdef~\Skip
-\\TreatMinUFRate~\circdef~ setMinUFRateTreat?ON \then \Skip
-\\HeparinBolus~\circdef~\Skip
-\\ArterialBolus~\circdef~setArtBolusVol?artBolusVol \then \Skip
-\\InterruptDialysis~\circdef~ senHDMode!BYPASS \then (signalBUTTON := OFF)
-\\CompletTreatment~\circdef~ endTreatment \then (signalBUTTON := OFF)
-\\DuringTherapy~\circdef~
-      \\\t2 (MonitorBPLimits\\
-            \interleave TreatMinUFRate\\
-            \interleave HeparinBolus\\
-            \interleave ArterialBolus\\
-            \interleave InterruptDialysis) \circseq
-      \\\t2 CompletTreatment
+    %\\\t1 SetTreatmentParameters \circseq
+    RinsingDialyzer)
 
 \\TherapyInitiation~\circdef
 \\\t1 therapyInitiation \then ConnectPatientStartTherapy
-  \circseq DuringTherapy
+ \circseq DuringTherapy
 % \subsection{Therapy Ending}
 
 \\Reinfusion~\circdef~\Skip
@@ -913,25 +920,31 @@ setMinUFRateTreat\rchanset\\
 \\OverviewTherapy~\circdef~\Skip
 
 \\TherapyEnding~\circdef
-  therapyEnding~\then~
-  Reinfusion
-  \circseq EmptyingDialyzer
-  \circseq \\\t4 \t3  EmptyingCartridge
-  \circseq OverviewTherapy\\
+  therapyEnding~\then~ \Skip
+  % Reinfusion
+  % \circseq EmptyingDialyzer
+  % \circseq \\\t4 \t3  EmptyingCartridge
+  % \circseq OverviewTherapy\\
 
 \\MainTherapy~\circdef
-  TherapyPreparation \circseq TherapyInitiation \circseq TherapyEnding
+  TherapyPreparation \circseq
+  TherapyInitiation \circseq
+  TherapyEnding
 
 \\HDMachineMain~\circdef (HDGenCompInit \circseq
-(((MainTherapy
-        \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
-        \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
+((
+MainTherapy
+% (MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
+% (MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  R1)
+        % \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
         % \lpar \emptyset | HDMachineChanSet | \emptyset \rpar SensorReadings)
-        ))
+        )))
   \circspot HDMachineMain
 
 \circend
 \end{circus}
 \begin{assert}
 "HDEnv = ( ( HDMachine(b_PAC1,b_PST1,b_HDM1,b_CON1,b_TIM1,b_BUT1,b_NAT1) [| {| tick,getCurrentTime |} |] SysClock(b_NAT1) ) \ {| tick,getCurrentTime |} )"
+\also "assert HDEnv :[deadlock free]"
+\also "assert HDEnv :[deadlock free]"
 \end{assert}

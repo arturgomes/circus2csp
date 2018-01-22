@@ -1795,7 +1795,27 @@ crl_asgThenChoose_aux (CSPSeq (CActionCommand (CAssign [v1] [a1])) (CSPCommActio
   = (CSPCommAction (ChanComm a []) (CSPSeq (CActionCommand (CAssign [v1] [a1])) na))
 crl_asgThenChoose_aux x = x
 \end{code}
-Process (CProcess "AC1" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("x",[],"") (ZVar ("RANGE",[],"")),Choose ("y",[],"") (ZVar ("RANGE",[],""))])) [CParAction "A" (CircusAction (CSPCommAction (ChanComm "a" []) (CActionCommand (CAssign [("x",[],"")] [ZInt 1])))),CParAction "B" (CircusAction (CSPCommAction (ChanComm "b" []) (CActionCommand (CAssign [("y",[],"")] [ZInt 2]))))] (CSPExtChoice (CActionName "A") (CActionName "B")))))
+
+
+\begin{lawn}[Skip and Interleave]{3}\sl
+    \begin{zed}
+      \Skip \interleave A = A\\
+      A \interleave \Skip = A\\
+    \end{zed}
+  \label{law:skipInterleave}
+\end{lawn}
+
+\begin{code}
+crl_skipInterleave :: CAction -> Refinement CAction
+crl_skipInterleave e@(CSPInterleave CSPSkip e2)
+  =  Done{orig = Just e, refined = Just e2, proviso=[]}
+
+crl_skipInterleave e@(CSPInterleave e2 CSPSkip)
+  =  Done{orig = Just e, refined = Just e2, proviso=[]}
+crl_skipInterleave _ = None
+
+\end{code}
+
 
 \subsection{Auxiliary functions from Oliveira's PhD thesis}
 Function for $usedC(A)$
@@ -2046,6 +2066,7 @@ reflawsCAction
             crl_extChoiceStopUnit,
             crl_externalChoiceSequenceDistribution2,
             crl_falseGuard,
+            crl_skipInterleave,
            crl_guardParDist,
             crl_guardComb,
              crl_guardSeqAssoc,

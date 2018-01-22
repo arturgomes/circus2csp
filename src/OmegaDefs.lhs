@@ -2575,3 +2575,70 @@ nmem_mkMemoryTYPVar bst
     bstTypes = ( get_binding_types nbst)
 
 \end{code}
+
+
+\begin{code}
+-- 1. get_binding_types takes a ZGenFilt as input and gets the type of a Choose x T in a binding b_TYP.
+
+{-
+Basically, we need to produce three types of actions:
+
+[CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl [Choose ("bala",[],"") (ZVar ("BINDINGala",[],"")),Choose ("bran",[],"") (ZVar ("BINDINGran",[],""))] (CSPNSParal [ZVar ("\\emptyset",[],"")] (CChanSet ["lterminate"]) [ZVar ("\\emptyset",[],"")] (CSPParAction "MemoryMergeala" [ZVar ("bala",[],"")]) (CSPParAction "MemoryMergeran" [ZVar ("bran",[],"")]))))),
+CParAction "MemoryMergeala" (CircusAction (CSPRepParal (CChanSet ["lterminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("bala",[],"")))] (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZVar ("bala",[],"")]))) -- ok
+CParAction "MemoryMergealavar" (CircusAction (CActionCommand (CVResDecl [Choose ("n",[],"") (ZVar ("NAMEala",[],"")),Choose ("bala",[],"") (ZVar ("BINDINGala",[],""))] (CSPExtChoice (CSPExtChoice (CSPUnfAction "\\qquad" (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("bala",[],"")) (ZVar ("n",[],"")))]) (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZVar ("bala",[],"")]))) (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\deltaala",[],"")) (ZVar ("n",[],""))))]) (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ("bala",[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]))) (CSPCommAction (ChanComm "lterminate" []) CSPSkip)))))]
+
+MemoryMerge - for the main memory (with parallel between type actions)
+MemoryMergeTYP - for replicated paralelism synchronising on "lterminate"
+MemoryMergeTYPVar - for each variable in the bindings of TYP
+
+-}
+nmem_mkMemoryMergeInternal :: [String] -> CAction
+nmem_mkMemoryMergeInternal [x] = (CSPParAction ("MemoryMerge"++x) [ZVar ((join_name "b" x),[],x),ZVar ("ns",[],"")])
+nmem_mkMemoryMergeInternal (x:xs)
+  = (CSPNSParal
+      [ZVar ("\\emptyset",[],"")]
+      (CChanSet ["lterminate"])
+      [ZVar ("\\emptyset",[],"")]
+      (nmem_mkMemoryMergeInternal xs)
+      (nmem_mkMemoryMergeInternal [x]))
+
+nmem_mkMemoryMerge :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMerge bst =
+  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ((remdups $ filter_ZGenFilt_Choose bst)++[Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))]) (nmem_mkMemoryMergeInternal bstTypes))))]
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
+
+nmem_mkMemoryMergeTYPInternal :: [String] -> [PPar]
+nmem_mkMemoryMergeTYPInternal [x] =
+  [CParAction ("MemoryMerge"++x) (CircusAction (CActionCommand (CVResDecl [Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],"")),Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))] (CSPRepParal (CChanSet ["lterminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ((join_name "b" x),[],"")))] (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],""),ZVar ("ns",[],"")])))))]
+nmem_mkMemoryMergeTYPInternal (x:xs) =
+  (nmem_mkMemoryMergeTYPInternal [x])++(nmem_mkMemoryMergeTYPInternal xs)
+
+nmem_mkMemoryMergeTYP :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMergeTYP bst
+  =  (nmem_mkMemoryMergeTYPInternal bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
+
+
+nmem_mkMemoryMergeTYPVarInternal :: [String] -> [PPar]
+nmem_mkMemoryMergeTYPVarInternal [x]
+  = [CParAction ("MemoryMerge"++x++"Var") (CircusAction (CActionCommand (CVResDecl [Choose ("n",[],"") (ZVar ((join_name "NAME" x),[],"")),Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],"")),Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))] (CSPExtChoice (CSPExtChoice (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ((join_name "b" x),[],"")) (ZVar ("n",[],"")))]) (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],""),ZVar ("ns",[],"")])) (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],x)) (ZVar ("n",[],""))))]) (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ((join_name "b" x),[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]]),ZVar ("ns",[],"")]))) (CSPCommAction (ChanComm "lterminate" [])
+  (CSPRepSeq [Choose ("bd",[],"")
+    (ZSeqDisplay [ZVar ((join_name "b" x),[],"")]),
+    Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
+  (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
+    ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))]
+nmem_mkMemoryMergeTYPVarInternal (x:xs) =
+  (nmem_mkMemoryMergeTYPVarInternal [x])++(nmem_mkMemoryMergeTYPVarInternal xs)
+
+nmem_mkMemoryMergeTYPVar :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMergeTYPVar bst
+  = (nmem_mkMemoryMergeTYPVarInternal bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
+
+\end{code}

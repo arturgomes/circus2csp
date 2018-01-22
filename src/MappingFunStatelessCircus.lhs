@@ -315,18 +315,9 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
     ((nmem_mkMemoryTYPVar bst)++
     (nmem_mkMemoryTYP bst)++
     (nmem_mkMemory bst)++
-    [CParAction "MemoryMerge" (CircusAction (CActionCommand
-      (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++
-      [Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
-    (CSPExtChoice (CSPExtChoice
-      (mk_lget_mem_merg_CSPRepExtChoice nbst nbst)
-      (mk_lset_mem_merg_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "lterminate" [])
-    (CSPRepSeq [Choose ("bd",[],"")
-      (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),
-      Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
-    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
-      ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))])
+    (nmem_mkMemoryMergeTYPVar bst)++
+    (nmem_mkMemoryMergeTYP bst)++
+    (nmem_mkMemoryMerge bst))
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
@@ -341,25 +332,12 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
 proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
   =  proc_ref5 (Process (CProcess p
     (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
-      [CParAction "Memory" (CircusAction (CActionCommand
-        (CVResDecl (remdups $ filter_ZGenFilt_Choose bst)
-  (CSPExtChoice
-    (CSPExtChoice
-      (mk_mget_mem_CSPRepExtChoice nbst nbst)
-      (mk_mset_mem_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "terminate" []) CSPSkip))))),
-    CParAction "MemoryMerge" (CircusAction (CActionCommand
-      (CVResDecl ( (remdups $ filter_ZGenFilt_Choose bst)++
-      [Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))])
-    (CSPExtChoice (CSPExtChoice
-      (mk_lget_mem_merg_CSPRepExtChoice nbst nbst)
-      (mk_lset_mem_merg_CSPRepExtChoice nbst nbst))
-    (CSPCommAction (ChanComm "lterminate" [])
-    (CSPRepSeq [Choose ("bd",[],"")
-      (ZSeqDisplay [union_ml_mr $ zgenfilt_to_zexpr $ remdups $ filter_ZGenFilt_Choose bst]),
-      Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
-    (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
-      ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))]
+    ((nmem_mkMemoryTYPVar bst)++
+    (nmem_mkMemoryTYP bst)++
+    (nmem_mkMemory bst)++
+    (nmem_mkMemoryMergeTYPVar bst)++
+    (nmem_mkMemoryMergeTYP bst)++
+    (nmem_mkMemoryMerge bst))
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
@@ -794,7 +772,7 @@ omega_CAction (CSPExtChoice ca cb)
        \left (\begin{array}{l}
         \left (\begin{array}{l}
          \left (\begin{array}{l}
-          \Omega'_A (A_1) \circseq terminate \then \Skip
+          \Omega'_A (A_1) \circseq lterminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEML | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns1)
@@ -803,7 +781,7 @@ omega_CAction (CSPExtChoice ca cb)
        \lpar \{\} | cs | \{\} \rpar \\
         \left (\begin{array}{l}
          \left (\begin{array}{l}
-          \Omega'_A (A_2) \circseq terminate \then \Skip
+          \Omega'_A (A_2) \circseq lterminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEML | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},ns2)
@@ -819,8 +797,8 @@ The definition of parallel composition (and interleaving), as defined in the D24
 omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZVar ("\\emptyset",[],"")] a1 a2)
   = make_get_com lsx
       (CSPNSParal [] cs []
-      (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
-      (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))
+      (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
+      (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip)))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
 omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZSetDisplay ns2] a1 a2)
@@ -828,13 +806,13 @@ omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZSetDisplay ns2] a1 a2
       (CSPNSParal [] cs []
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
        (CSExpr "MEML")))
@@ -845,13 +823,13 @@ omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZVar ("\\emptyset",[],"")] a1 a2
       (CSPNSParal [] cs []
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
        (CSExpr "MEML")))
@@ -862,13 +840,13 @@ omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
       (CSPNSParal [] cs []
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
        (CSExpr "MEML")))
@@ -1316,14 +1294,14 @@ omega_prime_CAction (CSPExtChoice ca cb)
 --      (CSPNSParal [] cs []
 --       (CSPHide
 --        (CSPNSParal [] (CSExpr "MEMI") []
---         (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPSeq a1 (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
 --         (CSPParAction "MemoryMerge"
 --          [ZSetDisplay [],
 --                 ZVar ("LEFT",[])]))
 --        (CSExpr "MEMI"))
 --       (CSPHide
 --        (CSPNSParal [] (CSExpr "MEMI") []
---         (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPSeq a2 (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
 --         (CSPParAction "MemoryMerge"
 --          [ZSetDisplay [],
 --                 ZVar ("RIGHT",[])]))
@@ -1826,14 +1804,14 @@ gamma_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
      (CSPNSParal [] cs []
       (CSPHide
        (CSPNSParal [] (CSExpr "MEMI") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds ns1),
                 ZVar ("LEFT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
        (CSExpr "MEMI"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEMI") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
          [ZSetDisplay (mk_var_v_var_bnds ns2),
                 ZVar ("RIGHT",[],[]),ZSeqDisplay ns1,ZSeqDisplay ns2]))
@@ -2245,7 +2223,7 @@ gamma_prime_CAction (CSPExtChoice ca cb)
        \left (\begin{array}{l}
         \left (\begin{array}{l}
          \left (\begin{array}{l}
-          \Gamma'_A (A_1) \circseq terminate \then \Skip
+          \Gamma'_A (A_1) \circseq lterminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEMI | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},LEFT)
@@ -2254,7 +2232,7 @@ gamma_prime_CAction (CSPExtChoice ca cb)
        \lpar \{\} | cs | \{\} \rpar \\
         \left (\begin{array}{l}
          \left (\begin{array}{l}
-          \Gamma'_A (A_2) \circseq terminate \then \Skip
+          \Gamma'_A (A_2) \circseq lterminate \then \Skip
          \end{array}\right )\\
           \lpar \{\} | MEMI | \{\} \rpar
           \\ MemoryMerge(\{v0 \mapsto vv0,\ldots\},RIGHT)
@@ -2274,14 +2252,14 @@ gamma_prime_CAction (CSPExtChoice ca cb)
 --      (CSPNSParal [] cs []
 --       (CSPHide
 --        (CSPNSParal [] (CSExpr "MEMI") []
---         (CSPSeq a1 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPSeq a1 (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
 --         (CSPParAction "MemoryMerge"
 --          [ZSetDisplay [],
 --                 ZVar ("LEFT",[])]))
 --        (CSExpr "MEMI"))
 --       (CSPHide
 --        (CSPNSParal [] (CSExpr "MEMI") []
---         (CSPSeq a2 (CSPCommAction (ChanComm "terminate" []) CSPSkip))
+--         (CSPSeq a2 (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
 --         (CSPParAction "MemoryMerge"
 --          [ZSetDisplay [],
 --                 ZVar ("RIGHT",[])]))
