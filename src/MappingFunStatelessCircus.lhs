@@ -669,7 +669,9 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
 is written in Haskell as:
 \begin{code}
 omega_CAction (CSPGuard g a)
-  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
+  -- 24/01/2018 - I think CSP won't accept the mgets before the guard, and therefore, it needs to be omega_CAction again.
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_CAction a)))
+  -- = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred g))
 \end{code}
 
@@ -987,7 +989,8 @@ omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
 
 \begin{code}
 omega_CAction (CActionCommand (CIf gax))
-  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction (rename_guard_pair lsx gpair))))
+-- = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction (rename_guard_pair lsx gpair))))
+  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_CAction (rename_guard_pair lsx gpair))))
   where
    gpair = get_guard_pair gax
    lsx = concat (map get_ZVar_st (remdups (concat (map (varset_to_zvars . free_var_ZPred) (map fst gpair)))))

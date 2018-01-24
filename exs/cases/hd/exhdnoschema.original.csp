@@ -1,0 +1,2263 @@
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+-------------   Circus Specification - HD Machine   -------------
+-----------------------------------------------------------------------
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+-------------   1.1 Types and state variables     -------------
+-----------------------------------------------------------------------
+
+HOUR = {0..1}
+MINUTE = {0..1}
+SECOND = {0..1}
+TIME = (HOUR,MINUTE)
+INTEGER = {0..1}
+CheckInterval = 1
+datatype BUTTON = ON | OFF
+datatype SWITCH = ENABLED | DISABLED
+datatype DIRECTION = FORWARD | BACKWARDS
+datatype STATEPHASE = connectThePatient | initPhase
+           | prepPhase | endPhase
+datatype ACTIVITY = rinsingEBC | applicationArterialBolus
+          | anticoagDelivRun | reinfProcess
+          | preparationOfDF | priming
+          | rinsing | idle
+datatype LID = OPEN | CLOSED
+datatype CONCENTRATE = ACID | ACETATE | BICARBONATE
+datatype HDMODE = RUN | ALARM | BYPASS
+datatype LAMP = GREEN | YELLOW
+datatype BOOL = TRUE | FALSE
+
+-----------------------------------------------------------------------
+-------------      1.2 State Components      -------------
+-----------------------------------------------------------------------
+
+-- HDGenComp components:
+--  airVolLimit : INTEGER
+--  airVol : INTEGER
+--  alarm : SWITCH
+--  apTransdPress : INTEGER
+--  artBolusVol : INTEGER
+--  bloodFlowInEBC : INTEGER
+--  bloodLines : BOOL
+--  bypassValve : LID
+--  fflowDirect : DIRECTION
+--  hdActivity : \power ACTIVITY
+--  hdMachineState : \power STATEPHASE
+--  hdMode : HDMODE
+--  infSalineVol : INTEGER
+--  lastNonZeroBF : INTEGER
+--  lowerPressureLimit : INTEGER
+--  minUFRateTreat : BUTTON
+--  netFluidRemoval : SWITCH
+--  netFluidRemovalRate : INTEGER
+--  rotDirectBP : DIRECTION
+--  rotDirectUFP : DIRECTION
+--  sadSensorFlow : INTEGER
+--  safeUpperLimit : INTEGER
+--	 signalLamp : LAMP
+--  timerINTEGERervalR10 : INTEGER
+--  timerINTEGERervalR11 : INTEGER
+--  timerINTEGERervalR12 : INTEGER
+--  timerINTEGERervalR13 : INTEGER
+--  timerINTEGERervalR9 : INTEGER
+--  upperPressureLimit : INTEGER
+--  volumeInEBC : INTEGER
+--  vpTransdPress : INTEGER
+
+nametype HDGenComp =
+		(INTEGER, INTEGER, SWITCH, INTEGER, INTEGER,
+		INTEGER, LID, DIRECTION, Set(ACTIVITY), Set(STATEPHASE),
+		HDMODE, INTEGER, INTEGER, INTEGER, INTEGER, SWITCH,
+		DIRECTION, DIRECTION, INTEGER, INTEGER, LAMP,
+		INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER,
+		INTEGER, BOOL, BUTTON)
+
+
+
+-- get functions for the HDGenComp
+get_airVolLimit(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within avl
+get_airVol(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within av
+get_alarm(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within al
+get_apTransdPress(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within aptp
+get_artBolusVol(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within abv
+get_bloodFlowInEBC(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within bfebc
+get_bloodLines(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within bl
+get_bypassValve(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within bv
+get_fflowDirect(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ffd
+get_hdActivity(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within hda
+get_hdMachineState(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within hdms
+get_hdMode(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within hdm
+get_infSalineVol(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within isv
+get_lastNonZeroBF(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within lnzbf
+get_lowerPressureLimit(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within lpl
+get_minUFRateTreat(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within mufpr
+get_netFluidRemoval(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within nfr
+get_netFluidRemovalRate(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within nfrr
+get_rotDirectBP(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within rdbp
+get_rotDirectUFP(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within rdufp
+get_sadSensorFlow(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ssf
+get_safeUpperLimit(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within sul
+get_signalLamp(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within slm
+get_timerIntervalR10(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ti10
+get_timerIntervalR11(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ti11
+get_timerIntervalR12(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ti12
+get_timerIntervalR13(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ti13
+get_timerIntervalR9(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within ti9
+get_upperPressureLimit(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within upl
+get_volumeInEBC(st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within viebc
+get_vpTransdPress(st)=
+		let (avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within vptp
+
+--set functions for HDGenComp
+
+set_airVolLimit(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(val, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--avl
+set_airVol(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, val, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--av
+set_alarm(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, val, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--al
+set_apTransdPress(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, val,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--aptp
+set_artBolusVol(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, val, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--abv
+set_bloodFlowInEBC(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 val, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--bfebc
+set_bloodLines(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, val, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--bl
+set_bypassValve(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, val, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--bv
+set_fflowDirect(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, val, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--ffd
+set_hdActivity(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, val,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--hda
+set_hdMachineState(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 val, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--hdms
+set_hdMode(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, val, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--hdm
+set_infSalineVol(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, val, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--isv
+set_lastNonZeroBF(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, val, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--lnzbf
+set_lowerPressureLimit(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, val,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--lpl
+set_minUFRateTreat(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 val, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--mufpr
+set_netFluidRemoval(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, val, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--nfr
+set_netFluidRemovalRate(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, val, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--nfrr
+set_rotDirectBP(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, val, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--rdbp
+set_rotDirectUFP(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, val,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--rdufp
+set_sadSensorFlow(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 val, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--ssf
+set_safeUpperLimit(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, val, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--sul
+set_signalLamp(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, val, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--slm
+set_timerIntervalR10(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, val, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--ti10
+set_timerIntervalR11(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, val,
+				 ti12, ti13 , upl, viebc, vptp)	--ti11
+set_timerIntervalR12(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 val, ti13 , upl, viebc, vptp)	--ti12
+set_timerIntervalR13(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, val , upl, viebc, vptp)	--ti13
+set_timerIntervalR9(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, val, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)	--ti9
+set_upperPressureLimit(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , val, viebc, vptp)	--upl
+set_volumeInEBC(val,st)=
+		let(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within(avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, val, vptp)	--viebc
+set_vpTransdPress(val,st)=
+		let (avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, vptp)=st
+		within (avl, av, al, abv, aptp,
+				 bfebc, bl, bv, ffd, hda,
+				 hdms, hdm, isv, lnzbf, lpl,
+				 mufpr, nfr, nfrr, rdbp, rdufp,
+				 ssf, sul, slm, ti9, ti10, ti11,
+				 ti12, ti13 , upl, viebc, val)	--vptp
+
+---- RinsingParameters components:
+--  fillingBPRate : INTEGER
+--  rinsingBPRate : INTEGER
+--  rinsingTime : INTEGER
+--  ufRateForRinsing : INTEGER
+--  ufVolForRinsing : INTEGER
+--  bloodFlowForConnectingPatient : INTEGER
+-- \where
+--  fillingBPRate \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  rinsingBPRate \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  rinsingTime \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  ufRateForRinsing \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  ufVolForRinsing \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  bloodFlowForConnectingPatient \in \{ x : INTEGER | 0 \leq x \leq 1\}
+
+nametype RinsingParameters =
+			({0,1},{0,1},{0,1},{0,1},{0,1},{0,1})
+-- get functions for RinsingParameters
+
+get_fillingBPRate(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within fbpr
+get_rinsingBPRate(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within rbpr
+get_rinsingTime(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within rt
+get_ufRateForRinsing(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within ufrfr
+get_ufVolForRinsing(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within ufvfr
+get_bloodFlowForConnectingPatient(st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within bffcp
+
+-- set functions for RinsingParameters
+
+set_fillingBPRate(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(val, rbpr, rt, ufrfr, ufvfr, bffcp)	--fbpr
+set_rinsingBPRate(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(fbpr, val, rt, ufrfr, ufvfr, bffcp)	--rbpr
+set_rinsingTime(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(fbpr, rbpr, val, ufrfr, ufvfr, bffcp)	--rt
+set_ufRateForRinsing(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(fbpr, rbpr, rt, val, ufvfr, bffcp)	--ufrfr
+set_ufVolForRinsing(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(fbpr, rbpr, rt, ufrfr, val, bffcp)	--ufvfr
+set_bloodFlowForConnectingPatient(val,st)=
+		let(fbpr, rbpr, rt, ufrfr, ufvfr, bffcp)=st
+		within(fbpr, rbpr, rt, ufrfr, ufvfr, val)	--bffcp
+
+---- DFParameters components:
+--  conductivity : INTEGER
+--  bicarbonateAcetate : CONCENTRATE
+--  bicarbonateConductivity : INTEGER
+--  dfTemperature : INTEGER
+--  dfFlow : INTEGER
+-- \where
+--  conductivity \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  bicarbonateConductivity \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  dfTemperature \in \{ x : INTEGER | 33 \leq x \leq 40\}
+--  dfFlow \in \{ x : INTEGER | 300 \leq x \leq 800\} \cup \{ x : INTEGER | 50 \leq x \leq 300\}
+
+nametype DFParameters =
+	({0,1},CONCENTRATE, {0,1}, {32,33,40,41,42}, {0,1,2})
+
+--get functions for DFParameters
+
+get_conductivity(st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within cnd
+get_bicarbonateAcetate(st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within bcac
+get_bicarbonateConductivity(st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within bcond
+get_dfTemperature(st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within dft
+get_dfFlow(st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within dff
+
+--set functions for DFParameters
+
+set_conductivity(val,st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within(val, bcac, bcond, dft, dff)	--cnd
+set_bicarbonateAcetate(val,st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within(cnd, val, bcond, dft, dff)	--bcac
+set_bicarbonateConductivity(val,st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within(cnd, bcac, val, dft, dff)	--bcond
+set_dfTemperature(val,st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within(cnd, bcac, bcond, val, dff)	--dft
+set_dfFlow(val,st)=
+		let(cnd, bcac, bcond, dft, dff)=st
+		within(cnd, bcac, bcond, dft, val)	--dff
+
+---- UFParameters components:
+--  ufVol : INTEGER
+--  therapyTime : INTEGER
+--  minUFRate : INTEGER
+--  maxUFRate : INTEGER
+-- \where
+--  ufVol \in \{ x : INTEGER | 100 \leq x \leq 20000\}
+--  therapyTime \in \{ x : INTEGER | 10 \leq x \leq 600\}
+--  minUFRate \in \{ x : INTEGER | 0 \leq x \leq 500\}
+--  maxUFRate \in \{ x : INTEGER | 0 \leq x \leq 4000\}
+
+nametype UFParameters =
+		({0,1}, {0,1}, {0,1}, {0,1})
+--get functions for UFParameters
+
+get_ufVol(st)=
+		let(ufv, tt, mufr, maufr)=st
+		within ufv
+get_therapyTime(st)=
+		let(ufv, tt, mufr, maufr)=st
+		within tt
+get_minUFRate(st)=
+		let(ufv, tt, mufr, maufr)=st
+		within mufr
+get_maxUFRate(st)=
+		let(ufv, tt, mufr, maufr)=st
+		within maufr
+
+-- set functions for UFParameters
+
+set_ufVol(val,st)=
+		let(ufv, tt, mufr, maufr)=st
+		within(val, tt, mufr, maufr)	--ufv
+set_therapyTime(val,st)=
+		let(ufv, tt, mufr, maufr)=st
+		within(ufv, val, mufr, maufr)	--tt
+set_minUFRate(val,st)=
+		let(ufv, tt, mufr, maufr)=st
+		within(ufv, tt, val, maufr)	--mufr
+set_maxUFRate(val,st)=
+		let(ufv, tt, mufr, maufr)=st
+		within(ufv, tt, mufr, val)	--maufr
+
+---- PressureParameters components:
+--  limitDeltaMinMaxAP : INTEGER
+--  actualTMPMaxTMP : INTEGER
+--  limitsTMP : SWITCH
+--  lowHigh : INTEGER
+--  extendedTMPLimitRange : SWITCH
+--\where
+--  limitDeltaMinMaxAP \in \{ x : INTEGER | 10 \leq x \leq 100\}
+--  actualTMPMaxTMP \in \{ x : INTEGER | 300 \leq x \leq 700\}
+--  lowHigh \in \{ x : INTEGER | 2 \leq x \leq 99\}
+
+nametype PressureParameters =
+		({0,1}, {0,1}, SWITCH, {0,1}, SWITCH)
+--get functions for PressureParameters
+
+get_limitDeltaMinMaxAP(st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within ldm
+get_actualTMPMaxTMP(st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within atmp
+get_limitsTMP(st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within ltmp
+get_lowHigh(st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within lh
+get_extendedTMPLimitRange(st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within etmp
+
+--set functions for PressureParameters
+
+set_limitDeltaMinMaxAP(val,st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within(val, atmp, ltmp, lh, etmp)	--ldm
+set_actualTMPMaxTMP(val,st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within(ldm, val, ltmp, lh, etmp)	--atmp
+set_limitsTMP(val,st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within(ldm, atmp, val, lh, etmp)	--ltmp
+set_lowHigh(val,st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within(ldm, atmp, ltmp, val, etmp)	--lh
+set_extendedTMPLimitRange(val,st)=
+		let(ldm, atmp, ltmp, lh, etmp)=st
+		within(ldm, atmp, ltmp, lh, val)	--etmp
+
+
+---- HeparinParameters components:
+--  heparinStopTime : TIME
+--  heparinBolusVol : INTEGER
+--  heparinProfileRate : INTEGER
+--  treatmentWithoutHeparin : SWITCH
+--  syringeType : INTEGER
+-- \where
+--  heparinStopTime \in \{\,h,m:INTEGER | (h,m) \in TIME \land m<2 \land h\leq 1\,\}
+--  heparinBolusVol \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  heparinProfileRate \in \{ x : INTEGER | 0 \leq x \leq 1\}
+--  syringeType \in \{1,2,3\}
+
+nametype HeparinParameters =
+		(({0,1},{0,1}),{0,1},{0,1},SWITCH,{1,2,3})
+-- get functions for HeparinParameters
+
+get_heparinStopTime(st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within hst
+get_heparinBolusVol(st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within hbv
+get_heparinProfileRate(st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within hpr
+get_treatmentWithoutHeparin(st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within twh
+get_syringeType(st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within sty
+
+-- set functions for HeparinParameters
+
+set_heparinStopTime(val,st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within(val, hbv, hpr, twh, sty)	--hst
+set_heparinBolusVol(val,st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within(hst, val, hpr, twh, sty)	--hbv
+set_heparinProfileRate(val,st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within(hst, hbv, val, twh, sty)	--hpr
+set_treatmentWithoutHeparin(val,st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within(hst, hbv, hpr, val, sty)	--twh
+set_syringeType(val,st)=
+		let(hst, hbv, hpr, twh, sty)=st
+		within(hst, hbv, hpr, twh, val)	--st
+
+-- Definition of HDState
+nametype HDState =
+		(HDGenComp,
+	RinsingParameters,
+	DFParameters,
+	UFParameters,
+	PressureParameters,
+	HeparinParameters)
+
+-- get functions for HDState
+get_HDGenComp(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within HDGC
+get_RinsingParameters(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within RP
+get_DFParameters(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within DFP
+get_UFParameters(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within UFP
+get_PressureParameters(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within PP
+get_HeparinParameters(st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within HP
+
+-- set functions for HDState
+
+set_HDGenComp(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(val, RP, DFP, UFP, PP, HP)	--HDGC
+set_RinsingParameters(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(HDGC, val, DFP, UFP, PP, HP)	--RP
+set_DFParameters(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(HDGC, RP, val, UFP, PP, HP)	--DFP
+set_UFParameters(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(HDGC, RP, DFP, val, PP, HP)	--UFP
+set_PressureParameters(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(HDGC, RP, DFP, UFP, val, HP)	--PP
+set_HeparinParameters(val,st)=
+		let(HDGC, RP, DFP, UFP, PP, HP)=st
+		within(HDGC, RP, DFP, UFP, PP, val)	--HP
+
+
+
+-----------------------------------------------------------------------
+-------------       1.3 Circus Channels       -------------
+-----------------------------------------------------------------------
+channel preparationPhase, therapyInitiation
+channel connectingToPatient, duringTherapy, therapyEnding
+channel autSelfTest, atrialTubing
+channel ventricularTubing, connectDialyzer
+
+--responses to requirements
+channel stopBloodFlow, produceAlarmSound, stopBP
+channel disconnectDF, stopFlowDialyzer, stopCoagulantFlow
+
+channel fillArterialDrip, connPatientArterially, connPatientVenously
+channel insertHeparinSyringe, heparinLineIsVented
+channel connectingConcentrate : CONCENTRATE
+channel salineBagLevel : INTEGER
+
+channel senAirVol : INTEGER
+channel senAirVolLimit : INTEGER
+channel senApTransdPress : INTEGER
+channel senBloodFlowInEBC : INTEGER
+channel senBypassValve : LID
+channel senFflowDirect : DIRECTION
+-- channel senInfVol : INTEGER
+channel senLastNonZeroBF : INTEGER
+channel senNetFluidRemoval : SWITCH
+channel senNetFluidRemovalRate : INTEGER
+channel senRotDirectBP : DIRECTION
+channel senRotDirectUFP : DIRECTION
+channel senVolInEBC : INTEGER
+channel senVpTransdPress : INTEGER
+channel senSADSensorFlow : INTEGER
+channel senHDMode : HDMODE
+channel senMinUFRateTreat : BUTTON
+
+-- Channels for the HDMachineSt - HDMachineStChanSet
+
+--- HDGenComp channels:
+channel setAirVolLimit, getAirVolLimit : INTEGER
+channel setAirVol, getAirVol : INTEGER
+channel setAlarm, getAlarm : SWITCH
+channel setArtBolusVol, getArtBolusVol : INTEGER
+channel setApTransdPress, getApTransdPress : INTEGER
+channel setBloodFlowInEBC, getBloodFlowInEBC : INTEGER
+channel setBypassValve, getBypassValve : LID
+channel setFflowDirect, getFflowDirect : DIRECTION
+-- channel setHdActivity : Set(ACTIVITY)
+channel getHdActivity : Set(ACTIVITY)
+channel setHdMachineState, getHdMachineState : Set(STATEPHASE)
+channel setHDMode, getHDMode : HDMODE
+channel setInfSalineVol, getInfSalineVol : INTEGER
+channel setLastNonZeroBF, getLastNonZeroBF : INTEGER
+-- channel setLowerPressureLimit : INTEGER
+channel getLowerPressureLimit : INTEGER
+channel setNetFluidRemovalRate, getNetFluidRemovalRate : INTEGER
+channel setNetFluidRemoval, getNetFluidRemoval : SWITCH
+channel setRotDirectBP, getRotDirectBP : DIRECTION
+channel setRotDirectUFP, getRotDirectUFP : DIRECTION
+-- channel setSafeUpperLimit : INTEGER
+channel getSafeUpperLimit : INTEGER
+channel setTimerIntervalR9, getTimerIntervalR9 : INTEGER
+channel setTimerIntervalR10, getTimerIntervalR10 : INTEGER
+channel setTimerIntervalR11, getTimerIntervalR11 : INTEGER
+channel setTimerIntervalR12, getTimerIntervalR12 : INTEGER
+channel setTimerIntervalR13, getTimerIntervalR13 : INTEGER
+-- channel setUpperPressureLimit : INTEGER
+channel getUpperPressureLimit : INTEGER
+channel setVolInEBC, getVolInEBC : INTEGER
+channel setVpTransdPress, getVpTransdPress : INTEGER
+channel setSADSensorFlow, getSADSensorFlow : INTEGER
+channel setSignalLamp, getSignalLamp : LAMP
+channel setBloodLines, getBloodLines : BOOL
+channel setMinUFRateTreat, getMinUFRateTreat : BUTTON
+channel getCurrentTime : INTEGER
+
+----- RinsingParameters channels:
+channel setFillingBPRate, getFillingBPRate : {0,1}
+channel setRinsingBPRate, getRinsingBPRate : {0,1}
+channel setRinsingTime, getRinsingTime : {0..1}
+channel setUfRateForRinsing, getUfRateForRinsing : {0..1}
+channel setUfVolForRinsing, getUfVolForRinsing : {0..1}
+channel setBloodFlowForConnectingPatient, getBloodFlowForConnectingPatient : {0..1}
+
+----- DFParameters channels:
+channel setConductivity, getConductivity : {0..1}
+channel setBicarbonateAcetate, getBicarbonateAcetate : CONCENTRATE
+channel setBicarbonateConductivity, getBicarbonateConductivity : {0..1}
+channel setDfTemperature, getDfTemperature : {32,33,40,41}
+channel setDfFlow, getDfFlow : {0,1,2}
+
+---- UFParameters channels:
+channel setUfVol, getUfVol : {0,1}
+channel setTherapyTime, getTherapyTime : {0,1}
+channel setMinUFRate, getMinUFRate : {0,1}
+channel setMaxUFRate, getMaxUFRate : {0,1}
+
+---- PressureParameters channels:
+channel setLimitDeltaMinMaxAP, getLimitDeltaMinMaxAP : {0,1}
+channel setActualTMPMaxTMP, getActualTMPMaxTMP : {0,1}
+channel setLimitsTMP, getLimitsTMP : SWITCH
+channel setLowHigh, getLowHigh : {0,1}
+channel setExtendedTMPLimitRange, getExtendedTMPLimitRange : SWITCH
+
+---- HeparinParameters channels:
+channel setHeparinStopTime, getHeparinStopTime : ({0..1},{0..1})
+channel setHeparinBolusVol, getHeparinBolusVol : {0,1}
+channel setHeparinProfileRate, getHeparinProfileRate : {0,1}
+channel setTreatmentWithoutHeparin, getTreatmentWithoutHeparin : SWITCH
+channel setSyringeType, getSyringeType : {1,2,3}
+
+-- channels for inputs of schemas
+channel input_of_SetRinsingParameters : {0,1}.{0,1}.{0,1}.{0,1}.{0,1}.{0,1}
+channel input_of_SetDFParameters : {0,1}.CONCENTRATE.{0,1}.{32,33,40,41}.{0,1,2}
+channel input_of_SetUFParameters : {0,1}.{0,1}.{0,1}.{0,1}
+channel input_of_SetPressureParameters : {0,1}.{0,1}.SWITCH.{0,1}.SWITCH
+channel input_of_SetHeparinParameters : ({0,1},{0,1}).{0,1}.{0,1}.SWITCH.{1,2,3}
+
+
+-----------------------------------------------------------------------
+-------------     1.4 Circus Channels Sets      -------------
+-----------------------------------------------------------------------
+TherapyPhaseChanSet	=
+		{|preparationPhase, therapyInitiation,
+		connectingToPatient, duringTherapy,
+		therapyEnding |}
+
+SensorReadingsComm = {|senAirVol, senApTransdPress,
+			senBloodFlowInEBC, senHDMode,
+			senSADSensorFlow, senVpTransdPress|}
+HDComm =
+		{|getApTransdPress, getBloodFlowInEBC,
+		getCurrentTime, getDfFlow, getHdActivity,
+		getHdMachineState,getFflowDirect,
+		getInfSalineVol, getVolInEBC,
+		getLowerPressureLimit, getRotDirectUFP,
+		getUpperPressureLimit, getDfTemperature,
+		getVpTransdPress, senBloodFlowInEBC,
+		senSADSensorFlow, setAirVol,
+		setBloodFlowInEBC, setLastNonZeroBF,
+		therapyInitiation, senVpTransdPress,
+		getTimerIntervalR9, setTimerIntervalR9,
+		getTimerIntervalR10,setTimerIntervalR10,
+		getTimerIntervalR9|}
+
+HDGenCompStChanSet =
+	{|getAirVolLimit, getAirVol,
+	getApTransdPress, getArtBolusVol,
+	getBloodFlowInEBC, getBypassValve,
+	getFflowDirect, getHdActivity,
+	getHDMode, getInfSalineVol,
+	getLastNonZeroBF, getLowerPressureLimit,
+	getMinUFRateTreat, getNetFluidRemoval,
+	getNetFluidRemovalRate, getSADSensorFlow,
+	getSafeUpperLimit, getSignalLamp,
+	getTimerIntervalR10, getTimerIntervalR11,
+	getTimerIntervalR12, getTimerIntervalR13,
+	getTimerIntervalR9, getUpperPressureLimit,
+	getVolInEBC, getVpTransdPress,
+	getBloodLines, setAirVolLimit,
+	setAirVol, setAlarm,
+	setBloodFlowInEBC, setLastNonZeroBF,
+	setTimerIntervalR10, setTimerIntervalR11,
+	setTimerIntervalR12, setTimerIntervalR13,
+	setTimerIntervalR9, getRotDirectBP,
+	getRotDirectUFP, preparationPhase,
+	connectingToPatient, therapyInitiation,
+	therapyEnding|}
+
+RinsingParametersStChanSet =
+	{|setFillingBPRate, setRinsingBPRate,
+	setRinsingTime, setUfVolForRinsing,
+	setBloodFlowForConnectingPatient,
+	getRinsingBPRate, getRinsingTime,
+	setUfRateForRinsing, getUfRateForRinsing,
+	getUfVolForRinsing,
+	getBloodFlowForConnectingPatient,
+	getFillingBPRate|}
+
+PressureParametersStChanSet =
+	{|setLimitDeltaMinMaxAP, setActualTMPMaxTMP,
+	setLimitsTMP, setLowHigh,
+	setExtendedTMPLimitRange, getLimitDeltaMinMaxAP,
+	getActualTMPMaxTMP, getLimitsTMP,
+	getLowHigh, getExtendedTMPLimitRange|}
+
+HeparinParametersStChanSet =
+	{|setTreatmentWithoutHeparin,
+	setHeparinBolusVol, setHeparinProfileRate,
+	getHeparinBolusVol, getHeparinProfileRate,
+	getTreatmentWithoutHeparin, setSyringeType,
+	getSyringeType|}
+
+UFParametersStChanSet =
+	{|setMaxUFRate, setMinUFRate,
+	setTherapyTime, setUfVol,
+	getMaxUFRate, getMinUFRate,
+	getTherapyTime, getUfVol|}
+
+DFParametersStChanSet =
+	{|setBicarbonateAcetate,
+	setBicarbonateConductivity, setDfFlow,
+	setDfTemperature, setConductivity,
+	getBicarbonateAcetate, getConductivity,
+	getDfFlow, getDfTemperature,
+	getBicarbonateConductivity|}
+
+DFParametersStComm =
+		{|setConductivity,setBicarbonateAcetate,
+			setBicarbonateConductivity,
+			setDfTemperature,setDfFlow|}
+
+UFParametersStComm =
+		{|setUfVol,setTherapyTime,
+			setMinUFRate,setMaxUFRate|}
+
+PressureParametersStComm =
+		{|setLimitDeltaMinMaxAP,setActualTMPMaxTMP,
+			setLimitsTMP,setLowHigh,setExtendedTMPLimitRange|}
+
+HeparinParametersStComm =
+		{|setHeparinStopTime,
+			setHeparinBolusVol,
+			setHeparinProfileRate,
+			setTreatmentWithoutHeparin,
+			setSyringeType|}
+
+RinsingParametersStComm =
+		{|setFillingBPRate,setRinsingBPRate,
+		setRinsingTime,setUfRateForRinsing,
+		setUfVolForRinsing,setBloodFlowForConnectingPatient|}
+
+MainTherapyChanSet =
+	{|setActualTMPMaxTMP, setArtBolusVol,
+		setBicarbonateAcetate, setBicarbonateConductivity,
+		setBloodFlowForConnectingPatient, setBloodFlowInEBC,
+		setBloodLines, setConductivity, setDfFlow,
+		setDfTemperature,
+		setExtendedTMPLimitRange, setFillingBPRate,
+		setHDMode, setHeparinBolusVol,
+		 setHeparinProfileRate,
+		setHeparinStopTime, setInfSalineVol,
+		setLimitDeltaMinMaxAP, setLimitsTMP, setLowHigh,
+		setMaxUFRate, setMinUFRate, setMinUFRateTreat,
+		setRinsingBPRate,
+		setRinsingTime, setSignalLamp,
+		setSyringeType, setTherapyTime,
+		setTreatmentWithoutHeparin,
+		setUfRateForRinsing, setUfVol,
+		setUfVolForRinsing,preparationPhase, therapyInitiation,
+				connectingToPatient, duringTherapy,
+				therapyEnding|}
+-----------------------------------------------------------------------
+-------------         1.5 Clock          -------------
+-----------------------------------------------------------------------
+---------------------------------------------------
+-------------    Tock-CSP     -------------
+---------------------------------------------------
+
+channel tock, timeout
+RUNNING(X) =
+	[] x:X @ x -> RUNNING(X)
+TOCKS =
+	tock -> TOCKS
+
+Wait(n) =
+	if n>0 then tock -> Wait(n-1) else SKIP
+
+Timeout(A,B,t) =
+	let Counter(t) =
+		if (t>0)
+		then tock -> Counter(t-1)
+		else timeout -> SKIP
+	within ((A /\ timeout -> B) [|{|timeout,tock|}|] Counter(t)) \ {|timeout|}
+
+channel setTime, getTime : {0..1}
+
+------------------------------------------
+--------- Clock definitions --------------
+SysClock =
+	let
+
+	ClockSt(ms) =
+		getTime!ms -> ClockSt(ms)
+		[] setTime?x -> ClockSt(x)
+
+	Clock =
+		let X =
+		(((getTime?clock -> (Wait(1) ;
+				if clock == 1
+				then tock -> setTime!(0) -> SKIP
+				else tock -> setTime!(clock + 1) -> SKIP))
+		||| (Timeout((let Y =
+		getTime?clock -> getCurrentTime!clock -> Y within Y),SKIP,1))
+		); X)
+		within X
+
+	ResetClock =
+		setTime!0 -> Clock
+	within (ClockSt(0)
+			[|{|getTime,setTime,tock|}|]
+
+	ResetClock) /\ therapyEnding -> SKIP
+--
+-- MySysClock =
+-- 	let X =
+-- 	SysClock; X within X
+-- assert MySysClock :[ deadlock free [FD] ] -- ok
+-- assert MySysClock :[ livelock free ] -- ok
+
+-----------------------------------------------------------------------
+-------------    2. Circus HDMachine Process     -------------
+-----------------------------------------------------------------------
+
+--------
+HDMachine(sta) =
+	let (HDGC, RP, DFP, UFP, PP, HP) = sta
+
+	HDGenCompSt(HDGC) =
+		getAirVolLimit!get_airVolLimit(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getAirVol!get_airVol(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getApTransdPress!get_apTransdPress(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getArtBolusVol!get_artBolusVol(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getBloodFlowInEBC!get_bloodFlowInEBC(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getBypassValve!get_bypassValve(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getFflowDirect!get_fflowDirect(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getHdActivity!get_hdActivity(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getHdMachineState!get_hdMachineState(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getHDMode!get_hdMode(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getInfSalineVol!get_infSalineVol(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getLastNonZeroBF!get_lastNonZeroBF(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getLowerPressureLimit!get_lowerPressureLimit(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getMinUFRateTreat!get_minUFRateTreat(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getNetFluidRemoval!get_netFluidRemoval(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getNetFluidRemovalRate!get_netFluidRemovalRate(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getSADSensorFlow!get_sadSensorFlow(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getSafeUpperLimit!get_safeUpperLimit(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getSignalLamp!get_signalLamp(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getTimerIntervalR10!get_timerIntervalR10(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getTimerIntervalR11!get_timerIntervalR11(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getTimerIntervalR12!get_timerIntervalR12(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getTimerIntervalR13!get_timerIntervalR13(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getTimerIntervalR9!get_timerIntervalR9(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getUpperPressureLimit!get_upperPressureLimit(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getVolInEBC!get_volumeInEBC(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getVpTransdPress!get_vpTransdPress(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getBloodLines!get_bloodLines(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] setAirVolLimit?airVolLimit ->
+				HDGenCompSt(set_airVolLimit(airVolLimit,HDGC))
+		[] setAirVol?airVol ->
+				HDGenCompSt(set_airVol(airVol,HDGC))
+		[] setAlarm?x ->
+				HDGenCompSt(set_alarm(x,HDGC))
+		[] setBloodFlowInEBC?bloodFlowInEBC ->
+				HDGenCompSt(set_bloodFlowInEBC(bloodFlowInEBC,HDGC))
+		[] setLastNonZeroBF?lastNonZeroBF ->
+				HDGenCompSt(set_lastNonZeroBF(lastNonZeroBF,HDGC))
+		[] setTimerIntervalR10?timerIntervalR10 ->
+				HDGenCompSt(set_timerIntervalR10(timerIntervalR10,HDGC))
+		[] setTimerIntervalR11?timerIntervalR11 ->
+				HDGenCompSt(set_timerIntervalR11(timerIntervalR11,HDGC))
+		[] setTimerIntervalR12?timerIntervalR12 ->
+				HDGenCompSt(set_timerIntervalR12(timerIntervalR12,HDGC))
+		[] setTimerIntervalR13?timerIntervalR13 ->
+				HDGenCompSt(set_timerIntervalR13(timerIntervalR13,HDGC))
+		[] setTimerIntervalR9?timerIntervalR9 ->
+				HDGenCompSt(set_timerIntervalR9(timerIntervalR9,HDGC))
+		[] getRotDirectBP!get_rotDirectBP(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] getRotDirectUFP!get_rotDirectUFP(HDGC) ->
+				HDGenCompSt(HDGC)
+		[] preparationPhase ->
+				HDGenCompSt(set_hdMachineState({prepPhase},HDGC))
+		[] connectingToPatient ->
+				HDGenCompSt(set_hdMachineState({connectThePatient},HDGC))
+		[] therapyInitiation ->
+				HDGenCompSt(set_hdMachineState({initPhase},HDGC))
+		[] therapyEnding ->
+				HDGenCompSt(set_hdMachineState({endPhase},HDGC))
+
+		RinsingParametersSt(RP) =
+		setFillingBPRate?fillingBPRate ->
+			 RinsingParametersSt(set_fillingBPRate(fillingBPRate,RP))
+		[] setRinsingBPRate?rinsingBPRate ->
+			 RinsingParametersSt(set_rinsingBPRate(rinsingBPRate,RP))
+		[] setRinsingTime?rinsingTime ->
+			 RinsingParametersSt(set_rinsingTime(rinsingTime,RP))
+		[] setUfVolForRinsing?ufVolForRinsing ->
+			 RinsingParametersSt(set_ufVolForRinsing(ufVolForRinsing,RP))
+		[] setBloodFlowForConnectingPatient?bloodFlowForConnectingPatient ->
+			 RinsingParametersSt(set_bloodFlowForConnectingPatient(bloodFlowForConnectingPatient,RP))
+		[] getRinsingBPRate!get_rinsingBPRate(RP) ->
+			 RinsingParametersSt(RP)
+		[] getRinsingTime!get_rinsingTime(RP) ->
+			 RinsingParametersSt(RP)
+		[] setUfRateForRinsing?ufRateForRinsing ->
+			 RinsingParametersSt(set_ufRateForRinsing(ufRateForRinsing,RP))
+		[] getUfRateForRinsing!get_ufRateForRinsing(RP) ->
+			 RinsingParametersSt(RP)
+		[] getUfVolForRinsing!get_ufVolForRinsing(RP) ->
+			 RinsingParametersSt(RP)
+		[] getBloodFlowForConnectingPatient!get_bloodFlowForConnectingPatient(RP) ->
+			 RinsingParametersSt(RP)
+		[] getFillingBPRate!get_fillingBPRate(RP) ->
+			 RinsingParametersSt(RP)
+	PressureParametersSt(PP) =
+		setLimitDeltaMinMaxAP?limitDeltaMinMaxAP ->
+			PressureParametersSt(set_limitDeltaMinMaxAP(limitDeltaMinMaxAP,PP))
+		[] setActualTMPMaxTMP?actualTMPMaxTMP ->
+			PressureParametersSt(set_actualTMPMaxTMP(actualTMPMaxTMP,PP))
+		[] setLimitsTMP?limitsTMP ->
+			PressureParametersSt(set_limitsTMP(limitsTMP,PP))
+		[] setLowHigh?lowHigh ->
+			PressureParametersSt(set_lowHigh(lowHigh,PP))
+		[] setExtendedTMPLimitRange?extendedTMPLimitRange ->
+			PressureParametersSt(set_extendedTMPLimitRange(extendedTMPLimitRange,PP))
+		[] getLimitDeltaMinMaxAP!get_limitDeltaMinMaxAP(PP) ->
+			PressureParametersSt(PP)
+		[] getActualTMPMaxTMP!get_actualTMPMaxTMP(PP) ->
+			PressureParametersSt(PP)
+		[] getLimitsTMP!get_limitsTMP(PP) ->
+			PressureParametersSt(PP)
+		[] getLowHigh!get_lowHigh(PP) ->
+			PressureParametersSt(PP)
+		[] getExtendedTMPLimitRange!get_extendedTMPLimitRange(PP) ->
+			PressureParametersSt(PP)
+
+	HeparinParametersSt (HP) =
+		setTreatmentWithoutHeparin?treatmentWithoutHeparin ->
+			HeparinParametersSt(set_treatmentWithoutHeparin(treatmentWithoutHeparin,HP))
+		[] setHeparinBolusVol?heparinBolusVol ->
+			HeparinParametersSt(set_heparinBolusVol(heparinBolusVol,HP))
+		[] setHeparinProfileRate?heparinProfileRate ->
+			HeparinParametersSt(set_heparinProfileRate(heparinProfileRate,HP))
+		[] setHeparinStopTime?heparinStopTime ->
+			HeparinParametersSt(set_heparinStopTime(heparinStopTime,HP))
+		[] getHeparinBolusVol!get_heparinBolusVol(HP) ->
+			HeparinParametersSt(HP)
+		[] getHeparinProfileRate!get_heparinProfileRate(HP) ->
+			HeparinParametersSt(HP)
+		[] getHeparinStopTime!get_heparinStopTime(HP) ->
+			HeparinParametersSt(HP)
+		[] getTreatmentWithoutHeparin!get_treatmentWithoutHeparin(HP) ->
+			HeparinParametersSt(HP)
+		[] setSyringeType?syringeType ->
+			HeparinParametersSt(set_syringeType(syringeType,HP))
+		[] getSyringeType!get_syringeType(HP) ->
+			HeparinParametersSt(HP)
+
+	UFParametersSt(UFP) =
+	 	setMaxUFRate?maxUFRate ->
+	 		UFParametersSt(set_maxUFRate(maxUFRate,UFP))
+		[] setMinUFRate?minUFRate ->
+			UFParametersSt(set_minUFRate(minUFRate,UFP))
+		[] setTherapyTime?therapyTime ->
+			UFParametersSt(set_therapyTime(therapyTime,UFP))
+		[] setUfVol?ufVol ->
+			UFParametersSt(set_ufVol(ufVol,UFP))
+		[] getMaxUFRate!get_maxUFRate(UFP) ->
+			UFParametersSt(UFP)
+		[] getMinUFRate!get_minUFRate(UFP) ->
+			UFParametersSt(UFP)
+		[] getTherapyTime!get_therapyTime(UFP) ->
+			UFParametersSt(UFP)
+		[] getUfVol!get_ufVol(UFP) ->
+			UFParametersSt(UFP)
+
+	DFParametersSt(DFP) =
+		setBicarbonateAcetate?bicarbonateAcetate ->
+			DFParametersSt(set_bicarbonateAcetate(bicarbonateAcetate,DFP))
+		[] setBicarbonateConductivity?bicarbonateConductivity ->
+			DFParametersSt(set_bicarbonateConductivity(bicarbonateConductivity,DFP))
+		[] setDfFlow?dfFlow ->
+			DFParametersSt(set_dfFlow(dfFlow,DFP))
+		[] setDfTemperature?dfTemperature ->
+			DFParametersSt(set_dfTemperature(dfTemperature,DFP))
+		[] setConductivity?conductivity ->
+			DFParametersSt(set_conductivity(conductivity,DFP))
+		[] getBicarbonateAcetate!get_bicarbonateAcetate(DFP) ->
+			DFParametersSt(DFP)
+		[] getConductivity!get_conductivity(DFP) ->
+			DFParametersSt(DFP)
+		[] getDfFlow!get_dfFlow(DFP) ->
+			DFParametersSt(DFP)
+		[] getDfTemperature!get_dfTemperature(DFP) ->
+			DFParametersSt(DFP)
+		[] getBicarbonateConductivity!get_bicarbonateConductivity(DFP) ->
+			DFParametersSt(DFP)
+
+	SensorReadings =
+	  senApTransdPress?apTransdPress ->
+	  			setApTransdPress?apTransdPress -> SensorReadings
+		[] senBloodFlowInEBC?bloodFlowInEBC ->
+				 setBloodFlowInEBC!bloodFlowInEBC -> SensorReadings
+		[] senBypassValve?bypassValve ->
+				 setBypassValve!bypassValve -> SensorReadings
+		[] senFflowDirect?fflowDirect ->
+				 setFflowDirect!fflowDirect -> SensorReadings
+		[] senLastNonZeroBF?lastNonZeroBF ->
+				 setLastNonZeroBF!lastNonZeroBF -> SensorReadings
+		[] senNetFluidRemoval?netFluidRemoval ->
+				 setNetFluidRemoval!netFluidRemoval -> SensorReadings
+		[] senNetFluidRemovalRate?netFluidRemovalRate ->
+				 setNetFluidRemovalRate!netFluidRemovalRate -> SensorReadings
+		[] senRotDirectBP?rotDirectBP ->
+				 setRotDirectBP!rotDirectBP -> SensorReadings
+		[] senRotDirectUFP?rotDirectUFP ->
+				 setRotDirectUFP!rotDirectUFP -> SensorReadings
+		[] senVolInEBC?volumeInEBC ->
+				 setVolInEBC!volumeInEBC -> SensorReadings
+		[] senSADSensorFlow?sadSensorFlow ->
+				 setSADSensorFlow!sadSensorFlow -> SensorReadings
+		[] senVpTransdPress?vpTransdPress ->
+				 setVpTransdPress!vpTransdPress -> SensorReadings
+		[] senHDMode?hdMode ->
+				 setHDMode!hdMode -> SensorReadings
+		[] senMinUFRateTreat?minUFRateTreat ->
+				 setMinUFRateTreat!minUFRateTreat -> SensorReadings
+	-- Software Requirements
+
+	-- Response to the Software Requirements
+
+	StopBloodFlow = stopBloodFlow -> SKIP
+
+	StopBP = stopBP -> SKIP
+
+	RaiseAlarm =
+		setAlarm!ENABLED ->
+		produceAlarmSound -> SKIP
+
+	StopFlowDialyzer = stopFlowDialyzer -> SKIP
+
+	DisconnectDF = disconnectDF -> SKIP
+
+	StopCoagulantFlow = stopCoagulantFlow -> SKIP
+
+	-- Requirements
+	--R1
+
+	R1 =
+		getHdActivity?hdActivity ->
+		getInfSalineVol?infSalineVol ->
+		(if hdActivity == {applicationArterialBolus}
+				and infSalineVol > 0
+			then (StopBloodFlow ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R1)
+
+	--subsubsection{Blood pump.}
+	--R2
+
+	NoFlowWatchDog =
+		getCurrentTime?time ->
+		getLastNonZeroBF?lastNonZeroBF ->
+			((time - lastNonZeroBF > 1 & tock -> StopBP ; RaiseAlarm)
+			[] (time - lastNonZeroBF <= 1 & tock -> NoFlowWatchDog))
+
+	BloodFlowSample  =
+	   senBloodFlowInEBC?bloodFlowInEBC ->
+	   getCurrentTime?time ->
+	  ((if bloodFlowInEBC != 0
+	   then setLastNonZeroBF!time -> SKIP
+	   else setBloodFlowInEBC!0 -> SKIP ) ; BloodFlowSample)
+
+	R2 = NoFlowWatchDog ||| BloodFlowSample
+
+	--R3
+
+	R3 =
+		getHdMachineState?hdMachineState ->
+		getBloodFlowInEBC?bloodFlowInEBC -> getDfFlow?dfFlow ->
+				if hdMachineState == {initPhase}
+					and bloodFlowInEBC < ((dfFlow * 1) % 1)
+				then RaiseAlarm
+				else Wait(CheckInterval) ; R3
+
+	--R4
+
+	R4 =
+		getHdMachineState?hdMachineState ->
+		getRotDirectUFP?rotDirectionBP ->
+		(if hdMachineState == {initPhase}
+				and rotDirectionBP == BACKWARDS
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R4)
+
+	--subsubsection{Blood-side entry pressure.}
+	--R5
+
+	R5 =
+		getHdMachineState?hdMachineState ->
+		getVpTransdPress?vpTransdPress ->
+		getUpperPressureLimit?upperPressureLimit ->
+		(if hdMachineState == {initPhase}
+				and vpTransdPress > upperPressureLimit
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R5)
+	--R6
+
+	R6 =
+		getHdMachineState?hdMachineState ->
+		getVpTransdPress?vpTransdPress ->
+		getLowerPressureLimit?lowerPressureLimit ->
+		(if hdMachineState == {initPhase}
+				and vpTransdPress < lowerPressureLimit
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R6)
+
+	--R7
+
+	R7 =
+		getHdMachineState?hdMachineState ->
+		getApTransdPress?apTransdPress ->
+		getUpperPressureLimit?upperPressureLimit ->
+		(if hdMachineState == {initPhase}
+				and apTransdPress > upperPressureLimit
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R7)
+
+	--R8
+
+	R8 =
+		getHdMachineState?hdMachineState ->
+		getApTransdPress?apTransdPress ->
+		getLowerPressureLimit?lowerPressureLimit ->
+		(if hdMachineState == {initPhase}
+				and apTransdPress < lowerPressureLimit
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R8)
+
+	--R9
+
+	TrackTimerVPTransdPressR9 =
+		((tock ->
+			senVpTransdPress?x ->
+			getTimerIntervalR9?timerIntervalR9 ->
+			(if x > 0 and timerIntervalR9 < 1
+				then setTimerIntervalR9!(timerIntervalR9+1) -> SKIP
+				else setTimerIntervalR9!0 -> SKIP )) ;
+				TrackTimerVPTransdPressR9)
+
+	R9internal =
+		getHdMachineState?hdMachineState ->
+		senVpTransdPress?vpTransdPress ->
+		getTimerIntervalR9?timerIntervalR9 ->
+		(if hdMachineState == {connectThePatient}
+				and vpTransdPress > 0
+				and timerIntervalR9 > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R9internal)
+
+	R9 =
+		R9internal ||| TrackTimerVPTransdPressR9
+
+	--R10
+
+	TrackTimerVPTransdPressR10 =
+	 (( tock ->
+	 	senVpTransdPress?x ->
+	 	getLowerPressureLimit?lowerPressureLimit ->
+			getTimerIntervalR10?timerIntervalR10 ->
+		(if x < lowerPressureLimit and timerIntervalR10 < 1
+			then setTimerIntervalR10!(timerIntervalR10+1) -> SKIP
+			else setTimerIntervalR10!0 -> SKIP ));
+
+	TrackTimerVPTransdPressR10)
+
+	R10internal =
+		getHdMachineState?hdMachineState ->
+		senVpTransdPress?vpTransdPress ->
+		getLowerPressureLimit?lowerPressureLimit ->
+		getTimerIntervalR10?timerIntervalR10 ->
+		(if hdMachineState == {connectThePatient}
+			and vpTransdPress < lowerPressureLimit
+			and timerIntervalR10 > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R10internal)
+
+	R10 =
+		R10internal ||| TrackTimerVPTransdPressR10
+
+	--R11
+
+	TrackTimerAPTransdPressR11 =
+		(tock ->
+	 		senApTransdPress?x ->
+	 		getLowerPressureLimit?lowerPressureLimit ->
+			getTimerIntervalR11?timerIntervalR11 ->
+			 (if x < lowerPressureLimit and timerIntervalR11 < 1
+			 	then setTimerIntervalR11!(timerIntervalR11+1) -> SKIP
+			 	else setTimerIntervalR11!0 -> SKIP ));
+ 				TrackTimerAPTransdPressR11
+
+	R11internal =
+		getHdMachineState?hdMachineState ->
+		senApTransdPress?apTransdPress ->
+		getLowerPressureLimit?lowerPressureLimit ->
+		getTimerIntervalR11?timerIntervalR11 ->
+		(if hdMachineState == {connectThePatient}
+				and apTransdPress < lowerPressureLimit
+				and timerIntervalR11 > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R11internal)
+
+	R11 =
+		R11internal ||| TrackTimerAPTransdPressR11
+
+	--R12
+
+	TrackTimerVPTransdPressR12 =
+		(tock ->
+			senVpTransdPress?x ->
+			getTimerIntervalR12?timerIntervalR12 ->
+			(if x > 0 and timerIntervalR12 < 1
+				then setTimerIntervalR12!(timerIntervalR12+1) -> SKIP
+				else setTimerIntervalR12!0 -> SKIP )) ;
+ 				TrackTimerVPTransdPressR12
+
+	R12internal =
+		getHdActivity?hdActivity ->
+		senVpTransdPress?vpTransdPress ->
+		getTimerIntervalR12?timerIntervalR12 ->
+		(if hdActivity == {reinfProcess}
+				and vpTransdPress > 0
+				and timerIntervalR12 > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R12internal)
+
+	R12 =
+		R12internal ||| TrackTimerVPTransdPressR12
+
+	--R13
+	TrackTimerVPTransdPressR13 =
+		(tock ->
+			senApTransdPress?x ->
+			getTimerIntervalR13?timerIntervalR13 ->
+			(if x < 1 and timerIntervalR13 < 1
+				then setTimerIntervalR13!(timerIntervalR13+1) -> SKIP
+				else setTimerIntervalR13!0 -> SKIP )) ;
+				TrackTimerVPTransdPressR13
+
+	R13internal =
+		getHdActivity?hdActivity ->
+		senApTransdPress?apTransdPress ->
+		getTimerIntervalR13?timerIntervalR13 ->
+		(if hdActivity == {reinfProcess}
+				and apTransdPress > 0
+				and timerIntervalR13 > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R13internal)
+
+	R13 =
+		R13internal ||| TrackTimerVPTransdPressR13
+
+	--subsubsection{Connecting the patient.}
+	--R14
+
+	R14 =
+		getHdMachineState?hdMachineState ->
+		getBloodFlowInEBC?bloodFlowInEBC ->
+		getUpperPressureLimit?upperPressureLimit ->
+		(if hdMachineState == {connectThePatient} and bloodFlowInEBC == 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R14)
+
+	--R15
+
+	R15 =
+		getHdMachineState?hdMachineState ->
+		getVolInEBC?volumeInEBC ->
+		getUpperPressureLimit?upperPressureLimit ->
+		(if hdMachineState == {connectThePatient} and volumeInEBC > 0
+			then (StopBP ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R15)
+	--R16
+
+	R16 =
+		connectingToPatient -> Wait(1) ; therapyInitiation -> SKIP
+
+	--R17
+
+	R17 =
+		getHdMachineState?hdMachineState ->
+		getRotDirectUFP?rotDirectionUFP ->
+		getUpperPressureLimit?upperPressureLimit ->
+		(if hdMachineState == {connectThePatient}
+				and rotDirectionUFP == BACKWARDS
+			then (StopFlowDialyzer ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R17)
+
+	--subsubsection{Flow bicarbonate concentrate into mixing chamber.}
+	--R18
+
+	R18 =
+		getHdActivity?hdActivity ->
+		getBicarbonateAcetate?bicarbonateAcetate ->
+		(if hdActivity == {preparationOfDF}
+				and bicarbonateAcetate == ACID
+			then (DisconnectDF ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R18)
+
+	--R19
+
+	R19 =
+		getHdActivity?hdActivity ->
+		getBicarbonateAcetate?bicarbonateAcetate ->
+		(if hdActivity == {preparationOfDF}
+				and bicarbonateAcetate == ACETATE
+			then (DisconnectDF ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R19)
+
+	--subsubsection{Heat and degas DF water.}
+
+	--R20
+
+	R20 =
+		getHdMachineState?hdMachineState ->
+		getHdActivity?hdActivity ->
+		getDfTemperature?dfTemperature ->
+		(if hdMachineState == {prepPhase}
+				and hdActivity == {priming, rinsing}
+				and dfTemperature > 41
+			then (DisconnectDF ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R20)
+
+	--R21
+
+	R21 =
+		getHdMachineState?hdMachineState ->
+		getDfTemperature?dfTemperature ->
+		(if hdMachineState == {initPhase}
+				and dfTemperature < 33
+			then (DisconnectDF ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R21)
+
+	--subsubsection{Heparin.}
+
+	R22 =
+		getHdMachineState?hdMachineState ->
+		getHdActivity?hdActivity ->
+		getFflowDirect?fflowDirect ->
+		(if hdMachineState == {prepPhase}
+				and hdActivity == {anticoagDelivRun}
+				and fflowDirect == BACKWARDS
+			then (StopBloodFlow ||| StopCoagulantFlow ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R22)
+
+	--subsubsection{Safety air detector.}
+	--R23
+
+	MonitorSADSensorFlow =
+	 getSADSensorFlow?sadSensorFlow ->
+	 	(if sadSensorFlow > 0
+	 		then (StopBP ||| RaiseAlarm)
+			else R23)
+
+	R23 =
+		getHdMachineState?hdMachineState ->
+		getHdActivity?hdActivity ->
+		getFflowDirect?fflowDirect ->
+		(if hdMachineState == {prepPhase, initPhase, connectThePatient}
+				and hdActivity == {rinsingEBC, reinfProcess, anticoagDelivRun}
+				and fflowDirect == BACKWARDS
+			then MonitorSADSensorFlow
+			else Wait(CheckInterval) ; R23)
+	--R24
+
+	R24 =
+		senSADSensorFlow?sadSensorFlow ->
+		(if sadSensorFlow >= 0 and sadSensorFlow <= 2
+			then setAirVolLimit!1 -> SKIP
+			else Wait(CheckInterval) ; R24)
+	--R25
+
+	R25 =
+		senSADSensorFlow?sadSensorFlow ->
+		(if sadSensorFlow > 0 and sadSensorFlow <= 1
+			then setAirVolLimit!1 -> SKIP
+			else Wait(CheckInterval) ; R25)
+	--R26
+
+	R26 =
+		senSADSensorFlow?sadSensorFlow ->
+		(if sadSensorFlow > 0
+			then setAirVolLimit!1 -> SKIP
+			else Wait(CheckInterval) ; R26)
+	--R27
+
+	R27 =
+		tock ->
+		senAirVol?airVol ->
+		setAirVol!airVol -> R27
+
+	--R2832
+
+	R2832 =
+		getAirVol?airVol ->
+		getAirVolLimit?airVolLimit ->
+		getHdMachineState?hdMachineState ->
+		getHdActivity?hdActivity ->
+		getFflowDirect?fflowDirect ->
+		(if airVol > airVolLimit
+			and (((hdActivity == {rinsingEBC}
+						and hdMachineState == {prepPhase})
+					or hdActivity == {applicationArterialBolus,reinfProcess})
+					or hdMachineState == {connectThePatient,initPhase})
+			then (StopBloodFlow ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R2832)
+
+	--subsubsection{Ultrafiltration.}
+	--R33
+
+	R33 =
+		getNetFluidRemovalRate?netFluidRemovalRate ->
+		getSafeUpperLimit?safeUpperLimit ->
+		(if netFluidRemovalRate > safeUpperLimit
+			then (StopFlowDialyzer ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R33)
+	--R34
+
+	R34 =
+		getHdMachineState?hdMachineState ->
+		getNetFluidRemoval?netFluidRemoval ->
+		getRotDirectUFP?rotDirectionUFP ->
+		getHDMode?hdMode ->
+		(if (hdMachineState == {initPhase} and
+			 netFluidRemoval == ENABLED and
+			 rotDirectionUFP == BACKWARDS and
+			 hdMode == BYPASS)
+			then (StopFlowDialyzer ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R34)
+	--R36
+
+	R36 =
+		getHdMachineState?hdMachineState ->
+		getNetFluidRemoval?netFluidRemoval ->
+		getBypassValve?bypassValve ->
+		(if (hdMachineState == {initPhase} and
+			 netFluidRemoval == ENABLED and
+			 bypassValve == OPEN)
+			then (StopFlowDialyzer ||| RaiseAlarm)
+			else Wait(CheckInterval) ; R36)
+
+
+
+-- {Therapy Processes}
+
+	-- {Therapy Preparation}
+
+	AutomatedSelfTest =
+		autSelfTest -> setSignalLamp!GREEN -> SKIP
+
+	ConnectingTheConcentrate =
+		connectingConcentrate?x -> setBicarbonateAcetate!x -> SKIP
+
+	SetRinsingParameters =
+		input_of_SetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient ->
+		setFillingBPRate!sFBPRate ->
+		setRinsingBPRate!sRBPRate ->
+		setRinsingTime!sRTime ->
+		setUfRateForRinsing!sUFRFRinsing ->
+		setUfVolForRinsing!sUFVFRinsing ->
+		setBloodFlowForConnectingPatient!sBFFCPatient -> SKIP
+
+	StdAtrialTubing =
+		atrialTubing -> SKIP
+
+	StdVentricularTubing =
+		ventricularTubing -> SKIP
+
+	InsertRinsingTubingSystem =
+		(StdAtrialTubing ||| StdVentricularTubing)
+
+	SalineBagLevels =
+		salineBagLevel?infSalineVol ->
+		setInfSalineVol!infSalineVol -> SKIP
+
+	BloodLines =
+		setBloodLines!TRUE -> SKIP
+
+	RinsingTesting =
+		setRinsingBPRate?rinsingBPRate -> SKIP
+
+	InsertingRinsingTestingTubSystem =
+    InsertRinsingTubingSystem ;
+    SalineBagLevels ;
+    BloodLines ;
+    RinsingTesting
+
+	PrepHeparinPump =
+		insertHeparinSyringe ->
+		heparinLineIsVented -> SKIP
+
+	SetDFParameters =
+		input_of_SetDFParameters?sCond.sBAc.sBCond.sDFTemp.sDFFlow ->
+	 	setConductivity!sCond ->
+		setBicarbonateAcetate!sBAc ->
+		setBicarbonateConductivity!sBCond ->
+		setDfTemperature!sDFTemp ->
+		setDfFlow!sDFFlow -> SKIP
+
+	SetUFParameters =
+		input_of_SetUFParameters?sUFVol.sTTime.sMiUFRate.sMaUFRate ->
+		setUfVol!sUFVol ->
+		setTherapyTime!sTTime ->
+		setMinUFRate!sMiUFRate ->
+		setMaxUFRate!sMaUFRate -> SKIP
+
+	SetPressureParameters =
+		input_of_SetPressureParameters?sLDMMAP.sATMPMTMP.sLTMP.sLH.sETMPLR ->
+		setLimitDeltaMinMaxAP!sLDMMAP ->
+		setActualTMPMaxTMP!sATMPMTMP ->
+		setLimitsTMP!sLTMP ->
+		setLowHigh!sLH ->
+		setExtendedTMPLimitRange!sETMPLR -> SKIP
+
+	SetHeparinParameters =
+		input_of_SetHeparinParameters?sHST.sHBV.sHPR.sTWH.sST ->
+		setHeparinStopTime!sHST ->
+		setHeparinBolusVol!sHBV ->
+		setHeparinProfileRate!sHPR ->
+		setTreatmentWithoutHeparin!sTWH ->
+		setSyringeType!sST -> SKIP
+
+	SetTreatmentParameters =
+		((SetDFParameters [|DFParametersStComm|] DFParametersSt(DFP))\DFParametersStComm);
+		((SetUFParameters [|UFParametersStComm|] UFParametersSt(UFP))\UFParametersStComm);
+	    ((SetPressureParameters [|PressureParametersStComm|] PressureParametersSt(PP))\PressureParametersStComm);
+	    ((SetHeparinParameters [|HeparinParametersStComm|] HeparinParametersSt(HP))\HeparinParametersStComm)
+
+	RinsingDialyzer =
+		connectDialyzer ->
+		fillArterialDrip ->
+		stopBP -> SKIP
+
+	TherapyPreparation =
+	 	 preparationPhase ->
+	 	 AutomatedSelfTest ;
+	 	 ConnectingTheConcentrate ;
+	 	 -- ((SetRinsingParameters [|RinsingParametersStComm|]RinsingParametersSt(RP))\RinsingParametersStComm) ;
+	 	 InsertingRinsingTestingTubSystem ;
+	 	 PrepHeparinPump ;
+	 	 SetTreatmentParameters ;
+	 	 RinsingDialyzer
+
+	-- {Therapy Initiation}
+
+	EnableUI =
+		setSignalLamp!YELLOW -> SKIP
+
+	ConnectPatientArterially =
+		connPatientArterially -> SKIP
+
+	ConnectPatientVenously =
+		connPatientVenously -> SKIP
+
+	SetStopBloodFlow =
+		setBloodFlowInEBC?bloodFlowInEBC -> SKIP
+
+	ConnectPatientStartTherapy =
+	 		 connectingToPatient ->
+	 		 EnableUI ;
+	 		 ConnectPatientArterially ;
+	 		 SetStopBloodFlow ;
+	 		 ConnectPatientVenously ;
+	 		 setSignalLamp!GREEN ->
+	 		 setHDMode!RUN -> SKIP
+
+	MonitorBPLimits =
+		SKIP
+
+	TreatMinUFRate =
+		setMinUFRateTreat?ON -> SKIP
+
+	HeparinBolus =
+		SKIP
+
+	ArterialBolus =
+		setArtBolusVol?artBolusVol -> SKIP
+
+	InterruptDialysis =
+		senHDMode!BYPASS ->
+		setSignalLamp!YELLOW -> SKIP
+
+	CompleteTreatment =
+		therapyEnding ->
+		setSignalLamp!YELLOW -> SKIP
+
+	DuringTherapy =
+			(MonitorBPLimits --||| TreatMinUFRate
+								 ||| HeparinBolus
+								 --||| ArterialBolus
+								 ||| InterruptDialysis) ;
+ 				CompleteTreatment
+
+	TherapyInitiation =
+		therapyInitiation ->
+			ConnectPatientStartTherapy ;
+			DuringTherapy
+
+	-- {Therapy Ending}
+
+	Reinfusion =
+		SKIP
+
+	EmptyingDialyzer =
+		SKIP
+
+	EmptyingCartridge =
+		SKIP
+
+	OverviewTherapy =
+		SKIP
+
+	TherapyEnding =
+		therapyEnding ->
+			Reinfusion ;
+			EmptyingDialyzer ;
+			EmptyingCartridge ;
+			OverviewTherapy
+
+	MainTherapy =
+		TherapyPreparation;
+		TherapyInitiation;
+		TherapyEnding
+
+
+  	ArterialBolusReq = R1
+
+  	BloodPumpReq =
+  		R2 ||| R3 ||| R4
+
+  	BloodEntryPressureReq =
+  		R5
+  		||| R6 ||| R7
+  		||| R8 ||| R9
+  		||| R10 ||| R11
+  		||| R12 ||| R13
+
+  	ConnPatientReq =
+  		R14
+  		||| R15
+  		||| R16
+  		||| R17
+
+  	FlowCarbMixChambReq =
+  		R18 ||| R19
+
+  	HeatDegasDFWaterReq =
+  		R20 ||| R21
+
+  	HeparinReq =
+  		R22
+
+  	SafetyAirDetectorReq =
+  		R23
+  		||| R24 ||| R25
+  		||| R26 ||| R27
+  		||| R2832
+
+  	UltrafiltrationReq =
+  		R33 ||| R34 ||| R36
+
+
+	HDMachineMain =
+
+	((ArterialBolusReq
+		||| MainTherapy) [|HDComm|] HDGenCompSt(HDGC))\ HDComm
+		-- [|SensorReadingsComm|]
+			-- SensorReadings
+
+	within HDMachineMain
+
+-----------------------------------------------------------------------
+-------------        3. FDR Tests         -------------
+-----------------------------------------------------------------------
+
+mystate = ((0, 0, ENABLED, 0, 0, 0, FALSE, CLOSED,
+          FORWARD, {idle}, {connectThePatient}, RUN, 0, 0, 0, OFF,
+          ENABLED, 0, FORWARD, FORWARD, 0, 0, GREEN, 0, 0,
+          0, 0, 0, 0, 0, 0),
+          (0,1,0,1,1,1),
+			(1,BICARBONATE, 1, 32, 1),
+			(1, 1, 0, 0),
+			(1, 1, DISABLED, 1, DISABLED),
+			((0,0),1,1,DISABLED,2))
+
+MACHINE =
+	(HDMachine(mystate)
+		[|{|tock,getTime,setTime|}|]
+
+	SysClock) \ {|tock,getTime,setTime|}
+
+MyHDMACHINE = let X = HDMachine(mystate); X within X
+assert MyHDMACHINE :[ deadlock free [FD] ]
+-- assert MACHINE :[ livelock free ]
+-- assert MACHINE :[ deterministic [F] ]
+--assert TOCKS [FD= (MACHINE|||RUNNING({tock})) \ diff(Events,{tock})

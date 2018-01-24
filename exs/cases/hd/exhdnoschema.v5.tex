@@ -2,13 +2,11 @@
 \subsection{Types and state variables - To be continued}
 %<*zedtypes>
 \begin{circus}
-NatValue == 0 \upto 2\\
+NatValue == 0 \upto 1\\
 BUTTON ::= ON~|~OFF\\
 STATEPHASE ::= connectThePatient~|~initPhase~|~prepPhase~|~endPhase\\
 ACTIVITY ::= applicationArterialBolus~|~rinsing~|~idle\\
-CONCENTRATE ::= ACID~|~ACETATE~|~BICARBONATE\\
-TIME~==~\{~h:\nat;~m:\nat~@~(h,m)~\}\\
-HDMODE ::= RUN~|~ALARM~|~BYPASS\\
+TIME~==~\{~h:NatValue;~m:NatValue~@~(h,m)~\}\\
 chkInterval == 1\\
 \end{circus}%<*hdchannels>
 \begin{circus}
@@ -27,7 +25,7 @@ chkInterval == 1\\
 \begin{circus}
   \circchannel fillArterialDrip, connPatientArterially, connPatientVenously\\
   \circchannel insertHeparinSyringe, heparinLineIsVented\\
-  \circchannel connectingConcentrate~:~CONCENTRATE\\
+  \circchannel connectingConcentrate~:~BUTTON\\
   \circchannel salineBagLevel~:~\nat
 \end{circus}
 
@@ -42,7 +40,7 @@ chkInterval == 1\\
   \circchannel setBloodFlow~:~\nat\\
   \circchannel senBypassVol~:~BUTTON\\
   \circchannel senFflowDirect~:~BUTTON\\
-  \circchannel senHDMode~:~HDMODE\\
+  \circchannel senHDMode~:~BUTTON\\
   \circchannel senInfVol~:~\nat\\
   \circchannel senLastNonZeroBF~:~\nat\\
   \circchannel senNetFluidRemovalRate~:~\nat\\
@@ -59,7 +57,7 @@ chkInterval == 1\\
 \end{circus}
 \begin{circus}
   \circchannel inputOfSetRinsingParameters~:~\nat \cross \nat \cross \nat \cross \nat \cross \nat \cross \nat\\
-  \circchannel inputOfSetDFParameters~:~\nat \cross CONCENTRATE \cross \nat\cross \nat \cross \nat\\
+  \circchannel inputOfSetDFParameters~:~\nat \cross BUTTON \cross \nat\cross \nat \cross \nat\\
   \circchannel inputOfSetUFParameters~:~\nat \cross \nat\cross \nat\cross \nat\\
   \circchannel inputOfSetPressureParameters~:~\nat \cross \nat \cross BUTTON \cross \nat  \cross BUTTON\\
   \circchannel inputOfSetHeparinParameters~:~TIME \cross \nat \cross \nat \cross BUTTON \cross \nat\\
@@ -122,7 +120,7 @@ setMinUFRateTreat\rchanset\\
     fflowDirect~:~BUTTON\\
     hdActivity~:~\power~ACTIVITY\\
     hdMachineState~:~\power~STATEPHASE\\
-    hdMode~:~HDMODE\\
+    hdMode~:~BUTTON\\
     infSalineVol~:~\nat\\
     lastNonZeroBF~:~\nat\\
     lowerPressureLimit~:~\nat\\
@@ -163,7 +161,7 @@ setMinUFRateTreat\rchanset\\
 \end{schema}
 \begin{schema}{DFParameters}
     conductivity~:~\nat\\
-    bicarbonateAcetate~:~CONCENTRATE\\% \comment{I don't see invariants for this one}\\
+    bicarbonateAcetate~:~BUTTON\\% \comment{I don't see invariants for this one}\\
     bicarbonateConductivity~:~\nat\\
     dfTemperature~:~\nat\\
     % rinsingTime~:~\nat\\
@@ -250,7 +248,7 @@ setMinUFRateTreat\rchanset\\
       (upperPressureLimit~:=~0)\circseq
       (volumeInEBC~:=~0)\circseq
       (vpTransdPress~:=~0)\circseq
-      (hdMode~:=~RUN)\circseq
+      (hdMode~:=~ON)\circseq
       (signalBUTTON~:=~ON)\circseq
       (bloodLines~:=~OFF)\circseq
       (minUFRateTreat:=OFF)
@@ -578,7 +576,7 @@ setMinUFRateTreat\rchanset\\
 %  \Delta HDState
 % \where
 %   hdActivity~=~\{preparationOfDF\}\\
-%   bicarbonateAcetate~=~ACID
+%   bicarbonateAcetate~=~ON
 % \end{schema}
 
 %
@@ -592,7 +590,7 @@ setMinUFRateTreat\rchanset\\
 %  \Delta HDState
 % \where
 %   hdActivity~=~\{preparationOfDF\}\\
-%   bicarbonateAcetate~=~ACETATE
+%   bicarbonateAcetate~=~OFF
 % \end{schema}
 
 %
@@ -751,7 +749,7 @@ setMinUFRateTreat\rchanset\\
 %   hdMachineState~=~\{initPhase\}\\
 %   netFluidRemoval~=~ON\\
 %   rotBUTTONUFP~=~OFF\\
-%   hdMode~=~BYPASS
+%   hdMode~=~OFF
 % \end{schema}
 
 %
@@ -805,7 +803,7 @@ setMinUFRateTreat\rchanset\\
 \\SoftwareRequirements~\circdef~
     \circmu~X \circspot
     (ArterialBolusReq
-              \\\interleave~BloodPumpReq
+              %\\\interleave~BloodPumpReq
               % \\\interleave~BloodEntryPressureReq
               % \\\interleave~ConnPatientReq
               % \\\interleave~FlowCarbMixChambReq
@@ -848,13 +846,13 @@ setMinUFRateTreat\rchanset\\
   \\\t2 ConnectPatientArterially \circseq
   \\\t2 SetStopBloodFlow\circseq
   \\\t2 ConnectPatientVenously \circseq
-  \\\t2 (signalBUTTON,hdMode := ON,RUN)
+  \\\t2 (signalBUTTON,hdMode := ON,ON)
 
 \\MonitorBPLimits~\circdef~\Skip
 \\TreatMinUFRate~\circdef~ setMinUFRateTreat?ON \then \Skip
 \\HeparinBolus~\circdef~\Skip
 \\ArterialBolus~\circdef~setArtBolusVol?artBolusVol \then \Skip
-\\InterruptDialysis~\circdef~ senHDMode!BYPASS \then (signalBUTTON := OFF)
+\\InterruptDialysis~\circdef~ senHDMode!OFF \then (signalBUTTON := OFF)
 \\CompletTreatment~\circdef~ endTreatment \then (signalBUTTON := OFF)
 \\DuringTherapy~\circdef~
       \\\t2 (MonitorBPLimits\\
@@ -933,8 +931,8 @@ setMinUFRateTreat\rchanset\\
 
 \\HDMachineMain~\circdef (HDGenCompInit \circseq
 ((
-MainTherapy
-% (MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
+% MainTherapy
+(MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  SoftwareRequirements)
 % (MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  R1)
         % \lpar \emptyset | TherapyPhaseChanSet | \emptyset \rpar StatePhase)
         % \lpar \emptyset | HDMachineChanSet | \emptyset \rpar SensorReadings)

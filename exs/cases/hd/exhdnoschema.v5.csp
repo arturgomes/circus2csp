@@ -5,8 +5,8 @@ include "function_aux.csp"
 NatValue = {0..1}
 datatype BUTTON = ON | OFF
 
-TIME = (NatValue,NatValue)
 
+TIME = (NatValue,NatValue)
 chkInterval = 1
 channel preparationPhase, therapyInitiation
 channel connectingToPatient, duringTherapy, therapyEnding, endTreatment
@@ -47,32 +47,26 @@ channel inputOfSetHeparinParameters : TIME.NatValue.NatValue.BUTTON.NatValue
 HDMachineChanSet = {| senApTransdPress,senBloodFlowInEBC,senBypassVol,senFflowDirect,senInfVol,senLastNonZeroBF,senNetFluidRemoval,senNetFluidRemovalRate,senRotDirectBP,senRotDirectUFP,senVolInEBC,senSADSensorFlow,senVpTransdPress,senHDMode,setMinUFRateTreat |}
 TherapyPhaseChanSet = {| preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
 MainTherapyChanSet = {| preparationPhase,therapyInitiation,connectingToPatient,duringTherapy,therapyEnding |}
-MyHDMACHINE = let X = (HDMachine(b_PAC1,b_PST1,b_HDM1,b_CON1,b_TIM1,b_BUT1,b_NAT1)); X within X
+MyHDMACHINE = let X = (HDMachine(b_PAC1,b_PST1,b_TIM1,b_BUT1,b_NAT1)); X within X
 assert MyHDMACHINE :[deadlock free]
 --------------------------------
 -- The universe of values
- datatype UNIVERSE = PAC.Set(BUTTON) | PST.Set(BUTTON) | HDM.BUTTON | CON.BUTTON | TIM.TIME | BUT.BUTTON | NAT.NatValue
+ datatype UNIVERSE = PAC.Set(BUTTON) | PST.Set(BUTTON) | TIM.TIME | BUT.BUTTON | NAT.NatValue
 --Conversions
 valuePAC(PAC.v) = v
 valuePST(PST.v) = v
-valueHDM(HDM.v) = v
-valueCON(CON.v) = v
 valueTIM(TIM.v) = v
 valueBUT(BUT.v) = v
 valueNAT(NAT.v) = v
 
 typePAC(x) = U_PAC
 typePST(x) = U_PST
-typeHDM(x) = U_HDM
-typeCON(x) = U_CON
 typeTIM(x) = U_TIM
 typeBUT(x) = U_BUT
 typeNAT(x) = U_NAT
 
 tagPAC(x) = PAC
 tagPST(x) = PST
-tagHDM(x) = HDM
-tagCON(x) = CON
 tagTIM(x) = TIM
 tagBUT(x) = BUT
 tagNAT(x) = NAT
@@ -82,12 +76,6 @@ subtype U_PAC = PAC.Set(BUTTON)
 
 -- subtypes of UNIVERSE for PST
 subtype U_PST = PST.Set(BUTTON)
-
--- subtypes of UNIVERSE for HDM
-subtype U_HDM = HDM.BUTTON
-
--- subtypes of UNIVERSE for CON
-subtype U_CON = CON.BUTTON
 
 -- subtypes of UNIVERSE for TIM
 subtype U_TIM = TIM.TIME
@@ -99,20 +87,20 @@ subtype U_BUT = BUT.BUTTON
 subtype U_NAT = NAT.NatValue
 
 -- definition of NAME for the entire spec
-datatype NAME = sv_airVolLimit | sv_airVol | sv_alarm | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_bypassValve | sv_fflowDirect | sv_hdActivity | sv_hdMachineState | sv_hdMode | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_netFluidRemoval | sv_rotBUTTONBP | sv_rotBUTTONUFP | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_bloodLines | sv_minUFRateTreat | sv_signalBUTTON | sv_fillingBPRate | sv_ONBPRate | sv_ONTime | sv_ufRateForRinsing | sv_ufVolForRinsing | sv_bloodFlowForConnectingPatient | sv_conductivity | sv_bicarbonateAcetate | sv_bicarbonateConductivity | sv_dfTemperature | sv_dfFlow | sv_ufVol | sv_therapyTime | sv_minUFRate | sv_maxUFRate | sv_limitDeltaMinMaxAP | sv_actualTMPMaxTMP | sv_limitsTMP | sv_lowHigh | sv_extendedTMPLimitRange | sv_heparinStopTime | sv_heparinBolusVol | sv_heparinProfileRate | sv_treatmentWithoutHeparin | sv_syringeType | sv_time
+datatype NAME = sv_airVolLimit | sv_airVol | sv_alarm | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_bypassValve | sv_fflowDirect | sv_hdActivity | sv_hdMachineState | sv_hdMode | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_netFluidRemoval | sv_rotBUTTONBP | sv_rotBUTTONUFP | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_bloodLines | sv_minUFRateTreat | sv_signalBUTTON | sv_fillingBPRate | sv_rinsingBPRate | sv_rinsingTime | sv_ufRateForRinsing | sv_ufVolForRinsing | sv_bloodFlowForConnectingPatient | sv_conductivity | sv_bicarbonateAcetate | sv_bicarbonateConductivity | sv_dfTemperature | sv_dfFlow | sv_ufVol | sv_therapyTime | sv_minUFRate | sv_maxUFRate | sv_limitDeltaMinMaxAP | sv_actualTMPMaxTMP | sv_limitsTMP | sv_lowHigh | sv_extendedTMPLimitRange | sv_heparinStopTime | sv_heparinBolusVol | sv_heparinProfileRate | sv_treatmentWithoutHeparin | sv_syringeType | sv_time
 
 -- Subtype definition for NAT
-b_NAT1 = {(sv_airVolLimit, NAT.0),(sv_airVol, NAT.0),(sv_artBolusVol, NAT.0),(sv_apTransdPress, NAT.0),(sv_bloodFlowInEBC, NAT.0),(sv_infSalineVol, NAT.0),(sv_lastNonZeroBF, NAT.0),(sv_lowerPressureLimit, NAT.0),(sv_netFluidRemovalRate, NAT.0),(sv_safeUpperLimit, NAT.0),(sv_timerIntervalR9, NAT.0),(sv_timerIntervalR10, NAT.0),(sv_timerIntervalR11, NAT.0),(sv_timerIntervalR12, NAT.0),(sv_timerIntervalR13, NAT.0),(sv_upperPressureLimit, NAT.0),(sv_volumeInEBC, NAT.0),(sv_vpTransdPress, NAT.0),(sv_sadSensorFlow, NAT.0),(sv_fillingBPRate, NAT.0),(sv_ONBPRate, NAT.0),(sv_ONTime, NAT.0),(sv_ufRateForRinsing, NAT.0),(sv_ufVolForRinsing, NAT.0),(sv_bloodFlowForConnectingPatient, NAT.0),(sv_conductivity, NAT.0),(sv_bicarbonateConductivity, NAT.0),(sv_dfTemperature, NAT.0),(sv_dfFlow, NAT.0),(sv_ufVol, NAT.0),(sv_therapyTime, NAT.0),(sv_minUFRate, NAT.0),(sv_maxUFRate, NAT.0),(sv_limitDeltaMinMaxAP, NAT.0),(sv_actualTMPMaxTMP, NAT.0),(sv_lowHigh, NAT.0),(sv_heparinBolusVol, NAT.0),(sv_heparinProfileRate, NAT.0),(sv_syringeType, NAT.0),(sv_time, NAT.0)}
-subtype NAME_NAT = sv_airVolLimit | sv_airVol | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_fillingBPRate | sv_ONBPRate | sv_ONTime | sv_ufRateForRinsing | sv_ufVolForRinsing | sv_bloodFlowForConnectingPatient | sv_conductivity | sv_bicarbonateConductivity | sv_dfTemperature | sv_dfFlow | sv_ufVol | sv_therapyTime | sv_minUFRate | sv_maxUFRate | sv_limitDeltaMinMaxAP | sv_actualTMPMaxTMP | sv_lowHigh | sv_heparinBolusVol | sv_heparinProfileRate | sv_syringeType | sv_time
+b_NAT1 = {(sv_airVolLimit, NAT.0),(sv_airVol, NAT.0),(sv_artBolusVol, NAT.0),(sv_apTransdPress, NAT.0),(sv_bloodFlowInEBC, NAT.0),(sv_infSalineVol, NAT.0),(sv_lastNonZeroBF, NAT.0),(sv_lowerPressureLimit, NAT.0),(sv_netFluidRemovalRate, NAT.0),(sv_safeUpperLimit, NAT.0),(sv_timerIntervalR9, NAT.0),(sv_timerIntervalR10, NAT.0),(sv_timerIntervalR11, NAT.0),(sv_timerIntervalR12, NAT.0),(sv_timerIntervalR13, NAT.0),(sv_upperPressureLimit, NAT.0),(sv_volumeInEBC, NAT.0),(sv_vpTransdPress, NAT.0),(sv_sadSensorFlow, NAT.0),(sv_fillingBPRate, NAT.0),(sv_rinsingBPRate, NAT.0),(sv_rinsingTime, NAT.0),(sv_ufRateForRinsing, NAT.0),(sv_ufVolForRinsing, NAT.0),(sv_bloodFlowForConnectingPatient, NAT.0),(sv_conductivity, NAT.0),(sv_bicarbonateConductivity, NAT.0),(sv_dfTemperature, NAT.0),(sv_dfFlow, NAT.0),(sv_ufVol, NAT.0),(sv_therapyTime, NAT.0),(sv_minUFRate, NAT.0),(sv_maxUFRate, NAT.0),(sv_limitDeltaMinMaxAP, NAT.0),(sv_actualTMPMaxTMP, NAT.0),(sv_lowHigh, NAT.0),(sv_heparinBolusVol, NAT.0),(sv_heparinProfileRate, NAT.0),(sv_syringeType, NAT.0),(sv_time, NAT.0)}
+subtype NAME_NAT = sv_airVolLimit | sv_airVol | sv_artBolusVol | sv_apTransdPress | sv_bloodFlowInEBC | sv_infSalineVol | sv_lastNonZeroBF | sv_lowerPressureLimit | sv_netFluidRemovalRate | sv_safeUpperLimit | sv_timerIntervalR9 | sv_timerIntervalR10 | sv_timerIntervalR11 | sv_timerIntervalR12 | sv_timerIntervalR13 | sv_upperPressureLimit | sv_volumeInEBC | sv_vpTransdPress | sv_sadSensorFlow | sv_fillingBPRate | sv_rinsingBPRate | sv_rinsingTime | sv_ufRateForRinsing | sv_ufVolForRinsing | sv_bloodFlowForConnectingPatient | sv_conductivity | sv_bicarbonateConductivity | sv_dfTemperature | sv_dfFlow | sv_ufVol | sv_therapyTime | sv_minUFRate | sv_maxUFRate | sv_limitDeltaMinMaxAP | sv_actualTMPMaxTMP | sv_lowHigh | sv_heparinBolusVol | sv_heparinProfileRate | sv_syringeType | sv_time
 NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
 
 -- Subtype definition for BUT
-b_BUT1 = {(sv_alarm, BUT.ON),(sv_bypassValve, BUT.ON),(sv_fflowDirect, BUT.ON),(sv_netFluidRemoval, BUT.ON),(sv_rotBUTTONBP, BUT.ON),(sv_rotBUTTONUFP, BUT.ON),(sv_bloodLines, BUT.ON),(sv_minUFRateTreat, BUT.ON),(sv_signalBUTTON, BUT.ON),(sv_limitsTMP, BUT.ON),(sv_extendedTMPLimitRange, BUT.ON),(sv_treatmentWithoutHeparin, BUT.ON)}
-subtype NAME_BUT = sv_alarm | sv_bypassValve | sv_fflowDirect | sv_netFluidRemoval | sv_rotBUTTONBP | sv_rotBUTTONUFP | sv_bloodLines | sv_minUFRateTreat | sv_signalBUTTON | sv_limitsTMP | sv_extendedTMPLimitRange | sv_treatmentWithoutHeparin
+b_BUT1 = {(sv_alarm, BUT.ON),(sv_bypassValve, BUT.ON),(sv_fflowDirect, BUT.ON),(sv_hdMode, BUT.ON),(sv_netFluidRemoval, BUT.ON),(sv_rotBUTTONBP, BUT.ON),(sv_rotBUTTONUFP, BUT.ON),(sv_bloodLines, BUT.ON),(sv_minUFRateTreat, BUT.ON),(sv_signalBUTTON, BUT.ON),(sv_bicarbonateAcetate, BUT.ON),(sv_limitsTMP, BUT.ON),(sv_extendedTMPLimitRange, BUT.ON),(sv_treatmentWithoutHeparin, BUT.ON)}
+subtype NAME_BUT = sv_alarm | sv_bypassValve | sv_fflowDirect | sv_hdMode | sv_netFluidRemoval | sv_rotBUTTONBP | sv_rotBUTTONUFP | sv_bloodLines | sv_minUFRateTreat | sv_signalBUTTON | sv_bicarbonateAcetate | sv_limitsTMP | sv_extendedTMPLimitRange | sv_treatmentWithoutHeparin
 NAMES_VALUES_BUT = seq({seq({(n,v) | v <- typeBUT(n)}) | n <- NAME_BUT})
 
 -- Subtype definition for PAC
-b_PAC1 = {(sv_hdActivity, PAC.{OFF})}
+b_PAC1 = {(sv_hdActivity, PAC.{ON})}
 subtype NAME_PAC = sv_hdActivity
 NAMES_VALUES_PAC = seq({seq({(n,v) | v <- typePAC(n)}) | n <- NAME_PAC})
 
@@ -120,16 +108,6 @@ NAMES_VALUES_PAC = seq({seq({(n,v) | v <- typePAC(n)}) | n <- NAME_PAC})
 b_PST1 = {(sv_hdMachineState, PST.{ON})}
 subtype NAME_PST = sv_hdMachineState
 NAMES_VALUES_PST = seq({seq({(n,v) | v <- typePST(n)}) | n <- NAME_PST})
-
--- Subtype definition for HDM
-b_HDM1 = {(sv_hdMode, HDM.ON)}
-subtype NAME_HDM = sv_hdMode
-NAMES_VALUES_HDM = seq({seq({(n,v) | v <- typeHDM(n)}) | n <- NAME_HDM})
-
--- Subtype definition for CON
-b_CON1 = {(sv_bicarbonateAcetate, CON.ON)}
-subtype NAME_CON = sv_bicarbonateAcetate
-NAMES_VALUES_CON = seq({seq({(n,v) | v <- typeCON(n)}) | n <- NAME_CON})
 
 -- Subtype definition for TIM
 b_TIM1 = {(sv_heparinStopTime, TIM.(0,0))}
@@ -147,12 +125,6 @@ BINDINGS_PAC = {set(b) | b <- set(distCartProd(NAMES_VALUES_PAC))}
 
 -- Bindings definitions for PST
 BINDINGS_PST = {set(b) | b <- set(distCartProd(NAMES_VALUES_PST))}
-
--- Bindings definitions for HDM
-BINDINGS_HDM = {set(b) | b <- set(distCartProd(NAMES_VALUES_HDM))}
-
--- Bindings definitions for CON
-BINDINGS_CON = {set(b) | b <- set(distCartProd(NAMES_VALUES_CON))}
 
 -- Bindings definitions for TIM
 BINDINGS_TIM = {set(b) | b <- set(distCartProd(NAMES_VALUES_TIM))}
@@ -172,7 +144,7 @@ channel lget, lset : NAME.UNIVERSE
 channel lterminate
 MEML = {| lset,lget,lterminate |}
 
-HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
+HDMachine(b_PAC,b_PST,b_TIM,b_BUT,b_NAT) =
   let
      MemoryPACVar(n,b_PAC) =
         ( ( mget.n.apply(b_PAC,n) ->
@@ -185,18 +157,6 @@ HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
     MemoryPSTVar(n,b_PST)
       [] mset.n?nv:typePST(n) ->
     MemoryPSTVar(n,over(b_PST,n,nv)))
-      [] terminate -> SKIP)
-     MemoryHDMVar(n,b_HDM) =
-        ( ( mget.n.apply(b_HDM,n) ->
-    MemoryHDMVar(n,b_HDM)
-      [] mset.n?nv:typeHDM(n) ->
-    MemoryHDMVar(n,over(b_HDM,n,nv)))
-      [] terminate -> SKIP)
-     MemoryCONVar(n,b_CON) =
-        ( ( mget.n.apply(b_CON,n) ->
-    MemoryCONVar(n,b_CON)
-      [] mset.n?nv:typeCON(n) ->
-    MemoryCONVar(n,over(b_CON,n,nv)))
       [] terminate -> SKIP)
      MemoryTIMVar(n,b_TIM) =
         ( ( mget.n.apply(b_TIM,n) ->
@@ -220,31 +180,77 @@ HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
         ( [| {| terminate |} |] n : dom(b_PAC) @ MemoryPACVar(n,b_PAC) )
      MemoryPST(b_PST) =
         ( [| {| terminate |} |] n : dom(b_PST) @ MemoryPSTVar(n,b_PST) )
-     MemoryHDM(b_HDM) =
-        ( [| {| terminate |} |] n : dom(b_HDM) @ MemoryHDMVar(n,b_HDM) )
-     MemoryCON(b_CON) =
-        ( [| {| terminate |} |] n : dom(b_CON) @ MemoryCONVar(n,b_CON) )
      MemoryTIM(b_TIM) =
         ( [| {| terminate |} |] n : dom(b_TIM) @ MemoryTIMVar(n,b_TIM) )
      MemoryBUT(b_BUT) =
         ( [| {| terminate |} |] n : dom(b_BUT) @ MemoryBUTVar(n,b_BUT) )
      MemoryNAT(b_NAT) =
         ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
-     Memory(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
-        ( ( ( ( ( ( MemoryNAT(b_NAT)
+     Memory(b_PAC,b_PST,b_TIM,b_BUT,b_NAT) =
+        ( ( ( ( MemoryNAT(b_NAT)
       [| {| terminate |} |]
       MemoryBUT(b_BUT) )
       [| {| terminate |} |]
       MemoryTIM(b_TIM) )
       [| {| terminate |} |]
-      MemoryCON(b_CON) )
-      [| {| terminate |} |]
-      MemoryHDM(b_HDM) )
-      [| {| terminate |} |]
       MemoryPST(b_PST) )
       [| {| terminate |} |]
       MemoryPAC(b_PAC) )
-
+     MemoryMergePACVar(n,b_PAC,ns) =
+        ( ( lget.n.apply(b_PAC,n) ->
+    MemoryMergePACVar(n,b_PAC,ns)
+      [] lset.n?nv:typePAC(n) ->
+    MemoryMergePACVar(n,over(b_PAC,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_PAC> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergePSTVar(n,b_PST,ns) =
+        ( ( lget.n.apply(b_PST,n) ->
+    MemoryMergePSTVar(n,b_PST,ns)
+      [] lset.n?nv:typePST(n) ->
+    MemoryMergePSTVar(n,over(b_PST,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_PST> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeTIMVar(n,b_TIM,ns) =
+        ( ( lget.n.apply(b_TIM,n) ->
+    MemoryMergeTIMVar(n,b_TIM,ns)
+      [] lset.n?nv:typeTIM(n) ->
+    MemoryMergeTIMVar(n,over(b_TIM,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_TIM> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeBUTVar(n,b_BUT,ns) =
+        ( ( lget.n.apply(b_BUT,n) ->
+    MemoryMergeBUTVar(n,b_BUT,ns)
+      [] lset.n?nv:typeBUT(n) ->
+    MemoryMergeBUTVar(n,over(b_BUT,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_BUT> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeNATVar(n,b_NAT,ns) =
+        ( ( lget.n.apply(b_NAT,n) ->
+    MemoryMergeNATVar(n,b_NAT,ns)
+      [] lset.n?nv:typeNAT(n) ->
+    MemoryMergeNATVar(n,over(b_NAT,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_NAT> @   ; n : <y | y <- ns> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergePAC(b_PAC,ns) =
+        ( [| {| lterminate |} |] n : dom(b_PAC) @ MemoryMergePACVar(n,b_PAC,ns) )
+     MemoryMergePST(b_PST,ns) =
+        ( [| {| lterminate |} |] n : dom(b_PST) @ MemoryMergePSTVar(n,b_PST,ns) )
+     MemoryMergeTIM(b_TIM,ns) =
+        ( [| {| lterminate |} |] n : dom(b_TIM) @ MemoryMergeTIMVar(n,b_TIM,ns) )
+     MemoryMergeBUT(b_BUT,ns) =
+        ( [| {| lterminate |} |] n : dom(b_BUT) @ MemoryMergeBUTVar(n,b_BUT,ns) )
+     MemoryMergeNAT(b_NAT,ns) =
+        ( [| {| lterminate |} |] n : dom(b_NAT) @ MemoryMergeNATVar(n,b_NAT,ns) )
+     MemoryMerge(b_PAC,b_PST,b_TIM,b_BUT,b_NAT,ns) =
+        ( ( ( ( MemoryMergeNAT(b_NAT,ns)
+      [| {| lterminate |} |]
+      MemoryMergeBUT(b_BUT,ns) )
+      [| {| lterminate |} |]
+      MemoryMergeTIM(b_TIM,ns) )
+      [| {| lterminate |} |]
+      MemoryMergePST(b_PST,ns) )
+      [| {| lterminate |} |]
+      MemoryMergePAC(b_PAC,ns) )
 
   within ( ( ( mset.sv_airVolLimit.(NAT.0) ->
     mset.sv_airVol.(NAT.0) ->
@@ -253,7 +259,7 @@ HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
     mset.sv_bloodFlowInEBC.(NAT.0) ->
     mset.sv_bypassValve.(BUT.OFF) ->
     mset.sv_fflowDirect.(BUT.ON) ->
-    mset.sv_hdActivity.(PAC.{OFF}) ->
+    mset.sv_hdActivity.(PAC.{ON}) ->
     mset.sv_hdMachineState.(PST.{OFF}) ->
     mset.sv_infSalineVol.(NAT.0) ->
     mset.sv_lastNonZeroBF.(NAT.0) ->
@@ -272,30 +278,47 @@ HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
     mset.sv_upperPressureLimit.(NAT.0) ->
     mset.sv_volumeInEBC.(NAT.0) ->
     mset.sv_vpTransdPress.(NAT.0) ->
-    mset.sv_hdMode.(HDM.ON) ->
+    mset.sv_hdMode.(BUT.ON) ->
     mset.sv_signalBUTTON.(BUT.ON) ->
     mset.sv_bloodLines.(BUT.OFF) ->
     mset.sv_minUFRateTreat.(BUT.OFF) ->
-    preparationPhase ->
+    mget.sv_alarm?v_sv_alarm:(typeBUT(sv_alarm)) ->
+    mget.sv_artBolusVol?v_sv_artBolusVol:(typeNAT(sv_artBolusVol)) ->
+    mget.sv_bicarbonateAcetate?v_sv_bicarbonateAcetate:(typeBUT(sv_bicarbonateAcetate)) ->
+    mget.sv_bloodFlowForConnectingPatient?v_sv_bloodFlowForConnectingPatient:(typeNAT(sv_bloodFlowForConnectingPatient)) ->
+    mget.sv_bloodFlowInEBC?v_sv_bloodFlowInEBC:(typeNAT(sv_bloodFlowInEBC)) ->
+    mget.sv_bloodLines?v_sv_bloodLines:(typeBUT(sv_bloodLines)) ->
+    mget.sv_fillingBPRate?v_sv_fillingBPRate:(typeNAT(sv_fillingBPRate)) ->
+    mget.sv_hdActivity?v_sv_hdActivity:(typePAC(sv_hdActivity)) ->
+    mget.sv_hdMode?v_sv_hdMode:(typeBUT(sv_hdMode)) ->
+    mget.sv_infSalineVol?v_sv_infSalineVol:(typeNAT(sv_infSalineVol)) ->
+    mget.sv_infSalineVol?v_sv_infSalineVol:(typeNAT(sv_infSalineVol)) ->
+    mget.sv_rinsingBPRate?v_sv_rinsingBPRate:(typeNAT(sv_rinsingBPRate)) ->
+    mget.sv_rinsingBPRate?v_sv_rinsingBPRate:(typeNAT(sv_rinsingBPRate)) ->
+    mget.sv_rinsingTime?v_sv_rinsingTime:(typeNAT(sv_rinsingTime)) ->
+    mget.sv_signalBUTTON?v_sv_signalBUTTON:(typeBUT(sv_signalBUTTON)) ->
+    mget.sv_ufRateForRinsing?v_sv_ufRateForRinsing:(typeNAT(sv_ufRateForRinsing)) ->
+    mget.sv_ufVolForRinsing?v_sv_ufVolForRinsing:(typeNAT(sv_ufVolForRinsing)) ->
+    ( preparationPhase ->
     autSelfTest ->
-    mset.sv_signalBUTTON.(BUT.ON) ->
+    lset.sv_signalBUTTON.(BUT.ON) ->
     connectingConcentrate?t_sv_bicarbonateAcetate ->
-    mset.sv_bicarbonateAcetate.(CON.t_sv_bicarbonateAcetate) ->
-    inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient ->
-    mset.sv_fillingBPRate.(NAT.sFBPRate) ->
-    mset.sv_ONBPRate.(NAT.sRBPRate) ->
-    mset.sv_ONTime.(NAT.sRTime) ->
-    mset.sv_ufRateForRinsing.(NAT.sUFRFRinsing) ->
-    mset.sv_ufVolForRinsing.(NAT.sUFVFRinsing) ->
-    mset.sv_bloodFlowForConnectingPatient.(NAT.sBFFCPatient) ->
-    ( ( ( ( ( ( ( ( atrialTubing -> SKIP
+    mset.sv_bicarbonateAcetate.(BUT.t_sv_bicarbonateAcetate) ->
+    -- inputOfSetRinsingParameters?sFBPRate.sRBPRate.sRTime.sUFRFRinsing.sUFVFRinsing.sBFFCPatient ->
+    -- lset.sv_fillingBPRate.(NAT.sFBPRate) ->
+    -- lset.sv_rinsingBPRate.(NAT.sRBPRate) ->
+    -- lset.sv_rinsingTime.(NAT.sRTime) ->
+    -- lset.sv_ufRateForRinsing.(NAT.sUFRFRinsing) ->
+    -- lset.sv_ufVolForRinsing.(NAT.sUFVFRinsing) ->
+    -- lset.sv_bloodFlowForConnectingPatient.(NAT.sBFFCPatient) ->
+    ( ( ( ( ( ( ( ( ( atrialTubing -> SKIP
       ||| ventricularTubing -> SKIP );
       salineBagLevel?t_sv_infSalineVol ->
     mset.sv_infSalineVol.(NAT.t_sv_infSalineVol) -> SKIP );
       setBloodLines ->
-    mset.sv_bloodLines.(BUT.ON) -> SKIP );
-      setRinsingBPSpeed?t_sv_ONBPRate ->
-    mset.sv_ONBPRate.(NAT.t_sv_ONBPRate) -> SKIP );
+    lset.sv_bloodLines.(BUT.ON) -> SKIP );
+      setRinsingBPSpeed?t_sv_rinsingBPRate ->
+    mset.sv_rinsingBPRate.(NAT.t_sv_rinsingBPRate) -> SKIP );
       insertHeparinSyringe ->
     heparinLineIsVented -> SKIP );
       connectDialyzer ->
@@ -303,23 +326,32 @@ HDMachine(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT) =
     stopBP -> SKIP );
       therapyInitiation ->
     connectingToPatient ->
-    mset.sv_signalBUTTON.(BUT.OFF) ->
+    lset.sv_signalBUTTON.(BUT.OFF) ->
     connPatientArterially ->
     setBloodFlow?t_sv_bloodFlowInEBC ->
     mset.sv_bloodFlowInEBC.(NAT.t_sv_bloodFlowInEBC) ->
     connPatientVenously ->
-    mset.sv_signalBUTTON.(BUT.ON) ->
-    mset.sv_hdMode.(HDM.ON) ->
+    lset.sv_signalBUTTON.(BUT.ON) ->
+    lset.sv_hdMode.(BUT.ON) ->
     ( ( ( setMinUFRateTreat?ON -> SKIP
       ||| setArtBolusVol?t_sv_artBolusVol ->
     mset.sv_artBolusVol.(NAT.t_sv_artBolusVol) -> SKIP )
       ||| senHDMode.OFF ->
-    mset.sv_signalBUTTON.(BUT.OFF) -> SKIP );
+    lset.sv_signalBUTTON.(BUT.OFF) -> SKIP );
       endTreatment ->
-    mset.sv_signalBUTTON.(BUT.OFF) -> SKIP ) );
+    lset.sv_signalBUTTON.(BUT.OFF) -> SKIP ) );
       therapyEnding -> SKIP );
+      lterminate -> SKIP )
+      [| MainTherapyChanSet |]
+      ( ( let X = ( ( let muR1 = ((valuePAC(v_sv_hdActivity) == {ON} and valueNAT(v_sv_infSalineVol) == 0) &
+         ( stopBloodFlow -> SKIP
+      ||| lset.sv_alarm.(BUT.ON) ->
+    produceAlarmSound -> SKIP ) [] (not (valuePAC(v_sv_hdActivity) == {ON} and valueNAT(v_sv_infSalineVol) == 0)) &
+         tick -> muR1) within muR1 );
+      X ) within X );
+      lterminate -> SKIP ) );
       terminate -> SKIP )
-      [| MEMI |] Memory(b_PAC,b_PST,b_HDM,b_CON,b_TIM,b_BUT,b_NAT))\MEMI )
+      [| MEMI |] Memory(b_PAC,b_PST,b_TIM,b_BUT,b_NAT))\MEMI )
 
 SysClock(b_NAT) =
   let

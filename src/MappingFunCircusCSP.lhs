@@ -1079,23 +1079,23 @@ mapping_predicate :: [ZName] -> ZPred -> String
 --     " then  " ++ (mapping_predicate lst x1) ++
 --     " else " ++ (mapping_predicate lst x2)
 mapping_predicate lst ( (ZMember (ZTuple [a,b]) (ZVar ("\\geq",[],[]))))
-  = (mapping_ZExpr lst a) ++ " >= " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " >= " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst ( (ZMember (ZTuple [a,b]) (ZVar (">",[],[]))))
-  = (mapping_ZExpr lst a) ++ " > " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " > " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst ( (ZMember (ZTuple [a,b]) (ZVar ("\\leq",[],[]))))
-  = (mapping_ZExpr lst a) ++ " <= " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " <= " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst ( (ZMember (ZTuple [a,b]) (ZVar ("<",[],[]))))
-  = (mapping_ZExpr lst a) ++ " < " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " < " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst ( (ZNot (ZEqual a b)))
-  = (mapping_ZExpr lst a) ++ " != " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " != " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst ( (ZEqual a b))
-  = (mapping_ZExpr lst a) ++ " == " ++ (mapping_ZExpr lst b)
+  = "(" ++ (mapping_ZExpr lst a) ++ " == " ++ (mapping_ZExpr lst b)++")"
 mapping_predicate lst (ZOr a b)
-  = (mapping_predicate lst a) ++ " or " ++ (mapping_predicate lst b)
+  = "(" ++ (mapping_predicate lst a) ++ " or " ++ (mapping_predicate lst b)++")"
 mapping_predicate lst (ZAnd a b)
-  = (mapping_predicate lst a) ++ " and " ++ (mapping_predicate lst b)
+  = "(" ++ (mapping_predicate lst a) ++ " and " ++ (mapping_predicate lst b)++")"
 mapping_predicate lst ( (ZNot b))
-  = "not " ++ (mapping_predicate lst b)
+  = "not (" ++ (mapping_predicate lst b)++")"
 mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\true") [] []))
   = "true"
 mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\false") [] []))
