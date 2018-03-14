@@ -343,7 +343,7 @@ setMinUFRateTreat\rchanset\\
    		% getHdMachineState?hdMachineState \then\\
    		% getVpTransdPress?vpTransdPress \then\\
    		% getLowerPressureLimit?lowerPressureLimit \then\\
-   		(\circif (hdMachineState = \{FALSE\} \land vpTransdPress < lowerPressureLimit)
+   		(\circif (hdMachineState = \{FALSE\} \land ((vpTransdPress < lowerPressureLimit) \lor (apTransdPress > upperPressureLimit)))
    			\circthen (StopBP \interleave RaiseAlarm)
    			\circelse (\lnot (hdMachineState = \{FALSE\} \land vpTransdPress < lowerPressureLimit)) \circthen (tick \then  R6)\circfi)
     %
@@ -813,7 +813,7 @@ setMinUFRateTreat\rchanset\\
    	 	 % SetRinsingParameters \circseq\\
    	 	 InsertingRinsingTestingTubSystem \circseq\\
    	 	 PrepHeparinPump \circseq\\
-   	 	 SetTreatmentParameters \circseq\\
+   	 	 % SetTreatmentParameters \circseq\\
    	 	 RinsingDialyzer
 
    	%  {Therapy Initiation}
@@ -904,7 +904,7 @@ setMinUFRateTreat\rchanset\\
       % (MainTherapy \interleave  (ArterialBolusReq \interleave BloodEntryPressureReq))
       (MainTherapy \interleave
       (
-      ArterialBolusReq
+      (R1 \interleave R2 \interleave R3 \interleave R4 \interleave R5 \interleave R6)
       % \interleave BloodPumpReq \interleave BloodEntryPressureReq
       ))
       % (MainTherapy \lpar \emptyset | MainTherapyChanSet | \emptyset \rpar  R1)

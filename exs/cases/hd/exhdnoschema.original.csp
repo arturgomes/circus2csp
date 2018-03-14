@@ -2105,7 +2105,7 @@ HDMachine(sta) =
 	 	 -- ((SetRinsingParameters [|RinsingParametersStComm|]RinsingParametersSt(RP))\RinsingParametersStComm) ;
 	 	 InsertingRinsingTestingTubSystem ;
 	 	 PrepHeparinPump ;
-	 	 SetTreatmentParameters ;
+	 	 -- SetTreatmentParameters ;
 	 	 RinsingDialyzer
 
 	-- {Therapy Initiation}
@@ -2229,7 +2229,7 @@ HDMachine(sta) =
 
 	HDMachineMain =
 
-	((ArterialBolusReq
+	(((R1 ||| R2||| R3||| R4||| R5||| R6)
 		||| MainTherapy) [|HDComm|] HDGenCompSt(HDGC))\ HDComm
 		-- [|SensorReadingsComm|]
 			-- SensorReadings
