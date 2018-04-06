@@ -1259,7 +1259,7 @@ circus_process_u
 	-- Action rename
 circus_process_rename :: EParser ZToken CProc
 circus_process_rename
-	= do {nm <- zword; optnls;
+	= do {nm <- circus_process_name;
 			tok L_OPENBRACKET;
 			ws <- opt [] ( circus_comm `sepby1` do {optnls; tok L_COMMA; optnls});
 	 		tok L_ASSIGN;

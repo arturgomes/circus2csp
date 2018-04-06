@@ -1053,7 +1053,7 @@ data CProc
   | CGenProc ZName [ZExpr]                 -- N[Exp^{+}]
   | CParamProc ZName [ZExpr]              -- N(Exp^{+})
   -- | CIndexProc [ZGenFilt] ProcessDef    -- \(Decl \circindex ProcDef) \lcircindex Exp^{+} \rcircindex  -- TODO
-  | CProcRename ZName [Comm] [Comm]        -- Proc[N^{+}:=N^{+}] -- TODO
+  | CProcRename CProc [Comm] [Comm]        -- Proc[N^{+}:=N^{+}] -- TODO
   | CSeq CProc CProc                       -- Proc \cirCSeq Proc
   | CSimpIndexProc ZName [ZExpr]           -- N\lcircindex Exp^{+} \rcircindex
   | CircusProc ZName                       -- N

@@ -92,7 +92,7 @@ omega_Circus_aux spec
   where
     (zb,res) = proc_ref1 e
 omega_Circus_aux spec [(Process cp)]
-  = [([],(Process (omega_ProcDecl spec cp)))]
+  = [((getType_ProcDecl cp),(Process (omega_ProcDecl spec cp)))]
 omega_Circus_aux spec [x] = [([],x)]
 -- e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _)))))
 -- x:xs
@@ -116,6 +116,10 @@ omega_Circus_aux spec
   = [(zb,res)]++(omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
+omega_Circus_aux spec
+  ((Process cp):xs)
+  = [((getType_ProcDecl cp),(Process (omega_ProcDecl spec cp)))]
+      ++(omega_Circus_aux spec xs)
 -- omega_Circus_aux spec ((Process cp):xs)
 --   = [([],(Process (omega_ProcDecl spec cp)))]++(omega_Circus_aux spec xs)
 omega_Circus_aux spec (x:xs)
@@ -231,30 +235,30 @@ proc_ref2 e@(Process (CProcess p (ProcDef
   = case ref of
       Just xe@(Process (CProcess pq (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
-        (xzs,(proc_ref3 xe))
-      Nothing -> (zs,(proc_ref3 e))
+        (xzs++(getType_CAction ma),(proc_ref3 xe))
+      Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
-        (xzs,(proc_ref3 xe))
-      Nothing ->([],(proc_ref3 e))
+        (xzs++(getType_CAction ma),(proc_ref3 xe))
+      Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef
       (ProcMain (ZSchemaDef (ZSPlain x) (ZSchema zs)) aclst ma)))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
-        (xzs,(proc_ref3 xe))
-      Nothing -> (zs,(proc_ref3 e))
+        (xzs++(getType_CAction ma),(proc_ref3 xe))
+      Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst ma)))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
-        (xzs,(proc_ref3 xe))
-      Nothing ->([],(proc_ref3 e))
+        (xzs++(getType_CAction ma),(proc_ref3 xe))
+      Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 x = ([],x)
 \end{code}

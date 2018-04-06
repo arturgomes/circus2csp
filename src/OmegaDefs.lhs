@@ -1661,16 +1661,16 @@ def_delta_mapping_t :: [ZGenFilt] -> [ZPara]
 def_delta_mapping_t xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v t) -> (ntrd v)) $ filter_ZGenFilt_Choose xs
+        tlist = map (\(Choose v (ZVar (t,_,_))) -> (def_U_prefix t)) $ filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZAbbreviation
                 (join_name "\\delta" tl,[],"")
                 (ZSetDisplay (sub_name xs tl)))
           -- (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
         sub_name [] _= []
-        sub_name ((Choose v t):xs) t1
-          | t1 == (ntrd v) =
-              [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar v,t])]
+        sub_name ((Choose v (ZVar (t,_,_))):xs) t1
+          | t1 == ( (def_U_prefix t)) =
+              [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar v,(ZVar (t,[],""))])]
                 ++ (sub_name xs t1)
           | otherwise = (sub_name xs t1)
         sub_name (_:xs) t1 = (sub_name xs t1)
@@ -1685,15 +1685,15 @@ def_delta_name (_:xs) = (def_delta_name xs)
 
 def_new_universe [] = []
 def_new_universe ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZBranch1 (tx,[],"") (ZVar (tt,[],""))):(def_new_universe xs)
+  = (ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))):(def_new_universe xs)
 def_new_universe ((Choose (_,_,_) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
   = (ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))):(def_new_universe xs)
 def_new_universe (_:xs) = (def_new_universe xs)
 
 def_sub_univ [] = []
 def_sub_univ ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZFreeTypeDef (join_name "U" tx,[],"")
-      [ZBranch1 (tx,[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
+  = (ZFreeTypeDef (join_name "U" (def_U_prefix tt),[],"")
+      [ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
 def_sub_univ ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
   = (ZFreeTypeDef (join_name "U" (def_U_prefix ("P"++c)),[],"")
       [ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))]):(def_sub_univ xs)
@@ -1702,12 +1702,12 @@ def_sub_univ (_:xs) = (def_sub_univ xs)
 def_sub_univ_set :: [ZGenFilt] -> [ZExpr]
 def_sub_univ_set [] = []
 def_sub_univ_set ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZVar (join_name "U" tx,[],"")):(def_sub_univ_set xs)
+  = (ZVar (join_name "U" (def_U_prefix tt),[],"")):(def_sub_univ_set xs)
 def_sub_univ_set (_:xs) = (def_sub_univ_set xs)
 
 def_sub_bind [] = []
 def_sub_bind ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZAbbreviation (join_name "BINDINGS" tx,[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" tx,[],""),ZVar (join_name "U" tx ,[],"")]))):(def_sub_bind xs)
+  = (ZAbbreviation (join_name "BINDINGS" (def_U_prefix tt),[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" (def_U_prefix tt),[],""),ZVar (join_name "U" (def_U_prefix tt) ,[],"")]))):(def_sub_bind xs)
 def_sub_bind ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
   = (ZAbbreviation (join_name "BINDINGS" (def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar (join_name "NAME" (def_U_prefix ("P"++c)),[],""),ZVar (join_name "U" (def_U_prefix ("P"++c)) ,[],"")]))):(def_sub_bind xs)
 
@@ -1716,7 +1716,7 @@ def_sub_bind (_:xs) = (def_sub_bind xs)
 
 def_sub_bindn [] = []
 def_sub_bindn ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZVar (join_name "BINDINGS" tx,[],"")):(def_sub_bindn xs)
+  = (ZVar (join_name "BINDINGS" (def_U_prefix tt),[],"")):(def_sub_bindn xs)
 def_sub_bindn ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
     = (ZVar (join_name "BINDINGS" (def_U_prefix ("P"++c)),[],"")):(def_sub_bindn xs)
 
@@ -1726,12 +1726,12 @@ def_sub_name :: [ZGenFilt] -> [ZPara]
 def_sub_name xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v t) -> (ntrd v)) $ filter_ZGenFilt_Choose xs
+        tlist = map (\(Choose v (ZVar (tt,_,_))) -> (def_U_prefix tt)) $ filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
         sub_name [] _= []
-        sub_name ((Choose v t):xs) t1
-          | t1 == (ntrd v) = [ZBranch0 v] ++ (sub_name xs t1)
+        sub_name ((Choose v (ZVar (tt,_,_))):xs) t1
+          | t1 == (def_U_prefix tt) = [ZBranch0 v] ++ (sub_name xs t1)
           | otherwise = (sub_name xs t1)
         sub_name (_:xs) t1 = (sub_name xs t1)
 
@@ -2548,10 +2548,13 @@ nmem_mkMemory bst =
     bstTypes = ( get_binding_types nbst)
 
 nmem_mkMemoryTYPInternal :: [String] -> [PPar]
+nmem_mkMemoryTYPInternal [] = []
 nmem_mkMemoryTYPInternal [x] =
   [CParAction ("Memory"++x) (CircusAction (CActionCommand (CVResDecl [Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],""))] (CSPRepParal (CChanSet ["terminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ((join_name "b" x),[],"")))] (CSPParAction ("Memory"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],"")])))))]
 nmem_mkMemoryTYPInternal (x:xs) =
   (nmem_mkMemoryTYPInternal [x])++(nmem_mkMemoryTYPInternal xs)
+
+
 
 nmem_mkMemoryTYP :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryTYP bst
@@ -2562,6 +2565,7 @@ nmem_mkMemoryTYP bst
 
 
 nmem_mkMemoryTYPVarInternal :: [String] -> [PPar]
+nmem_mkMemoryTYPVarInternal [] = []
 nmem_mkMemoryTYPVarInternal [x]
   = [CParAction ("Memory"++x++"Var") (CircusAction (CActionCommand (CVResDecl [Choose ("n",[],"") (ZVar ((join_name "NAME" x),[],"")),Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],""))] (CSPExtChoice (CSPExtChoice (CSPCommAction (ChanComm "mget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ((join_name "b" x),[],"")) (ZVar ("n",[],"")))]) (CSPParAction ("Memory"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],"")])) (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],x)) (ZVar ("n",[],""))))]) (CSPParAction ("Memory"++x++"Var") [ZVar ("n",[],""),ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ((join_name "b" x),[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]))) (CSPCommAction (ChanComm "terminate" []) CSPSkip)))))]
 nmem_mkMemoryTYPVarInternal (x:xs) =
@@ -2640,5 +2644,156 @@ nmem_mkMemoryMergeTYPVar bst
   where
     nbst = (remdups $ filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
+
+\end{code}
+
+
+
+\subsubsection{Getting Types from Circus Process}
+\begin{code}
+getType_ProcDecl :: ProcDecl -> [ZGenFilt]
+getType_ProcDecl (CProcess vZName vProcessDef) = []
+getType_ProcDecl (CParamProcess vZName vZName_lst vProcessDef) = []
+getType_ProcDecl (CGenProcess vZName vZName_lst vProcessDef) = []
+\end{code}
+\begin{code}
+getType_ProcessDef :: ProcessDef -> [ZGenFilt]
+getType_ProcessDef (ProcDefSpot vZGenFilt_lst vProcessDef) = vZGenFilt_lst++[]
+getType_ProcessDef (ProcDefIndex vZGenFilt_lst vProcessDef) = vZGenFilt_lst++[]
+getType_ProcessDef (ProcDef vCProc) = []
+\end{code}
+\begin{code}
+getType_CProc :: CProc -> [ZGenFilt]
+getType_CProc (CRepSeqProc vZGenFilt_lst vCProc) = vZGenFilt_lst++(getType_CProc vCProc)
+getType_CProc (CRepExtChProc vZGenFilt_lst vCProc) = vZGenFilt_lst++(getType_CProc vCProc)
+getType_CProc (CRepIntChProc vZGenFilt_lst vCProc) = vZGenFilt_lst++(getType_CProc vCProc)
+getType_CProc (CRepParalProc vCSExp vZGenFilt_lst vCProc) = vZGenFilt_lst++(getType_CProc vCProc)
+getType_CProc (CRepInterlProc vZGenFilt_lst vCProc) = vZGenFilt_lst++(getType_CProc vCProc)
+getType_CProc (CHide vCProc vCSExp) = []
+getType_CProc (CExtChoice v1CProc v2CProc) = (getType_CProc v1CProc)++(getType_CProc v2CProc)
+getType_CProc (CIntChoice v1CProc v2CProc) = (getType_CProc v1CProc)++(getType_CProc v2CProc)
+getType_CProc (CParParal vCSExp v1CProc v2CProc) = (getType_CProc v1CProc)++(getType_CProc v2CProc)
+getType_CProc (CInterleave v1CProc v2CProc) = (getType_CProc v1CProc)++(getType_CProc v2CProc)
+getType_CProc (CGenProc vZName vZExpr_lst) = []
+getType_CProc (CParamProc vZName vZExpr_lst) = []
+getType_CProc (CProcRename vZName vComm_lst1 vComm_lst) = []
+getType_CProc (CSeq v1CProc v2CProc) = (getType_CProc v1CProc)++(getType_CProc v2CProc)
+getType_CProc (CSimpIndexProc vZName vZExpr_lst) = []
+getType_CProc (CircusProc vZName) = []
+getType_CProc (ProcMain _ZPara vPPar_lst vCAction) = []
+getType_CProc (ProcStalessMain vPPar_lst vCAction) = []
+\end{code}
+\subsubsection{Getting Types from Circus Actions}
+\begin{code}
+getType_PPar :: PPar -> [ZGenFilt]
+getType_PPar (ProcZPara vZPara) = []
+getType_PPar (CParAction vZName vParAction)
+  = (getType_ParAction vParAction)
+getType_PPar (CNameSet vZName vNSExp) = []
+\end{code}
+\begin{code}
+getType_ParAction :: ParAction -> [ZGenFilt]
+getType_ParAction (CircusAction vCAction) = []
+getType_ParAction (ParamActionDecl vZGenFilt_lst vParAction)
+  = vZGenFilt_lst++(getType_ParAction vParAction)
+\end{code}
+\begin{code}
+getType_CAction :: CAction -> [ZGenFilt]
+getType_CAction (CActionSchemaExpr vZSExpr) = []
+getType_CAction (CActionCommand vCCommand) = []
+getType_CAction (CActionName vZName) = []
+getType_CAction (CSPSkip ) = []
+getType_CAction (CSPStop) = []
+getType_CAction (CSPChaos) = []
+getType_CAction (CSPCommAction vComm vCAction)
+  = (getType_CAction vCAction)
+getType_CAction (CSPGuard vZPred vCAction)
+  = (getType_CAction vCAction)
+getType_CAction (CSPSeq v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPExtChoice v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPIntChoice v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPNSParal v1NSExp vCSExp v2NSExp v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPParal vCSExp v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPInterleave v1CAction v2CAction)
+  = (getType_CAction v1CAction)++(getType_CAction v2CAction)
+getType_CAction (CSPHide vCAction vCSExp) = (getType_CAction vCAction)
+getType_CAction (CSPParAction vZName vZExpr_lst) = []
+getType_CAction (CSPRenAction vZName vCReplace) = []
+getType_CAction (CSPRecursion vZName vCAction)
+  = (getType_CAction vCAction)
+getType_CAction (CSPUnfAction vZName vCAction)
+  = (getType_CAction vCAction)
+getType_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepSeq vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepExtChoice vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepIntChoice vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepParalNS _CSExp vZGenFilt_lst vNSExp vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepParal _CSExp vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepInterlNS vZGenFilt_lst vNSExp vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CAction (CSPRepInterl vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+\end{code}
+
+\subsubsection{Circus Communication}
+
+\begin{code}
+getType_Comm :: Comm -> [ZGenFilt]
+getType_Comm (ChanComm vZName vCParameter_lst) = []
+getType_Comm (ChanGenComm vZName vZExpr_lst vCParameter_lst) = []
+\end{code}
+\begin{code}
+
+getType_CParameter :: CParameter -> [ZGenFilt]
+getType_CParameter (ChanInp vZName) = []
+getType_CParameter (ChanInpPred vZName _ZPred) = []
+getType_CParameter (ChanOutExp _ZExpr) = []
+getType_CParameter (ChanDotExp _ZExpr) = []
+\end{code}
+
+\subsubsection{Circus Commands}
+
+\begin{code}
+getType_CCommand :: CCommand -> [ZGenFilt]
+getType_CCommand (CAssign vZVar_lst vZExpr_lst) = []
+getType_CCommand (CIf vCGActions) = []
+getType_CCommand (CVarDecl vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CCommand (CAssumpt vZName_lst v1ZPred v2ZPred) = []
+getType_CCommand (CAssumpt1 vZName_lst vZPred) = []
+getType_CCommand (CPrefix v1ZPred v2ZPred) = []
+getType_CCommand (CPrefix1 _ZPred) = []
+getType_CCommand (CommandBrace _ZPred) = []
+getType_CCommand (CommandBracket _ZPred) = []
+getType_CCommand (CValDecl vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CCommand (CResDecl vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+getType_CCommand (CVResDecl vZGenFilt_lst vCAction)
+  = vZGenFilt_lst++(getType_CAction vCAction)
+\end{code}
+
+\begin{code}
+getType_CGActions :: CGActions  -> [ZGenFilt]
+getType_CGActions (CircGAction _ZPred vCAction)
+  = (getType_CAction vCAction)
+getType_CGActions (CircThenElse v1CGActions v2CGActions)
+  = (getType_CGActions v1CGActions)++(getType_CGActions v2CGActions)
+
+rename_ftv nm (ZBranch0 (a,b,c)) = (ZBranch0 (a,b,nm))
+
 
 \end{code}
