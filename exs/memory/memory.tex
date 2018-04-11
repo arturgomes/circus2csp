@@ -20,7 +20,7 @@
 
 \begin{document}
 
-\title{Revisiting the Haemodialysis Case Study using \Circus}
+\title{Memory model - D24.1 and CTOC - in \Circus}
 
 \author{%
   Artur O. Gomes
@@ -78,121 +78,120 @@ recurses right after these, or terminates.
       \end{block}
 \end{circus}%
 
-
+\pagebreak
 \subsubsection{Proof}
 \begin{argue}
 \lpar \lchanset terminate \rchanset \rpar  n : \dom b \circspot Memory_{Var}(n,b)
-  \\=  & Replicated parallelism definition\\
-Memory_{Var}(n_1,b) \lpar \lchanset terminate \rchanset \rpar \ldots \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_k,b)
-    \\= & $Memory_{Var}$ definition\\
-  \begin{block} mget.n_1!b(n_1) \then Memory_{Var}(n_1,b) \\
- \extchoice~
-       \begin{block}
-         mset.n_1?nv:(nv \in \delta(n_1)) \then\\
-         \quad Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\})))
-       \end{block}\\
- \extchoice~terminate \then \Skip
- \end{block}\\
-  \lpar \lchanset terminate \rchanset \rpar\\
- \ldots\\
- \lpar \lchanset terminate \rchanset \rpar\\
- \begin{block} mget.n_k!b(n_k) \then Memory_{Var}(n_k,b) \\
-\extchoice~
-      \begin{block}
-        mset.n_k?nv:(nv \in \delta(n_k)) \then\\
-        \quad Memory_{Var}(n_k,(b \oplus \{n_k \mapsto nv\})))
-      \end{block}\\
-\extchoice~terminate \then \Skip
-\end{block}\\
-= & parallel composition/ external choice exchange\\
-\begin{block}
-  mget.n_1!b(n_1) \then Memory_{Var}(n_1,b) \\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  \ldots\\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  mget.n_k!b(n_k) \then Memory_{Var}(n_k,b) \\
-\end{block}\\
-\extchoice~
-\begin{block}
- \begin{block}
-   mset.n_1?nv:(nv \in \delta(n_1)) \then\\
-   \quad Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\})))
- \end{block}\\
- \lpar \lchanset terminate \rchanset \rpar\\
- \ldots\\
- \lpar \lchanset terminate \rchanset \rpar\\
- \begin{block}
-   mset.n_k?nv:(nv \in \delta(n_k)) \then\\
-   \quad Memory_{Var}(n_k,(b \oplus \{n_k \mapsto nv\})))
- \end{block}\\
-\end{block}\\
-\extchoice~
-\begin{block}
-  terminate \then \Skip \\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  \ldots\\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  \extchoice~terminate \then \Skip
-\end{block}\pagebreak
-\\ = & parallel composition introduction 1\\
-\begin{block}
-mget.n_1!b(n_1) \then \begin{block}
-  Memory_{Var}(n_1,b) \\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  \ldots\\
-  \lpar \lchanset terminate \rchanset \rpar\\
-  mget.n_k!b(n_k) \then Memory_{Var}(n_k,b) \\
-  \end{block}\\
-  \extchoice\\\ldots\\\extchoice\\
-  mget.n_k!b(n_k) \then \begin{block}
-    mget.n_1!b(n_1) \then Memory_{Var}(n_1,b) \\
-    \lpar \lchanset terminate \rchanset \rpar\\
-    \ldots\\
-    \lpar \lchanset terminate \rchanset \rpar\\
-    Memory_{Var}(n_k,b) \\
-    \end{block}\\
-\end{block}\\
-\extchoice~
-\begin{block}
-mset.n_1?nv:(nv \in \delta(n_1)) \then\\\begin{block}
-  Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\})))
- \lpar \lchanset terminate \rchanset \rpar\\
- \ldots\\
- \lpar \lchanset terminate \rchanset \rpar\\
- \begin{block}
-   mset.n_k?nv:(nv \in \delta(n_k)) \then\\
-   \quad Memory_{Var}(n_k,(b \oplus \{n_k \mapsto nv\})))
- \end{block}\\
-\end{block}\\
-\extchoice\\\ldots\\\extchoice\\
-mset.n_k?nv:(nv \in \delta(n_k)) \then\\\begin{block}
- \begin{block}
-   mset.n_1?nv:(nv \in \delta(n_1)) \then\\
-   \quad Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\})))
- \end{block}\\
- \lpar \lchanset terminate \rchanset \rpar\\
- \ldots\\
- \lpar \lchanset terminate \rchanset \rpar\\
-Memory_{Var}(n_k,(b \oplus \{n_k \mapsto nv\})))
-\end{block}\\
-\end{block}\\
-\extchoice~terminate \then \Skip
-\\=\\
-\begin{block}
-(\Extchoice n : \dom b \circspot mget.n!b(n) \then Memory_{Var}(n,b))\\
-\extchoice~
-(\Extchoice n : \dom b \circspot mset.n?nv:(nv \in \delta(n)) \then
-Memory_{Var}(n,(b \oplus \{n \mapsto nv\})))\\
-\extchoice~terminate \then \Skip
-\end{block}\\
-\\= & variable $n$ is no longer necessary to be a parameter\\
+\\=  & Replicated parallelism definition\\
+
+Memory_{Var}(n_1,b) \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_2,b)
+
+\\= & $Memory_{Var}$ definition\\
 
 \begin{block}
-(\Extchoice n : \dom b \circspot mget.n!b(n) \then Memory(b))\\
-\extchoice~
-(\Extchoice n : \dom b \circspot mset.n?nv:(nv \in \delta(n)) \then
-Memory((b \oplus \{n \mapsto nv\})))\\
-\extchoice~terminate \then \Skip
+  mget.n_1!b(n_1) \then Memory_{Var}(n_1,b) \\
+  \extchoice~mset.n_1?nv:(nv \in \delta(n_1)) \then Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\}))\\
+  \extchoice~terminate \then \Skip
 \end{block}\\
+\lpar \lchanset terminate \rchanset \rpar\\
+\begin{block}
+  mget.n_2!b(n_2) \then Memory_{Var}(n_2,b) \\
+  \extchoice~mset.n_2?nv:(nv \in \delta(n_2)) \then Memory_{Var}(n_2,(b \oplus \{n_2 \mapsto nv\}))\\
+  \extchoice~terminate \then \Skip
+\end{block}\\
+
+= & CSP + L4A (Hoare's book - p.51)\\
+
+\begin{block}
+  mget.n_1!b(n_1) \then (Memory_{Var}(n_1,b) \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_2,b))\\
+  \extchoice~ mget.n_2!b(n_2) \then (Memory_{Var}(n_2,b) \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_1,b))\\
+  \extchoice~mset.n_1?nv:(nv \in \delta(n_1)) \then \begin{block}Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\}))\\\lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_2,b))\end{block}\\
+  \extchoice~mset.n_2?nv:(nv \in \delta(n_2)) \then \begin{block}Memory_{Var}(n_2,(b \oplus \{n_2 \mapsto nv\}))\\\lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_1,b))\end{block}\\
+  \extchoice~terminate \then (\Skip \lpar \lchanset terminate \rchanset \rpar \Skip)
+\end{block}\\
+ \\
+
+ = & parallelism composition unit - C.90\\
+
+\begin{block}
+  mget.n_1!b(n_1) \then (Memory_{Var}(n_1,b) \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_2,b))\\
+  \extchoice~ mget.n_2!b(n_2) \then (Memory_{Var}(n_2,b) \lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_1,b))\\
+  \extchoice~mset.n_1?nv:(nv \in \delta(n_1)) \then \begin{block}Memory_{Var}(n_1,(b \oplus \{n_1 \mapsto nv\}))\\\lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_2,b))\end{block}\\
+  \extchoice~mset.n_2?nv:(nv \in \delta(n_2)) \then \begin{block}Memory_{Var}(n_2,(b \oplus \{n_2 \mapsto nv\}))\\\lpar \lchanset terminate \rchanset \rpar Memory_{Var}(n_1,b))\end{block}\\
+  \extchoice~terminate \then \Skip
+\end{block}\\
+
+= & $MemoryA$ definition\\
+
+ \begin{block}
+ mget.n_1!b(n_1) \then MemoryA(b)\\
+ \extchoice~ mget.n_2!b(n_2) \then MemoryA(b)\\
+ \extchoice~mset.n_1?nv:(nv \in \delta(n_1)) \then MemoryA((b \oplus \{n_1 \mapsto nv\}))\\
+  \extchoice~mset.n_2?nv:(nv \in \delta(n_2)) \then MemoryA((b \oplus \{n_2 \mapsto nv\}))\\
+  \extchoice~terminate \then \Skip
+  \end{block}\\
+
+= & iterated external choice\\
+
+ \begin{block}
+ (\Extchoice n: \dom b \circdef mget.n!b(n) \then MemoryA(b))\\
+ \extchoice~(\Extchoice n: \dom b \circdef mset.n?nv:(nv \in \delta(n)) \then MemoryA((b \oplus \{n \mapsto nv\})))\\
+  \extchoice~terminate \then \Skip
+  \end{block}\\
+
+=\\
+\begin{block}
+(\Extchoice n: \dom b \circdef mget.n!b(n) \then Memory(b))\\
+\extchoice~(\Extchoice n: \dom b \circdef mset.n?nv:(nv \in \delta(n)) \then Memory((b \oplus \{n \mapsto nv\})))\\
+ \extchoice~terminate \then \Skip
+ \end{block}\\
+
+= \\
+
+Memory(b)
 \end{argue}
+
+\begin{lstlisting}[ mathescape, basicstyle=\ttfamily\scriptsize,xleftmargin=0.5cm,breaklines=true,
+  framextopmargin=50pt]
+  S1 = MemoryNAT(b_nat)
+  assert S1 [FD= S2
+  assert S2 [FD= S1
+  S2 = (( ( mget.v_1.apply(b_nat,v_1) -> MemoryNATVar(v_1,b_nat)
+    [] mset.v_1?nv:typeNAT(v_1) -> MemoryNATVar(v_1,over(b_nat,v_1,nv)))
+    [] terminate -> SKIP)
+    [|{|terminate|}|]
+    ( ( mget.v_2.apply(b_nat,v_2) -> MemoryNATVar(v_2,b_nat)
+      [] mset.v_2?nv:typeNAT(v_2) -> MemoryNATVar(v_2,over(b_nat,v_2,nv)))
+      [] terminate -> SKIP))
+  assert S2 [FD= S3
+  assert S3 [FD= S2
+  S3 =
+    mget.v_1.apply(b_nat,v_1) -> (MemoryNATVar(v_1,b_nat) [|{|terminate|}|] MemoryNATVar(v_2,b_nat))
+    [] mget.v_2.apply(b_nat,v_2) -> (MemoryNATVar(v_2,b_nat) [|{|terminate|}|] MemoryNATVar(v_1,b_nat))
+    [] mset.v_1?nv:typeNAT(v_1) -> (MemoryNATVar(v_1,over(b_nat,v_1,nv)) [|{|terminate|}|] MemoryNATVar(v_2,b_nat))
+    [] mset.v_2?nv:typeNAT(v_2) -> (MemoryNATVar(v_2,over(b_nat,v_2,nv)) [|{|terminate|}|] MemoryNATVar(v_1,b_nat))
+    [] terminate -> SKIP
+  assert S3 [FD= S4
+  assert S4 [FD= S3
+  S4 =
+    mget.v_1.apply(b_nat,v_1) -> MemoryNAT(b_nat)
+    [] mget.v_2.apply(b_nat,v_2) -> MemoryNAT(b_nat)
+    [] mset.v_1?nv:typeNAT(v_1) -> MemoryNAT(over(b_nat,v_1,nv))
+    [] mset.v_2?nv:typeNAT(v_2) -> MemoryNAT(over(b_nat,v_2,nv))
+    [] terminate -> SKIP
+  assert S4 [FD= S5
+  assert S5 [FD= S4
+  S5 =
+    ([] n:dom(b_nat) @ mget.n.apply(b_nat,n) -> MemoryNAT(b_nat))
+    [] ([] n:dom(b_nat) @ mset.n?nv:typeNAT(n) -> MemoryNAT(over(b_nat,n,nv)))
+    [] terminate -> SKIP
+  assert S5 [FD= S6
+  assert S6 [FD= S5
+  S6 =
+    ([] n:dom(b_nat) @ mget.n.apply(b_nat,n) -> Memory(b_nat))
+    [] ([] n:dom(b_nat) @ mset.n?nv:typeNAT(n) -> Memory(over(b_nat,n,nv)))
+    [] terminate -> SKIP
+  assert S1 [FD= S6
+  assert S6 [FD= S1
+\end{lstlisting}
 \end{document}
