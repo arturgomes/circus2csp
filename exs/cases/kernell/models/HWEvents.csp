@@ -1,0 +1,82 @@
+{- =============================================================================
+
+	HWEvents.csp
+
+
+ These are the globally visible hardware events
+
+ For now we cover a range of abstraction levels.
+ These may be factored out to seperate source files later.
+
+ We start with the most detailed first,
+ and then present slimmed-down variants
+
+-}
+
+
+{-  Global Clock ------------------------------------------------------------ -}
+
+channel tick  -- standard clock tick
+channel tock  -- used if 2-phase cycle is required
+
+{- Main (Memory) Bus -----------------------------------------------------------
+  We do not model bus operations as atomic, but rather as 2-phase:
+   1. signal direction and address
+   2. data transfer -}
+
+{- Addresses -}
+
+nametype A = {0,1}
+
+{- Data -}
+
+nametype D = {0,1}
+
+{- Direction, from CPU perspective -}
+
+datatype Dir
+ = R  -- reading (data from memory to CPU)
+ | W  -- writing (data from CPU to memory)
+
+channel ma : Dir.A  -- address on memory bus
+channel md : Dir.D  -- data on memory bus
+
+
+{- Interrupt Controller --------------------------------------------------------
+   The IRQ controller takes in interrupt events (iXXX)
+   and decides when to drop, queue or raise them (rXXX)
+-}
+
+{- Timer -}
+
+channel iTMR, rTMR
+
+{- Memory Management Unit -}
+
+channel iMMU, rMMU
+
+{- External Devices -}
+
+channel iDEV, rDEV
+
+{- Software Traps -}
+
+channel iTRP, rTRP
+
+{- Machine Instructions, and operands --------------------------------------- -}
+
+datatype I
+  = NOP   -- generic instruction
+  | S0    -- set S bit to zero (user mode)
+  | S1    -- set S bit to one (supervisor mode)
+
+nametype OP = {0..1}
+
+
+{- Processor Modes: User, Supervisor ---------------------------------------- -}
+
+datatype PM
+ = USR   -- processor has just entered user mode
+ | SUP   -- processor has just entered supervisor mode
+
+channel pm : PM   -- observable mode changes

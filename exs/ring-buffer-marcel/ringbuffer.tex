@@ -38,7 +38,7 @@ Direction ::=  req | ack
 \t1 \circstate\ CtrState \defs [cache:Value; size:\nat; top:CellId; bot:CellId] \\
 
 %            InitCtr \defs [CtrState' | cache'=0 \land size' = 0 \land top' = 1 \land bot'= 0] \\
-\t1 InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 0) \\
+\t1 InitCtr \circdef (cache, size, top, bot := 0, 0, 1, 1) \\
 \t1 Input \circdef \\
 \t2 (\lcircguard size < maxbuff \rcircguard \circguard input?x \then (\lcircguard size = 0 \rcircguard \circguard ((cache:=x) \circseq (size:=1))))\\
 \t2 \extchoice \lcircguard size > 0 \rcircguard \circguard write.top.req!x \then \\

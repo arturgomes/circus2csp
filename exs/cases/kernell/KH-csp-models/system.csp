@@ -1,0 +1,317 @@
+
+
+
+{- Clock -}
+
+channel tick --used for syncing each hardware component
+CLOCK = tick -> CLOCK
+
+
+{- Memory and Bus -}
+
+--Memory is represented by a map where Mem_Region is a key for Data
+
+datatype CodeOwner
+ = jDC | kernel |  partition1 | partition2 | mf_handler | supI_handler  | scheduler 
+--(DC stands for DontCare)
+
+
+--convention - aX is always forbidden to everyone, even the kernel (for debugging)
+datatype Mem_Region =  a0 | aDC | aX 
+
+datatype Data = d0 | dDC   
+
+mem_init = (|  a0 => d0, aDC => d0, aX => d0 |)
+
+
+datatype Op
+ =  nopInst | writeInst  | mmuBlockInst | mmuUnBlockInst 
+ | setSupModeInst |  setUsrModeInst | jumpInst | handlerReturnInst
+
+
+
+
+--supervisor mode only instructions and memory regions
+supervisor_instructions = {mmuBlockInst,mmuUnBlockInst, setSupModeInst}
+
+
+datatype Bus_Dir =  r | w 
+channel read, write : Data          --synced with CPU
+channel bus : Bus_Dir.Mem_Region    --synced with MMU
+channel badaccess , mmuOK           --synced with MMU 
+
+
+
+--m is the memory map
+MEM_BUS(m) 
+ = tick -> MEM_BUS_READ(m) [] MEM_BUS_WRITE(m) [] MEM_BUS(m)
+
+MEM_BUS_READ(m) 
+= bus.r?a -> (mmuOK -> read!mapLookup(m,a) -> MEM_BUS(m)  )
+             [] 
+             (badaccess -> MEM_BUS(m))
+
+MEM_BUS_WRITE(m) 
+=  bus.w?a -> ( ( mmuOK -> write?d  -> MEM_BUS(mapUpdate(m, a, d))  )
+               [](badaccess -> MEM_BUS(m)) )
+
+{-Memory Protection Unit -}
+
+channel  raise, raiseFailed : InTag     --synced with IRQ
+
+channel mmuBlock, mmuUnBlock : Mem_Region         --synced with CPU
+
+mmu_init= {aX}  
+
+MMU(blocked) 
+ = tick -> TRANSFER(blocked) 
+            [] BLOCK_MEM_REGION(blocked) 
+            [] UNBLOCK_MEM_REGION(blocked) 
+            [] MMU(blocked) 
+TRANSFER(blocked) 
+= bus?dir?addr ->  ( if member(addr, blocked) 
+                     then ( badaccess -> raise!memfault -> MMU(blocked) )  
+                                         
+                     else ( mmuOK -> MMU(blocked) )
+                    )
+                   
+BLOCK_MEM_REGION(blocked) 
+= mmuBlock?a -> MMU(union(blocked,{a}))  
+                           
+UNBLOCK_MEM_REGION(blocked) 
+= mmuUnBlock?a -> MMU(diff(blocked,{a}))
+
+
+
+
+{- Interrupts and Interrupt Controller -}
+
+
+
+datatype InTag = memfault | supInst  | schedulerInterrupt 
+
+interruptVector = < 
+                    (supInst, false), 
+                    (memfault, false),  
+                    (schedulerInterrupt, false)
+                                             >  --(list in order of priority high to low)
+
+
+--raiseFailed    -- synced with MMU / Device
+--raise          -- synced with MMU / Device      
+
+channel irqForward, devRaise : InTag    --synced with CPU
+channel noPendingIRQs         --synced with CPU
+
+channel devStart, devEnd
+
+IRQ(vector)
+=  ( RAISE(vector) )
+   [] ( FORWARD_TO_CPU(vector) )
+   [] ( devStart -> PROCESS_DEVICE_INTERRUPTS(vector) ) 
+
+RAISE(vector) = raise?(x)  -> IRQ(raise_interrupt(x, vector) )
+                              
+
+PROCESS_DEVICE_INTERRUPTS(vector) 
+=  (  devEnd -> IRQ(vector) ) 
+   [] ( DEV_INTERRUPT(vector) ) 
+
+DEV_INTERRUPT(vector)
+= devRaise?x   -> ( (DEV_INTERRUPT(raise_interrupt(x, vector) ))
+                    [](devEnd -> IRQ(raise_interrupt(x, vector) )) 
+                  ) 
+
+
+
+FORWARD_TO_CPU(vector)
+ = ( if is_irq_pending(<>,vector)   == false
+     then (  noPendingIRQs -> IRQ(vector) )
+     else (  irqForward!(get_next_tag(<>,vector)) -> 
+             IRQ(clear_bit(get_next_tag(<>,vector), <>, vector)) 
+          )  
+   ) 
+
+{-Interrupt Helper Functions -}
+
+--raise an interrupt 
+raise_interrupt(tag, vector) = set_bit(tag, <>, vector)
+
+
+--find a tuple and set bool true while maintaining list order
+set_bit(tag, sublist1, sublist2) 
+= if sublist2 == <>
+  then sublist1
+  else if head(sublist2) == (tag, false)
+       then ( sublist1 ^ <(tag, true)> ^ tail(sublist2) ) 
+       else set_bit(tag, sublist1 ^ <head(sublist2)>, tail(sublist2))
+
+
+--find a tuple and set bool false while maintaining list order
+clear_bit(tag, sublist1, sublist2) 
+= if sublist2 == <>
+  then sublist1
+  else if head(sublist2) == (tag, true)
+       then ( sublist1 ^ <(tag, false)> ^ tail(sublist2) ) 
+       else clear_bit(tag, sublist1 ^ <head(sublist2)>, tail(sublist2))
+
+
+is_irq_pending(sublist1, sublist2) 
+= if sublist2 == <>
+  then false
+  else if is_irq_activated(head(sublist2)) == true
+       then true
+       else is_irq_pending(<head(sublist1)>, tail(sublist2) )  
+
+is_irq_activated( (tag,status) ) 
+= if status == true
+  then true
+  else false
+
+
+get_next_tag(sublist1, sublist2)
+= if sublist2 == <>
+  then head(sublist1)   ---throws an emptylist exception. 
+  -- When you call this function you assume there is an IRQ present. 
+  else if is_irq_activated(head(sublist2)) == true
+       then get_irq_tag(head(sublist2))
+       else get_next_tag(<head(sublist1)>, tail(sublist2) )  
+
+get_irq_tag( (tag, status) )
+= tag
+
+
+
+
+{- CPU -}
+channel irqFwdDisabled   --not synced with anything, just for info
+
+--Return popped stack. Keep the bottom element (kernel) on the bottom of the stack always
+popped_stack(stack) =  if length(stack) ==1
+                        then ( stack )   
+                        else ( tail(stack) )
+
+
+channel fe :  CodeOwner.Op.CodeOwner.Mem_Region.Data   --synced with CODE.  
+
+
+
+
+channel BADINTERRUPTTAG --show status before STOP
+
+
+CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+ --(currLoc, currSupBit, lastLoc, lastSupBit)
+
+= tick -> SYNC_DEVICES(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+
+--used to make sending interrupts from DEVICES to IRQ more deterministic
+SYNC_DEVICES(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+ = devStart -> 
+   devEnd -> CHECK_IRQ_ENABLED(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) 
+
+CHECK_IRQ_ENABLED(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) 
+= if TrapsEnabled == false
+    then irqFwdDisabled -> FETCH(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) 
+    else CHECK_INTERRUPTS(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+
+--channel test
+CHECK_INTERRUPTS(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+= noPendingIRQs -> FETCH(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+  [] 
+  irqForward?tag -> 
+      --this block of code is equivalent to trap table (matching interrupts to handler code)
+  if tag == memfault
+  then HANDLE(currLoc, currSupBit, lastLoc, lastSupBit,  TrapsEnabled, mf_handler)
+  else if tag == supInst
+  then HANDLE(currLoc, currSupBit, lastLoc, lastSupBit,  TrapsEnabled, supI_handler)
+  else if tag == schedulerInterrupt
+  then HANDLE(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled,  scheduler)
+  else BADINTERRUPTTAG -> STOP         
+              
+     
+      
+  
+HANDLE(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled,handler) 
+ = FETCH(handler, true, currLoc, currSupBit, false)
+  
+
+FETCH(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) 
+ = fe.currLoc?inst -> 
+   CHECK_SUP_BIT_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, inst )
+
+
+get_owner(owner, mode) = owner
+get_mode(owner, mode) = mode
+
+
+CHECK_SUP_BIT_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+= if currSupBit == false
+
+  then if member(op, supervisor_instructions)
+  then raise!supInst ->  CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+  else EXEC_RETURN_INST(currLoc, currSupBit, lastLoc, 
+                         lastSupBit, TrapsEnabled, op.jmp.addr.dat ) 
+
+  else EXEC_RETURN_INST(currLoc, currSupBit, lastLoc, 
+                         lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+
+EXEC_RETURN_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == handlerReturnInst
+   then --enable IRQs and pop stack
+        CPU(lastLoc, lastSupBit, currLoc, currSupBit, true)
+   else EXEC_JUMP_INST(currLoc, currSupBit, lastLoc,
+                        lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+EXEC_JUMP_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == jumpInst
+
+   then if jmp == jDC  --jump to DONTCARE is a nop
+   then CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) 
+   else CPU(jmp, currSupBit, currLoc, currSupBit, true) 
+      
+   else EXEC_SUPMODE_INST(currLoc, currSupBit, lastLoc, 
+                          lastSupBit, TrapsEnabled, op.jmp.addr.dat ) 
+
+EXEC_SUPMODE_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == setSupModeInst
+   then CPU(currLoc, true, lastLoc, lastSupBit, TrapsEnabled)
+   else EXEC_USRMODE_INST(currLoc, currSupBit, lastLoc, 
+                           lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+
+EXEC_USRMODE_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == setUsrModeInst
+   then CPU(currLoc, false, lastLoc, lastSupBit, TrapsEnabled)
+   else EXEC_MMU_BLOCK_INST(currLoc, currSupBit, lastLoc, 
+                             lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+EXEC_MMU_BLOCK_INST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == mmuBlockInst
+   then mmuBlock!addr ->  CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+   else EXEC_MMU_UNBLOCK_INST(currLoc, currSupBit, lastLoc,
+                              lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+EXEC_MMU_UNBLOCK_INST(currLoc, currSupBit, lastLoc, 
+                       lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == mmuUnBlockInst
+   then mmuUnBlock!addr ->  CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+   else EXEC_WRITEINST(currLoc, currSupBit, lastLoc, 
+                        lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+
+EXEC_WRITEINST(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled, op.jmp.addr.dat )
+ = if op == writeInst
+
+   then if addr == aDC
+   then CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) --nop
+   else bus.w.addr ->
+     ( write!dat ->  CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+       []
+       CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled) )  
+
+   else CPU(currLoc, currSupBit, lastLoc, lastSupBit, TrapsEnabled)
+
+
+
+

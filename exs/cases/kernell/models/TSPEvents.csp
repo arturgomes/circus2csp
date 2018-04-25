@@ -1,0 +1,146 @@
+{- =============================================================================
+
+	TSPEvents.csp
+
+ These are the globally visible TSP events
+-}
+
+
+{- Code Identity ---------------------------------------------------------------
+
+  Given configuration data we can identify the code running
+  by its range of instruction fetch addresses.
+  We abstract this as a type that identifies the relevant entity,
+  and by making code fetch observable.
+
+  For now we bake partition authorisation into our entity definition.
+-}
+
+datatype ENT
+ = KNL  -- kernel
+ | P1   -- partition 1 (authorised to do everything priviledged)
+ | P2   -- partition 2 (not authorised to anything priviledged)
+subtype PARTITION = P1 | P2
+
+{- Code Execution --------------------------------------------------------------
+
+  We model an instruction fetch with an event that records not just the opcode
+  and operands, but also the identity of the entity in whose memory space the
+  instruction resides.
+-}
+
+channel fi : ENT.I.OP
+
+{- Partition Starting ----------------------------------------------------------
+
+  In any partition code we simply mark the cold-start points (the beginning)
+  and the warm-start points (sometime later).
+  We also observe the kernel (or authorised partition) starting a partition.
+
+  Note that a switch to/from kernel and a partition can happen without these
+  markers - that is a normal context-switch.
+-}
+
+datatype LBL  -- labels marking interesting code points
+  = CLD   -- in partition code just before first cold-start instruction
+  | WRM   -- in partition code just before first warm-start instruction
+channel lbl : LBL
+
+channel st : ENT.LBL  -- start entity, at label
+-- valid partition code has at most one of each.
+
+{- Partition Modes -------------------------------------------------------------
+  These are STOPPED, READY, RUNNING, and ACTIVE = READY | RUNNING
+-}
+
+datatype PMODE = STOPPED | READY | RUNNING
+subtype ACTIVE = READY | RUNNING
+
+{- Hypercalls -------------------------------------------------------------
+   We shall model these similarly to instruction fetches
+-}
+
+datatype HCALL
+ = START.PARTITION  -- start partition
+
+channel hc : PARTITION.HCALL  -- always followed by a kernel instruction
+
+{- We need to define a check process that ensures that a hypercall is always
+followed by a kernel instruction -}
+
+channel badHCall
+
+HCALLSCAN =     fi?ent?i?op     -> HCALLSCAN
+             [] hc?p?call:HCALL -> SEENHCALL
+SEENHCALL  =    fi.KNL?i?op     -> HCALLSCAN
+             [] hc?p?call:HCALL -> HCALLFAIL
+             [] ([] p:PARTITION @ fi.p?i?op -> HCALLFAIL)
+HCALLFAIL  = badHCall -> STOP
+
+HCALLCHECK(CODE) = HCALLSCAN [| {|fi,hc|} |] CODE
+-- !!! Is this really part of some Requirement?
+
+{- Kernel Actions --------------------------------------------------------------
+  The Kernel can change partition modes,...
+-}
+
+channel partmode : PMODE
+
+{- Timings  --------------------------------------------------------------
+  We can mark schedule boundaries
+-}
+
+datatype SLOTBNDRY = SLOTBEGIN | SLOTEND
+channel slot : PARTITION.SLOTBNDRY
+
+{- We should check that we always have slot begin followed by the end of the
+same slot  -}
+
+
+channel badSchedule
+
+-- we assume we start outside any time-slot
+SCHEDSCAN   =    slot?p!SLOTBEGIN -> SLOTSCAN(p)
+              [] slot?p!SLOTEND   -> SCHEDFAIL
+SLOTSCAN(p) =    slot.p.SLOTEND   -> SCHEDSCAN
+              [] ([] p:diff(PARTITION,{p}) @ slot.p.SLOTEND -> SCHEDFAIL)
+              [] slot.p.SLOTBEGIN -> SCHEDFAIL
+SCHEDFAIL   = badSchedule -> STOP
+
+{- We should check that partition code only runs during its own timeslot -}
+
+channel partOutOfTime
+
+-- here we assume that SCHEDSCAN above is satisfied
+PTIMESCAN =    fi?KNL?i?op  -> PTIMESCAN
+            [] ([] p:PARTITION @ slot.p.SLOTBEGIN -> PSLOT(p) )
+            [] ([] p:PARTITION @ fi.p?i?op        -> PTIMEFAIL)
+PSLOT(p)  =    fi?KNL?i?op    -> PSLOT(p)
+            [] fi.p?i?op      -> PSLOT(p)
+            [] slot.p.SLOTEND -> PTIMESCAN
+            [] ([] p:diff(PARTITION,{p}) @ fi.p?i?op -> PTIMEFAIL)
+PTIMEFAIL = partOutOfTime -> STOP
+-- this is definitely one of the other requirements!!!
+
+{- Code Termination ------------------------------------------------------------
+   Partition code may end,
+   in which case we want to signal that and then busy loop
+-}
+channel done : ENT
+
+DONE(ent) = done.ent -> NOPLOOP(ent)
+NOPLOOP(ent) = fi.ent.NOP.0 -> NOPLOOP(ent)
+
+{- Generic Partition Behaviour -------------------------------------------------
+
+  A partition starts with cold start code, followed by warm start code,
+  and then enters a running phase, from which it might decide to terminate.
+-}
+
+GP(ent)
+ = lbl.CLD -> fi.ent.NOP.0 -> lbl.WRM -> fi.ent.NOP.1 -> GPRUN(ent)
+
+GPRUN(ent)
+ = (fi.ent.NOP?op -> GPRUN(ent))
+   |~|
+   DONE(ent)

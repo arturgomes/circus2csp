@@ -1,0 +1,76 @@
+{- PK-230 ======================================================================
+
+       Partitions shall be executed in user mode.
+
+  Rationale: The separation between the partitioning kernel and the application
+  programs is provided by the Supervisor / User mode of the computer.
+
+  Note: None
+
+============================================================================= -}
+
+include "Platform.csp"
+
+-- We track all 'fi' events and processor mode changes
+
+
+channel pk230fail
+
+PK230 = PK230sup -- assumes supervisor mode when started
+
+PK230sup
+ =  (fi.KNL?i?op -> PK230sup)
+    []
+    (fi.P1?i?op -> pk230fail -> STOP)
+    []
+    (pm.USR -> PK230usr)
+    []
+    (pm.SUP -> PK230sup)
+
+PK230usr
+ =  (fi?ent?i?op -> PK230usr)
+    []
+    (pm.USR -> PK230usr)
+    []
+    (pm.SUP -> PK230sup)
+
+{- 1. Testing Good Behaviour ------------------------------------------------ -}
+
+PK230GOODCODE
+ = fi.KNL.NOP.0 -> fi.KNL.S0.0  ->
+   fi.P1.NOP.0  -> fi.P1.NOP.1  ->
+   fi.KNL.S1.0  -> fi.KNL.NOP.1 -> PK230GOODCODE
+--
+assert PK230GOODCODE :[divergence free]
+assert PK230GOODCODE :[deadlock free[F]]
+
+PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi |} |] CODE)
+
+
+PK230GOOD= PK230TEST(PK230GOODCODE)
+--
+assert PK230GOOD :[divergence free]
+
+
+{- TEST 1 -}
+assert PK230GOOD :[deadlock free[F]]  -- MUST SUCCEED !!
+
+
+{- 2. Testing Bad Behaviour ------------------------------------------------- -}
+
+PK230BADCODE
+ = fi.KNL.NOP.0 -> fi.KNL.S1.0 ->
+   fi.P1.NOP.0 -> fi.P1.NOP.1 ->
+   fi.KNL.S1.0 -> fi.KNL.NOP.1 -> PK230BADCODE
+--
+assert PK230BADCODE :[divergence free]
+assert PK230BADCODE :[deadlock free[F]]
+
+
+PK230BAD = PK230TEST(PK230BADCODE)
+--
+assert PK230BAD :[divergence free]
+
+
+{- TEST 2 -}
+assert PK230BAD :[deadlock free[F]]  -- MUST FAIL !!

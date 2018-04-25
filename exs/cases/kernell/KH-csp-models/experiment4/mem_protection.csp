@@ -1,0 +1,230 @@
+include "system_more_addresses.csp"
+
+
+
+-------------
+--CODE:
+-------------
+
+KERNEL_INIT_CODE(me) =
+--fe.me?(x).(jDC).(aDC).(dDC) ->    --run all possible instructions
+--fe.me?(x).(jDC).(aDC).(dDC) ->    --run all possible instructions
+--fe.me.nopInst.jDC.aDC.dDC -> 
+--fe.me.setSupModeInst.jDC.a0.d0 ->    --Instruction to set mode to supervisor 
+--fe.me.nopInst.jDC.aDC.dDC -> 
+
+--fe.me.writeInst.jDC.aX.d0 ->     -- a legal write, no memfault
+
+KERNEL_LOOP(me)
+
+KERNEL_LOOP(me) = 
+fe.me.nopInst.jDC.aDC.dDC -> 
+KERNEL_LOOP(me)
+
+
+
+PARTITION_1(me) = 
+fe.me.nopInst.jDC.aDC.dDC ->
+PARTITION_1_DONE(me)
+PARTITION_1_DONE(me) = 
+fe.me.nopInst.jDC.aDC.dDC ->
+PARTITION_1_DONE(me)   
+
+
+PARTITION_2(me) = 
+PARTITION_2_DONE(me)
+PARTITION_2_DONE(me) = 
+fe.me.nopInst.jDC.aDC.dDC ->
+fe.me.writeInst.(jDC)?(x).(d0) ->    --Attempt to write to all possible addresses
+PARTITION_2_DONE(me) 
+
+
+
+SCHEDULER_HANDLER(me) = 
+fe.me.mmuBlockInst.jDC.a0.dDC ->   --block a0
+fe.me.mmuUnBlockInst.jDC.a1.dDC -> --unblock a1
+fe.me.mmuBlockInst.jDC.a2.dDC ->   --block a2
+fe.me.setUsrModeInst.jDC.aDC.dDC ->
+fe.me.jumpInst.partition1.aDC.dDC ->   --Instruction to jump to Partition1
+
+
+fe.me.mmuBlockInst.jDC.a0.dDC ->      --block a0
+fe.me.mmuBlockInst.jDC.a1.dDC ->      --block a1
+fe.me.mmuUnBlockInst.jDC.a2.dDC ->    --unblock a2
+fe.me.setUsrModeInst.jDC.aDC.dDC ->
+fe.me.jumpInst.partition2.aDC.dDC ->   --Instruction to jump to Partition2
+SCHEDULER_HANDLER(me)
+
+
+MEMFAULT_HANDLER(me) = 
+--fe.me.setSupModeInst.jDC.a0.d0 ->    --Instruction to set mode to supervisor 
+fe.me.nopInst.jDC.aDC.dDC -> 
+fe.me.handlerReturnInst.jDC.aDC.dDC ->    --Instruction to enable IRQ forwarding, return to previous code section + mode by popping stack
+MEMFAULT_HANDLER(me)
+
+SUPINST_HANDLER(me) = 
+fe.me.nopInst.jDC.aDC.dDC -> 
+fe.me.handlerReturnInst.jDC.aDC.dDC ->    --Instruction to enable IRQ forwarding, return to previous code section + mode by popping stack
+SUPINST_HANDLER(me)
+
+
+
+
+
+
+
+SCENARIO_COMPLETED_HANDLER(me) = 
+SCENARIO_COMPLETED ->
+SCENARIO_COMPLETED_HANDLER(me)
+
+CODE0 =  KERNEL_INIT_CODE(kernel) 
+CODE1 = CODE0 [| {|   |} |] PARTITION_1(partition1)
+CODE2 = CODE1 [| {|   |} |] PARTITION_2(partition2)
+CODE3 = CODE2 [| {|   |} |] MEMFAULT_HANDLER(mf_handler)
+CODE4 = CODE3 [| {|   |} |] SUPINST_HANDLER(supI_handler )
+CODE7 = CODE4 [| {|   |} |] SCHEDULER_HANDLER(scheduler )
+--CODE8 = CODE7 [| {|   |} |] KERNEL_ERROR_CODE(kernel_error )
+--CODE9 = CODE8 [| {|  |} |] SCENARIO_COMPLETED_HANDLER(scenario_completed)
+
+CODE = CODE7
+
+
+
+
+
+
+-------------
+--DEVICES:
+-------------
+
+
+--To script interrupts:
+--copy this block. Add N of 'devRaise!yourInterrupt' between devStart and devEnd.
+--multiple interrupts per clock cycle are supported. 
+
+--tick -> 
+--devStart ->
+--devRaise!timer1Interrupt
+--devRaise!timer2Interrupt
+--devEnd ->
+
+
+
+DEVICES = 
+
+
+
+DEVICES_LOOP
+
+DEVICES_LOOP = 
+--put timers here
+
+
+tick -> 
+devStart ->
+--devRaise!scenarioDone ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+
+tick -> 
+devStart ->
+devRaise!schedulerInterrupt ->
+
+devEnd ->
+
+
+
+-- < N ticks> 
+
+
+--finish scenario
+--tick -> 
+--devStart ->
+--devRaise!scenarioDone ->
+--devEnd ->
+
+
+DEVICES_LOOP
+
+
+
+
+
+
+
+
+
+
+
+channel  CHECKER_TEST_FAILED
+
+
+CHECKER = ( (tick -> CHECKER)
+          []
+          ( fe.partition2.writeInst.jDC.a1.d0 -> (( write.d0 -> CHECKER_TEST_FAILED -> STOP)
+                         [](tick -> CHECKER))))
+
+
+
+
+
+
+
+INTERNAL_SYSTEM0 = CPU(kernel, true, kernel, true, true)   
+INTERNAL_SYSTEM1 = INTERNAL_SYSTEM0 [| {| tick, read, bus, write |} |]  MEM_BUS (mem_init)
+INTERNAL_SYSTEM2 = INTERNAL_SYSTEM1 [| {| tick, bus, badaccess, mmuOK, mmuBlock, mmuUnBlock |} |] MMU(mmu_init) 
+INTERNAL_SYSTEM3 = INTERNAL_SYSTEM2 [| {| tick, devStart, devEnd |} |] DEVICES
+INTERNAL_SYSTEM4 = INTERNAL_SYSTEM3 [| {| noPendingIRQs, raise,  irqForward, devStart, devRaise, devEnd|} |] IRQ(interruptVector) 
+
+
+
+INTERNAL_SYSTEM5 = INTERNAL_SYSTEM4 [| {| tick, fe.partition2.writeInst.jDC.a1.d0, write.d0, mmuOK  |} |] CHECKER
+
+INTERNAL_SYSTEM6 = INTERNAL_SYSTEM5 [| {| fe, SCENARIO_COMPLETED  |} |] CODE
+
+
+SYSTEM = INTERNAL_SYSTEM6  [| {| tick  |} |] CLOCK
+
+assert SYSTEM :[deadlock free [F]]
+
+

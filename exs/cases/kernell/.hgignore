@@ -1,0 +1,4 @@
+syntax: glob
+201*-MAIN.pdf
+Dasia2018-Submission.out
+*.pdf

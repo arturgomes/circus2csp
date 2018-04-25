@@ -1,0 +1,97 @@
+{- =============================================================================
+
+	HWEvents.csp
+
+
+ These are the globally visible hardware events
+
+ For now we cover a range of abstraction levels.
+ These may be factored out to seperate source files later.
+
+ We start with the most detailed first,
+ and then present slimmed-down variants
+
+-}
+
+
+{-  Global Clock ------------------------------------------------------------ -}
+\begin{circus}
+\circchannel tick\\  % standard clock tick
+\circchannel tock  % used if 2-phase cycle is required
+\end{circus}
+
+{- Main (Memory) Bus -----------------------------------------------------------
+  We do not model bus operations as atomic, but rather as 2-phase:
+   1. signal direction and address
+   2. data transfer -}
+
+{- Addresses -}
+\begin{circus}
+A == \{0,1\}
+\end{circus}
+
+{- Data -}
+\begin{circus}
+D == \{0,1\}
+\end{circus}
+
+{- Direction, from CPU perspective -}
+\begin{circus}
+Dir ::= R  % - reading (data from memory to CPU)
+        | W  % - writing (data from CPU to memory)
+\end{circus}
+\begin{circus}
+
+\circchannel ma : Dir \cross A\\  % address on memory bus
+\circchannel md : Dir \cross D  %  data on memory bus
+\end{circus}
+
+
+{- Interrupt Controller --------------------------------------------------------
+   The IRQ controller takes in interrupt events (iXXX)
+   and decides when to drop, queue or raise them (rXXX)
+-}
+
+{- Timer -}
+\begin{circus}
+
+\circchannel iTMR, rTMR
+\end{circus}
+
+{- Memory Management Unit -}
+\begin{circus}
+
+\circchannel iMMU, rMMU
+\end{circus}
+
+{- External Devices -}
+\begin{circus}
+
+\circchannel iDEV, rDEV
+\end{circus}
+
+{- Software Traps -}
+\begin{circus}
+\circchannel iTRP, rTRP
+\end{circus}
+
+{- Machine Instructions, and operands --------------------------------------- -}
+\begin{circus}
+
+I ::=
+  NOP   % generic instruction
+  | S0    % set S bit to zero (user mode)
+  | S1\\    % set S bit to one (supervisor mode)
+
+OP == \{0 \upto 1\}
+
+\end{circus}
+
+{- Processor Modes: User, Supervisor ---------------------------------------- -}
+\begin{circus}
+PM ::=
+ USR   % processor has just entered user mode
+ | SUP\\   % processor has just entered supervisor mode
+
+\circchannel pm : PM   % observable mode changes
+\end{circus}

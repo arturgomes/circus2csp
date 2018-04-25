@@ -1,0 +1,61 @@
+%
+\documentclass[11pt,a4paper,fleqn]{article}
+\usepackage[a4paper, margin=1.1in]{geometry}
+\usepackage{amssymb,amsmath}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.eps}
+\usepackage{epstopdf}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{lstlhs}
+\usepackage{lstcspm}
+\usepackage{url}
+\usepackage{DD6}
+
+
+\newcommand{\blankline}{\vskip\baselineskip}
+\def\pk#1{\textbf{PK-{#1}}}
+
+% sane default for proof documents
+\parindent 0pt\parskip 0.5ex
+
+\author{Andrew Butterfield}
+\title{Modelling IMA Kernel Requirements on LEON}
+\date\today
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+We want to model the IMAKQP Requirements Baseline\cite{IMAKQP-D02}
+over a Leon based platform.
+Initial work \cite{KH:2016,Costelloe17} was done in machine-readable CSP (CSPm)
+using the FDR refinement checker\cite{fdr,fdrmanual}.
+We are now investigating starting with Circus models\cite{OCW2007},
+which are then automatically translated to CSPm.
+
+Note: it would be worth comparing the baseline to the Velykis model \cite{VF10}.
+
+\appendix
+
+\newpage
+\input{D02-Reqmts}
+% \newpage
+% \input{AB-CSP-Models}
+% \newpage
+% \input{KH-CSP-Models}
+
+\newpage
+\bibliographystyle{alpha}
+\bibliography{MAIN}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

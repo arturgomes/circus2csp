@@ -1,0 +1,45 @@
+{- =============================================================================
+Platform.csp
+
+ Here we model the behaviour of the hardware platform, initially with different
+ platform models tailored for specific groups of requirements.
+-}
+\begin{assert}
+"include HWEvents.csp"
+\also "include TSPEvents.csp"
+\end{assert}
+
+{- 4.2 Partition Mode Management -----------------------------------------------
+
+Things we need to observe:
+  what code (kernel, partition1, ...) is currently running
+  what priviledge mode (user, supervisor) the processor is currently in
+  which code segment (initialisation, main loop, ...) of an entity is running,
+    and when it starts and finishes.
+  we need to observe when the kernel starts a partition (cold or warm)
+  we also need to track partition modes and partition start hypercalls
+-}
+
+-- starts in supervisor mode, executes code/hypercalls,
+-- marking hardware state/mode changes as requested.
+\begin{circus}
+\circprocess PMM \circdef \circbegin Act \circdef pm.SUP \then Act \circspot Act \circend\\
+
+\circprocess PMMRUN \circdef
+\circbegin
+  Act \circdef (fi?ent.S1?op \then pm.SUP \then Act
+   \extchoice
+   fi?ent.S0?op \then pm.USR \then Act
+   \extchoice
+   fi?ent.NOP?op \then Act
+   \extchoice
+   hc?p?call:HCALL \then pm.SUP \then Act)
+   \circspot Act
+\circend
+\end{circus}
+-- S1, S0 should result in an exception trap if attempted in user mode !!!!!
+
+\begin{assert}
+"assert PMM :[divergence free]"
+\also "assert PMM :[deadlock free[F]]"
+\end{assert}

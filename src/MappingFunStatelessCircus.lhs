@@ -674,7 +674,7 @@ is written in Haskell as:
 \begin{code}
 omega_CAction (CSPGuard g a)
   -- 24/01/2018 - I think CSP won't accept the mgets before the guard, and therefore, it needs to be omega_CAction again.
-  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_CAction a)))
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
   -- = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred g))
 \end{code}

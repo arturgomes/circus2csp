@@ -1,0 +1,120 @@
+include "platform.csp"
+
+LINEAR
+ = fi.KNL.NOP.1 -> 
+   fi.KNL.S0.1  -> 
+   fi.KNL.S1.0  -> LINEAR
+
+TREE = PC(0)
+
+PC(pc)
+ =  pc == 0 & fi.KNL.NOP.1 -> PC(1)
+    []
+    pc == 1 & fi.KNL.S0.1  -> PC(2)
+    []
+    pc == 2 & fi.KNL.S1.0  -> PC(0)
+
+
+
+{- ========OLD STUFF ===========
+
+-------------
+--CODE:
+-------------
+
+KERNEL_INIT_CODE(me) =
+--fe.me?(x).(jDC).(aDC).(dDC) ->    --run all possible instructions
+--fe.me?(x).(jDC).(aDC).(dDC) ->    --run all possible instructions
+--fe.me.nopInst.jDC.aDC.dDC -> 
+--fe.me.setSupModeInst.jDC.a0.d0 ->    --Instruction to set mode to supervisor 
+--fe.me.nopInst.jDC.aDC.dDC -> 
+
+--fe.me.writeInst.jDC.aX.d0 ->     -- a legal write, no memfault
+
+KERNEL_LOOP(me)
+
+KERNEL_LOOP(me) = 
+fe.me.nopInst.jDC.aDC.dDC -> 
+KERNEL_LOOP(me)
+
+
+
+PARTITION_1(me) = 
+
+fe.me.nopInst.jDC.aDC.dDC ->
+
+
+
+PARTITION_1_DONE(me)
+PARTITION_1_DONE(me) = 
+
+fe.me.nopInst.jDC.aDC.dDC ->
+
+PARTITION_1_DONE(me)   
+
+
+PARTITION_2(me) = 
+
+PARTITION_2_DONE(me)
+PARTITION_2_DONE(me) = 
+fe.me.nopInst.jDC.aDC.dDC ->
+fe.me.writeInst.(jDC)?(x).(d0) ->    --Attempt to write to all possible addresses
+PARTITION_2_DONE(me) --loop forever for now
+
+
+
+SCHEDULER_HANDLER(me) = 
+fe.me.mmuBlockInst.jDC.a0.dDC ->   --block a0
+fe.me.mmuUnBlockInst.jDC.a1.dDC -> --unblock a1
+fe.me.mmuBlockInst.jDC.a2.dDC ->   --block a2
+fe.me.setUsrModeInst.jDC.aDC.dDC ->
+fe.me.jumpInst.partition1.aDC.dDC ->   --Instruction to jump to Partition1
+
+
+fe.me.mmuBlockInst.jDC.a0.dDC ->      --block a0
+fe.me.mmuBlockInst.jDC.a1.dDC ->      --block a1
+fe.me.mmuUnBlockInst.jDC.a2.dDC ->    --unblock a2
+fe.me.setUsrModeInst.jDC.aDC.dDC ->
+fe.me.jumpInst.partition2.aDC.dDC ->   --Instruction to jump to Partition2
+SCHEDULER_HANDLER(me)
+
+
+MEMFAULT_HANDLER(me) = 
+--fe.me.setSupModeInst.jDC.a0.d0 ->    --Instruction to set mode to supervisor 
+fe.me.nopInst.jDC.aDC.dDC -> 
+
+fe.me.handlerReturnInst.jDC.aDC.dDC ->    --Instruction to enable IRQ forwarding, return to previous code section + mode by popping stack
+MEMFAULT_HANDLER(me)
+
+
+
+
+SUPINST_HANDLER(me) = 
+
+fe.me.nopInst.jDC.aDC.dDC -> 
+fe.me.handlerReturnInst.jDC.aDC.dDC ->    --Instruction to enable IRQ forwarding, return to previous code section + mode by popping stack
+SUPINST_HANDLER(me)
+
+
+
+
+
+
+
+SCENARIO_COMPLETED_HANDLER(me) = 
+SCENARIO_COMPLETED ->
+SCENARIO_COMPLETED_HANDLER(me)
+
+CODE0 =  KERNEL_INIT_CODE(kernel) 
+CODE1 = CODE0 [| {|   |} |] PARTITION_1(partition1)
+CODE2 = CODE1 [| {|   |} |] PARTITION_2(partition2)
+CODE3 = CODE2 [| {|   |} |] MEMFAULT_HANDLER(mf_handler)
+CODE4 = CODE3 [| {|   |} |] SUPINST_HANDLER(supI_handler )
+CODE7 = CODE4 [| {|   |} |] SCHEDULER_HANDLER(scheduler )
+--CODE8 = CODE7 [| {|   |} |] KERNEL_ERROR_CODE(kernel_error )
+--CODE9 = CODE8 [| {|  |} |] SCENARIO_COMPLETED_HANDLER(scenario_completed)
+
+CODE = CODE7
+
+
+-}

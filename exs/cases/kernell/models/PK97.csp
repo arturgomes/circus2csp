@@ -1,0 +1,90 @@
+{- PK-97 =======================================================================
+
+       The starting type of a partition shall be WARM or COLD.
+
+  Rationale: A transition entering in the ACTIVE mode corresponds to a start or
+  a re-start of the partition. This (re-)start can be COLD or WARM. Whatever the
+  starting type of the partition, the PK starts the execution of the partition
+  from its entry start address. The only difference is the status of the
+  associated starting type. This is the concern of the partition to access to
+  its starting type status and to adapt its initialization strategy accordingly.
+
+  Note: None
+
+============================================================================= -}
+
+include "Platform.csp"
+
+-- We track partition start events, from both kernel and partition perspective
+
+
+channel pk97fail
+
+PK97 = PK97knl -- assume the kernel is running
+
+PK97knl
+ = (fi.KNL?i?op -> PK97knl)  -- kernel still running
+   []
+   (fi.P1?i?op -> PK97part)  -- context switch to partition 1
+   []
+   (st.P1.CLD -> PK97cold)
+   []
+   (st.P1.WRM -> PK97warm)
+
+PK97part
+ = (fi.KNL?i?op -> PK97knl)  -- partition 1 interrupted
+   []
+   (fi.P1?i?op -> PK97part)  -- partition 1 still running
+
+PK97cold
+ = (lbl.CLD -> fi?P1?i?op -> PK97warm) -- see a cold start,
+
+PK97warm
+ = (lbl.WRM -> fi?P1?i?op -> PK97part) -- see a warm start
+
+assert PK97 :[divergence free]
+assert PK97 :[deadlock free[F]]
+
+PK97TEST(CODE) = PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi |} |] CODE)
+
+{- 1. Testing Good Behaviour ------------------------------------------------ -}
+
+PK97GOODCODE
+ = fi.KNL.S0.0
+   -> st.P1.CLD -> lbl.CLD -> fi.P1.NOP.0 -> lbl.WRM -> fi.P1.NOP.1
+   -> fi.KNL.S0.0
+   -> st.P1.WRM -> lbl.WRM -> fi.P1.NOP.1
+   -> PK97GOODCODE
+--
+assert PK97GOODCODE :[divergence free]
+assert PK97GOODCODE :[deadlock free[F]]
+
+PK97OK = PK97TEST(PK97GOODCODE)
+--
+assert PK97OK :[divergence free]
+
+{- TEST 1 -}
+assert PK97OK :[deadlock free[F]]  -- MUST SUCCEED !!
+
+
+{- 2. Testing Bad Behaviour ------------------------------------------------- -}
+
+PK97BAD1CODE
+ = fi.KNL.S0.0 -> st.P1.CLD -> fi.P1.NOP.0 -> PK97BAD1CODE
+PK97BAD2CODE
+ = fi.KNL.S0.1 -> lbl.WRM -> fi.P1.NOP.1 -> PK97BAD2CODE
+--
+assert PK97BAD1CODE :[divergence free]
+assert PK97BAD1CODE :[deadlock free[F]]
+assert PK97BAD2CODE :[divergence free]
+assert PK97BAD2CODE :[deadlock free[F]]
+
+PK97BAD1 = PK97TEST(PK97BAD1CODE)
+PK97BAD2 = PK97TEST(PK97BAD2CODE)
+--
+assert PK97BAD1 :[divergence free]
+assert PK97BAD2 :[divergence free]
+
+{- TEST 2 -}
+assert PK97BAD1 :[deadlock free[F]]  -- MUST FAIL !!
+assert PK97BAD2 :[deadlock free[F]]  -- MUST FAIL !!

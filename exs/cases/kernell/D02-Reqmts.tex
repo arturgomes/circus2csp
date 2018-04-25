@@ -1,0 +1,1110 @@
+\section{The Baseline Requirements (D02 \S4)}
+
+\def\ReqmtHdr#1#2#3{\subsubsection*{#1 #2 #3}}
+
+Here we present the full set (single/multi/core/extended)
+of baseline requirements, as extracted automatically from
+the DOORs-generated spreadsheet supplied
+with the delivered version of IMAKQP-D02.
+
+\subsection{Initialisation Management (\S4.1)}
+
+\ReqmtHdr{PK-79}{CORE}{SandM}
+The partitioning kernel shall start its execution by initialising the system according to the defined configuration.
+\begin{quote}\it
+\textsc{Note}
+Initialization of the partitioning kernel includes the initialization of all the structures needed by the PK following the configuration (partitions, ports, scheduling plans, timers, virtualization of traps and interrupts...)
+\end{quote}
+
+\ReqmtHdr{PK-81}{EXTENDED}{SandM}
+The partitioning kernel shall control configuration and partition binary image integrity.
+\begin{quote}\it
+\textsc{Rationale}
+The Kernel is not in charge of copying partitions images from non-volatile memory to RAM. This is the role of the BOOT software or the system partition. By consequence, binary images shall be available in RAM when the kernel starts its execution. However there can exist a means to ensure that images have been correctly copied before staring the execution of the partition. An authentication header or any other authentication mean can be added to the partition image for this purpose. This integrity verification could also be done by the BOOT software.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Some verifications of the configuration could be performed by the partitioning kernel for instance to ensure that the number of defined partitions in the configuration is not greater than the authorised maximum number of partitions. However, the major part of the configuration checks can be done off-line (see section PK- 153).
+\end{quote}
+
+\ReqmtHdr{PK-84}{CORE}{SandM}
+After PK initialization phase, the partitioning kernel shall start the execution of the default scheduling plan as defined in configuration.
+\begin{quote}\it
+\textsc{Rationale}
+Multiple scheduling plans is supported by the PK. The configuration allows defining the default scheduling plan which will be executed when starting the execution.
+\end{quote}
+
+\ReqmtHdr{PK-86}{CORE}{SandM}
+The partitioning Kernel configuration shall allow defining the entry start address of each partition, this entry start address being in RAM or in NVR (execute in place partition).
+\begin{quote}\it
+\textsc{Note}
+Accessing to Volatile or Non-Volatile memory shall be done without protocol. In this case there is no difference from the kernel point of view.
+\end{quote}
+
+\ReqmtHdr{PK-101}{CORE}{SandM}
+Before restarting a partition from its entry start address, the partitioning kernel shall initialize its context.
+\begin{quote}\it
+\textsc{Note}
+Initialize the context of a partition consists in resetting the vCPU registers (set to 0). All virtual traps and interrupts that are pending are reset.
+\end{quote}
+
+\subsection{Partition Mode Management (\S4.2)}
+
+\ReqmtHdr{PK-230}{CORE}{SandM}
+Partitions shall be executed in user mode.
+\begin{quote}\it
+\textsc{Rationale}
+The separation between the partitioning kernel and the application programs is provided by the Supervisor / User mode of the computer.
+\end{quote}
+
+\ReqmtHdr{PK-98}{CORE}{SandM}
+When a partition enters in the ACTIVE mode, the Partitioning Kernel shall start executing the partition at the entry start address as defined in configuration.
+\begin{quote}\it
+\textsc{Rationale}
+A transition entering in the ACTIVE mode corresponds to a start or a re-start of the partition. This (re-)start can be COLD or WARM. Whatever the starting type of the partition, the PK starts the execution of the partition from its entry start address. This is the concern of the partition to access to its starting type status and to adapt its initialization strategy accordingly.
+\end{quote}
+
+\ReqmtHdr{PK-541}{CORE}{SandM}
+When a partition enters in the ACTIVE mode,  its associated vCPU shall have been reset.
+\begin{quote}\it
+\textsc{Note}
+Reset a vCPU means that the vCPU returns in its initial context (registers and virtual interrupts are cleared).
+\end{quote}
+
+\ReqmtHdr{PK-97}{CORE}{SandM}
+The starting type of a partition shall be WARM or COLD.
+\begin{quote}\it
+\textsc{Rationale}
+A transition entering in the ACTIVE mode corresponds to a start or a re-start of the partition. This (re-)start can be COLD or WARM. Whatever the starting type of the partition, the PK starts the execution of the partition from its entry start address.  The only difference is the status of the associated starting type. This is the concern of the partition to access to its starting type status and to adapt its initialization strategy accordingly.
+\end{quote}
+
+\ReqmtHdr{PK-100}{CORE}{SandM}
+The partitioning kernel shall allow an authorized partition to start any partition (STOPPED mode to ACTIVE mode)  with a WARM or COLD starting type.
+\begin{quote}\it
+\textsc{Rationale}
+ This capability is required by an authorized partition such as the system partition to control the re-start of other partitions.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+None. The PK provides a service to start a partition in COLD or WARM starting type. This service is only accessible to an authorized partition.
+In practice it is expected that only one authorized partition (the system partition) will be allowed to stop and re-start another partition. When the binary code and the data of the partition are reinitialised at application level (re-copy of code and data from its non volatile memory) a COLD restart should be applied as all the memory context of the considered partition is then lost.
+\end{quote}
+
+\ReqmtHdr{PK-547}{CORE}{SandM}
+The partitioning kernel shall allow a partition to access its starting type status.
+
+\ReqmtHdr{PK-96}{CORE}{SandM}
+The partitioning kernel shall execute partitions during their allocated timeslots when the said partitions are not in the STOPPED mode.
+
+\ReqmtHdr{PK-99}{CORE}{SandM}
+The partitioning kernel shall allow a partition to be stopped by itself, by an authorised partition or by the health monitoring.
+\begin{quote}\it
+\textsc{Note}
+A partition in the STOPPED mode is no more scheduled during its allocated timeslots. Its  timeslots are lost in the sense that another partition will not be scheduled during this free time to ensure determinism and respects Time Partitioning. However, the PK can use this free time to perform background tasks or not depending on the PK implementation.  In single-core architecture a partition can be stopped during a timeslot on its own request or by the health monitoring. In a multi-core architecture, a partition can be stopped during its execution by itself, by an authorized partition or by the health monitoring. Whichever the scenario, the partition is immediately stopped and the time remaining in the timeslot is lost.
+\end{quote}
+
+\ReqmtHdr{PK-286}{CORE}{SandM}
+The partitioning kernel shall allow an authorised partition to access to the mode of any other partitions.
+\begin{quote}\it
+\textsc{Rationale}
+A partition is authorized to have access to the mode of any other partitions by configuration which is under the responsibility of the system integrator. Authorizing a partition to have access to the mode of any other partitions is required in order to define an authorized partition (system partition) in charge of a centralized FDIR management.
+\end{quote}
+
+\subsection{Space Partitioning (\S4.3)}
+
+\ReqmtHdr{PK-233}{CORE}{SandM}
+It shall be possible to configure the access rights for each memory area accessible to a partition.
+\begin{quote}\it
+\textsc{Rationale}
+For Leon3/2 MMU access is configured and controlled for reading, writing and executing.  For LEON2 without MMU, access is configured and controlled for writing and it is accepted that reading is allowed for all memory mapped and executing is protected by writing access configuration
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The allowed memory areas can be volatile (RAM) or non-volatile memory (NVR) as long as their access are done without protocol (ex: non volatile Flash memory). In this case there is no difference from the kernel point of view.
+We assume here that a memory access "without protocol" is one that simply follows the normal RAM access process of providing address and transfer direction information, and then moving data to/from the addressed location over the standard CPU-Memory bus.
+\end{quote}
+
+\ReqmtHdr{PK-3}{CORE}{SandM}
+The Partitioning Kernel shall allow each partition to access its memory areas such as described in the configuration.
+\begin{quote}\it
+\textsc{Rationale}
+See PK-233.
+\end{quote}
+
+\ReqmtHdr{PK-4}{CORE}{SandM}
+The partitioning kernel shall detect and prevent any attempt of a partition to access a memory area that is not defined as allowed for access in its configuration.
+\begin{quote}\it
+\textsc{Rationale}
+See PK-233.
+\end{quote}
+
+\ReqmtHdr{PK-6}{CORE}{SandM}
+The Partitioning Kernel shall allow a partition to write at a given address in the authorized bits, if the considered bits of the considered address are allowed for writing in the configuration.
+\begin{quote}\it
+\textsc{Rationale}
+This requirement covers the cases where, within a 32bits address are defined some control registers of different I/O devices, these devices being controlled by different partitions.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Access to specific bits is done using a PK hypercall.
+\end{quote}
+
+\ReqmtHdr{PK-8}{CORE}{SandM}
+The Partitioning Kernel shall detect and prevent any attempt of a partition to write (resp. read) in the bits of addresses that are not allocated to this partition in the configuration.
+\begin{quote}\it
+\textsc{Rationale}
+See PK-233.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Access to specific bits is done using a PK hypercall.
+\end{quote}
+
+\ReqmtHdr{PK-7}{CORE}{SandM}
+The Partitioning Kernel shall allow a partition to read specific bits at a given address, if the considered bits of the considered address are allowed for reading in the configuration.
+\begin{quote}\it
+\textsc{Rationale}
+See PK-233.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Access to specific bits is done using a PK hypercall.
+\end{quote}
+
+\ReqmtHdr{PK-5}{CORE}{SandM}
+Memory mapped IO shall be considered as any other accessible address.
+
+\ReqmtHdr{PK-9}{CORE}{SandM}
+When a partition is resumed by the partitioning kernel at the beginning of its timeslots, the said partition shall restart in the same memory context (memory allocated to the partition), CPU core registers context and FPU context (if FPU is used by the considered partition).
+\begin{quote}\it
+\textsc{Note}
+A partition is resumed when switching from READY to RUNNING mode.
+\end{quote}
+
+\ReqmtHdr{PK-581}{EXTENDED}{SandM}
+The partitioning kernel shall allow to configure memory areas accessible to a partition in execute access right.
+
+\subsection{Time Partitioning (\S4.4)}
+
+\ReqmtHdr{PK-11}{CORE}{SandM}
+The minimal admissible value for the timestep shall be TIMESTEP\_DURATION µs.
+
+\ReqmtHdr{PK-12}{CORE}{SandM}
+The minimal admissible value for a Major Frame shall be MINIMAL\_MAF\_DURATION µs.
+
+\ReqmtHdr{PK-14}{CORE}{SINGLE}
+The Partitioning Kernel configuration shall allow to define one or more scheduling plans.
+\begin{quote}\it
+\textsc{Rationale}
+Multiple scheduling plans allows to handle multiple missions phases.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+A scheduling plan is characterized by the definition of a MAF and the periodic synchronization signal.
+\end{quote}
+
+\ReqmtHdr{PK-15}{CORE}{SINGLE}
+A scheduling plan shall be defined in configuration as a sequence of one or many timeslots composing a Major Frame (MAF).
+\begin{quote}\it
+\textsc{Rationale}
+It allows to define deterministic scheduling plans.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The different timeslots composing the MAF should not overlap themselves and be strictly included in the MAF. These structural constraints can be checked off-line on the PK configuration file.
+\end{quote}
+
+\ReqmtHdr{PK-10}{CORE}{SandM}
+A Timeslot shall be defined in configuration by:
+- a start offset in the major frame expressed as a time value multiple of the timestep;
+- a duration expressed as a time value multiple of the timestep;
+- and an identifier.
+\begin{quote}\it
+\textsc{Rationale}
+The duration of the timeslot is expressed as a multiple of the time step duration to avoid to modify the configuration when modifying the timestep duration.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The timeslot identifier is required to be unique. But the pair<partition\_id; slot\_id> can also cover the need in an even more efficient way: if the identifier is unique at system level, each evolution of the scheduling plan will modify the identifiers of all the timeslots of all the partitions, even the timeslots belonging to partition that conserve exactly the same scheduling plan.
+This unicity constraint can be checked off-line on the configuration file.
+\end{quote}
+
+\ReqmtHdr{PK-578}{CORE}{SandM}
+The partitioning kernel configuration shall allow allocating a timeslot to a scheduling unit.
+\begin{quote}\it
+\textsc{Note}
+The scheduling unit is the unit of scheduling attached to a timeslot in a MAF. In a single-core context, the scheduling unit is a partition. In a multi-core context, the scheduling unit is a virtual CPU of a partition. In general, we refer to a multi-core scheduling unit as a pair represented as < partition; vcpu >.
+\end{quote}
+
+\ReqmtHdr{PK-24}{CORE}{SandM}
+The partitioning kernel shall allow a partition to get the identifier of the current timeslot.
+\begin{quote}\it
+\textsc{Rationale}
+This requirement only makes sense if a given partition's execution during a MAF is split across a number of timeslots, and this provides an easy way for such a partition to determine which of those time slots is currently running.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The timeslot identifier can be useful information for the partition to know in which timeslot it is currently executing. These identifiers are defined in configuration by the system integrator. These identifiers shall be unique in the configuration to avoid any ambiguities.
+\end{quote}
+
+\ReqmtHdr{PK-262}{CORE}{SINGLE}
+The partitioning kernel shall execute the Major Frame (MAF) of the current scheduling plan cyclically.
+\begin{quote}\it
+\textsc{Rationale}
+The scheduling plan is cyclic and deterministic.
+\end{quote}
+
+\ReqmtHdr{PK-274}{CORE}{SINGLE}
+The partitioning kernel configuration shall allow to define the default scheduling plan.
+\begin{quote}\it
+\textsc{Rationale}
+After the PK finished its initialization, the PK starts to execute partition according to a scheduling plan. As multiple scheduling plans can be defined in configuration the PK needs to know which is the first scheduling plan to apply.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+
+\end{quote}
+
+\ReqmtHdr{PK-80}{CORE}{SINGLE}
+When starting the first scheduling plan, the starting type status of all the partitions shall be COLD.
+\begin{quote}\it
+\textsc{Rationale}
+In a COLD starting type it is assumed that the partition will perform initialization (parameters initialization, device initialization...). A WARM starting type will not make any sense when a partition is executed for the first time.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+It is assumed that the partitioning kernel is not responsible for loading the partition image from NVR to RAM.
+\end{quote}
+
+\ReqmtHdr{PK-27}{CORE}{SINGLE}
+The Partition Kernel configuration shall allow an authorized partition to trigger a switch from the active scheduling plan to any of the defined scheduling plans.
+\begin{quote}\it
+\textsc{Rationale}
+The partition Kernel supports multiple scheduling plans. Multiple scheduling plans are a useful capability to handle multiple mission phases. An authorized partition (namely the system partition) should be able to change the current scheduling plan.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+We don't want here to specify in the configuration which partition is authorized to perform which transitions. Such a fine grained configuration allowing authorizing a partition to performed only specified transitions would be very complex and difficult to handle at user level. Moreover, the allowed transitions from one scheduling plan to another are an application concern as it is mission dependant.
+\end{quote}
+
+\ReqmtHdr{PK-28}{CORE}{SINGLE}
+The partitioning Kernel shall allow each partition to access to the current scheduling plan identifier.
+\begin{quote}\it
+\textsc{Rationale}
+The partition Kernel supports multiple scheduling plans. Multiple scheduling plans are a useful capability to handle multiple mission phases. A partition needs to know the current mission phase to adapt its behaviour accordingly.
+\end{quote}
+
+\ReqmtHdr{PK-29}{CORE}{SINGLE}
+The partitioning kernel shall apply the required change of scheduling plan at the end of the execution of the MAF.
+\begin{quote}\it
+\textsc{Note}
+The switching to a new scheduling plan has no functional impact on partitions which were previously scheduled and are still scheduled in the new plan. Namely, the partitioning kernel should not perform any COLD or WARM reset.
+\end{quote}
+
+\ReqmtHdr{PK-18}{CORE}{SandM}
+The partitioning kernel shall provide a mechanism to synchronise the Major Frame on a hardware interrupt (multiplexed or not).
+\begin{quote}\it
+\textsc{Rationale}
+This allows synchronizing the MAF on the PPS signal or another external signal. This is useful for the management of time-driven synchronous communication like 1553 with TSP. In such cases, the need at software architecture level is to plan time-slots for 1553 communications that have a given offset with regards to the occurrence of an IRQ (PPS discrete signal or through 1553 bus).The way to handle this with TSP is to launch each MAF only upon reception of this signal. Doing this, MAF are not anymore exactly cyclic but, at the end of a MAF, the PK waits a maximum configurable duration for the reception of this signal. When received, the scheduling plan is launched, and the 1553 timeslots will be executed at the appropriate planned offset with regards to the occurrence of the signal.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+This implies that the major frame is defined with the same feature as the external signal used for synchronisation.  The major frame will therefore be the same time as the expected synchronisation method (or a multiple of it). For example, if the interrupt to synchronise the major frame is the PPS, it should be noted that the major frame must also be 1 second, or a multiple of this time.
+\end{quote}
+
+\ReqmtHdr{PK-16}{CORE}{SandM}
+The partitioning kernel shall allow a partition to inform the partitioning kernel during its timeslots that it has completed its activities for the current time slot.
+\begin{quote}\it
+\textsc{Rationale}
+The capability of a partition to inform the partitioning kernel that it has completed its activities avoids the partition to manage a background thread. It is useful for a partition with or without a Guest-OS (Bare metal partition). The time during which the partition is yield can be used by the PK to perform background tasks. Finally, energy saver actions can be done during this yield time.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+When a partition informs the PK about its completion (yield action) the partition enters in the READY mode. Virtual interrupts allocated to the partition are then masked. What the partitioning kernel does during this yield time of the partition is a PK implementation concern.
+\end{quote}
+
+\ReqmtHdr{PK-17}{CORE}{SandM}
+When a partition informs the partitioning kernel about its completion, the partitioning kernel shall switch the partition in READY mode until the next timeslot for this partition in the MAF.
+\begin{quote}\it
+\textsc{Rationale}
+See PK-16.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+See PK-16.
+\end{quote}
+
+\ReqmtHdr{PK-20}{CORE}{SandM}
+The partitioning kernel shall allow partitions to access the MAF Time.
+\begin{quote}\it
+\textsc{Rationale}
+It allows the partition to access an accurate OBT.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The MAF Time is the time elapsed from the start of the current MAF.
+\end{quote}
+
+\subsubsection*{MAF Synchronisation}
+
+\ReqmtHdr{PK-21}{CORE}{SandM}
+When the synchronisation signal arrives before the end of the MAF, the partitioning kernel shall launch the new MAF and raise a synchronisation error to the health monitoring.
+
+\ReqmtHdr{PK-22}{CORE}{SandM}
+At the end of a major frame, if the synchronisation signal is not raised during a configured jitter duration, the partitioning kernel shall start the new MAF and raise a synchronisation error to the health monitoring.
+\begin{quote}\it
+\textsc{Rationale}
+The partitioning kernel shall continue executing the scheduling plan: this is the role of the application to handle the error (FDIR).
+\end{quote}
+
+%%% Not found in D02
+
+% \ReqmtHdr{PK-638}{CORE}{SandM}
+% The minimum value supported by the partitioning kernel for the jitter duration shall be MIN\_JITTER\_DURATION.
+%
+% \ReqmtHdr{PK-637}{CORE}{SandM}
+% The maximum value supported by the partitioning kernel for the jitter duration shall be MAX\_JITTER\_DURATION.
+% \begin{quote}\it
+% \textsc{Note}
+% This maximum requirement is a validation indication.
+% \end{quote}
+
+\subsection{Interpartition Communications (\S4.5)}
+
+\ReqmtHdr{PK-30}{CORE}{SandM}
+The Partitioning Kernel configuration shall allow defining communications ports to receive and send inter-partition communication messages.
+\begin{quote}\it
+\textsc{Rationale}
+Basic concept for IPC.
+\end{quote}
+
+\ReqmtHdr{PK-31}{CORE}{SandM}
+The Partitioning Kernel configuration shall allow linking a port to a partition.
+\begin{quote}\it
+\textsc{Note}
+A communication port is said to be owned by a partition to denote that the partition is allowed to have access to the port. A communication port is owned by one and only one partition. This structural constraint is checked on an instance of PK configuration by the integrator (assisted by a tool or not).
+\end{quote}
+
+\ReqmtHdr{PK-32}{CORE}{SandM}
+A communication port shall be defined in configuration by:
+- its name;
+- its transfer direction denoting whether the port allows messages to be sent (source port) or received (destination port);
+- its mode of transfer (sampling mode or queuing mode) which denotes the mode which is expected to be used to manage the messages in the inter-partition communication;
+- its maximum message size.
+
+\ReqmtHdr{PK-35}{CORE}{SandM}
+When a partition attempts to read a message in an empty destination port, the partitioning kernel shall provide an indication to the reading partition that the destination port is empty.
+
+\ReqmtHdr{PK-38}{CORE}{SandM}
+The partitioning kernel shall allow any partition to read or write messages solely in its owned ports.
+
+\ReqmtHdr{PK-36}{CORE}{SandM}
+The partitioning kernel shall allow any partition to write messages solely in its owned source ports.
+
+\ReqmtHdr{PK-37}{CORE}{SandM}
+The partitioning kernel shall allow any partition to read messages solely in its owned destination ports.
+
+\ReqmtHdr{PK-40}{CORE}{SandM}
+The partitioning kernel shall allow any partition to write a message in a port which size is smaller or equal to the maximum message size of the port as defined in configuration.
+
+\subsubsection{Logical Communication Links (\S4.5.2)}
+
+\ReqmtHdr{PK-33}{CORE}{SandM}
+The partition Kernel configuration shall allow defining logical communication links. A logical communication link is a link between one source port and one or many destinations ports.
+\begin{quote}\it
+\textsc{Note}
+To be linkable, source and destination sampling ports shall have the same refresh period and the same maximum message size.  To be linkable, one source and one destination queuing ports shall have the same maximum message size and the same maximum message number. All these structural constraints should be checked by the integrator on the configuration.
+\end{quote}
+
+\ReqmtHdr{PK-34}{CORE}{SandM}
+The partitioning kernel shall provide two modes of inter-partition communication between two partitions:  queuing mode and sampling mode.
+\begin{quote}\it
+\textsc{Note}
+A communication in queuing or sampling mode can involves ports owned by the same partition.
+
+Communications in queuing mode is managed according a FIFO policy.
+\end{quote}
+
+\subsubsection{Sampling Communications (\S4.5.3)}
+
+\ReqmtHdr{PK-41}{CORE}{SandM}
+An inter-partition communication in sampling mode shall involve a single sampling source port and one or more sampling destination ports.
+\begin{quote}\it
+\textsc{Rationale}
+To be linkable, source and destination ports shall have the same refresh period and the same maximum message size.  To be linkable, one source and one destination queuing ports shall have the same max message size and the same maximum message number. All these structural constraints should be checked by the integrator on the configuration.
+\end{quote}
+
+\ReqmtHdr{PK-42}{CORE}{SandM}
+An inter-partition communication port in sampling mode shall be characterized in configuration by its refresh period.
+\begin{quote}\it
+\textsc{Note}
+Note that a sampling port is also characterized in configuration by the generic attributes of a communication port (name, transfer direction, mode of transfer, maximum message size)  as stated by the requirement PK-32.
+\end{quote}
+
+\ReqmtHdr{PK-43}{CORE}{SandM}
+When a partition read a message in a sampling destination port, the partitioning kernel shall provide to the partition the validity of the  message read with regard to the  refresh period defined in the configuration.
+\begin{quote}\it
+\textsc{Rationale}
+A message is valid if the age of the message (duration between the writing date and the reading date of the message) is lower than the refresh period.
+\end{quote}
+
+\ReqmtHdr{PK-44}{CORE}{SandM}
+A new message sent by a partition a sampling source port shall overwrite the previous message.
+
+\ReqmtHdr{PK-45}{CORE}{SandM}
+When a partition read a message a sampling  destination port, the partitioning kernel shall always provide the latest message written  in this port.
+
+\subsubsection{Queuing Communications (\S4.5.4)}
+
+\ReqmtHdr{PK-46}{CORE}{SandM}
+An inter-partition communication in queuing mode shall involve a single queuing source port and a single queuing destination port.
+
+\ReqmtHdr{PK-47}{CORE}{SandM}
+An inter-partition communication port in queuing mode shall be characterized in configuration by the maximum number of messages that can be stored in the queue.
+\begin{quote}\it
+\textsc{Note}
+Note that a queuing port is also characterized in configuration by the generic attributes of a communication port (name, transfer direction, mode of transfer, maximum message size)  as stated by the requirement PK-32.
+\end{quote}
+
+\ReqmtHdr{PK-48}{CORE}{SandM}
+Reading a message in a destination queuing port shall remove the message from the port.
+
+\ReqmtHdr{PK-49}{CORE}{SandM}
+The messages involved in an inter-partition communication in queuing mode shall be managed according to a FIFO policy.
+
+\ReqmtHdr{PK-571}{CORE}{SandM}
+For write operations when the queue is full the partitioning kernel shall employ a non-overwrite policy.
+
+\ReqmtHdr{PK-50}{CORE}{SandM}
+When using a non-overwrite policy, when a partition attempts to write a message in the FIFO queuing destination port that is full, the partitioning kernel shall not store the message and shall provide an indication to the writing  partition that the queue is full.
+
+\ReqmtHdr{PK-51}{EXTENDED}{SandM}
+For write operations the partitioning kernel can provide an additional overwrite policy when the queue is full.
+\begin{quote}\it
+\textsc{Note}
+The FIFO protocol with overwrite policy corresponds to a circular buffering protocol.
+\end{quote}
+
+\ReqmtHdr{PK-52}{EXTENDED}{SandM}
+When using an overwrite policy, when a partition attempts to write a message in the FIFO queuing destination port that is full, the partitioning kernel shall overwrite the oldest message contained in the queue.
+
+\ReqmtHdr{PK-579}{EXTENDED}{SandM}
+When using an overwrite policy, the partitioning kernel shall provide an indication to the reading partition when a message has been overwritten in the FIFO queuing source port which the partition is reading.
+\begin{quote}\it
+\textsc{Note}
+An indication is solely provided for the reader. The writer can access to the number of messages contained in the queue (see extended requirement PK-309) and the partition thus has the capability to know if messages will be overwritten when it is writing in its owned ports.
+\end{quote}
+
+\subsubsection{Zero-Copy IPC (\S4.5.5)}
+
+\ReqmtHdr{PK-57}{EXTENDED}{SandM}
+The partitioning kernel shall provide zero-copy inter-partition communication.
+
+\ReqmtHdr{PK-586}{EXTENDED}{SandM}
+The partitioning kernel shall provide an additional mode of transfer (zero-copy mode) for communication port.
+
+\ReqmtHdr{PK-587}{EXTENDED}{SandM}
+A zero-copy IPC shall involve a single source port in zero-copy mode and a single destination port in zero-copy mode.
+
+\ReqmtHdr{PK-588}{EXTENDED}{SandM}
+A zero copy IPC shall allow a partition to access a buffer to write a message to a zero-copy source port.
+
+\ReqmtHdr{PK-589}{EXTENDED}{SandM}
+A zero copy IPC shall allow a partition to access a buffer to read a message from a zero-copy destination port.
+
+\ReqmtHdr{PK-590}{EXTENDED}{SandM}
+Writing or reading in a zero-copy port shall be done in user mode.
+
+\ReqmtHdr{PK-591}{EXTENDED}{SandM}
+A zero copy IPC shall allow a partition to release the buffer once the content is managed.
+
+\ReqmtHdr{PK-592}{EXTENDED}{SandM}
+The partitioning kernel shall provide an indication error when a partition requests to read from a zero-copy port that is empty or not released by the writing partition.
+
+\ReqmtHdr{PK-593}{EXTENDED}{SandM}
+The partitioning kernel shall provide an indication error when a partition requests to write to a zero-copy port that is not released by the reading partition.
+
+\ReqmtHdr{PK-594}{EXTENDED}{SandM}
+The partitioning kernel shall be able to manage at least NUMBER\_ZERO\_COPY\_BUFFERS buffers allocated to partitions when the zero copy communication mechanism is involved.
+
+\ReqmtHdr{PK-595}{EXTENDED}{SandM}
+The partitioning kernel configuration shall allow configuring the memory areas to be used for each zero-copy IPC management.
+
+\subsubsection{Access to Configuration Attributes of ports (\S4.5.6)}
+
+\ReqmtHdr{PK-307}{CORE}{SandM}
+The partitioning kernel shall allow a partition to access to the values of the configuration attributes of its owned ports.
+\begin{quote}\it
+\textsc{Rationale}
+This allows the partition to perform some checks on its owned ports.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+As defined in the previous requirements, configuration attributes of a sampling ports are : its name, its transfer direction, its mode of transfer, its maximum message size and its refresh period.
+The configuration attributes of a queuing ports are :  its name, its transfer direction, its mode of transfer, its maximum message size and the maximum number of messages in the queue.
+\end{quote}
+
+\ReqmtHdr{PK-308}{CORE}{SandM}
+The partitioning kernel shall allow an authorized partition to access to the values of the configuration attributes of all ports defined in configuration.
+\begin{quote}\it
+\textsc{Rationale}
+This allows an authorized partition such as the  system partition to perform some checks on the ports defined in configuration. This can be useful for FDIR purposes.
+\end{quote}
+
+\ReqmtHdr{PK-309}{EXTENDED}{SandM}
+The partitioning kernel shall allow a partition to access to the current number of messages contained in its owned queuing ports.
+\begin{quote}\it
+\textsc{Rationale}
+The access to the current number of messages contained in the queuing ports can be useful but is not mandatory as the source partition will be informed by the kernel when attempting to send a message in a queue that is full.
+\end{quote}
+
+\subsection{Health Monitoring and Traps Management (\S4.6)}
+
+\ReqmtHdr{PK-58}{CORE}{SandM}
+The Partitioning Kernel shall detect and handle all traps and interrupts.
+
+\ReqmtHdr{PK-59}{CORE}{SandM}
+Configuration shall allow defining the list of virtual interrupts and traps.
+\begin{quote}\it
+\textsc{Rationale}
+The association between real interrupt and virtual interrupt could be hardware dependant due to multiplexed interrupt.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+If any, multiplexed interrupts can be virtualized and thought of as part of the list of virtual interrupts in configuration. The part of the partitioning kernel concerned with the management of the multiplexed interrupt (specific code hardware dependant) has to be considered for timing calculation of WCET. This specific code has to be qualified independently and has no impact on the qualification of generic requirements.
+\end{quote}
+
+\ReqmtHdr{PK-67}{CORE}{SandM}
+Partitioning kernel shall be able to handle multiplexed interrupts and provides associated virtual interrupts to partitions.
+\begin{quote}\it
+\textsc{Note}
+The part of the partitioning kernel concerned with the management of the multiplexed interrupt (specific code hardware dependant) has to be considered for timing calculation of WCET. This specific code has to be qualified independently and has no impact on the qualification of generic requirements.
+\end{quote}
+
+\ReqmtHdr{PK-60}{CORE}{SandM}
+Configuration shall allow the allocation of a virtual trap to a partition.
+\begin{quote}\it
+\textsc{Rationale}
+The partition responsible for the trap can be informed through the health monitoring and manage the recovery by itself.
+\end{quote}
+
+\ReqmtHdr{PK-61}{CORE}{SandM}
+Configuration shall allow the allocation of a virtual interrupt to a partition.
+\begin{quote}\it
+\textsc{Rationale}
+The partitioning kernel provides to the partition a VCPU. Allocation of virtual traps and interrupts to partitions allows the system integrator to specify the context of the partition to be set by the VCPU.
+\end{quote}
+
+\ReqmtHdr{PK-69}{CORE}{SandM}
+The Partitioning Kernel shall allow a partition to attach a partition handler to each of the virtual traps and interrupts allocated to the said partition.
+\begin{quote}\it
+\textsc{Note}
+An application handler is a method that contains the code that gets executed in response to a specific event that occurs in an application (here a virtual interrupt or virtual trap).
+The configuration specifies for each partition which interrupts have to be routed to it. Partitioning Kernel transfers the interrupt to the partition as a virtual interrupt (software event related to the initial interrupt) if the partition subscribed to this virtual interrupt.  Handlers are associated with the subscribed virtual interrupts. These handlers are executed when the partition is running.  The interrupt is masked until the partition clears the virtual interrupt.
+Example: A partition can attach an handler to a virtual trap or interrupt by using the Virtual Trap Table of the virtual CPU.
+\end{quote}
+
+\ReqmtHdr{PK-186}{CORE}{SandM}
+The partitioning kernel shall execute the handlers of the virtual interrupts allocated to a partition according to a policy order based on the priority of the corresponding interrupts.
+\begin{quote}\it
+\textsc{Rationale}
+Virtual interrupts includes here the extended interrupts.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+As virtual interrupts dedicated to a partition are masked when the partition is not running, solely the virtual interrupts attached to the partition can be raised and handled in a synchronous manner. All the virtual interrupts dedicated to a partition that are triggered when the said partition is not running are not handled. The status (masked/unmasked) of the virtual interrupts is restored when the partition enters in its timeslot. The pending virtual interrupts are then handled in a specific order according to a policy based on the priority of the corresponding interrupts.
+\end{quote}
+
+\subsubsection{Health Monitoring (\S4.6.1)}
+
+\ReqmtHdr{PK-557}{CORE}{SandM}
+The health monitoring shall be able to detect and handle the following health monitoring events: software traps, exception traps and synchronization error event.
+
+\ReqmtHdr{PK-92}{CORE}{SandM}
+The health monitoring shall be able to react to health monitoring events by executing one of the following actions:
+- Ignore the event;
+- Restart the partition in WARM starting type;
+- Stop the partition (partition enters in the STOPPED mode);
+- Propagate then event to the current partition (virtual event);
+\begin{quote}\it
+\textsc{Note}
+In case of restart, the partition enters in the ACTIVE mode and the starting type is WARM. The partition will start at its entry start address.
+\end{quote}
+
+\ReqmtHdr{PK-558}{CORE}{SandM}
+The health monitoring configuration shall allow selecting the action to be executed in response to a health monitoring event.
+
+\ReqmtHdr{PK-559}{CORE}{SandM}
+The health monitoring shall react to a health monitoring event by executing the action associated to this event as defined by its configuration.
+
+\ReqmtHdr{PK-89}{CORE}{SandM}
+Any errors handled by the health monitoring shall be logged in a LIFO manner following an overwrite or non-overwrite policy if defined at configuration level.
+\begin{quote}\it
+\textsc{Rationale}
+Health monitoring logs are useful for a centralized FDIR.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Overwrite and non-overwrite policies characterize the management of the writing actions in the health-monitoring log buffer. A LIFO buffer with overwrite policy is a circular buffer. The oldest value is overwritten. The reader will always read starting from the most recent value.
+\end{quote}
+
+\ReqmtHdr{PK-95}{CORE}{SandM}
+The partitioning Kernel shall be able to record HM\_LOGG\_MAX\_EVENT\_NB events in the health-monitoring log buffer.
+\begin{quote}\it
+\textsc{Note}
+Events can be logged in a LIFO manner. When buffer is full several policies could be defined:
+- overwrite policy: the new entry overwrites the oldest entry of the log buffer (circular buffering);
+- non-overwrite policy: the new entry is then lost.
+\end{quote}
+
+\ReqmtHdr{PK-90}{CORE}{SandM}
+The Health Monitoring log shall be composed at least of:
+- the absolute date;
+- the type of error;
+- and the identification of the faulty partition or the partitioning kernel.
+\begin{quote}\it
+\textsc{Note}
+The type of the error is implementation dependent.
+\end{quote}
+
+\ReqmtHdr{PK-93}{CORE}{SandM}
+An authorized partition shall have access to the health-monitoring log buffer reading most recent log elements and removing it from the buffer.
+
+\ReqmtHdr{PK-94}{EXTENDED}{SandM}
+An authorized partition shall be able to reset the health-monitoring log buffer.
+
+\ReqmtHdr{PK-91}{EXTENDED}{SandM}
+The health monitoring shall be able to log additional information such as engineering data.
+
+\subsubsection{Trap Management (\S4.6.2)}
+
+\ReqmtHdr{PK-176}{CORE}{SandM}
+When a non-nominal exception trap occurs during kernel execution, the partitioning kernel shall jump to a system integrator handler in supervisor mode passing trap information by arguments.
+\begin{quote}\it
+\textsc{Rationale}
+Software and Exception Traps that occur during partition execution are handled through the Health Monitoring. Non-Nominal Exceptions Traps that occur during kernel execution in supervisor mode can be handled with two different manners:
+- either the Partitioning Kernel enters an infinite idled loop. Detection of the error is then handled through the use of a system watchdog which will reset the system;
+- either the Partitioning Kernel allows jumping to a system integrator handler;
+This last solution is adopted in this specification. This solution allows to retrieve the trap infoís (passed as arguments) and thus to provide an error report before resetting the system.  This system integrator handler needs to be compiled and linked with the kernel.
+\end{quote}
+
+\ReqmtHdr{PK-63}{CORE}{SandM}
+The kernel shall mask hardware interrupts allocated to a partition when said partition is not currently executing.
+\begin{quote}\it
+\textsc{Note}
+When masked, the HW interrupt is not routed to the processor. On context switch, the PK will unmask all interrupt allocated to the partition. The partition is in charge of clearing interrupts.
+\end{quote}
+
+\ReqmtHdr{PK-66}{CORE}{SandM}
+A partition shall be able to mask, unmask and clear its associated virtual traps and interrupts.
+\begin{quote}\it
+\textsc{Rationale}
+The partition has to manage its own virtual context.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+This requirement includes extended interrupts.
+\end{quote}
+
+\ReqmtHdr{PK-275}{CORE}{SandM}
+When entering in a timeslot, the partitioning kernel shall restore the status of the virtual interrupts (masked or unmasked) allocated to the partition as left by the partition at the end of its last timeslot execution except  if the concerned virtual interrupts occured between the previous and current timeslot.
+\begin{quote}\it
+\textsc{Rationale}
+Status of the virtual interrupts (masked/unmasked) is part of the partition context and has to be restored.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+This requirement allows the following scenarios:
+- Scenario 1: The partition P1 masks a virtual interrupt VI1 during its timeslot using the PK hypercall. The PK will effectively mask the corresponding interrupt I1. The interrupt will be masked until the partition P1 unmasks VI1.
+- Scenario 2: The partition P1 ends its timeslot leaving unmasked the virtual interrupt VI1. The PK will mask the corresponding interrupt at the end of the P1 timeslot. If the interrupt is not raised before the next execution timeslot of the partition P1, then the PK will unmask the interrupt at the beginning of the P1 execution timeslot.
+- Scenario 3: The partition P1 ends its timeslot leaving unmasked the virtual interrupt VI1. The PK will mask the corresponding interrupt at the end of the P1 timeslot. If the interrupt is raised before the next execution timeslot of the partition P1, then the PK will let the interrupt status to ìmaskedî at the beginning of the P1 execution timeslot.
+\end{quote}
+
+\subsubsection{Extended Interrupts (\S4.6.3)}
+
+\ReqmtHdr{PK-481}{EXTENDED}{SINGLE}
+The partitioning kernel shall provide NUMBER\_EXTENDED\_INTERRUPT extended interrupts.
+
+\ReqmtHdr{PK-461}{EXTENDED}{SINGLE}
+The partitioning kernel shall allow each partition to use one or more extended interrupts supplied by the partitioning kernel.
+
+\ReqmtHdr{PK-462}{EXTENDED}{SINGLE}
+The partitioning kernel shall supply an extended interrupt to signal the start of a new slot to a partition.
+\begin{quote}\it
+\textsc{Rationale}
+It allows activating a partition handler at the beginning of a timeslot. This is not only useful for partition without guest-OS: in a single-thread partition it allows to control the sequencing in function of the current executing timeslot.
+\end{quote}
+
+\ReqmtHdr{PK-459}{EXTENDED}{SINGLE}
+The partitioning kernel shall supply an extended interrupt to signal to the partition that a new message has been sent/written in a port.
+\begin{quote}\it
+\textsc{Rationale}
+It allows optimising partitionís resources and reducing the performance loss caused by polling the state of the port. Since there is only one single interrupt line to notify partition about incoming messages, on the reception of
+the interrupt the partition code has to determine which ports are ready to perform the operation.
+When a new message is available in the channel, the partitioning kernel triggers an extended interrupt to the destination(s).
+\end{quote}
+
+\subsection{Time Management (\S4.7)}
+
+\ReqmtHdr{PK-70}{CORE}{SandM}
+The partitioning kernel shall allow a partition to access the global time with a precision of one timestep.
+
+\ReqmtHdr{PK-71}{CORE}{SandM}
+The partitioning kernel shall provide a least one virtual timer per partition.
+\begin{quote}\it
+\textsc{Rationale}
+This is used for the Guest-OS or the schedule activities in case of no Guest-OS in partition. The precision of the timer for delays management is the kernel one.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+This virtualised timer could be derived from the partitioning kernel timer used for partition scheduling.
+\end{quote}
+
+\ReqmtHdr{PK-175}{CORE}{SandM}
+The partitioning kernel shall allow a partition to select the source of time (local time or global time) of the virtualized timers which it uses.
+
+\subsection{Cache Management (\S4.8)}
+
+\ReqmtHdr{PK-78}{CORE}{SandM}
+The partitioning kernel shall allow a partition to use caches by configuration.
+
+\ReqmtHdr{PK-77}{CORE}{SandM}
+The partitioning kernel shall be able to flush the processor's cache at context switch.
+
+\ReqmtHdr{PK-194}{EXTENDED}{SandM}
+The partitioning kernel shall allow by configuration to flush or not flush the processorís cache at each context switch.
+\begin{quote}\it
+\textsc{Rationale}
+This should be a Kernel configuration (compile option of the Kernel).
+Flushing cache is usually done for qualification to ensure determinism. It prevents different behaviours during integration. The WCETs and scheduling plan are evaluated with this feature.
+Not-flushing caches may allow improving overall performance of the system without breaking time and space partitioning.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+Either all caches are flushed or none and cache flushing also includes flushing the TLB. Configuration should not have to distinguish between the different types of caches.
+\end{quote}
+
+\subsection{FPU Management (\S4.9)}
+
+\ReqmtHdr{PK-73}{CORE}{SandM}
+The Partitioning Kernel shall manage the initialisation of the Floating Point Unit if at least one partition is configured for using FPU.
+
+\ReqmtHdr{PK-74}{CORE}{SandM}
+When the partitioning kernel performs a switch from one partition using FPU to another one, it shall save the context of the FPU.
+\begin{quote}\it
+\textsc{Rationale}
+The context of the FPU is part of the partition's context.
+\end{quote}
+
+\ReqmtHdr{PK-75}{CORE}{SandM}
+When the partitioning kernel performs a switch from one partition to another one using FPU, it shall restore the context of the FPU of the new partition and activate FPU.
+
+\ReqmtHdr{PK-76}{CORE}{SandM}
+When the partitioning kernel performs a switch from one partition to another one not using FPU, it shall deactivate FPU.
+
+\subsection{Sizing (\S4.10)}
+
+\ReqmtHdr{PK-26}{CORE}{SandM}
+The maximum number of scheduling plans that can be defined in configuration shall be MAXIMUM\_SCHEDULING\_PLANS.
+
+\ReqmtHdr{PK-68}{CORE}{SandM}
+The number of virtualized interrupts shall be fixed to NUMBER\_VIRTUALIZED\_INTERRUPTS.
+\begin{quote}\it
+\textsc{Note}
+Due to multiplexed interrupt, the number of virtualised interrupts has to be limited.
+\end{quote}
+
+\ReqmtHdr{PK-197}{CORE}{SandM}
+The maximum number of timeslots allowed by the partitioning kernel in a MAF shall be smaller than the size of the MAF.
+\begin{quote}\it
+\textsc{Note}
+The size of the MAF is expressed in a number of timestep.
+\end{quote}
+
+\ReqmtHdr{PK-198}{CORE}{SandM}
+The maximum number of memory areas allowed for one partition shall be MAXIMUM\_MEMORY\_AREAS.
+
+\ReqmtHdr{PK-108}{CORE}{SandM}
+The partitioning kernel shall be able to manage at least NUMBER\_MANAGED\_PARTITIONS partitions.
+
+\ReqmtHdr{PK-109}{CORE}{SandM}
+The partitioning kernel shall be able to manage at least NUMBER\_MANAGED\_PORTS ports.
+
+\ReqmtHdr{PK-110}{CORE}{SandM}
+The maximum value allowed by the partitioning kernel for the maximum message size attribute of a port shall be greater or equal to MAXIMUM\_MESSAGE\_SIZE bytes.
+\begin{quote}\it
+\textsc{Rationale}
+It should be possible to write a complete PUS telemetry in a port which size is 4096 bytes.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+We define here the lower bound of the maximum value allowed by the kernel for the maximum message size attribute of a port.
+\end{quote}
+
+\subsection{Performance (\S4.11)}
+
+\ReqmtHdr{PK-104}{CORE}{SandM}
+The partitioning kernel shall use less than MAXIMUM\_VOLATILE\_MEMORY\_SIZE Kbytes in volatile memory in the worst case configuration.
+
+\subsection{API (\S4.12)}
+
+\ReqmtHdr{PK-103}{CORE}{SandM}
+The partitioning kernel shall propose an application interface in user mode for all services described in this specification.
+
+\ReqmtHdr{PK-111}{CORE}{SandM}
+If the execution of a service fails, the Partitioning Kernel shall return to the application an indication error with an error code.
+\begin{quote}\it
+\textsc{Rationale}
+This is the responsibility of the application to perform the appropriate action to handle the erroneous behaviour.
+\end{quote}
+
+\subsection{Hardware Specific Requirements (\S4.13)}
+
+\ReqmtHdr{PK-23}{CORE}{SandM}
+In order to elaborate properly WCET the basic execution time of the context switch, the configuration dependent execution time of the context switch, the services executed in kernel mode and the interrupt management time shall be bounded.
+\begin{quote}\it
+\textsc{Rationale}
+The execution time of a partition context switch needs to be predictable.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The documentation shall provide the information to enable the computation of the WCET of a context switch based on the basic execution time (minimal code), the optional execution time of FPU management (depends on the FPU configuration of the previous and next partition), and the optional execution time of virtualized interrupts management (also depends on the configuration). WCET of the Partitioning Kernel communication services (services to read / write in ports) could be provided and expressed as a minimal time plus an additional time depending of the number of bytes to be transferred.
+Interrupt has to be avoided using time and space partitioning. But if needed this has to be managed by the integrator for margin aspect.
+\end{quote}
+
+\ReqmtHdr{PK-105}{CORE}{SandM}
+Target hardware platforms for the partitioning kernel are LEON3FT with MMU and LEON2 with MMU.
+\begin{quote}\it
+\textsc{Note}
+For multiplexed interrupt handler, use case targets could  be the SCOC3, GR 712, MDPA.
+\end{quote}
+
+\ReqmtHdr{PK-225}{EXTENDED}{SandM}
+Target hardware platform for the partitioning kernel is LEON 2 without MMU.
+
+\subsubsection{Shared Cache (\S4.13.1)}
+
+\ReqmtHdr{PK-612}{EXTENDED}{SandM}
+When the hardware supports it, the partitioning kernel shall be able to seggregate the L2 shared cache among partitions.
+
+\ReqmtHdr{PK-628}{EXTENDED}{SandM}
+When L2 shared cache is seggregated among partitions, the partitioning kernel shall not flush
+
+\subsubsection{IO MMU (\S4.13.2)}
+
+\ReqmtHdr{PK-631}{EXTENDED}{SandM}
+When hardware CPU has an IO-MMU, the partitioning kernel shall allow to manage the IO-MMU to seggregate IOs between partitions as defined in configuration.
+\begin{quote}\it
+\textsc{Note}
+LEON4 processor implements an IO-MMU.
+\end{quote}
+
+\subsection{Configuration (\S4.14)}
+
+\ReqmtHdr{PK-106}{CORE}{SandM}
+The configuration of the partitioning kernel for a given deployment shall be defined in a XML format which respects an XML schema.
+\begin{quote}\it
+\textsc{Note}
+This specification doesn't specify any specific XML schema with which the configuration file should comply. The PK provider is thus responsible to provide a suitable xml schema and the system integrator to use xml files that conform to the schema.
+\end{quote}
+
+\newpage
+\section{Annex 1 : PK REQMTS for MULTI-CORE ARCH.}
+
+We don't do any further breakdown of these multicore requirements
+at present.
+
+\ReqmtHdr{PK-603}{EXTENDED}{MULTI}
+The partitioning kernel shall allow a partition to access to the vCPU identifier on which the partition is currently executing.
+\begin{quote}\it
+\textsc{Rationale}
+This permits to know the virtual cpu that is used by the code invoking this service for the partition in execution.
+\end{quote}
+
+\ReqmtHdr{PK-607}{EXTENDED}{MULTI}
+The partitioning kernel shall allow a partition to access to the mode of its allocated vCPUs.
+
+\ReqmtHdr{PK-606}{EXTENDED}{MULTI}
+The partitioning kernel shall allow a partition to stop a vCPU which is allocated to it.
+
+\ReqmtHdr{PK-609}{EXTENDED}{MULTI}
+The partitioning kernel shall allow a partition to reset a vCPU which is allocated to it.
+\begin{quote}\it
+\textsc{Note}
+Reset a vCPU is equivalent to start a vCPU which have never been ACTIVE since the beginning of the system execution.
+\end{quote}
+
+\ReqmtHdr{PK-465}{CORE}{MULTI}
+The Partitioning Kernel configuration shall allow defining one or more master scheduling plans.
+\begin{quote}\it
+\textsc{Rationale}
+This requirement allows handling multiple missions phases in a multi-core context.
+\end{quote}
+
+\ReqmtHdr{PK-466}{CORE}{MULTI}
+A master scheduling plan shall be defined in configuration as a set of core level scheduling plans.
+
+\ReqmtHdr{PK-506}{CORE}{MULTI}
+A core level scheduling plan shall be defined in configuration as a sequence of one or many timeslots composing a core level Major Frame (Core MAF).
+
+\ReqmtHdr{PK-538}{CORE}{MULTI}
+A master scheduling plan shall be composed of core level MAFs having the same duration.
+\begin{quote}\it
+\textsc{Note}
+The term master MAF duration is used to denote this common duration of core-level MAFs. This constraint simplifies the switch to one master scheduling plan to another.
+\end{quote}
+
+\ReqmtHdr{PK-507}{CORE}{MULTI}
+The partitioning kernel shall execute the core level Major Frames (Core MAFs) of the current master scheduling plan cyclically.
+
+\ReqmtHdr{PK-468}{CORE}{MULTI}
+A master scheduling plan shall be composed of at most one core level scheduling plan for each processing core.
+\begin{quote}\it
+\textsc{Note}
+A master scheduling plan doesn't necessary define a core level scheduling plan for each processing core. In the example shown in Figure PK-423, the master scheduling plan is composed of three core level scheduling plans (CPU-0, CPU-1 and CPU-2). The last processing core is not used and is powered off. A master scheduling plan defines zero or one core level scheduling plan per core.
+\end{quote}
+
+\ReqmtHdr{PK-508}{CORE}{MULTI}
+When starting the first core level scheduling plan of a CPU, the starting type status of all the partitions shall be COLD.
+
+\ReqmtHdr{PK-509}{CORE}{MULTI}
+The Partition Kernel configuration shall allow an authorized partition to trigger a switch from the active master scheduling plan to any of the defined master scheduling plans.
+
+\ReqmtHdr{PK-510}{CORE}{MULTI}
+The partitioning Kernel shall allow each partition to access to the current master scheduling plan identifier.
+
+\ReqmtHdr{PK-572}{CORE}{MULTI}
+The partitioning kernel shall synchronize all core level MAFs composing the master scheduling plan which is currently executing.
+\begin{quote}\it
+\textsc{Rationale}
+This is to avoid a time slippage between MAFs.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+This can allow to have guarantees on which partitions are currently running on the concurrent processing cores at each given instant (useful for profiling of interferences).
+\end{quote}
+
+\ReqmtHdr{PK-511}{CORE}{MULTI}
+The partitioning kernel configuration shall allow at master scheduling plan level to select an hardware interrupt to be used for core level MAFs synchronization.
+\begin{quote}\it
+\textsc{Note}
+This interrupt is called master synchronization signal in the following.
+\end{quote}
+
+\ReqmtHdr{PK-470}{CORE}{MULTI}
+The partitioning kernel configuration shall allow defining the virtual CPUs of a partition.
+
+\ReqmtHdr{PK-467}{CORE}{MULTI}
+The partitioning kernel shall allow scheduling a partition on several processing cores at the same time.
+\begin{quote}\it
+\textsc{Note}
+For example, a partition P1 can be allocated to timeslots in MAF-1 of CPU-1 and to timeslots in MAF-2 of CPU-2. P1 partition timeslots of MAF-1 can overlap with partition timeslots of MAF-2.
+\end{quote}
+
+\ReqmtHdr{PK-533}{CORE}{MULTI}
+When an authorized partition request a change of master scheduling plan, the effective change shall occur at the end of the current master MAF.
+\begin{quote}\it
+\textsc{Note}
+As all core level MAFs have the same duration, the end of the master MAF matches with the end of all the core level MAFs which compose the master scheduling plan.
+\end{quote}
+
+\ReqmtHdr{PK-475}{CORE}{MULTI}
+When switching to a new master scheduling plan, the partitioning kernel shall ensure that all the processing cores that are not impacted by the change of master scheduling plan continue running as before with no impact on their scheduling.
+\begin{quote}\it
+\textsc{Note}
+For instance: the core scheduling plan may be changed for CPU2 and CPU3, but not the core scheduling plan of CPU0 and CPU1, therefore the scheduling of CPU0 and CPU1 must continue as before, without any latencies induced by the scheduling plan change on CPU2 and CPU3.
+The partitioning kernel has to be able to detect that the core level scheduling plan of a CPU is not impacted by the change of master scheduling plan. A solution to handle this issue is to associate an identifier to the core level scheduling plan. The same definition of the core level scheduling plan can then be used in the definition of several master scheduling plans.
+\end{quote}
+
+\ReqmtHdr{PK-597}{CORE}{MULTI}
+The partitioning kernel shall be able to put a processing core in power saving mode whenever this processing core is not used.
+\begin{quote}\it
+\textsc{Rationale}
+This requirement is a performance requirement which allows saving energy.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+We consider that the processing core is not used at least in the following situation:
+- no core level scheduling plan is allocated to the core;
+- timeslots of a partition which is in STOPPED mode;
+- time remaining in a timeslot when a partition signals the kernel about its completion;
+- time intervalls bewteen the end of a timeslot and the beginning of the next inter-timeslot.
+\end{quote}
+
+\ReqmtHdr{PK-472}{CORE}{MULTI}
+The partitioning kernel configuration shall allow to use or not the power saving mode functionality.
+
+\ReqmtHdr{PK-477}{CORE}{MULTI}
+When switching to a new master scheduling plan, the partitioning kernel shall start and initialize processing cores that werenít used in the previous plan.
+
+\ReqmtHdr{PK-463}{CORE}{MULTI}
+Migration of a scheduling unit from one processing core to another when switching to a new master sheduling plan shall have no functional impact on the partition's behaviour.
+\begin{quote}\it
+\textsc{Rationale}
+In a single-core context, a change of scheduling plan don't impact the functional behaviour of a partition that were scheduled in the previous scheduling plan. This requirement ensures the same in a multi-core context. The partitioning kernel need to detect which are the partition migrations when a change of master scheduling plan occurs.
+\end{quote}
+
+\ReqmtHdr{PK-633}{EXTENDED}{MULTI}
+The partitioning kernel shall support a scheduling policy different from the cyclic scheduling policy to improve flexibility and reactivity to asynchronous interrupts.
+\begin{quote}\it
+\textsc{Note}
+This alternative scheduling scheme is called Dynamic Scheduling policy in the next requirements of the section.
+\end{quote}
+
+\ReqmtHdr{PK-636}{EXTENDED}{MULTI}
+The partitioning kernel shall allow to apply a dynamic scheduling policy on some of the cores of the platform.
+
+\ReqmtHdr{PK-634}{EXTENDED}{MULTI}
+The dynamic scheduling policy shall be able to trigger context switches on occurence of asynchronous events while maintaining time partitioning.
+
+\ReqmtHdr{PK-490}{CORE}{MULTI}
+The partitioning kernel shall provide NUMBER\_EXTENDED\_INTERRUPT extended interrupts.
+
+\ReqmtHdr{PK-491}{CORE}{MULTI}
+The partitioning kernel shall allow each partition to use one or more extended interrupts supplied by the partitioning kernel.
+
+\ReqmtHdr{PK-492}{CORE}{MULTI}
+The partitioning kernel shall supply an extended interrupt to signal the start of a new slot to a partition.
+\begin{quote}\it
+\textsc{Rationale}
+It allows activating a partition handler at the beginning of a timeslot. This is not only useful for partition without guest-OS: in a single-thread partition it allows to control the sequencing in function of the current executing timeslot.
+\end{quote}
+
+\ReqmtHdr{PK-493}{CORE}{MULTI}
+The partitioning kernel shall supply an extended interrupt to signal to the partition that a new message has been sent/written in a destination port.
+\begin{quote}\it
+\textsc{Rationale}
+It allows optimising partitionís resources and reducing the performance loss caused by polling the state of the port. Since there is only one single interrupt line to notify partition about incoming messages, on the reception of the interrupt the partition code has to determine which ports are ready to perform the operation.
+When a new message is available in the channel, the partitioning kernel triggers an extended interrupt to the destination(s).
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+When the plan allocates partitions in several CPUís, partitions involved in a communication can be running or not at the same time. If they do not overlap in time, the reader will receive the interrupt at the beginning of its slot. If they overlap, as soon as the writer partition sends the message, the partitioning kernel will deliver the interrupt the reader partition that will be able to receive the message.
+\end{quote}
+
+\ReqmtHdr{PK-515}{CORE}{MULTI}
+The partitioning kernel shall manage reading and writing concurrent access through an appropriate protection mechanism.
+
+\ReqmtHdr{PK-573}{EXTENDED}{MULTI}
+The access time for reading a sampling port shall not depend on the fact that this port is being updated at the same time by a concurrent access.
+
+\ReqmtHdr{PK-575}{EXTENDED}{MULTI}
+The access time for reading a queuing port shall not depend on the fact that this port is being updated at the same time by a concurrent access.
+
+\ReqmtHdr{PK-574}{EXTENDED}{MULTI}
+The access time for writing a sampling port shall not depend on the fact that this port is being read at the same time by a concurrent access.
+
+\ReqmtHdr{PK-576}{EXTENDED}{MULTI}
+The access time for writing a queuing port shall not depend on the fact that this port is being read at the same time by a concurrent access.
+
+\ReqmtHdr{PK-529}{CORE}{MULTI}
+The partitioning kernel shall allow a scheduling unit of a partition to send asynchronous events to other scheduling units of the partition through the extended interrupt mechanism.
+
+\ReqmtHdr{PK-513}{CORE}{MULTI}
+Allowed inter-core communications are defined by configuration of the partitioning kernel.
+
+\ReqmtHdr{PK-627}{CORE}{MULTI}
+When the hardware supports it, the PK shall be able to partition the shared cache among the cores.
+
+\ReqmtHdr{PK-626}{EXTENDED}{MULTI}
+When shared cache is partitioned amongst cores, the partitioning kernel shall manage the flush of the shared cache in the same manner as cache of level 1.

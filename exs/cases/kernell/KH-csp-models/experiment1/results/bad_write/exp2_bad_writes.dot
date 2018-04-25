@@ -1,0 +1,27 @@
+digraph G {
+  0 -> 1 [ label="tick" ];
+  1 -> 2 [ label="devStart" ];
+  2 -> 3 [ label="devEnd" ];
+  3 -> 4 [ label="noPendingIRQs" ];
+  4 -> 5 [ label="fe.kernel.nopInst.jDC.aDC.dDC" ];
+  5 -> 6 [ label="tick" ];
+  6 -> 7 [ label="devStart" ];
+  7 -> 8 [ label="devEnd" ];
+  8 -> 9 [ label="noPendingIRQs" ];
+  9 -> 10 [ label="fe.kernel.mmuUnBlockInst.jDC.a0.dDC" ];
+  10 -> 11 [ label="mmuUnBlock.a0" ];
+  11 -> 12 [ label="tick" ];
+  12 -> 13 [ label="devStart" ];
+  13 -> 14 [ label="devEnd" ];
+  14 -> 15 [ label="noPendingIRQs" ];
+  15 -> 16 [ label="fe.kernel.nopInst.jDC.aDC.dDC" ];
+  16 -> 17 [ label="tick" ];
+  17 -> 18 [ label="devStart" ];
+  18 -> 19 [ label="devEnd" ];
+  19 -> 20 [ label="noPendingIRQs" ];
+  20 -> 21 [ label="fe.kernel.writeInst.jDC.aX.d0" ];
+  21 -> 22 [ label="bus.w.aX" ];
+  22 -> 23 [ label="badaccess" ];
+  23 -> 24 [ label="raise.memfault" ];
+  24 -> 25 [ label="CHECKER_TEST_FAILED" ];
+}

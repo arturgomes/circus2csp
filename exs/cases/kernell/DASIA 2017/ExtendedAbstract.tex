@@ -1,0 +1,215 @@
+
+\begin{center}
+\textbf{Presenter:} \emph{Andrew Butterfield}
+\end{center}
+
+\section{Background}
+
+%\begin{center}
+%\textbf{Presenter}: \textsc{Andrew Butterfield}
+%\end{center}
+The project
+\textit{IMA-SP Kernel Qualification – Preparation (IMAKQP)}
+an  activity led by SciSys Ltd,
+involving CNES, Airbus DS, TASF,
+looking at the approach to be adopted for IMA-SP Separation Kernel qualification.
+The activity
+\textit{Formal Methods Expert to IMA-SP Kernel Qualification – Preparation
+(FMEIMAKQP)}
+\footnote{
+   funded by ESTEC CONTRACT No. 4000112208
+   supported, in part, by Science Foundation Ireland grant 13/RC/2094
+}
+was a parallel joint activity involving Lero@TCD,
+exploring the potential role that formal verification techniques
+might play in a future kernel qualification process.
+It followed on from the experience of a previous activity
+\textit{Method and Tools for Onboard Software Engineering (MTOBSE)}
+ \footnote{
+   funded by ESTEC CONTRACT No. 4000106016,
+   and supported, in part, by Science Foundation Ireland grant 10/CE/I1855
+}
+
+The MTOBSE project, involving two partners in Lero: the Irish Software Research Centre,
+namely the University of Limerick and Trinity College Dublin,
+ looked at a top-down approach to formalising and verifying
+an IMA TSP kernel,
+and was reported on at two previous DASIA events\cite{MTOBSE-DASIA13,MTOBSE-DASIA13}.
+We developed a reference specification for a Time-Space Partitioning (TSP) kernel\cite{MTOBSE-D03} and did a survey of formal techniques that had
+potential for verifying a kernel implementation\cite{MTOBSE-D04,MTOBSE-D06}.
+We then selected Isabelle/HOL\cite{NPW02} and used this to formalise the
+reference specification and some of the XtratuM code\cite{MTOBSE-D07}.
+We then reported on our experiences\cite{MTOBSE-D08}.
+A key focus of the MTOBSE project was to consider formally verifying a kernel
+to the extent required by the Common Criterion (CC) guidelines for both functional correctness and security\cite{RD-07},
+with particular reference to the Separation Kernel Protection Profile (SKPP)\cite{RD-08}.
+
+The focus of FMEIMAKQP was exploring approaches for qualifying
+an \emph{existing} separation kernel implementation as its starting point.
+In particular,
+the focus was on functional correctness rather than security properties.
+From a formal perspective this involved looking much more closely at techniques
+for reasoning at or close to source code level.
+Also of interest was to explore how formal techniques might best be integrated
+with well-established software engineering practises,
+such as testing, and model-based development.
+Results of this activity
+were reported at DASIA in 2015 \cite{FMEIMAKQP-DASIA15},
+and in 2016 \cite{FMEIMAKQP-DASIA16}.
+
+\section{Key FMEIMAKQP Outcomes}
+Key formal-methods results in the Final Report for FMEIMAKQP\cite{FMEIMAKQP-R1}
+where:
+\begin{enumerate}
+  \item
+    A High-Level model written in CSP\cite{hoare-1985:commuseque:}
+    of the Leon-processor based platform,
+    and some of the Requirement Baseline\cite{IMAKQP-D02}
+    behavioural specifications.
+    Analysis of these models was done using
+    the model/refinement checking tool FDR3\cite{FDR3}.
+    Some of this reported on work done in Trinity College Dublin
+    for a Masters Thesis\cite{KH-MCS2016}
+  \item
+    The use of the Frama-C toolkit\cite{Frama-C:user:Magnesium} to add low-level
+    annotations to the C sources for the Xtratum hypervisor\cite{CRM10}.
+\end{enumerate}
+A key issue that has to be addressed for both of these results
+was the fact that they involved a consideration of ``unavoidable concurreny'',
+along with the non-determinism that usually arises.
+The purpose of the separation kernel is to allow multiple
+(software) partitions to run on one hardware platform,
+each being isolated in both time and space,
+with any cross-communication limited to what is authorised.
+For a single-core system, despite the fact that at any point in time,
+we have only one partition or the kernel itself actually running,
+we find that we have what is an essentially \emph{concurrent} system.
+The CPU executes instruction in a sequential manner on behalf
+of either the kernel or partition.
+Also running concurrently is the MMU/MPU which observes the bus traffic,
+and checks, against its current configuration setup,
+if the memory requests are permitted.
+Meanwhile, the interrupt request hardware, although part of the CPU,
+is effectively also running in parallel,
+taking in interrupt requests from IO devices and timers,
+as well as the MMU/MPU.
+
+
+Key formal methods-related recommendations in \cite{FMEIMAKQP-R1} include:
+\begin{itemize}
+  \item
+    Formalising the Requirements Baseline\\
+    It would describe a relationship between a valid kernel configuration
+    and the permissible behaviours associated
+    with both the kernel and all the partitions defined in the configuration.
+    The primary value of this model
+    is that it would provide a way to check the requirements
+    baseline for internal consistency.
+  \item
+    Formalising the Data Invariant\\
+    A configuration invariant would allow the formal verification
+    of configuration tools.
+    It could also be used to verify the correct use by the kernel of its
+    own internal data-structures.
+  \item
+    Verifying \textbf{PK-9}\\
+    This is a requirement regarding the correct save/restore of partition state
+    as a result of context-switches.
+    It proved difficult to test adequately.
+  \item
+    Completing the CSP models\\
+    This work \cite{KH-MCS2016} was very much a proof of concept.
+    But is has potential to do much more,
+    particularly because CSP's model of events and concurrency
+    is a good fit to the concurrent behaviour of the kernel platforms,
+    and the general behavioural flavour of many of the requirements..
+\end{itemize}
+We also suggested other kinds of space-related modelling and software
+activities that might benefit from early formal modelling:
+e.g. SAVOIR (architecture,specifications,data models,interfaces, protocols).
+
+The last recommendation discussed various modalities
+for future activities in this space.
+In particular it was noted that student projects
+are a way to conduct explorations of various ideas,
+as demonstrated by the work reported at DASIA 2016.
+
+\section{Current Investigations}
+
+In this paper we will describe results of current investigations
+by Lero at Trinity College Dublin that explore how formal techniques
+could be used to support the verification of seperation kernel software
+and its related design artefacts, from requirements down.
+
+\subsection{Revising the CSP Model}
+
+Work is ongoing to transform the CSP models described in \cite{KH-MCS2016}
+mainly to try to avoid the problem of ``combinatorial state-space explosion''
+that bedevils model-checking based techniques.
+Some initial progress towards this goal was made in the thesis,
+but there is plenty of scope for improvement.
+
+There are two lines of attack we are bringing to bear on this problem:
+\begin{enumerate}
+  \item Abstraction:
+   In order to be able to successfully run checks,
+   we need to tale particular care to abstract away from all irrelevent
+   aspects of system state.
+   For example, in order to model how the MMU monitors memory accesses
+   and how the kernel configures the MMU and handles its interrupts,
+   we probably don't need to distinguish between reads/writes,
+   or the specific data values, at least for many requirements.
+   The challenge is find the greatest abstract that does not information
+   that is in fact important for the requirement or behaviour being modelled.
+  \item Modularity:
+    The verification approach is to take a model of the Kernel, some Partitions,
+    and the Hardware Platform (KPHP),
+    and construct a way to use the requirement model
+    to act as a monitor for the kernel behaviour.
+    With CSP it is possible to build individual models for each of (most of)
+    the baseline requirements
+    This makes it possible to check each requirement individually,
+    which clearly a very useful aspect of this modelling approach.
+    However much of this advantage is lost if a check for a given requirement
+    fails because of state-space explosions
+    due to parts of the KPHP state
+    that are irrelevant to that given requirement.
+    We are exploring how to (re-)factor the various models into sub-models
+    that focus on key subsets of the overall space,
+    so that each requirement check is tailored to only use the relevant subset.
+\end{enumerate}
+
+\subsection{A Requirements DSL}
+
+A student project is also investigating the development
+of a machine-readable domain-specific language (DSL) for requirements
+that can express the kinds of requirements we find in the kernel baseline.
+Such a language could then be used to develop tools to
+perform requirements consistency checking,
+and to connect the requirement to other modelling notations and techniques.
+
+Some aspects of this are quite novel for the aerospace industry:
+we propose the implement the DSL using the functional programming language
+Haskell (www.haskell.org).
+This is because DSL development is something for which that language is ideally suited.
+The concrete language syntax is that of Haskell,
+so no parsers need be written.
+The language elements can be defined as atomic building blocks
+used in conjunction with combining forms, using the type-class system
+of Haskell.
+This leverages the type system to ensure descriptions are well-formed,
+but does not impose any \emph{a-priori} semantics on the language.
+The class system is enacted by defining various
+datatypes that do have semantic significance,
+and showing how they are instances of the DSL language.
+This means we can easily give the same description multiple meanings.
+Such meanings could comprise:
+\begin{itemize}
+  \item A Text Rendering --- useful for review of the requirements
+  \item Structure Graphs --- tailored for some kind of consistency/completness checking
+  \item CSP Output --- so we can exploit the CSP models and the FD3 model-checker.
+  \item Simulator Output --- generate something for an appropriate simulation tool.
+\end{itemize}
+
+The key challenge here is the correct identification
+of the atomic building blocks and combining forms.

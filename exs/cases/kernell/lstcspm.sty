@@ -1,0 +1,80 @@
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{gray_ulisses}{gray}{0.55}
+\definecolor{castanho_ulisses}{rgb}{0.71,0.33,0.14}
+\definecolor{preto_ulisses}{rgb}{0.41,0.20,0.04}
+\definecolor{green_ulises}{rgb}{0.2,0.75,0}
+
+
+
+% Define Language
+\lstdefinelanguage{cspm}
+{
+  morecomment=[l]{--}, % l is for line comment
+  %morecomment=[s]{/*}{*/}, % s is for start and end delimiter
+  morecomment=[s]{\{-}{-\}}, % s is for start and end delimiter
+  % list of keywords
+  %morekeywords={
+  ndkeywords={
+and,
+or,
+not,
+if,
+then,
+else,
+let,
+within,
+channel,
+assert,
+datatype,
+subtype,
+external,
+transparent,
+nametype,
+module,
+exports,
+endmodule,
+instance,
+Timed,
+include,
+false,
+true,
+print,
+type
+  },
+  ndkeywordstyle=\color{red},
+  identifierstyle=\color{black},
+  otherkeywords={
+    |, ?, !, ., ->, :,[],<>,==,^,<,>
+    },
+  sensitive=false, % keywords are not case-sensitive
+  %morestring=[b]" % defines that strings are enclosed in double quotes
+}
+\lstset{frame=tb,
+  language=cspm,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  %basicstyle={\small\ttfamily},
+  basicstyle={\linespread{0.75}\fontsize{9}{12}\selectfont\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  %breaklines=true,
+  breaklines=false,
+  breakatwhitespace=true,  %true
+  morekeywords={channel, then},
+  tabsize=3
+}
+
+%add line numbers
+\lstset{
+  numbers=left,
+  stepnumber=1,
+  firstnumber=1,
+  numberfirstline=true
+}

@@ -1,0 +1,105 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+include Platform.csp
+channel pk97fail
+
+PK97 = 
+  let
+     PK97knl = ( ( ( fi.KNL?i?op ->
+    PK97knl
+      [] fi.P1?i?op ->
+    PK97part)
+      [] st.P1.CLD ->
+    PK97cold)
+      [] st.P1.WRM ->
+    PK97warm)
+     PK97part = ( fi.KNL?i?op ->
+    PK97knl
+      [] fi.P1?i?op ->
+    PK97part)
+     PK97cold = lbl.CLD ->
+    fi?P1?i?op ->
+    PK97warm
+     PK97warm = lbl.WRM ->
+    fi?P1?i?op ->
+    PK97part
+     
+  within PK97knl
+assert PK97 :[divergence free]
+assert PK97 :[deadlock free[F]]
+PK97TEST(CODE) = (PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi |} |] CODE))
+
+PK97GOODCODE = 
+  let
+     PK97GOODCODEAct = fi.KNL.S0.0 ->
+    st.P1.CLD ->
+    lbl.CLD ->
+    fi.P1.NOP.0 ->
+    lbl.WRM ->
+    fi.P1.NOP.1 ->
+    fi.KNL.S0.0 ->
+    st.P1.WRM ->
+    lbl.WRM ->
+    fi.P1.NOP.1 ->
+    PK97GOODCODEAct
+     
+  within PK97GOODCODEAct
+assert PK97GOODCODE :[divergence free]
+assert PK97GOODCODE :[deadlock free[F]]
+PK97OK = PK97TEST(PK97GOODCODE)
+assert PK97OK :[divergence free]
+assert PK97OK :[deadlock free[F]]  -- MUST SUCCEED !!
+
+PK97BAD1CODE = 
+  let
+     Act = fi.KNL.S0.0 ->
+    st.P1.CLD ->
+    fi.P1.NOP.0 ->
+    Act
+     
+  within Act
+
+PK97BAD2CODE = 
+  let
+     Act = fi.KNL.S0.1 ->
+    lbl.WRM ->
+    fi.P1.NOP.1 ->
+    Act
+     
+  within Act
+assert PK97BAD1CODE :[divergence free]
+assert PK97BAD1CODE :[deadlock free[F]]
+assert PK97BAD2CODE :[divergence free]
+assert PK97BAD2CODE :[deadlock free[F]]
+PK97BAD1 = PK97TEST(PK97BAD1CODE)
+PK97BAD2 = PK97TEST(PK97BAD2CODE)
+assert PK97BAD1 :[divergence free]
+assert PK97BAD2 :[divergence free]
+assert PK97BAD1 :[deadlock free[F]]  -- MUST FAIL !!
+assert PK97BAD2 :[deadlock free[F]]  -- MUST FAIL !!
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = 
+--Conversions
+
+
+
+-- definition of NAME for the entire spec 
+datatype NAME = 
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI -- 
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}

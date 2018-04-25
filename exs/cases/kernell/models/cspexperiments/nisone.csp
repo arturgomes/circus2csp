@@ -1,0 +1,6 @@
+n = 1
+
+nametype C1 = {0}
+nametype C = C1
+
+cv = 0

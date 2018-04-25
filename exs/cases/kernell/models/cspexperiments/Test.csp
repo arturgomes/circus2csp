@@ -1,0 +1,21 @@
+{- Test.csp -}
+
+-- random tests of csp
+
+
+-- using constant to define a type
+
+include "niszero.csp"
+--include "nisone.csp"
+--include "nistwo.csp"
+--include "nisfour.csp"
+
+nametype N = {0..n}
+
+channel p : N
+
+P = [] v : N @ p.v -> P
+
+channel q : C
+
+Q = q.cv -> Q

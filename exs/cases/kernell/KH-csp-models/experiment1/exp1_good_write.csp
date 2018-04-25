@@ -1,0 +1,294 @@
+include "../system.csp"
+
+
+{-
+Partition switch experiment:
+control: no bad instructions
+var1 : each partition tries an illegal write
+var2 : each partition tries a supervisor instruction
+test: do we get a memfault?
+
+
+Interrupt priority test
+
+We are chcking that interrupts 
+
+we check for the following trace:
+
+raise.highest -> raise.2ndhighest -> forward highest -> forward r-> 2ndhighest.
+
+if we get a deadlock
+var1: 
+
+
+
+
+
+experiment 1 - writes
+motivation: testing my assumptions, building confidence in my checker process
+
+The kernel does a good write
+the kernel does a bad write
+the kernel does all possible writes
+
+do we get a memfault? we know what should happen, what does happen?
+do we need to adjust the model?
+
+
+
+
+experiment 2 - introduce the scheduler (with no memory protection)
+motivation: testing my assumptions, building up complexity
+
+The kernel does a supervisor instruction
+the a partition does a supervisor instruction
+a handler does a supervisor instruction
+
+do we get a supervisor instruction error?
+go into detail talking about user / supervisor bit
+ we know what should happen, what does happen?
+
+
+experiment 3 - adding memory protection to scheduler 
+
+this time we check writes for each entity: kernel, handler, partition
+
+
+
+we build on the above, maybe we will discover something. Alternatively take it and show to A.B
+
+maybe do something with ? operator
+
+
+
+
+
+
+-}
+
+
+-------------
+--CODE:
+-------------
+
+KERNEL_INIT_CODE(owner) =
+
+fe.owner.nopInst.jDC.aDC.dDC -> 
+fe.owner.mmuUnBlockInst.jDC.a0.dDC ->   --unBlock a0
+fe.owner.nopInst.jDC.aDC.dDC -> 
+
+
+
+KERNEL_LOOP(owner)
+
+KERNEL_LOOP(owner) = 
+fe.owner.writeInst.jDC.a0.d0 ->    --Instruction to do a good write
+KERNEL_LOOP(owner)
+
+
+PARTITION_1(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+
+PARTITION_1(owner)   --loop forever for now
+
+
+PARTITION_2(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+PARTITION_2(owner) --loop forever for now
+
+
+
+SCHEDULER_HANDLER(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+SCHEDULER_HANDLER(owner)
+
+
+MEMFAULT_HANDLER(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+fe.owner.handlerReturnInst.jDC.aDC.dDC ->   
+MEMFAULT_HANDLER(owner)
+
+
+
+
+SUPINST_HANDLER(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+fe.owner.handlerReturnInst.jDC.aDC.dDC ->   
+SUPINST_HANDLER(owner)
+
+
+
+
+--These are not used in this scenario
+TIMER1_HANDLER(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+fe.owner.handlerReturnInst.jDC.aDC.dDC ->   TIMER1_HANDLER(owner)
+
+
+TIMER2_HANDLER(owner) = 
+fe.owner.nopInst.jDC.aDC.dDC -> 
+fe.owner.handlerReturnInst.jDC.aDC.dDC ->   TIMER2_HANDLER(owner)
+
+
+channel SCENARIO_COMPLETED
+
+
+SCENARIO_COMPLETED_HANDLER(owner) = 
+SCENARIO_COMPLETED ->
+SCENARIO_COMPLETED_HANDLER(owner)
+
+CODE0 =  KERNEL_INIT_CODE(kernel) 
+
+CODE3 = CODE0 [| {|   |} |] MEMFAULT_HANDLER(mf_handler)
+CODE4 = CODE3 [| {|   |} |] SUPINST_HANDLER(supI_handler )
+
+CODE = CODE4
+
+
+
+
+
+
+-------------
+--DEVICES:
+-------------
+
+
+--To script interrupts:
+--copy this block. Add N of 'devRaise!yourInterrupt' between devStart and devEnd.
+--multiple interrupts per clock cycle are supported. 
+
+--tick -> 
+--devStart ->
+--devRaise!timer1Interrupt
+--devRaise!timer2Interrupt
+--devEnd ->
+
+
+
+DEVICES = 
+
+
+
+DEVICES_LOOP
+
+DEVICES_LOOP = 
+--put timers here
+
+
+tick -> 
+devStart ->
+--devRaise!scenarioDone ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+tick -> 
+devStart ->
+devEnd ->
+
+
+tick -> 
+devStart ->
+--devRaise!schedulerInterrupt ->
+
+devEnd ->
+
+
+
+-- < N ticks> 
+
+
+--finish scenario
+--tick -> 
+--devStart ->
+--devRaise!scenarioDone ->
+--devEnd ->
+
+
+DEVICES_LOOP
+
+
+
+
+
+
+
+
+
+
+
+channel  CHECKER_TEST_FAILED
+
+
+CHECKER = ( ( tick -> CHECKER )
+            []
+            ( ( (raise.memfault -> CHECKER_TEST_FAILED -> STOP)
+              ) 
+
+            )
+          )
+
+
+
+
+INTERNAL_SYSTEM0 = CPU(kernel, true, kernel, true, true)   
+INTERNAL_SYSTEM1 = INTERNAL_SYSTEM0 [| {| tick, read, bus, write |} |]  MEM_BUS (mem_init)
+INTERNAL_SYSTEM2 = INTERNAL_SYSTEM1 [| {| tick, bus, badaccess, mmuOK, mmuBlock, mmuUnBlock |} |] MMU(mmu_init) 
+--INTERNAL_SYSTEM3 = INTERNAL_SYSTEM2 [| {| tick, devStart, devEnd |} |] DEVICES
+INTERNAL_SYSTEM4 = INTERNAL_SYSTEM2 [| {| noPendingIRQs, raise,  irqForward, devStart, devRaise, devEnd|} |] IRQ(interruptVector) 
+
+
+
+INTERNAL_SYSTEM5 = INTERNAL_SYSTEM4 [| {| tick, raise  |} |] CHECKER
+
+INTERNAL_SYSTEM6 = INTERNAL_SYSTEM5 [| {| fe, SCENARIO_COMPLETED  |} |] CODE
+
+
+SYSTEM = INTERNAL_SYSTEM6  [| {| tick  |} |] CLOCK
+
+assert SYSTEM :[deadlock free [F]]
+{-
+Whilst compiling SYSTEM :[deadlock free [F]]:
+A diallowed immediate recursion was detected. In particular, the process:
+    MMU({aX})
+can recurse through only on arguments of operators by the following chain of calls:
+    MMU({aX}):
+        tick -> TRANSFER({aX}) [] BLOCK_MEM_REGION({aX}) [] UNBLOCK_MEM_REGION({aX}) [] MMU({aX})
+    MMU({aX})
+-}
+
