@@ -1,4 +1,4 @@
-{- PK-97 =======================================================================
+\section{PK-97} %{-  =======================================================================
 
        The starting type of a partition shall be WARM or COLD.
 
@@ -11,11 +11,11 @@
 
   Note: None
 
-============================================================================= -}
+%============================================================================= -}
 \begin{assert}
 "include Platform.csp"
 \end{assert}
--- We track partition start events, from both kernel and partition perspective
+ We track partition start events, from both kernel and partition perspective
 
 \begin{circus}
 \circchannel pk97fail\\
@@ -42,7 +42,7 @@
 \also "assert PK97 :[deadlock free[F]]"
 \also "PK97TEST(CODE) = (PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi |} |] CODE))"
 \end{assert}
-{- 1. Testing Good Behaviour ------------------------------------------------ -}
+\subsection{Testing Good Behaviour} %------------------------------------------------ -}
 \begin{circus}
 \circprocess PK97GOODCODE \circdef \circbegin\\
 PK97GOODCODEAct \circdef (fi.KNL.S0.0
@@ -59,12 +59,12 @@ PK97GOODCODEAct \circdef (fi.KNL.S0.0
 \also "PK97OK = PK97TEST(PK97GOODCODE)"
 \also "assert PK97OK :[divergence free]"
 \end{assert}
-{- TEST 1 -}
+\subsubsection{TEST 1}
 \begin{assert}
 "assert PK97OK :[deadlock free[F]]  -- MUST SUCCEED !!"
 \end{assert}
 
-{- 2. Testing Bad Behaviour ------------------------------------------------- -}
+\subsection{Testing Bad Behaviour} %------------------------------------------------- -}
 \begin{circus}
 \circprocess PK97BAD1CODE \circdef \circbegin
   Act \circdef fi.KNL.S0.0 \then st.P1.CLD \then fi.P1.NOP.0 \then Act\\
@@ -85,7 +85,7 @@ PK97GOODCODEAct \circdef (fi.KNL.S0.0
 \also "assert PK97BAD1 :[divergence free]"
 \also "assert PK97BAD2 :[divergence free]"
 \end{assert}
-{- TEST 2 -}
+\subsubsection{TEST 2}
 \begin{assert}
 "assert PK97BAD1 :[deadlock free[F]]  -- MUST FAIL !!"
 \also "assert PK97BAD2 :[deadlock free[F]]  -- MUST FAIL !!"

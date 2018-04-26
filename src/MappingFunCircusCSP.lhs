@@ -624,6 +624,12 @@ mapping_PPar procn args spec (CParAction p (CircusAction (CActionCommand (CVResD
     ++ (mapping_ZGenFilt_list spec decl)
     ++ ") =\n        "
     ++ (mapping_CAction procn args spec a)
+mapping_PPar procn args spec (CParAction p (CircusAction (CActionCommand (CVarDecl decl a ))))
+  = p
+    ++"("
+    ++ (mapping_ZGenFilt_list spec decl)
+    ++ ") =\n        "
+    ++ (mapping_CAction procn args spec a)
 mapping_PPar procn args spec (CParAction p pa)
   = p ++ (mapping_ParAction procn spec pa)
 mapping_PPar procn args spec x
@@ -646,7 +652,7 @@ mapping_ParAction :: ZName -> [ZPara] -> ParAction -> String
 mapping_ParAction procn spec (CircusAction ca)
   = " = " ++ (mapping_CAction procn [] spec ca)
 mapping_ParAction procn spec (ParamActionDecl xl pa)
-  = "("++(mapping_ZGenFilt_list  spec xl ) ++ ") = " ++ (mapping_ParAction [] spec pa)
+  = "("++(mapping_ZGenFilt_list  spec xl ) ++ ")" ++ (mapping_ParAction [] spec pa)
 \end{code}
 
 \subsection{Mapping Circus Actions}
@@ -1040,8 +1046,11 @@ mapString f s (x:xs) = (f s x) ++ (mapString f s xs)
 mapping_CParameter :: ZName -> [ZPara] -> CParameter -> ZName
 mapping_CParameter procn spec (ChanInp zn)
   = "?"++zn
+
+mapping_CParameter procn spec (ChanInpPred zn (ZPSchema (ZSRef (ZSPlain p) [] [])))
+  = "?"++zn ++":"++ p
 mapping_CParameter procn spec (ChanInpPred zn zp)
- = "?"++zn ++":"++ (mapping_predicate (get_delta_names1 spec) zp)
+  = "?"++zn ++":"++ (mapping_predicate (get_delta_names1 spec) zp)
 mapping_CParameter procn spec (ChanOutExp ze)
   = mapping_CParameter procn spec (ChanDotExp ze)
 mapping_CParameter procn spec (ChanDotExp ze)
@@ -1169,6 +1178,8 @@ get_channel_name_cont spec ((ChanDotExp v) : xs)
   = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs)
   = "?"++v++(get_channel_name_cont spec xs)
+get_channel_name_cont spec ((ChanInpPred v (ZPSchema (ZSRef (ZSPlain p) [] []))) : xs)
+  = "?"++v++":"++p++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInpPred v x) : xs)
   = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)++(get_channel_name_cont spec xs)
 \end{code}

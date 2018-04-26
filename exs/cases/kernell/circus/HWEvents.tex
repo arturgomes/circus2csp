@@ -1,8 +1,8 @@
-{- =============================================================================
+% {- =============================================================================
+%
+% 	HWEvents.csp
 
-	HWEvents.csp
-
-
+\section{HWEvents}
  These are the globally visible hardware events
 
  For now we cover a range of abstraction levels.
@@ -11,31 +11,33 @@
  We start with the most detailed first,
  and then present slimmed-down variants
 
--}
+% -}
 
 
-{-  Global Clock ------------------------------------------------------------ -}
+\subsection{Global Clock}% ------------------------------------------------------------ -}
 \begin{circus}
 \circchannel tick\\  % standard clock tick
 \circchannel tock  % used if 2-phase cycle is required
 \end{circus}
 
-{- Main (Memory) Bus -----------------------------------------------------------
+\subsection{Main (Memory) Bus} % -----------------------------------------------------------
   We do not model bus operations as atomic, but rather as 2-phase:
-   1. signal direction and address
-   2. data transfer -}
+	\begin{itemize}
+   \item{1} signal direction and address
+   \item{2} data transfer
+	 \end{itemize}
 
-{- Addresses -}
+\subsubsection{Addresses}
 \begin{circus}
 A == \{0,1\}
 \end{circus}
 
-{- Data -}
+\subsubsection{Data}
 \begin{circus}
 D == \{0,1\}
 \end{circus}
 
-{- Direction, from CPU perspective -}
+\subsubsection{Direction, from CPU perspective}
 \begin{circus}
 Dir ::= R  % - reading (data from memory to CPU)
         | W  % - writing (data from CPU to memory)
@@ -47,51 +49,50 @@ Dir ::= R  % - reading (data from memory to CPU)
 \end{circus}
 
 
-{- Interrupt Controller --------------------------------------------------------
-   The IRQ controller takes in interrupt events (iXXX)
-   and decides when to drop, queue or raise them (rXXX)
--}
+\subsection{Interrupt Controller} --------------------------------------------------------
+The IRQ controller takes in interrupt events (iXXX)
+and decides when to drop, queue or raise them (rXXX)
 
-{- Timer -}
+
+\subsubsection{Timer}
 \begin{circus}
-
 \circchannel iTMR, rTMR
 \end{circus}
 
-{- Memory Management Unit -}
+\subsubsection{Memory Management Unit}
 \begin{circus}
 
 \circchannel iMMU, rMMU
 \end{circus}
 
-{- External Devices -}
+\subsubsection{External Devices}
 \begin{circus}
 
 \circchannel iDEV, rDEV
 \end{circus}
 
-{- Software Traps -}
+\subsubsection{Software Traps}
 \begin{circus}
 \circchannel iTRP, rTRP
 \end{circus}
 
-{- Machine Instructions, and operands --------------------------------------- -}
+\subsection{Machine Instructions, and operands} %--------------------------------------- -}
 \begin{circus}
 
-I ::=
-  NOP   % generic instruction
-  | S0    % set S bit to zero (user mode)
+I ::=\\
+  NOP\\   % generic instruction
+  | S0\\    % set S bit to zero (user mode)
   | S1\\    % set S bit to one (supervisor mode)
 
 OP == \{0 \upto 1\}
 
 \end{circus}
 
-{- Processor Modes: User, Supervisor ---------------------------------------- -}
+\subsection{Processor Modes: User, Supervisor} %---------------------------------------- -}
 \begin{circus}
-PM ::=
- USR   % processor has just entered user mode
- | SUP\\   % processor has just entered supervisor mode
+PM ::=\\
+ USR\\   % processor has just entered user mode
+ | SUP   % processor has just entered supervisor mode
 
 \circchannel pm : PM   % observable mode changes
 \end{circus}

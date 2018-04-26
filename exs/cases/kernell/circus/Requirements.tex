@@ -1,4 +1,4 @@
-{- Requirements Modelling =================================
+\section{Requirements Modelling} %Sec 4 %=================================
 
  Every requirement is modelled as a process over hardware and TSP events,
  with some requirement-specific marker events added in.
@@ -6,127 +6,117 @@
  Most requirement models encode the relevant satisfaction property in terms
  of either the presence or absence of deadlock, as appropriate.
 
--}
+
 
 % include "Platform.csp"
 
-{- 4.1 Initialisation Management ------------------------- -}
+\section{Initialisation Management} %------------------------- -}
 
-{- PK-79
+\subsection{PK-79}
 The partitioning kernel shall start its execution by initialising the system according to the defined configuration.
--}
 
-{- PK-84
+\subsection{PK-84}
 After PK initialization phase, the partitioning kernel shall start the execution of the default scheduling plan as defined in configuration.
--}
 
-{- PK-86
+\subsection{PK-86}
 The partitioning Kernel configuration shall allow defining the entry start address of each partition, this entry start address being in RAM or in NVR (execute in place partition).
--}
 
-{- PK-101
+\subsection{PK-101}
 Before restarting a partition from its entry start address, the partitioning kernel shall initialize its context.
--}
 
-{- 4.2 Partition Mode Management -------------------------
+\section{Partition Mode Management} % -------------------------
 
 Things we need to observe:
-  - what code (kernel, partition1, ...) is currently running
-  - what priviledge mode (user, supervisor) the processor is currently in
-  - which code segment (initialisation, main loop, ...) of an entity is running,
-    and when it starts and finishes.
-  - we need to observe when the kernel starts a partition (cold or warm).
--}
+\begin{itemize}
+  \item what code (kernel, partition1, ...) is currently running
+  \item what priviledge mode (user, supervisor) the processor is currently in
+  \item which code segment (initialisation, main loop, ...) of an entity is running, and when it starts and finishes.
+  \item we need to observe when the kernel starts a partition (cold or warm).
+\end{itemize}
 
-
-{- PK-230
+\subsection{PK-230}
 Partitions shall be executed in user mode. (Req 5)
--
-We track all ftch events and processor mode changes
--}
-\begin{circus}
-\circchannel pk230fail
 
-PK230 = PK230sup -- assumes supervisor mode when started
+We track all ftch events and processor mode changes
+
+\begin{circus}
+\circchannel pk230fail\\
+
+\circprocess PK230 \circdef \circbegin\\
 
 PK230sup
- =  (ftch.KNL?i?op -> PK230sup)
-    []
-    (ftch.P1?i?op -> pk230fail -> STOP)
-    []
-    (ftch.P1?i?op -> pk230fail -> STOP)
-    []
-    (pm.USR -> PK230usr)
-    []
-    (pm.SUP -> PK230sup)
+ \circdef ((ftch.KNL?i?op \then PK230sup)
+    \extchoice
+    (ftch.P1?i?op \then pk230fail \then \Stop)
+    \extchoice
+    (ftch.P1?i?op \then pk230fail \then \Stop)
+    \extchoice
+    (pm.USR \then PK230usr)
+    \extchoice
+    (pm.SUP \then PK230sup))\\
 
 PK230usr
- =  (ftch?ent?i?op -> PK230usr)
-    []
-    (pm.USR -> PK230usr)
-    []
-    (pm.SUP -> PK230sup)
-
--- we now give two tests: good behaviour and bad behaviour
-
-PK230GOODCODE
- = ftch.KNL.NOP.0 -> ftch.KNL.S0.0 ->
-   ftch.P1.NOP.0 -> ftch.P1.NOP.1 ->
-   ftch.P1.NOP.0 -> ftch.P1.NOP.1 ->
-   ftch.KNL.S1.0 -> ftch.KNL.NOP.1 -> PK230GOODCODE
-
-assert PK230GOODCODE :[divergence free]
-assert PK230GOODCODE :[deadlock free[F]]
-
-PK230GOODSYS = PMM [| {| ftch |} |] PK230GOODCODE
-
-assert PK230GOODSYS :[divergence free]
-assert PK230GOODSYS :[deadlock free[F]]
-
-PK230GOOD = PK230 [| {| ftch, pm |} |] PK230GOODSYS
-
-assert PK230GOOD :[divergence free]
-assert PK230GOOD :[deadlock free[F]]
-
-PK230BADCODE
- = ftch.KNL.NOP.0 -> ftch.KNL.S1.0 ->
-   ftch.P1.NOP.0 -> ftch.P1.NOP.1 ->
-   ftch.P1.NOP.0 -> ftch.P1.NOP.1 ->
-   ftch.KNL.S1.0 -> ftch.KNL.NOP.1 -> PK230BADCODE
-
-assert PK230BADCODE :[divergence free]
-assert PK230BADCODE :[deadlock free[F]]
-
-PK230BADSYS = PMM [| {| ftch |} |] PK230BADCODE
-
-assert PK230BADSYS :[divergence free]
-assert PK230BADSYS :[deadlock free[F]]
-
-PK230BAD = PK230 [| {| ftch, pm |} |] PK230BADSYS
-
-assert PK230BAD :[divergence free]
-assert PK230BAD :[deadlock free[F]]
+ \circdef ((ftch?ent?i?op \then PK230usr)
+    \extchoice
+    (pm.USR \then PK230usr)
+    \extchoice
+    (pm.SUP \then PK230sup))\\
+\circspot  PK230sup % assumes supervisor mode when started
+\circend
 \end{circus}
-{- PK-98
+we now give two tests: good behaviour and bad behaviour
+
+\begin{assert}
+"PK230GOODCODE = ftch.KNL.NOP.0 -> ftch.KNL.S0.0 -> ftch.P1.NOP.0 -> ftch.P1.NOP.1 -> ftch.P1.NOP.0 -> ftch.P1.NOP.1 -> ftch.KNL.S1.0 -> ftch.KNL.NOP.1 -> PK230GOODCODE"\\
+
+
+\also "assert PK230GOODCODE :[divergence free]"\\
+\also "assert PK230GOODCODE :[deadlock free[F]]"\\
+
+\also "PK230GOODSYS = PMM [| {| ftch |} |] PK230GOODCODE"\\
+
+\also "assert PK230GOODSYS :[divergence free]"\\
+\also "assert PK230GOODSYS :[deadlock free[F]]"\\
+
+\also "PK230GOOD = PK230 [| {| ftch, pm |} |] PK230GOODSYS"\\
+
+\also "assert PK230GOOD :[divergence free]"\\
+\also "assert PK230GOOD :[deadlock free[F]]"\\
+\end{assert}
+
+\begin{assert}
+"PK230BADCODE = ftch.KNL.NOP.0 -> ftch.KNL.S1.0 -> ftch.P1.NOP.0 -> ftch.P1.NOP.1 -> ftch.P1.NOP.0 -> ftch.P1.NOP.1 -> ftch.KNL.S1.0 -> ftch.KNL.NOP.1 -> PK230BADCODE"\\
+
+   \also "assert PK230BADCODE :[divergence free]"\\
+   \also "assert PK230BADCODE :[deadlock free[F]]"\\
+
+   \also "PK230BADSYS = PMM [| {| ftch |} |] PK230BADCODE"\\
+
+   \also "assert PK230BADSYS :[divergence free]"\\
+   \also "assert PK230BADSYS :[deadlock free[F]]"\\
+
+   \also "PK230BAD = PK230 [| {| ftch, pm |} |] PK230BADSYS"\\
+
+   \also "assert PK230BAD :[divergence free]"\\
+   \also "assert PK230BAD :[deadlock free[F]]"
+\end{assert}
+\subsection{PK-98}
 When a partition enters in the ACTIVE mode, the Partitioning Kernel shall start executing the partition at the entry start address as defined in configuration.
--}
 
-{- PK-541
+\subsection{PK-541}
 When a partition enters in the ACTIVE mode,  its associated vCPU shall have been reset.
--}
 
-{- PK-97
+\subsection{PK-97}
 The starting type of a partition shall be WARM or COLD. (Req 8)
 
 We track partition start events, from both kernel and partition perspective
--}
+
 \begin{circus}
 \circchannel pk97fail
 \end{circus}
 
 
-{- PK-100
-The partitioning kernel shall allow an authorized partition to start any partition (STOPPED mode to ACTIVE mode)  with a WARM or COLD starting type. (Req 9)
--}
+\subsection{PK-100}
+The partitioning kernel shall allow an authorized partition to start any partition (STOPED) mode to ACTIVE mode)  with a WARM or COLD starting type. (Req 9)
 
-{- 4.3.... not yet in here... --------------------------- -}
+%{- 4.3.... not yet in here... --------------------------- -}

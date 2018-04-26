@@ -1,5 +1,5 @@
-include "sequence_aux.csp"
-include "function_aux.csp"
+-- include "sequence_aux.csp"
+-- include "function_aux.csp"
 
 
 include "HWEvents.csp"
@@ -22,7 +22,7 @@ PMMRUN =
     Act)
       [] fi?ent.NOP?op ->
     Act)
-      [] hc?p?call: ->
+      [] hc?p?call:HCALL ->
     pm.SUP ->
     Act)
 
