@@ -5,7 +5,6 @@ Platform.csp
  platform models tailored for specific groups of requirements.
 -}
 
-include "HWEvents.csp"
 include "TSPEvents.csp"
 
 {- 4.2 Partition Mode Management -----------------------------------------------

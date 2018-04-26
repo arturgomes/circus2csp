@@ -5,6 +5,7 @@
  These are the globally visible TSP events
 -}
 
+include "HWEvents.csp"
 
 {- Code Identity ---------------------------------------------------------------
 
