@@ -1,15 +1,15 @@
-{- =============================================================================
-Platform.csp
+% =============================================================================
+\section{Platform}
 
  Here we model the behaviour of the hardware platform, initially with different
  platform models tailored for specific groups of requirements.
--}
+%
 \begin{assert}
 "include HWEvents.csp"
 \also "include TSPEvents.csp"
 \end{assert}
 
-{- 4.2 Partition Mode Management -----------------------------------------------
+\subsection} % -----------------------------------------------
 
 Things we need to observe:
   what code (kernel, partition1, ...) is currently running
@@ -18,10 +18,9 @@ Things we need to observe:
     and when it starts and finishes.
   we need to observe when the kernel starts a partition (cold or warm)
   we also need to track partition modes and partition start hypercalls
--}
 
--- starts in supervisor mode, executes code/hypercalls,
--- marking hardware state/mode changes as requested.
+starts in supervisor mode, executes code/hypercalls,
+marking hardware state/mode changes as requested.
 \begin{circus}
 \circprocess PMM \circdef \circbegin Act \circdef pm.SUP \then Act \circspot Act \circend\\
 
