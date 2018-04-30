@@ -1,0 +1,56 @@
+\usetikzlibrary{automata, positioning, arrows}
+% \usepackage{amssymb}
+\usetikzlibrary{arrows,fit,positioning,calc,shapes}
+\definecolor{grey}{RGB}{220,220,220}
+
+% \usepackage[english]{babel}
+% \useunder{\uline}{\ul}{}
+% \onehalfspacing
+
+\counterwithin{table}{subsection}
+\def\CTOC{{\sf\slshape{Circus2CSP}}}
+\def\Circus{{\sf\slshape{Circus}}}
+\def\CRefine{{\sf\slshape{CRefine}}}
+\def\JCircus{{\sf\slshape{JCircus}}}
+\def\CircusT{{\sf\slshape{Circus~Time}}}
+
+\newcommand{\Timeout}[1]{\stackrel{#1}{\rres}}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\newcommand{\CSPM}{$CSP_M$}
+
+
+%et al. in italic
+\newcommand{\etal}{\textit{et al}. }
+\newcommand{\wrt}{\textit{w.r.t.}}
+\newcommand{\ie}{\textit{i}.\textit{e}., }
+\newcommand{\eg}{\textit{e}.\textit{g}. }
+
+% drafting notes
+% swap comment around to make them disappear/appear
+%\def\DRAFT#1{~\newline\textbf{DRAFT:}\textsc{{#1}}\textbf{:END}\newline~}
+%\def\DRAFT#1{~\newline\colorbox{yellow}{#1}\newline~}
+\def\DRAFT#1{}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{step}[thm]{Step}
+\newcommand*{\fcourier}{\fontfamily{pcr}\selectfont}
+\DeclareTextFontCommand{\tco}{\fcourier}
+\newcounter{examplecounter}
+\newenvironment{lawn}[1][]{%
+    \refstepcounter{examplecounter}%
+  \textbf{Law \arabic{examplecounter} (#1)}%
+  \quad
+}{%
+}
+% \numberwithin{examplecounter}{section}
+\newenvironment{prov}
+  {\newline\noindent\ provided }
+  {}
+\newenvironment{provs}
+  {\newline\noindent\ provided\begin{itemize}}
+  {\end{itemize}}
+\newenvironment{block}
+    {\left(\begin{array}{l}}
+    {\end{array}\right)}
+
+\newenvironment{assert}{\verbatim}{\endverbatim}
