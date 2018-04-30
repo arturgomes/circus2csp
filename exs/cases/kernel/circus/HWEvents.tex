@@ -1,0 +1,100 @@
+
+\section{HWEvents}
+ These are the globally visible hardware events
+
+ For now we cover a range of abstraction levels.
+ These may be factored out to seperate source files later.
+
+ We start with the most detailed first,
+ and then present slimmed-down variants
+
+
+
+\subsection{Global Clock}
+
+\begin{circus}
+\circchannel tick\\  % standard clock tick
+\circchannel tock  % used if 2-phase cycle is required
+\end{circus}
+
+\subsection{Main (Memory) Bus}
+
+  We do not model bus operations as atomic, but rather as 2-phase:
+	\begin{itemize}
+   \item{1} signal direction and address
+   \item{2} data transfer
+	 \end{itemize}
+
+\subsubsection{Addresses}
+
+\begin{circus}
+A == \{0,1\}
+\end{circus}
+
+\subsubsection{Data}
+
+\begin{circus}
+D == \{0,1\}
+\end{circus}
+
+\subsubsection{Direction, from CPU perspective}
+
+\begin{circus}
+Dir ::= R  % - reading (data from memory to CPU)
+        | W  % - writing (data from CPU to memory)
+\end{circus}
+
+\begin{circus}
+\circchannel ma : Dir \cross A\\  % address on memory bus
+\circchannel md : Dir \cross D  %  data on memory bus
+\end{circus}
+
+
+\subsection{Interrupt Controller} --------------------------------------------------------
+The IRQ controller takes in interrupt events (iXXX)
+and decides when to drop, queue or raise them (rXXX)
+
+
+\subsubsection{Timer}
+
+\begin{circus}
+\circchannel iTMR, rTMR
+\end{circus}
+
+\subsubsection{Memory Management Unit}
+
+\begin{circus}
+\circchannel iMMU, rMMU
+\end{circus}
+
+\subsubsection{External Devices}
+
+\begin{circus}
+\circchannel iDEV, rDEV
+\end{circus}
+
+\subsubsection{Software Traps}
+\begin{circus}
+\circchannel iTRP, rTRP
+\end{circus}
+
+\subsection{Machine Instructions, and operands} %--------------------------------------- -}
+\begin{circus}
+I ::=\\
+  NOP\\   % generic instruction
+  | S0\\    % set S bit to zero (user mode)
+  | S1\\    % set S bit to one (supervisor mode)
+
+OP == \{0 \upto 1\}
+\end{circus}
+
+\subsection{Processor Modes: User, Supervisor} %---------------------------------------- -}
+\begin{circus}
+PM ::=\\
+ USR\\
+ | SUP
+\end{circus}
+
+\begin{circus}
+\circchannel pm : PM
+\end{circus}

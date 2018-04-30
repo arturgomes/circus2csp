@@ -1,0 +1,37 @@
+\section{PK-100} % ======================================================================
+
+The partitioning kernel shall allow an authorised partition
+to start any partition (STOPPED mode to ACTIVE mode)
+with a WARM or COLD starting type.
+
+Rationale: This capability is required by an authorized partition such as the
+system partition to control the re-start of other partitions.
+
+Note: The PK provides a service to start a partition in COLD or WARM starting
+type. This service is only accessible to an authorized partition.
+
+In practice it is expected that only one authorized partition (the system
+partition) will be allowed to stop and re-start another partition. When the
+binary code and the data of the partition are reinitialised at application
+level (re-copy of code and data from its non volatile memory) a COLD restart
+should be applied as all the memory context of the considered partition is
+then lost.
+
+% ============================================================================= -}
+\begin{assert}
+include "Platform.csp"
+\end{assert}
+ we need to observe:
+ \begin{itemize}
+ \item partition modes
+ \item kernel mode-change events
+ \item partition start hypercalls
+\end{itemize}
+\begin{circus}
+\circchannel pk100fail\\
+
+\circprocess PK100 \circdef \circbegin\\
+  Act \circdef pk100fail \then \Stop\\ % assume the kernel is running
+  \circspot Act\\
+\circend
+\end{circus}
