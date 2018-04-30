@@ -1,6 +1,0 @@
-n = 2
-
-nametype C2 = {0,1}
-nametype C = C2
-
-cv = 0

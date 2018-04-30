@@ -1,6 +1,0 @@
-n = 0
-
-nametype C0 = {0} --can't make this empty if we want channel q : C
-nametype C = C0
-
-cv = 0

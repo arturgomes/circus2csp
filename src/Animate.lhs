@@ -180,6 +180,8 @@ latexCircus anim args = getspecLatex args (applyLatex anim)
 applyLatex anim
   = (print_tex_Circus (reverse (map origpara (spec anim))))
 
+print_tex_Circus _ = error "print_tex_Circus NYI"
+
 resetanimator :: Animator -> (Animator,Answer,String)
 resetanimator anim
   = (animator0, Done "Reset command: Specification is now empty.","")

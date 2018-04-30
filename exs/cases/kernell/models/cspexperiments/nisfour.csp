@@ -1,6 +1,0 @@
-n = 4
-
-nametype C22 = {0..1}.{0..1}
-nametype C = C22
-
-cv = 0.1
