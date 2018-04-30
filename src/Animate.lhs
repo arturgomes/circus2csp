@@ -33,7 +33,7 @@ import Data.Char
 import Data.List
 import MappingFunStatelessCircus
 import MappingFunCircusCSP
-import PrintTex
+--import PrintTex
 
 
 
