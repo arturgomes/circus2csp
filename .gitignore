@@ -1,6 +1,6 @@
 .stack-work
 *.o
-*pdf
+*.pdf
 *.hi
 *.aux
 *.log
@@ -10,7 +10,3 @@
 *.synctex.gz
 *.fdb_latexmk
 test_haskabelle
-*~
-
-
-

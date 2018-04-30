@@ -31,10 +31,15 @@ output_zexpr = zexpr_stdout pinfo
 output_zpred = zpred_stdout pinfo
 output_zpara = zpara_stdout pinfo
 
+version = "0.8.0.0"
+vdate = "April 2018"
 
 main :: IO ()
 main
-  = do  putStrLn "Welcome to Circus2CSP translator, version 0.7b.  September 2017"
+  = do  putStr "Welcome to Circus2CSP translator, version "
+        putStr version
+        putStr " "
+        putStrLn vdate
         putStrLn "Author: Artur Oliveira Gomes (gomesa at tcd.ie)"
         putStrLn "This is based on JAZA (Just Another Z Animator), see below."
         putStrLn "Copyright(C) 1999-2005 Mark Utting (marku@cs.waikato.ac.nz)."
