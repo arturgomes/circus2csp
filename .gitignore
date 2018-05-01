@@ -11,3 +11,6 @@
 *.fdb_latexmk
 test_haskabelle
 bin
+*.hc
+*.csp
+
