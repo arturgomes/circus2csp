@@ -10,6 +10,8 @@ module Animate
 -- should be built on top of this module.
 ( Animator,
   animator0,        -- initial animator state
+  getSrcDir, getDstDir, -- get source and destination directories
+  setSrcDir, setDstDir, -- set source and destination directories
   Answer(..),       -- most Animator results are returned using this
   errstr,           -- convenience function for creating a string ErrorMsg.
   isUndefMsg,       -- recognises the 'undefined result' message
@@ -40,10 +42,16 @@ import MappingFunCircusCSP
 -- This data structure contains all the internal state of the animator.
 -- We use named fields so that it can easily be extended with new fields.
 data Animator
-  = Anim {spec::[ZParaInfo],  -- a stack of definitions, most recent at head
-    filename::String -- maximum search space size.
-   }
+  = Anim { spec::[ZParaInfo]  -- a stack of definitions, most recent at head
+         , filename :: String -- working filename
+         , srcSubDir :: String -- optional place to look for files
+         , dstSubDir :: String -- optional place to output files
+         }
 
+getSrcDir = srcSubDir
+getDstDir = dstSubDir
+setSrcDir anim str = anim{srcSubDir = str}
+setDstDir anim str = anim{dstSubDir = str}
 
 data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
@@ -73,11 +81,15 @@ uenv ps =
   -- a function, expressed as a set comprehension
               (s, ZSetComp [Choose x dom] (Just (ZTuple[ZVar x, ZFree1 s (ZVar x)])))
 
+spec0 = []
+filename0 = ""
 
 animator0
-  = Anim{spec=[],
-   filename=""
-  }
+  = Anim{ spec       =  spec0
+        , filename   =  filename0
+        , srcSubDir  =  "./"
+        , dstSubDir  =  "./"
+        }
 
 
 -- Most animator functions return one of these responses.
@@ -171,7 +183,9 @@ applyOmega anim
 upslonCircus anim args = getspecCSP args (applyUpslon anim)
 
 applyUpslon anim
-  = upslonHeader ++ (mapping_Circus (reverse (map origpara (spec anim))) (reverse (map origpara (spec anim))))
+  = upslonHeader
+    ++ (mapping_Circus (reverse (map origpara (spec anim)))
+                       (reverse (map origpara (spec anim))) )
 
 upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
 
@@ -180,11 +194,12 @@ latexCircus anim args = getspecLatex args (applyLatex anim)
 applyLatex anim
   = (print_tex_Circus (reverse (map origpara (spec anim))))
 
-print_tex_Circus _ = error "print_tex_Circus NYI"
+print_tex_Circus _ = "print_tex_Circus NYI"
 
 resetanimator :: Animator -> (Animator,Answer,String)
 resetanimator anim
-  = (animator0, Done "Reset command: Specification is now empty.","")
+  = ( anim{spec=spec0, filename=filename0}
+    , Done "Reset command: Specification is now empty.","")
 
 ----------------------------------------------------------------------
 -- The remaining functions are usually private to this module

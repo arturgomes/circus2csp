@@ -13,6 +13,7 @@ import Errors
 import Animate
 import Data.List
 import Data.Char
+import Data.Char
 import Formatter
 import System.IO          -- Standard IO library, so we can catch IO errors etc.
 import Control.Exception
@@ -31,8 +32,8 @@ output_zexpr = zexpr_stdout pinfo
 output_zpred = zpred_stdout pinfo
 output_zpara = zpara_stdout pinfo
 
-version = "0.8.0.0"
-vdate = "April 2018"
+version = "0.8.1.0"
+vdate = "May 2018"
 
 main :: IO ()
 main
@@ -49,8 +50,33 @@ main
         putStrLn ""
         putStrLn "Type `help' to see the available commands."
         putStrLn ""
-      	get_cmd animator0 ""
+        animGo <- get_config animator0
+        putStrLn ("Src. path: "++getSrcDir animGo)
+        putStrLn ("Dst. path: "++getDstDir animGo)
+      	get_cmd animGo ""
 
+get_config anim  = catch (read_config anim)
+                         ((\e -> return anim)::(IOException -> IO Animator))
+
+read_config anim
+  = do txt <- readFile ".c2c"
+       let anim' = parse_configs anim $ lines txt
+       return anim'
+
+parse_configs anim [] = anim
+parse_configs anim (ln:lns)
+  = parse_configs anim' lns
+  where
+    anim' = case trim ln of
+             ('s':'r':'c':':':rest)  ->  setSrcDir anim rest
+             ('d':'s':'t':':':rest)  ->  setDstDir anim rest
+             _                       ->  anim
+
+trim = reverse . ltrim . reverse . ltrim
+ltrim "" = ""
+ltrim str@(c:cs)
+ | isSpace c  =  ltrim cs
+ | otherwise  =  str
 
 get_cmd :: Animator -> String -> IO ()
 get_cmd anim fn
@@ -139,8 +165,8 @@ do_cmd cmd args anim fn
       do {putStr (unlines help); get_cmd anim fn}
   | cmd == "load" =
       catch
-	  (do {putStrLn ("Loading '"++args++"' ...");
-	       spec <- readFile (args++".tex");
+	  (do {putStrLn ("Loading '"++getSrcDir anim++args++"' ...");
+	       spec <- readFile (getSrcDir anim++args++".tex");
 	       done_cmd (pushfile args spec anim)})
 	  (\err ->
 	      do {putStrLn (show (err :: IOException));
@@ -166,16 +192,24 @@ do_cmd cmd args anim fn
 
 done_cmd :: (Animator, Answer,String) -> IO ()
 done_cmd (anim, DoneUpsilon s f,args)
-  = do {putStrLn s; touch (args++".csp"); writeStr (args++".csp") s; get_cmd anim args}
+  = cmd_output (anim,s,args,".csp",".csp")
 done_cmd (anim, DoneLatex s f,args)
-  = do {putStrLn s; writeStr (args++".pretty.tex") s; get_cmd anim args}
+  = cmd_output (anim,s,args,".pretty.tex",".pretty.tex")
 done_cmd (anim, DoneOmega s f,args)
-  = do {putStrLn s; touch (args++".csp"); writeStr (args++".hc") s; get_cmd anim args}
+  = cmd_output (anim,s,args,".csp",".hc")
 done_cmd (anim, Done s,args)
-  = do {putStrLn s; writeFile "spec.txt" s; get_cmd anim args}
+  = cmd_output (anim,s,args,".spec.txt",".spec.txt")
 done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
 done_cmd (anim, ErrorLocns es,args)= do {putStrLn (unlines (map fmtperr es));
            get_cmd anim args}
+
+cmd_output (anim,s,args,extt,extw)
+  = do putStrLn s
+       touch (root++extt)
+       writeStr (root++extw) s
+       get_cmd anim args
+  where
+    root = getDstDir anim++args
 
 -- done_cmd :: (Animator, Answer) -> IO ()
 -- done_cmd (anim, DoneUpsilon s f)
