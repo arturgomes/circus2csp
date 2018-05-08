@@ -45,7 +45,7 @@ PK97warm
 assert PK97 :[divergence free]
 assert PK97 :[deadlock free[F]]
 
-PK97TEST(CODE) = PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi |} |] CODE)
+PK97TEST(CODE) = PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi, hc |} |] CODE)
 
 {- 1. Testing Good Behaviour ------------------------------------------------ -}
 

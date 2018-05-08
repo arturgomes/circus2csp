@@ -44,7 +44,7 @@ PK230usr
 "PK230GOODCODE = fi.KNL.NOP.0 -> fi.KNL.S0.0  -> fi.P1.NOP.0  -> fi.P1.NOP.1  -> fi.KNL.S1.0  -> fi.KNL.NOP.1 -> PK230GOODCODE"
 \also "assert PK230GOODCODE :[divergence free]"
 \also "assert PK230GOODCODE :[deadlock free[F]]"
-\also "PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi |} |] CODE)"
+\also "PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi, hc |} |] CODE)"
 \also "PK230GOOD= PK230TEST(PK230GOODCODE)"
 \also "assert PK230GOOD :[divergence free]"
 \end{assert}

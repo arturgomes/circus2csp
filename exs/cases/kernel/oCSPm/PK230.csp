@@ -44,7 +44,7 @@ PK230GOODCODE
 assert PK230GOODCODE :[divergence free]
 assert PK230GOODCODE :[deadlock free[F]]
 
-PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi |} |] CODE)
+PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi, hc |} |] CODE)
 
 
 PK230GOOD= PK230TEST(PK230GOODCODE)

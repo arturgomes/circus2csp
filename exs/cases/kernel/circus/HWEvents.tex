@@ -1,5 +1,6 @@
-
 \section{HWEvents}
+
+
  These are the globally visible hardware events
 
  For now we cover a range of abstraction levels.
@@ -101,4 +102,16 @@ PM ::=\\
 
 \begin{circus}
 \circchannel pm : PM
+\end{circus}
+
+\subsection{Dummy Process}
+
+Needed to ensure that \CTOC\ translates this to valid CSP.
+
+\begin{circus}
+\circprocess HWEventsDummy \circdef
+\\ \circbegin
+\\ \circspot
+      \Skip
+\\ \circend
 \end{circus}
