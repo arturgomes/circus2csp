@@ -34,14 +34,16 @@ D == \{0,1\}
 
 \subsubsection{Direction, from CPU perspective}
 
-\begin{circus}
-Dir ::= R  % - reading (data from memory to CPU)
-        | W  % - writing (data from CPU to memory)
-\end{circus}
 
 \begin{circus}
-\circchannel ma : Dir \cross A\\  % address on memory bus
-\circchannel md : Dir \cross D  %  data on memory bus
+Dir ::= R | W
+\end{circus}
+
+For memory access we distinguish between the address and data transfer
+phases.
+\begin{circus}
+\circchannel ma : Dir \cross A\\
+\circchannel md : Dir \cross D
 \end{circus}
 
 
@@ -50,47 +52,37 @@ Dir ::= R  % - reading (data from memory to CPU)
 The IRQ controller takes in interrupt events (iXXX)
 and decides when to drop, queue or raise them (rXXX)
 
-
+Here XXX ranges over TMR (Timer),
+MMU,
+DEV (External Devices),
+and TRP (Software Traps).
 \subsubsection{Timer}
 
 \begin{circus}
 \circchannel iTMR, rTMR
-\end{circus}
-
-\subsubsection{Memory Management Unit}
-
-\begin{circus}
+\also
 \circchannel iMMU, rMMU
-\end{circus}
-
-\subsubsection{External Devices}
-
-\begin{circus}
+\also
 \circchannel iDEV, rDEV
-\end{circus}
-
-\subsubsection{Software Traps}
-\begin{circus}
+\also
 \circchannel iTRP, rTRP
 \end{circus}
 
 \subsection{Machine Instructions, and operands}
 
+We have a no-op (or generic) instruction,
+along with those that set/reset processor mode.
+We also have a datatype that distinguishes different instruction operands.
 \begin{circus}
-I ::=\\
-  NOP\\   % generic instruction
-  | S0\\    % set S bit to zero (user mode)
-  | S1\\    % set S bit to one (supervisor mode)
-
+I ::= NOP | S0 | S1
+\\
 OP == \{0 \upto 1\}
 \end{circus}
 
 \subsection{Processor Modes: User, Supervisor}
 
 \begin{circus}
-PM ::=\\
- USR\\
- | SUP
+PM ::= USR | SUP
 \end{circus}
 
 \begin{circus}
@@ -110,12 +102,10 @@ We abstract this as a type that identifies the relevant entity,
 and by making code fetch observable.
 
 For now we bake partition authorisation into our entity definition.
-
+We allow for having the kernel (KNL) and at least two partitions (P$n$).
 \begin{circus}
-ENT ::=\\
-  KNL\\  % kernel
- | P1\\   % partition 1 (authorised to do everything priviledged)
- | P2\\   % partition 2 (not authorised to anything priviledged)
+ENT ::= KNL | P1 | P2
+\also
 PARTITION == \{P1, P2\}
 \end{circus}
 
@@ -139,16 +129,18 @@ We also observe the kernel (or authorised partition) starting a partition.
 Note that a switch to/from kernel and a partition can happen without these
 markers - that is a normal context-switch.
 
+Labels marking marking interesting code points:
+in partition code just before first cold-start instruction (CLD);
+in partition code just before first warm-start instruction (WRM);
+\dots
 \begin{circus}
-
-LBL  % labels marking interesting code points
-  ::= CLD   % in partition code just before first cold-start instruction
-  | WRM   % in partition code just before first warm-start instruction
+LBL ::= CLD | WRM
+\\
+\circchannel lbl : LBL
 \end{circus}
-
+Start entity, at label
 \begin{circus}
-\circchannel lbl : LBL\\
-\circchannel st : ENT \cross LBL  % start entity, at label
+\circchannel st : ENT \cross LBL
 \end{circus}
 -- valid partition code has at most one of each.
 
@@ -157,7 +149,7 @@ LBL  % labels marking interesting code points
 
 \begin{circus}
 PMODE ::= STOPPED | READY | RUNNING\\
-ACTIVE == \{READY,RUNNING\} % is that right??
+ACTIVE == \{READY,RUNNING\}
 \end{circus}
 
 \subsection{Hypercalls }
@@ -165,11 +157,12 @@ ACTIVE == \{READY,RUNNING\} % is that right??
 We shall model these similarly to instruction fetches
 
 \begin{circus}
-HCALL ::= START \ldata PARTITION \rdata % start partition
+HCALL ::= START \ldata PARTITION \rdata
 \end{circus}
 \begin{circus}
-\circchannel hc : PARTITION \cross HCALL  % always followed by a kernel instruction
+\circchannel hc : PARTITION \cross HCALL
 \end{circus}
+always followed by a kernel instruction
 
 We need to define a check process that ensures that a hypercall is always
 followed by a kernel instruction
@@ -177,14 +170,16 @@ followed by a kernel instruction
 	\circchannel badHCall
 \end{circus}
 \begin{circus}
-\circprocess HCALLSCAN \circdef \circbegin\\
-  Act \circdef fi?ent?i?op     \then  Act\\
-              \extchoice  hc?p?call:HCALL \then  SEENHCALL\\
-  SEENHCALL \circdef (fi.KNL?i?op     \then  Act\\
-	             \extchoice  hc?p?call:HCALL \then  Act\\
-	             \extchoice  (\Extchoice  p:PARTITION \circspot fi.p?i?op \then  HCALLFAIL))\\
-  HCALLFAIL \circdef badHCall \then  \Stop\\
-\circspot Act\\
+\circprocess HCALLSCAN \circdef \circbegin
+\\ \t1 Act \circdef
+\\ \t2 fi?ent?i?op \then  Act
+\\ \t2 ~\extchoice~  hc?p?call:HCALL \then  SEENHCALL
+\\ \t1 SEENHCALL \circdef
+\\ \t2 (fi.KNL?i?op \then  Act
+\\ \t2 ~\extchoice~  hc?p?call:HCALL \then  Act
+\\ \t2 ~\extchoice~  (\Extchoice  p:PARTITION \circspot fi.p?i?op \then  HCALLFAIL))
+\\ \t1 HCALLFAIL \circdef badHCall \then  \Stop
+\\ \t1 \circspot Act\\
 \circend
 
 % HCALLCHECK(CODE) = HCALLSCAN [| {|fi,hc|} |] CODE
@@ -213,16 +208,19 @@ same slot.
 \end{circus}
 we assume we start outside any time-slot
 \begin{circus}
-\circprocess SCHEDSCAN \circdef \circbegin\\
-  Act \circdef slot?p!SLOTBEGIN \then  SLOTSCAN(p)
-              \extchoice  slot?p!SLOTEND   \then  SCHEDFAIL\\
-  SLOTSCAN \circdef \circvar p : PARTITION \circspot
-        (slot.p.SLOTEND   \then  Act
-        \extchoice  (\Extchoice  p: PARTITION \cap \{p\} \circspot slot.p.SLOTEND \then  SCHEDFAIL)
-        \extchoice  slot.p.SLOTBEGIN \then  SCHEDFAIL)\\
-  SCHEDFAIL \circdef badSchedule \then \Stop\\
-\circspot Act\\
-\circend
+\circprocess SCHEDSCAN \circdef \circbegin
+\\ \t1 Act \circdef
+\\ \t2 slot?p!SLOTBEGIN \then  SLOTSCAN(p)
+\\ \t2 ~\extchoice~  slot?p!SLOTEND   \then  SCHEDFAIL
+\\ \t1 SLOTSCAN \circdef
+\\ \t2 \circvar p : PARTITION \circspot
+\\ \t3 (~slot.p.SLOTEND   \then  Act
+\\ \t3 ~\extchoice~  (~\Extchoice  p: PARTITION \cap \{p\} \circspot
+\\ \t4   slot.p.SLOTEND \then  SCHEDFAIL)
+\\ \t3 ~\extchoice~  slot.p.SLOTBEGIN \then  SCHEDFAIL~)
+\\ \t1 SCHEDFAIL \circdef badSchedule \then \Stop
+\\ \t1 \circspot Act
+\\\circend
 \end{circus}
 We should check that partition code only runs during its own timeslot
 \begin{circus}
@@ -231,17 +229,23 @@ We should check that partition code only runs during its own timeslot
 \end{circus}
 here we assume that SCHEDSCAN above is satisfied
 \begin{circus}
-\circprocess PTIMESCAN \circdef \circbegin\\
-  Act \circdef fi?KNL?i?op  \then  Act
-            \extchoice  (\Extchoice  p:PARTITION \circspot slot.p.SLOTBEGIN \then  PSLOT(p) )
-            \extchoice  (\Extchoice  p:PARTITION \circspot fi.p?i?op        \then  PTIMEFAIL)\\
-PSLOT  \circdef( \circvar p : PARTITION \circspot (fi?KNL?i?op    \then  PSLOT(p)
-            \extchoice  fi.p?i?op      \then  PSLOT(p)
-            \extchoice  slot.p.SLOTEND \then  Act
-            \extchoice  (\Extchoice  p: PARTITION \cap \{p\} \circspot fi.p?i?op \then  PTIMEFAIL)))\\
-PTIMEFAIL \circdef partOutOfTime \then  \Stop\\
-\circspot Act\\
-\circend
+\circprocess PTIMESCAN \circdef \circbegin
+\\ \t1 Act \circdef
+\\ \t2 fi?KNL?i?op  \then  Act
+\\ \t2 ~\extchoice~  (\Extchoice  p:PARTITION
+                      \circspot slot.p.SLOTBEGIN \then  PSLOT(p) )
+\\ \t2 ~\extchoice~  (\Extchoice  p:PARTITION
+                      \circspot fi.p?i?op \then  PTIMEFAIL)
+\\ \t1 PSLOT  \circdef
+\\ \t2 (~\circvar p : PARTITION \circspot
+\\ \t3 (fi?KNL?i?op    \then  PSLOT(p)
+\\ \t3 ~\extchoice~  fi.p?i?op      \then  PSLOT(p)
+\\ \t3 ~\extchoice~  slot.p.SLOTEND \then  Act
+\\ \t3 ~\extchoice~  (\Extchoice  p: PARTITION \cap \{p\}
+                      \circspot fi.p?i?op \then  PTIMEFAIL))~)
+\\ \t1 PTIMEFAIL \circdef partOutOfTime \then  \Stop
+\\ \t1 \circspot Act
+\\ \circend
 \end{circus}
 this is definitely one of the other requirements!!!
 
@@ -259,15 +263,13 @@ A partition starts with cold start code, followed by warm start code,
 and then enters a running phase, from which it might decide to terminate.
 
 \begin{circus}
-\circprocess GP \circdef ent : ENT \circspot \circbegin\\
-  Act \circdef lbl.CLD \then  fi.ent.NOP.0 \then  lbl.WRM \then  fi.ent.NOP.1 \then  GPRUN\\
-GPRUN\circdef\\
-  (fi.ent.NOP?op \then  GPRUN)\\
-   \intchoice DONE\\
-   DONE \circdef done.ent \then  NOPLOOP\\
-   NOPLOOP \circdef fi.ent.NOP.0 \then  NOPLOOP   \\
-   \circspot Act\\
-\circend
+\circprocess GP \circdef ent : ENT \circspot \circbegin
+\\ \t1 Act \circdef lbl.CLD \then  fi.ent.NOP.0 \then  lbl.WRM \then  fi.ent.NOP.1 \then  GPRUN
+\\ \t1 GPRUN\circdef (fi.ent.NOP?op \then  GPRUN) \intchoice DONE
+\\ \t1 DONE \circdef done.ent \then  NOPLOOP
+\\ \t1 NOPLOOP \circdef fi.ent.NOP.0 \then  NOPLOOP
+\\ \t1 \circspot Act
+\\ \circend
 
 \end{circus}
 
@@ -295,19 +297,19 @@ Things we need to observe:
 starts in supervisor mode, executes code/hypercalls,
 marking hardware state/mode changes as requested.
 \begin{circus}
-\circprocess PMM \circdef \circbegin Act \circdef pm.SUP \then Act \circspot Act \circend\\
-
-\circprocess PMMRUN \circdef
-\circbegin
-  Act \circdef (fi?ent.S1?op \then pm.SUP \then Act
-   \extchoice
-   fi?ent.S0?op \then pm.USR \then Act
-   \extchoice
-   fi?ent.NOP?op \then Act
-   \extchoice
-   hc?p?call:HCALL \then pm.SUP \then Act)
-   \circspot Act
-\circend
+\circprocess PMM \circdef \circbegin
+\\ \t1 Act \circdef pm.SUP \then PMMRUN
+\\ \t1 \circspot Act
+\\ \circend
+\\
+\circprocess PMMRUN \circdef \circbegin
+\\ \t1 Act \circdef
+\\ \t2 (fi?ent.S1?op \then pm.SUP \then Act
+\\ \t2 ~\extchoice~ fi?ent.S0?op \then pm.USR \then Act
+\\ \t2 ~\extchoice~ fi?ent.NOP?op \then Act
+\\ \t2 ~\extchoice~ hc?p?call:HCALL \then pm.SUP \then Act)
+\\ \t1 \circspot Act
+\\ \circend
 \end{circus}
 -- S1, S0 should result in an exception trap if attempted in user mode !!!!!
 
@@ -319,24 +321,23 @@ marking hardware state/mode changes as requested.
 section{Code}
 
 \begin{circus}
-\circprocess LINEAR \circdef \circbegin\\
-  Act \circdef fi.KNL.NOP.1 \then
+\circprocess LINEAR \circdef \circbegin
+\\ \t1 Act \circdef fi.KNL.NOP.1 \then
    fi.KNL.S0.1  \then
-   fi.KNL.S1.0  \then Act\\
- \circspot Act\\
- \circend
+   fi.KNL.S1.0  \then Act
+\\ \t1 \circspot Act
+\\ \circend
 \end{circus}
 \begin{circus}
-\circprocess TREE \circdef \circbegin\\
-  PC \circdef pc : \nat \circspot
-    (\lcircguard pc = 0 \rcircguard \circguard fi.KNL.NOP.1 \then PC(1)
-     \extchoice
-     \lcircguard pc = 1 \rcircguard \circguard fi.KNL.S0.1  \then PC(2)
-     \extchoice
-     \lcircguard pc = 2 \rcircguard \circguard fi.KNL.S1.0  \then PC(0))\\
-  \circspot PC(0)\\
-\circend
-
+\circprocess TREE \circdef \circbegin
+\\ \t1 PC \circdef pc : \nat \circspot
+\\ \t2 (\lcircguard pc = 0 \rcircguard \circguard fi.KNL.NOP.1 \then PC(1)
+\\ \t2 \extchoice
+\\ \t2 \lcircguard pc = 1 \rcircguard \circguard fi.KNL.S0.1  \then PC(2)
+\\ \t2 \extchoice
+\\ \t2 \lcircguard pc = 2 \rcircguard \circguard fi.KNL.S1.0  \then PC(0))
+\\ t1 \circspot PC(0)
+\\\circend
 \end{circus}
 
 \section{PK-230}
@@ -355,24 +356,20 @@ We track all 'fi' events and processor mode changes
 \circchannel pk230fail
 \end{circus}
 
+Assumes supervisor mode when started\dots
 \begin{circus}
-\circprocess PK230 \circdef \circbegin\\ % assumes supervisor mode when started
-PK230sup
- \circdef  ((fi.KNL?i?op \then PK230sup)
-    \extchoice
-    (fi.P1?i?op \then pk230fail \then STOP)
-    \extchoice
-    (pm.USR \then PK230usr)
-    \extchoice
-    (pm.SUP \then PK230sup))
-PK230usr
- \circdef  (fi?ent?i?op \then PK230usr)
-    \extchoice
-    (pm.USR \then PK230usr)
-    \extchoice
-    (pm.SUP \then PK230sup)
-  \circspot PK230sup\\
-\circend
+\circprocess PK230 \circdef \circbegin
+\\ \t1 PK230sup \circdef
+\\ \t2 fi.KNL?i?op \then PK230sup
+\\ \t2 ~\extchoice~ fi.P1?i?op \then pk230fail \then STOP
+\\ \t2 ~\extchoice~ pm.USR \then PK230usr
+\\ \t2 ~\extchoice~ pm.SUP \then PK230sup
+\\ \t1 PK230usr \circdef
+\\ \t2 ~fi?ent?i?op \then PK230usr
+\\ \t2 ~\extchoice~ pm.USR \then PK230usr
+\\ \t2 ~\extchoice~ pm.SUP \then PK230sup
+\\ \t1 \circspot PK230sup
+\\ \circend
 \end{circus}
 
 \subsection{Testing Good Behaviour}
@@ -451,19 +448,20 @@ and to adapt its initialization strategy accordingly.
 
 \circprocess PK97 \circdef \circbegin\\
 
-  PK97knl \circdef ((fi.KNL?i?op \then PK97knl)  % kernel still running
-     \extchoice (fi.P1?i?op \then PK97part)  % context switch to partition 1
-     \extchoice (st.P1.CLD \then PK97cold)
-     \extchoice (st.P1.WRM \then PK97warm))\\
+ \t1 PK97knl \circdef \\
+  \t2 ((fi.KNL?i?op \then PK97knl)  % kernel still running
+     ~\extchoice~ (fi.P1?i?op \then PK97part) \\ % context switch to partition 1
+  \t2   ~\extchoice~ (st.P1.CLD \then PK97cold)
+     ~\extchoice~ (st.P1.WRM \then PK97warm))\\
 
-  PK97part \circdef ((fi.KNL?i?op \then PK97knl)  % partition 1 interrupted
-     \extchoice (fi.P1?i?op \then PK97part))\\  % partition 1 still running
+ \t1 PK97part \circdef ((fi.KNL?i?op \then PK97knl)  % partition 1 interrupted
+     ~\extchoice~ (fi.P1?i?op \then PK97part))\\  % partition 1 still running
 
-  PK97cold \circdef (lbl.CLD \then fi?P1?i?op \then PK97warm)\\ % see a cold start,
+ \t1 PK97cold \circdef (lbl.CLD \then fi?P1?i?op \then PK97warm)\\ % see a cold start,
 
-  PK97warm \circdef (lbl.WRM \then fi?P1?i?op \then PK97part)\\ % see a warm start
+ \t1 PK97warm \circdef (lbl.WRM \then fi?P1?i?op \then PK97part)\\ % see a warm start
 
-  \circspot PK97knl\\ % assume the kernel is running
+  \t1 \circspot PK97knl\\ % assume the kernel is running
   \circend
 \end{circus}
 \begin{assert}
@@ -474,13 +472,13 @@ and to adapt its initialization strategy accordingly.
 \subsection{Testing Good Behaviour}
 \begin{circus}
 \circprocess PK97GOODCODE \circdef \circbegin\\
-PK97GOODCODEAct \circdef (fi.KNL.S0.0
-  \then st.P1.CLD \then lbl.CLD \then fi.P1.NOP.0 \then lbl.WRM \then fi.P1.NOP.1
-  \then fi.KNL.S0.0
-  \then st.P1.WRM \then lbl.WRM \then fi.P1.NOP.1
+ \t1 PK97GOODCODEAct \circdef \\
+  \t1 ~~(~fi.KNL.S0.0 \then st.P1.CLD \then lbl.CLD \then fi.P1.NOP.0 \\
+  \t2       \then lbl.WRM \then fi.P1.NOP.1 \then fi.KNL.S0.0 \\
+  \t2      \then st.P1.WRM \then lbl.WRM \then fi.P1.NOP.1
   \then PK97GOODCODEAct)\\
- \circspot PK97GOODCODEAct\\
-   \circend
+ \t1 \circspot PK97GOODCODEAct\\
+\circend
 \end{circus}
 \begin{assert}
 "assert PK97GOODCODE :[divergence free]"
@@ -496,14 +494,15 @@ PK97GOODCODEAct \circdef (fi.KNL.S0.0
 \subsection{Testing Bad Behaviour}
 \begin{circus}
 \circprocess PK97BAD1CODE \circdef \circbegin
-  Act \circdef fi.KNL.S0.0 \then st.P1.CLD \then fi.P1.NOP.0 \then Act\\
-  \circspot Act\\
- \circend\\
+\\ \t1 Act \circdef fi.KNL.S0.0 \then st.P1.CLD \then fi.P1.NOP.0 \then Act
+\\ \t1 \circspot Act
+\\ \circend
+\\
 \circprocess PK97BAD2CODE \circdef\circbegin
-  Act \circdef fi.KNL.S0.1 \then lbl.WRM \then fi.P1.NOP.1 \then Act\\
-  \circspot Act\\
- \circend
- \end{circus}
+\\ \t1 Act \circdef fi.KNL.S0.1 \then lbl.WRM \then fi.P1.NOP.1 \then Act
+\\ \t1  \circspot Act
+\\ \circend
+\end{circus}
 \begin{assert}
 "assert PK97BAD1CODE :[divergence free]"
 \also "assert PK97BAD1CODE :[deadlock free[F]]"
@@ -554,10 +553,10 @@ as all the memory context of the considered partition is then lost.
 \begin{circus}
 \circchannel pk100fail\\
 
-\circprocess PK100 \circdef \circbegin\\
-  Act \circdef pk100fail \then \Stop\\ % assume the kernel is running
-  \circspot Act\\
-\circend
+\circprocess PK100 \circdef \circbegin
+\\ \t1 Act \circdef pk100fail \then \Stop
+\\ \t1 \circspot Act
+\\ \circend
 \end{circus}
 
 \section{PK-547 to PK-286}
