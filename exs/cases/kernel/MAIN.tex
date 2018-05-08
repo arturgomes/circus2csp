@@ -4,8 +4,6 @@
 \usepackage[normalem]{ulem}
 \usepackage[table,xcdraw]{xcolor}
 \usepackage{chngcntr}
-\usepackage{czt}
-\usepackage{circus}
 \usepackage{epsfig}
 \usepackage{sty/HD}
 \usepackage{hyperref}
@@ -20,6 +18,10 @@
 
 \usepackage{tikz}
 \usepackage{sty/artur}
+\usepackage{czt}
+\usepackage{circus}
+
+
 
 \begin{document}
 
@@ -40,57 +42,58 @@
 
 \tableofcontents
 
-\chapter{Overview}
+% \chapter{Overview}
 
-\chapter{2017 Models Recast in \Circus}
-
-\input{circus/HWEvents}
-\input{circus/TSPEvents}
-\input{circus/Platform}
-\input{circus/Code}
-\input{circus/PK97}
-\input{circus/PK100}
-\input{circus/PK230}
-\input{circus/Requirements}
+\input{circus/Rqmts-PMM}
 
 \appendix
 
-\chapter{The Requirements}
+% \chapter{The Requirements}
+%
+% \input{doc/D02-Reqmts}
 
-\input{doc/D02-Reqmts}
+% \chapter{Original CSP Models}
+%
+% \section{HWEvents}
+% \lstinputlisting[language=cspm]{oCSPm/HWEvents.csp}
+%
+% \newpage
+% \section{TSPEvents}
+% \lstinputlisting[language=cspm]{oCSPm/TSPEvents.csp}
+%
+% \newpage
+% \section{Platform}
+% \lstinputlisting[language=cspm]{oCSPm/Platform.csp}
+%
+% \newpage
+% \section{Code}
+% \lstinputlisting[language=cspm]{oCSPm/Code.csp}
+%
+% \newpage
+% \section{PK97}
+% \lstinputlisting[language=cspm]{oCSPm/PK97.csp}
+%
+% \newpage
+% \section{PK100}
+% \lstinputlisting[language=cspm]{oCSPm/PK100.csp}
+%
+% \newpage
+% \section{PK230}
+% \lstinputlisting[language=cspm]{oCSPm/PK230.csp}
+%
+% \newpage
+% \section{Requirements}
+% \lstinputlisting[language=cspm]{oCSPm/Requirements.csp}
 
-\chapter{Original CSP Models}
-
-
-\section{HWEvents}
-\lstinputlisting[language=cspm]{oCSPm/HWEvents.csp}
-
-\newpage
-\section{TSPEvents}
-\lstinputlisting[language=cspm]{oCSPm/TSPEvents.csp}
-
-\newpage
-\section{Platform}
-\lstinputlisting[language=cspm]{oCSPm/Platform.csp}
-
-\newpage
-\section{Code}
-\lstinputlisting[language=cspm]{oCSPm/Code.csp}
-
-\newpage
-\section{PK97}
-\lstinputlisting[language=cspm]{oCSPm/PK97.csp}
-
-\newpage
-\section{PK100}
-\lstinputlisting[language=cspm]{oCSPm/PK100.csp}
-
-\newpage
-\section{PK230}
-\lstinputlisting[language=cspm]{oCSPm/PK230.csp}
-
-\newpage
-\section{Requirements}
-\lstinputlisting[language=cspm]{oCSPm/Requirements.csp}
+% \chapter{2017 Models Recast in \Circus}
+%
+% \input{circus/HWEvents}
+% \input{circus/TSPEvents}
+% \input{circus/Platform}
+% \input{circus/Code}
+% \input{circus/PK97}
+% \input{circus/PK100}
+% \input{circus/PK230}
+% \input{circus/Requirements}
 
 \end{document}

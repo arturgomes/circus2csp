@@ -1,0 +1,585 @@
+\chapter{Partition Mode Management Requirements (D02, \S4.2)}
+
+
+\section{HWEvents}
+
+These are the globally visible hardware events.
+
+\subsection{Global Clock}
+
+\begin{circus}
+\circchannel tick\\  % standard clock tick
+\circchannel tock  % used if 2-phase cycle is required
+\end{circus}
+
+\subsection{Main (Memory) Bus}
+
+  We do not model bus operations as atomic, but rather as 2-phase:
+	\begin{itemize}
+   \item{1} signal direction and address
+   \item{2} data transfer
+	 \end{itemize}
+
+\subsubsection{Addresses}
+
+\begin{circus}
+A == \{0,1\}
+\end{circus}
+
+\subsubsection{Data}
+
+\begin{circus}
+D == \{0,1\}
+\end{circus}
+
+\subsubsection{Direction, from CPU perspective}
+
+\begin{circus}
+Dir ::= R  % - reading (data from memory to CPU)
+        | W  % - writing (data from CPU to memory)
+\end{circus}
+
+\begin{circus}
+\circchannel ma : Dir \cross A\\  % address on memory bus
+\circchannel md : Dir \cross D  %  data on memory bus
+\end{circus}
+
+
+\subsection{Interrupt Controller}
+
+The IRQ controller takes in interrupt events (iXXX)
+and decides when to drop, queue or raise them (rXXX)
+
+
+\subsubsection{Timer}
+
+\begin{circus}
+\circchannel iTMR, rTMR
+\end{circus}
+
+\subsubsection{Memory Management Unit}
+
+\begin{circus}
+\circchannel iMMU, rMMU
+\end{circus}
+
+\subsubsection{External Devices}
+
+\begin{circus}
+\circchannel iDEV, rDEV
+\end{circus}
+
+\subsubsection{Software Traps}
+\begin{circus}
+\circchannel iTRP, rTRP
+\end{circus}
+
+\subsection{Machine Instructions, and operands}
+
+\begin{circus}
+I ::=\\
+  NOP\\   % generic instruction
+  | S0\\    % set S bit to zero (user mode)
+  | S1\\    % set S bit to one (supervisor mode)
+
+OP == \{0 \upto 1\}
+\end{circus}
+
+\subsection{Processor Modes: User, Supervisor}
+
+\begin{circus}
+PM ::=\\
+ USR\\
+ | SUP
+\end{circus}
+
+\begin{circus}
+\circchannel pm : PM
+\end{circus}
+
+
+\section{TSPEvents}
+
+These are the globally visible TSP events
+
+\subsection{Code Identity}% ---------------------------------------------------------------
+
+Given configuration data we can identify the code running
+by its range of instruction fetch addresses.
+We abstract this as a type that identifies the relevant entity,
+and by making code fetch observable.
+
+For now we bake partition authorisation into our entity definition.
+
+\begin{circus}
+ENT ::=\\
+  KNL\\  % kernel
+ | P1\\   % partition 1 (authorised to do everything priviledged)
+ | P2\\   % partition 2 (not authorised to anything priviledged)
+PARTITION == \{P1, P2\}
+\end{circus}
+
+\subsection{Code Execution}
+
+We model an instruction fetch with an event that records not just the opcode
+and operands, but also the identity of the entity in whose memory space the
+instruction resides.
+
+\begin{circus}
+
+\circchannel fi : ENT\cross I\cross OP
+\end{circus}
+
+\subsection{Partition Starting}
+
+In any partition code we simply mark the cold-start points (the beginning)
+and the warm-start points (sometime later).
+We also observe the kernel (or authorised partition) starting a partition.
+
+Note that a switch to/from kernel and a partition can happen without these
+markers - that is a normal context-switch.
+
+\begin{circus}
+
+LBL  % labels marking interesting code points
+  ::= CLD   % in partition code just before first cold-start instruction
+  | WRM   % in partition code just before first warm-start instruction
+\end{circus}
+
+\begin{circus}
+\circchannel lbl : LBL\\
+\circchannel st : ENT \cross LBL  % start entity, at label
+\end{circus}
+-- valid partition code has at most one of each.
+
+\subsection{Partition Modes}
+  These are STOPPED, READY, RUNNING, and ACTIVE = READY or RUNNING
+
+\begin{circus}
+PMODE ::= STOPPED | READY | RUNNING\\
+ACTIVE == \{READY,RUNNING\} % is that right??
+\end{circus}
+
+\subsection{Hypercalls }
+
+We shall model these similarly to instruction fetches
+
+\begin{circus}
+HCALL ::= START \ldata PARTITION \rdata % start partition
+\end{circus}
+\begin{circus}
+\circchannel hc : PARTITION \cross HCALL  % always followed by a kernel instruction
+\end{circus}
+
+We need to define a check process that ensures that a hypercall is always
+followed by a kernel instruction
+\begin{circus}
+	\circchannel badHCall
+\end{circus}
+\begin{circus}
+\circprocess HCALLSCAN \circdef \circbegin\\
+  Act \circdef fi?ent?i?op     \then  Act\\
+              \extchoice  hc?p?call:HCALL \then  SEENHCALL\\
+  SEENHCALL \circdef (fi.KNL?i?op     \then  Act\\
+	             \extchoice  hc?p?call:HCALL \then  Act\\
+	             \extchoice  (\Extchoice  p:PARTITION \circspot fi.p?i?op \then  HCALLFAIL))\\
+  HCALLFAIL \circdef badHCall \then  \Stop\\
+\circspot Act\\
+\circend
+
+% HCALLCHECK(CODE) = HCALLSCAN [| {|fi,hc|} |] CODE
+% !!! Is this really part of some Requirement?
+\end{circus}
+
+\subsection{Kernel Actions}
+  The Kernel can change partition modes,...
+
+\begin{circus}
+	\circchannel partmode : PMODE
+\end{circus}
+\subsection{Timings}
+  We can mark schedule boundaries
+
+\begin{circus}
+	SLOTBNDRY ::= SLOTBEGIN | SLOTEND\\
+	\circchannel slot : PARTITION \cross SLOTBNDRY
+\end{circus}
+
+We should check that we always have slot begin followed by the end of the
+same slot.
+\begin{circus}
+
+\circchannel badSchedule
+\end{circus}
+we assume we start outside any time-slot
+\begin{circus}
+\circprocess SCHEDSCAN \circdef \circbegin\\
+  Act \circdef slot?p!SLOTBEGIN \then  SLOTSCAN(p)
+              \extchoice  slot?p!SLOTEND   \then  SCHEDFAIL\\
+  SLOTSCAN \circdef \circvar p : PARTITION \circspot
+        (slot.p.SLOTEND   \then  Act
+        \extchoice  (\Extchoice  p: PARTITION \cap \{p\} \circspot slot.p.SLOTEND \then  SCHEDFAIL)
+        \extchoice  slot.p.SLOTBEGIN \then  SCHEDFAIL)\\
+  SCHEDFAIL \circdef badSchedule \then \Stop\\
+\circspot Act\\
+\circend
+\end{circus}
+We should check that partition code only runs during its own timeslot
+\begin{circus}
+
+\circchannel partOutOfTime
+\end{circus}
+here we assume that SCHEDSCAN above is satisfied
+\begin{circus}
+\circprocess PTIMESCAN \circdef \circbegin\\
+  Act \circdef fi?KNL?i?op  \then  Act
+            \extchoice  (\Extchoice  p:PARTITION \circspot slot.p.SLOTBEGIN \then  PSLOT(p) )
+            \extchoice  (\Extchoice  p:PARTITION \circspot fi.p?i?op        \then  PTIMEFAIL)\\
+PSLOT  \circdef( \circvar p : PARTITION \circspot (fi?KNL?i?op    \then  PSLOT(p)
+            \extchoice  fi.p?i?op      \then  PSLOT(p)
+            \extchoice  slot.p.SLOTEND \then  Act
+            \extchoice  (\Extchoice  p: PARTITION \cap \{p\} \circspot fi.p?i?op \then  PTIMEFAIL)))\\
+PTIMEFAIL \circdef partOutOfTime \then  \Stop\\
+\circspot Act\\
+\circend
+\end{circus}
+this is definitely one of the other requirements!!!
+
+\subsection{Code Termination}
+Partition code may end,
+in which case we want to signal that and then busy loop (continue in the next subsection)
+\begin{circus}
+\circchannel done : ENT
+\end{circus}
+
+
+\subsection{Generic Partition Behaviour}
+
+A partition starts with cold start code, followed by warm start code,
+and then enters a running phase, from which it might decide to terminate.
+
+\begin{circus}
+\circprocess GP \circdef ent : ENT \circspot \circbegin\\
+  Act \circdef lbl.CLD \then  fi.ent.NOP.0 \then  lbl.WRM \then  fi.ent.NOP.1 \then  GPRUN\\
+GPRUN\circdef\\
+  (fi.ent.NOP?op \then  GPRUN)\\
+   \intchoice DONE\\
+   DONE \circdef done.ent \then  NOPLOOP\\
+   NOPLOOP \circdef fi.ent.NOP.0 \then  NOPLOOP   \\
+   \circspot Act\\
+\circend
+
+\end{circus}
+
+
+\section{Platform}
+
+ Here we model the behaviour of the hardware platform, initially with different
+ platform models tailored for specific groups of requirements.
+
+Things we need to observe:
+  \begin{itemize}
+    \item
+      what code (kernel, partition1, ...) is currently running
+    \item
+      what priviledge mode (user, supervisor) the processor is currently in
+    \item
+      which code segment (initialisation, main loop, ...) of an entity is running,
+        and when it starts and finishes.
+    \item
+      we need to observe when the kernel starts a partition (cold or warm)
+    \item
+      we also need to track partition modes and partition start hypercalls
+  \end{itemize}
+
+starts in supervisor mode, executes code/hypercalls,
+marking hardware state/mode changes as requested.
+\begin{circus}
+\circprocess PMM \circdef \circbegin Act \circdef pm.SUP \then Act \circspot Act \circend\\
+
+\circprocess PMMRUN \circdef
+\circbegin
+  Act \circdef (fi?ent.S1?op \then pm.SUP \then Act
+   \extchoice
+   fi?ent.S0?op \then pm.USR \then Act
+   \extchoice
+   fi?ent.NOP?op \then Act
+   \extchoice
+   hc?p?call:HCALL \then pm.SUP \then Act)
+   \circspot Act
+\circend
+\end{circus}
+-- S1, S0 should result in an exception trap if attempted in user mode !!!!!
+
+\begin{assert}
+"assert PMM :[divergence free]"
+\also "assert PMM :[deadlock free[F]]"
+\end{assert}
+
+section{Code}
+
+\begin{circus}
+\circprocess LINEAR \circdef \circbegin\\
+  Act \circdef fi.KNL.NOP.1 \then
+   fi.KNL.S0.1  \then
+   fi.KNL.S1.0  \then Act\\
+ \circspot Act\\
+ \circend
+\end{circus}
+\begin{circus}
+\circprocess TREE \circdef \circbegin\\
+  PC \circdef pc : \nat \circspot
+    (\lcircguard pc = 0 \rcircguard \circguard fi.KNL.NOP.1 \then PC(1)
+     \extchoice
+     \lcircguard pc = 1 \rcircguard \circguard fi.KNL.S0.1  \then PC(2)
+     \extchoice
+     \lcircguard pc = 2 \rcircguard \circguard fi.KNL.S1.0  \then PC(0))\\
+  \circspot PC(0)\\
+\circend
+
+\end{circus}
+
+\section{PK-230}
+
+\ReqmtHdr{PK-230}{CORE}{SandM}
+Partitions shall be executed in user mode.
+\begin{quote}\it
+\textsc{Rationale}
+The separation between the partitioning kernel and the application programs
+is provided by the Supervisor / User mode of the computer.
+\end{quote}
+
+We track all 'fi' events and processor mode changes
+
+\begin{circus}
+\circchannel pk230fail
+\end{circus}
+
+\begin{circus}
+\circprocess PK230 \circdef \circbegin\\ % assumes supervisor mode when started
+PK230sup
+ \circdef  ((fi.KNL?i?op \then PK230sup)
+    \extchoice
+    (fi.P1?i?op \then pk230fail \then STOP)
+    \extchoice
+    (pm.USR \then PK230usr)
+    \extchoice
+    (pm.SUP \then PK230sup))
+PK230usr
+ \circdef  (fi?ent?i?op \then PK230usr)
+    \extchoice
+    (pm.USR \then PK230usr)
+    \extchoice
+    (pm.SUP \then PK230sup)
+  \circspot PK230sup\\
+\circend
+\end{circus}
+
+\subsection{Testing Good Behaviour}
+
+\begin{assert}
+"PK230GOODCODE = fi.KNL.NOP.0 -> fi.KNL.S0.0  -> fi.P1.NOP.0  -> fi.P1.NOP.1  -> fi.KNL.S1.0  -> fi.KNL.NOP.1 -> PK230GOODCODE"
+\also "assert PK230GOODCODE :[divergence free]"
+\also "assert PK230GOODCODE :[deadlock free[F]]"
+\also "PK230TEST(CODE) = PK230 [| {| fi, pm |} |] (PMM [| {| fi, hc |} |] CODE)"
+\also "PK230GOOD= PK230TEST(PK230GOODCODE)"
+\also "assert PK230GOOD :[divergence free]"
+\end{assert}
+
+\subsubsection{TEST 1}
+
+\begin{assert}
+"assert PK230GOOD :[deadlock free[F]]"
+\end{assert}
+
+\subsection{Testing Bad Behaviour}
+
+\begin{assert}
+"PK230BADCODE = fi.KNL.NOP.0 -> fi.KNL.S1.0 -> fi.P1.NOP.0 -> fi.P1.NOP.1 -> fi.KNL.S1.0 -> fi.KNL.NOP.1 -> PK230BADCODE"
+\also "assert PK230BADCODE :[divergence free]"
+\also "assert PK230BADCODE :[deadlock free[F]]"
+\also "PK230BAD = PK230TEST(PK230BADCODE)"
+\also "assert PK230BAD :[divergence free]"
+\end{assert}
+
+
+\subsubsection{TEST 2}
+\begin{assert}
+"assert PK230BAD :[deadlock free[F]]"
+\end{assert}
+
+\section{PK-98 to PK-541}
+
+To be considered.
+
+\ReqmtHdr{PK-98}{CORE}{SandM}
+When a partition enters in the ACTIVE mode, the Partitioning Kernel shall start executing the partition at the entry start address as defined in configuration.
+\begin{quote}\it
+\textsc{Rationale}
+A transition entering in the ACTIVE mode corresponds to a start or a re-start of the partition. This (re-)start can be COLD or WARM. Whatever the starting type of the partition, the PK starts the execution of the partition from its entry start address. This is the concern of the partition to access to its starting type status and to adapt its initialization strategy accordingly.
+\end{quote}
+
+\ReqmtHdr{PK-541}{CORE}{SandM}
+When a partition enters in the ACTIVE mode,  its associated vCPU shall have been reset.
+\begin{quote}\it
+\textsc{Note}
+Reset a vCPU means that the vCPU returns in its initial context (registers and virtual interrupts are cleared).
+\end{quote}
+
+
+\section{PK-97}
+
+\ReqmtHdr{PK-97}{CORE}{SandM}
+The starting type of a partition shall be WARM or COLD.
+\begin{quote}\it
+\textsc{Rationale}
+A transition entering in the ACTIVE mode corresponds to
+a start or a re-start of the partition.
+This (re-)start can be COLD or WARM.
+Whatever the starting type of the partition,
+the PK starts the execution of the partition from its entry start address.
+The only difference is the status of the associated starting type.
+This is the concern of the partition to access to its starting type status
+and to adapt its initialization strategy accordingly.
+\end{quote}
+
+
+ We track partition start events, from both kernel and partition perspective
+
+\begin{circus}
+\circchannel pk97fail\\
+
+\circprocess PK97 \circdef \circbegin\\
+
+  PK97knl \circdef ((fi.KNL?i?op \then PK97knl)  % kernel still running
+     \extchoice (fi.P1?i?op \then PK97part)  % context switch to partition 1
+     \extchoice (st.P1.CLD \then PK97cold)
+     \extchoice (st.P1.WRM \then PK97warm))\\
+
+  PK97part \circdef ((fi.KNL?i?op \then PK97knl)  % partition 1 interrupted
+     \extchoice (fi.P1?i?op \then PK97part))\\  % partition 1 still running
+
+  PK97cold \circdef (lbl.CLD \then fi?P1?i?op \then PK97warm)\\ % see a cold start,
+
+  PK97warm \circdef (lbl.WRM \then fi?P1?i?op \then PK97part)\\ % see a warm start
+
+  \circspot PK97knl\\ % assume the kernel is running
+  \circend
+\end{circus}
+\begin{assert}
+"assert PK97 :[divergence free]"
+\also "assert PK97 :[deadlock free[F]]"
+\also "PK97TEST(CODE) = (PK97 [| {| fi, st, lbl |} |] (PMM [| {| fi, hc |} |] CODE))"
+\end{assert}
+\subsection{Testing Good Behaviour}
+\begin{circus}
+\circprocess PK97GOODCODE \circdef \circbegin\\
+PK97GOODCODEAct \circdef (fi.KNL.S0.0
+  \then st.P1.CLD \then lbl.CLD \then fi.P1.NOP.0 \then lbl.WRM \then fi.P1.NOP.1
+  \then fi.KNL.S0.0
+  \then st.P1.WRM \then lbl.WRM \then fi.P1.NOP.1
+  \then PK97GOODCODEAct)\\
+ \circspot PK97GOODCODEAct\\
+   \circend
+\end{circus}
+\begin{assert}
+"assert PK97GOODCODE :[divergence free]"
+\also "assert PK97GOODCODE :[deadlock free[F]]"
+\also "PK97OK = PK97TEST(PK97GOODCODE)"
+\also "assert PK97OK :[divergence free]"
+\end{assert}
+\subsubsection{TEST 1}
+\begin{assert}
+"assert PK97OK :[deadlock free[F]]  -- MUST SUCCEED !!"
+\end{assert}
+
+\subsection{Testing Bad Behaviour}
+\begin{circus}
+\circprocess PK97BAD1CODE \circdef \circbegin
+  Act \circdef fi.KNL.S0.0 \then st.P1.CLD \then fi.P1.NOP.0 \then Act\\
+  \circspot Act\\
+ \circend\\
+\circprocess PK97BAD2CODE \circdef\circbegin
+  Act \circdef fi.KNL.S0.1 \then lbl.WRM \then fi.P1.NOP.1 \then Act\\
+  \circspot Act\\
+ \circend
+ \end{circus}
+\begin{assert}
+"assert PK97BAD1CODE :[divergence free]"
+\also "assert PK97BAD1CODE :[deadlock free[F]]"
+\also "assert PK97BAD2CODE :[divergence free]"
+\also "assert PK97BAD2CODE :[deadlock free[F]]"
+\also "PK97BAD1 = PK97TEST(PK97BAD1CODE)"
+\also "PK97BAD2 = PK97TEST(PK97BAD2CODE)"
+\also "assert PK97BAD1 :[divergence free]"
+\also "assert PK97BAD2 :[divergence free]"
+\end{assert}
+\subsubsection{TEST 2}
+\begin{assert}
+"assert PK97BAD1 :[deadlock free[F]]  -- MUST FAIL !!"
+\also "assert PK97BAD2 :[deadlock free[F]]  -- MUST FAIL !!"
+\end{assert}
+
+
+\section{PK-100}
+
+\ReqmtHdr{PK-100}{CORE}{SandM}
+The partitioning kernel shall allow an authorized partition
+to start any partition (STOPPED mode to ACTIVE mode)
+with a WARM or COLD starting type.
+\begin{quote}\it
+\textsc{Rationale}
+ This capability is required by an authorized partition
+ such as the system partition to control the re-start of other partitions.
+\end{quote}
+\begin{quote}\it
+\textsc{Note}
+The PK provides a service to start a partition in COLD or WARM starting type.
+This service is only accessible to an authorized partition.
+In practice it is expected that only one authorized partition
+(the system partition) will be allowed to stop and re-start another partition.
+When the binary code and the data of the partition are reinitialised
+at application level (re-copy of code and data from its non volatile memory)
+a COLD restart should be applied
+as all the memory context of the considered partition is then lost.
+\end{quote}
+
+
+ we need to observe:
+ \begin{itemize}
+ \item partition modes
+ \item kernel mode-change events
+ \item partition start hypercalls
+\end{itemize}
+\begin{circus}
+\circchannel pk100fail\\
+
+\circprocess PK100 \circdef \circbegin\\
+  Act \circdef pk100fail \then \Stop\\ % assume the kernel is running
+  \circspot Act\\
+\circend
+\end{circus}
+
+\section{PK-547 to PK-286}
+
+To be considered.
+
+\ReqmtHdr{PK-547}{CORE}{SandM}
+The partitioning kernel shall allow a partition to access its starting type status.
+
+\ReqmtHdr{PK-96}{CORE}{SandM}
+The partitioning kernel shall execute partitions during their allocated timeslots when the said partitions are not in the STOPPED mode.
+
+\ReqmtHdr{PK-99}{CORE}{SandM}
+The partitioning kernel shall allow a partition to be stopped by itself, by an authorised partition or by the health monitoring.
+\begin{quote}\it
+\textsc{Note}
+A partition in the STOPPED mode is no more scheduled during its allocated timeslots. Its  timeslots are lost in the sense that another partition will not be scheduled during this free time to ensure determinism and respects Time Partitioning. However, the PK can use this free time to perform background tasks or not depending on the PK implementation.  In single-core architecture a partition can be stopped during a timeslot on its own request or by the health monitoring. In a multi-core architecture, a partition can be stopped during its execution by itself, by an authorized partition or by the health monitoring. Whichever the scenario, the partition is immediately stopped and the time remaining in the timeslot is lost.
+\end{quote}
+
+\ReqmtHdr{PK-286}{CORE}{SandM}
+The partitioning kernel shall allow an authorised partition to access to the mode of any other partitions.
+\begin{quote}\it
+\textsc{Rationale}
+A partition is authorized to have access to the mode of any other partitions by configuration which is under the responsibility of the system integrator. Authorizing a partition to have access to the mode of any other partitions is required in order to define an authorized partition (system partition) in charge of a centralized FDIR management.
+\end{quote}
