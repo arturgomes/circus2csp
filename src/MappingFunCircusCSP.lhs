@@ -66,6 +66,7 @@ mapping_Circus spec (x:xs)
 \begin{code}
 
 mapping_CircParagraphs :: [ZPara] -> ZPara -> String
+mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) []) = ""
 mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) univ)
   = case res of
     False -> ("\n--------------------------------"++
@@ -174,6 +175,7 @@ mapping_CircParagraphs spec (ZAbbreviation (xn,_,_) xp)
 \end{code}
 \subsection{Mapping $NAME$}
 \begin{code}
+mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) []) = ""
 mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
   | nm == "NAME" = "\n-- definition of NAME for the entire spec "
       ++ "\ndatatype NAME = "++(mapping_ZBranch_list (remdups zbs))++"\n"
