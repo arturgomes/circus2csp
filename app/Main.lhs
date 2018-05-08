@@ -53,7 +53,7 @@ main
         animGo <- get_config animator0
         putStrLn ("Src. path: "++getSrcDir animGo)
         putStrLn ("Dst. path: "++getDstDir animGo)
-      	get_cmd animGo ""
+        get_cmd animGo ""
 
 get_config anim  = catch (read_config anim)
                          ((\e -> return anim)::(IOException -> IO Animator))
@@ -81,8 +81,8 @@ ltrim str@(c:cs)
 get_cmd :: Animator -> String -> IO ()
 get_cmd anim fn
   = do  -- TODO: this catch does not work with Hugs.  Find out why.
-	s <- catch (getLineEdit prompt1) ((\err -> return "quit")::(IOException -> IO String))
-	get_cmd2 (dropWhile isSpace s) anim fn
+  s <- catch (getLineEdit prompt1) ((\err -> return "quit")::(IOException -> IO String))
+  get_cmd2 (dropWhile isSpace s) anim fn
 
 
 -- This handles reading any extra lines of input, until a complete
@@ -113,10 +113,10 @@ get_cmd3 cmd sofar opened anim fn
     | opened <= 0
       = do_cmd cmd (dropWhile isSpace (concatMap ('\n':) (reverse sofar))) anim fn
     | otherwise
-      = do  s <- getLineEdit prompt2
-	    let opened2 = opened + length (filter openbracket s)
-				 - length (filter closebracket s)
-	    get_cmd3 cmd (s:sofar) opened2 anim fn
+      = do s <- getLineEdit prompt2
+           let opened2 = opened + length (filter openbracket s)
+                                - length (filter closebracket s)
+           get_cmd3 cmd (s:sofar) opened2 anim fn
 
 openbracket :: Char -> Bool
 openbracket '(' = True
@@ -135,10 +135,11 @@ help =
   ["Available commands:",
    fmtcmd "quit"                   "Exit the animator",
    fmtcmd "load filename"          "Load a Z specification from a file",
-   fmtcmd "show"                   "Display a summary of whole spec.",
-   fmtcmd "tocsp"                   "Map the whole spec into CSP.",
-   fmtcmd "latex"                   "Pretty print into LaTeX.",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
+   fmtcmd "tocsp"                  "Map the whole spec into CSP.",
+   fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
+   fmtcmd "show"                   "Display a summary of whole spec.",
+   fmtcmd "latex"                  "Pretty print into LaTeX.",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
    fmtcmd "% comment"              "(Ignored)"
@@ -158,32 +159,40 @@ do_cmd cmd args anim fn
       return ()
   | cmd == ":load" =
       do {putStrLn ("ERROR \"" ++ args
-		    ++ "\" (Line 1): You did not quit JAZA."
-		    ++ "\nDo the load again...");
-	  return ()}
+      ++ "\" (Line 1): You did not quit JAZA."
+      ++ "\nDo the load again...");
+    return ()}
   | cmd == "help" && args =="" =
       do {putStr (unlines help); get_cmd anim fn}
-  | cmd == "load" =
-      catch
-	  (do {putStrLn ("Loading '"++getSrcDir anim++args++"' ...");
-	       spec <- readFile (getSrcDir anim++args++".tex");
-	       done_cmd (pushfile args spec anim)})
-	  (\err ->
-	      do {putStrLn (show (err :: IOException));
-		  get_cmd anim fn})
+  | cmd == "load"
+     = catch
+        (do {putStrLn ("Loading '"++getSrcDir anim++args++"' ...");
+             spec <- readFile (getSrcDir anim++args++".tex");
+             done_cmd (pushfile args spec anim)})
+        (\err ->
+            do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+  | cmd == "omega" =
+      done_cmd (omegaCircus anim fn)
+  | cmd == "tocsp" =
+      done_cmd (anim, upslonCircus anim fn, fn)
+  | cmd == "conv"
+     = catch
+        (do putStrLn ("Loading '"++getSrcDir anim++args++"' ...")
+            spec <- readFile (getSrcDir anim++args++".tex")
+            let (anim1,answ1,fn1) = pushfile args spec anim
+            let (anim2,answ2,fn2) = omegaCircus anim1 fn1
+            done_cmd (anim2, upslonCircus anim2 fn2, fn2))
+        (\err ->
+            do {putStrLn (show (err :: IOException)); get_cmd anim fn})
   | cmd == "reset" && args == "" =
       done_cmd (resetanimator anim)
   | cmd == "show" =
       done_cmd (anim, showC,fn)
-  | cmd == "tocsp" =
-      done_cmd (anim, upslonCircus anim fn, fn)
   | cmd == "latex" =
       done_cmd (anim, latexCircus anim fn, fn)
-  | cmd == "omega" =
-      done_cmd (omegaCircus anim fn)
   | otherwise =
-      do  putStrLn "Unknown/illegal command."
-	  get_cmd anim fn
+      do putStrLn "Unknown/illegal command."
+         get_cmd anim fn
   where
   -- rd is used to read input values from user
   rd p = getLineEdit ("    Input " ++ p ++ " = ")
@@ -203,6 +212,7 @@ done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
 done_cmd (anim, ErrorLocns es,args)= do {putStrLn (unlines (map fmtperr es));
            get_cmd anim args}
 
+cmd_output :: (Animator, String, String, String, String) -> IO ()
 cmd_output (anim,s,args,extt,extw)
   = do putStrLn s
        touch (root++extt)
@@ -239,8 +249,8 @@ writeStr fp c =
 fmtgfs :: (Int,ZGenFilt) -> String
 fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
    show n ++ "  " ++ "false  \\because{"
-	++ concat[zpred_string pinfo p ++ "; " | p<- r:rs]
-	++ "}"
+  ++ concat[zpred_string pinfo p ++ "; " | p<- r:rs]
+  ++ "}"
 fmtgfs (n,gf) =
    show n ++ "  " ++ zgenfilt_string pinfo gf
 
@@ -248,8 +258,8 @@ fmtgfs (n,gf) =
 
 putErrorMsg :: ErrorMsg -> IO ()
 putErrorMsg m =
-    do  sequence_ (map putMsgPart m)
-	putStrLn ""
+    do sequence_ (map putMsgPart m)
+       putStrLn ""
 
 putMsgPart :: MsgPart -> IO ()
 putMsgPart (MStr s)   = putStr s
@@ -275,10 +285,10 @@ fmtcmd cmd msg = "    " ++ ljustify 24 cmd ++ msg
 
 
 getLineEdit :: String -> IO String
-getLineEdit prompt =
-    do  putStr prompt
-	hFlush stdout   -- needed with GHC.
-	getLine
+getLineEdit prompt
+  = do putStr prompt
+       hFlush stdout   -- needed with GHC.
+       getLine
 --    do  Just s <- readline prompt
 --	if null s
 --	   then return ()
