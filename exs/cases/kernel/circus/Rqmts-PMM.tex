@@ -123,16 +123,33 @@ State variables, for now just the processor mode.
 PROCMODE \defs [ procm : PROCMODES ]
 \end{circus}
 
+First, a way to identify the kernel and partitions.
+For now we use numbers, with the kernel being -1,
+0 denoting one authorised partition,
+and 1 standing for an ordinary partition.
+\begin{circus}
+   MAXP   == 2
+\\ CODEID == 0 \upto (MAXP-1)
+\\ KNL    == -1
+\\ AUP    == 0
+\end{circus}
+\begin{assert}
+"next(codeid) = (codeid+1) % MAXP"
+\end{assert}
+
 An implicit part of the state are the program
 contexts for the kernel and partitions.
 For our purposes these include the code itself (instruction sequence),
 and the program counter, and, for the partitions,
 their entry start address.
 
+
+
+First, let us determine what ``instructions'' we require.
+
 Kernel code has four components:
 initialisation, scheduler, hypercall-handlers,
 and external interrupt-handlers (incl. timing).
-
 The scheduler:
 \begin{enumerate}
   \item saves ``current'' partition context (PC, vars)
@@ -141,6 +158,18 @@ The scheduler:
   \item sets scheduled timeout for this slot
   \item jumps to the next partition (at its just restored PC)
 \end{enumerate}
+Traps and their Handlers will typically do something simple,
+perhaps just declaring that they were called.
+One thing we do need to provide are instructions
+to change the processor mode, and to reset the vCPU.
+
+Partition instructions are mainly hypercalls to attempt
+things like starting or stopping a partition,
+accessing the mode of other partitions,
+or accessing its own starting type status.
+We may want a neutral/NOP instruction so we can show a partition
+being allowed to execute in its own time slot.
+
 
 \subsection{Main \Circus\ Process}
 
