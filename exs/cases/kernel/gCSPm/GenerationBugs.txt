@@ -1,0 +1,26 @@
+Bugs found in generated CSPm
+
+--------------------------------------------------------------------------------
+2018-05-09
+
+Relevant Circus extracts:
+
+PROCMODES ::= SUP | USR
+PROCMODE \defs [ procm : PROCMODES ]
+\circprocess\ PMM \circdef \circbegin \\
+\t1 \circstate PMMState \defs PROCMODE \\
+\t1 PMMInit \circdef ( procm := SUP ) \\
+\t1 \circspot PMMInit \circseq ( procm := USR ) \\
+\circend
+
+Error found in generated CSPm:
+
+Rqmts-PMM.csp>
+/Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:28:1-33:
+    Couldn't match expected type PROCMODES with actual type {PROCMODES}
+    In a pattern binding: b_PRO1 = {(sv_procm, PRO.{SUP})}
+
+Fixed (by hacking generated CSPm file) to:
+
+ - b_PRO1 = {(sv_procm, PRO.{SUP})}
+ + b_PRO1 = {(sv_procm, PRO.SUP)}

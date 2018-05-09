@@ -118,11 +118,29 @@ Processor mode, starting type, and partition mode:
 \\ PARTMODES ::= STOPPED | ACTIVE
 \end{circus}
 
-State variables:
+State variables, for now just the processor mode.
 \begin{circus}
 PROCMODE \defs [ procm : PROCMODES ]
 \end{circus}
 
+An implicit part of the state are the program
+contexts for the kernel and partitions.
+For our purposes these include the code itself (instruction sequence),
+and the program counter, and, for the partitions,
+their entry start address.
+
+Kernel code has four components:
+initialisation, scheduler, hypercall-handlers,
+and external interrupt-handlers (incl. timing).
+
+The scheduler:
+\begin{enumerate}
+  \item saves ``current'' partition context (PC, vars)
+  \item identifies next partition
+  \item restores next partition context
+  \item sets scheduled timeout for this slot
+  \item jumps to the next partition (at its just restored PC)
+\end{enumerate}
 
 \subsection{Main \Circus\ Process}
 
