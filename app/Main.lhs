@@ -133,12 +133,14 @@ closebracket  _  = False
 
 help =
   ["Available commands:",
+   fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
+   fmtcmd "reconv"                 "repeat 'conv' on previous file",
+   fmtcmd "show"                   "Display a summary of whole spec.",
    fmtcmd "quit"                   "Exit the animator",
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
    fmtcmd "tocsp"                  "Map the whole spec into CSP.",
-   fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
-   fmtcmd "show"                   "Display a summary of whole spec.",
+   fmtcmd "reload"                 "Re-load Z specification from current file",
    fmtcmd "latex"                  "Pretty print into LaTeX.",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
@@ -166,24 +168,32 @@ do_cmd cmd args anim fn
       do {putStr (unlines help); get_cmd anim fn}
   | cmd == "load"
      = catch
-        (do {putStrLn ("Loading '"++getSrcDir anim++args++"' ...");
-             spec <- readFile (getSrcDir anim++args++".tex");
-             done_cmd (pushfile args spec anim)})
+        ( do let fname = getSrcDir anim++args
+             putStrLn ("Loading '"++fname++"' ...")
+             spec <- readFile (fname++".tex");
+             let (anim',_,_) = resetanimator anim
+             done_cmd (pushfile args spec $ setFName args anim') )
         (\err ->
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+  | cmd == "reload"
+     = do_cmd "load" (getFName anim) anim fn
   | cmd == "omega" =
       done_cmd (omegaCircus anim fn)
   | cmd == "tocsp" =
       done_cmd (anim, upslonCircus anim fn, fn)
   | cmd == "conv"
      = catch
-        (do putStrLn ("Loading '"++getSrcDir anim++args++"' ...")
-            spec <- readFile (getSrcDir anim++args++".tex")
-            let (anim1,answ1,fn1) = pushfile args spec anim
+        (do let fname = getSrcDir anim++args
+            putStrLn ("Loading '"++fname++"' ...")
+            spec <- readFile (fname++".tex")
+            let (anim',_,_) = resetanimator anim
+            let (anim1,answ1,fn1) = pushfile args spec $ setFName args anim'
             let (anim2,answ2,fn2) = omegaCircus anim1 fn1
             done_cmd (anim2, upslonCircus anim2 fn2, fn2))
         (\err ->
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+  | cmd == "reconv"
+     = do_cmd "conv" (getFName anim) anim fn
   | cmd == "reset" && args == "" =
       done_cmd (resetanimator anim)
   | cmd == "show" =

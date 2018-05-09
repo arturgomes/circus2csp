@@ -12,6 +12,7 @@ module Animate
   animator0,        -- initial animator state
   getSrcDir, getDstDir, -- get source and destination directories
   setSrcDir, setDstDir, -- set source and destination directories
+  setFName, getFName,       -- name of currently loaded file
   Answer(..),       -- most Animator results are returned using this
   errstr,           -- convenience function for creating a string ErrorMsg.
   isUndefMsg,       -- recognises the 'undefined result' message
@@ -52,6 +53,8 @@ getSrcDir = srcSubDir
 getDstDir = dstSubDir
 setSrcDir anim str = anim{srcSubDir = str}
 setDstDir anim str = anim{dstSubDir = str}
+getFName = filename
+setFName fn anim = anim{filename = fn}
 
 data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
@@ -144,7 +147,27 @@ pushfile filename contents anim
 
 -- Artur:
 showCircus :: Animator  -> Answer
-showCircus spec@Anim{spec=sp} = Done (unlines $ map fmtpara $ reverse sp)
+showCircus anim
+ = Done $ unlines ( [ ""
+                    , "Filename = " ++ filename anim
+                    , "from: " ++ srcSubDir anim
+                    , "  to: " ++ dstSubDir anim
+                    , "-----" ]
+                    ++ map showInteresting
+                         (filter isInteresting $ reverse $ spec anim) )
+
+isInteresting (CircusProcess (Process _) _) = True
+isInteresting (CircusChannel (CircChannel _) _) = True
+isInteresting _ = False
+
+showInteresting (CircusProcess (Process (CProcess nm _)) _) = "PROCESS "++nm
+showInteresting (CircusChannel (CircChannel cdecls) _)
+  = "channel " ++ (intercalate ", " $ map showCDeclName cdecls)
+showInteresting _ = "?"
+
+showCDeclName (CChan nm)             =  nm
+showCDeclName (CChanDecl nm _)       =  nm++":T"
+showCDeclName (CGenChanDecl nm _ _)  =  "["++nm++"]"
 
 getspecHC :: String -> Animator -> Answer
 getspecHC args s@(Anim{spec=x}) = DoneOmega (unlines ( map fmtpara ( reverse x))) args
@@ -198,7 +221,7 @@ print_tex_Circus _ = "print_tex_Circus NYI"
 
 resetanimator :: Animator -> (Animator,Answer,String)
 resetanimator anim
-  = ( anim{spec=spec0, filename=filename0}
+  = ( anim{spec=spec0}
     , Done "Reset command: Specification is now empty.","")
 
 ----------------------------------------------------------------------
