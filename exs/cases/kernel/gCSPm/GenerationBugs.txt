@@ -1,8 +1,7 @@
 Bugs found in generated CSPm
 
 --------------------------------------------------------------------------------
-2018-05-09
-
+2018-05-09 (1)
 Relevant Circus extracts:
 
 PROCMODES ::= SUP | USR
@@ -24,3 +23,73 @@ Fixed (by hacking generated CSPm file) to:
 
  - b_PRO1 = {(sv_procm, PRO.{SUP})}
  + b_PRO1 = {(sv_procm, PRO.SUP)}
+
+--------------------------------------------------------------------------------
+2018-05-10 (1)
+Relevant Circus extracts:
+
+   MAXP   == 2
+\\ CODEID == -1 \upto (MAXP-1)
+
+Error found in generated CSPm:
+
+Rqmts-PMM.csp>
+/Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:12:12:
+    Unclosed multiline comment opened here.
+
+Fixed (by hacking generated CSPm file) to:
+
+ - CODEID = {- 1..(MAXP - 1)}
+ + CODEID = { -1..(MAXP - 1)}
+
+--------------------------------------------------------------------------------
+2018-05-10 (2)
+Relevant Circus extracts:
+
+
+\t1 GO \circdef
+   cid : CODEID \circspot
+      \lcircguard running = cid \rcircguard \circguard \Skip \\
+\t1 \circspot PMMInit \circseq
+               ( procm := USR )
+               \circseq ( do.KNL.OP1 \then GO(KNL) )
+
+Error found in generated CSPm:
+
+/Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:121:17-29:
+    v_sv_running is not in scope
+    Did you mean:
+        sv_running (defined at /Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:39:28-38)
+/Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:121:34-37:
+    cid is not in scope
+
+Fixed (by hacking generated CSPm file) to:
+
+Partially, we can get rid of v_sv_running being out of scope
+ -     ( (valueCOD(v_sv_running) == cid) & do.AUP.OP2 ->
+ -      ( (valueCOD(v_sv_running) == cid) & do.2.OP3 ->
+ -     ( (valueCOD(v_sv_running) == cid) & SKIP ) ) );
+ +     ( (valueCOD(sv_running) == cid) & do.AUP.OP2 ->
+ +     ( (valueCOD(sv_running) == cid) & do.2.OP3 ->
+ +     ( (valueCOD(sv_running) == cid) & SKIP ) ) );
+However, the cid problem still persists.
+
+--------------------------------------------------------------------------------
+2018-mm-dd (n)
+Relevant Circus extracts:
+Error found in generated CSPm:
+Fixed (by hacking generated CSPm file) to:
+
+
+--------------------------------------------------------------------------------
+2018-mm-dd (n)
+Relevant Circus extracts:
+Error found in generated CSPm:
+Fixed (by hacking generated CSPm file) to:
+
+
+--------------------------------------------------------------------------------
+2018-mm-dd (n)
+Relevant Circus extracts:
+Error found in generated CSPm:
+Fixed (by hacking generated CSPm file) to:

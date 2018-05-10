@@ -21,7 +21,12 @@
 \usepackage{czt}
 \usepackage{circus}
 
+\parindent=0pt % I hate first line indentation
+\parskip=3pt   % I like a visual white gap between paragraphs
 
+%\def\DRAFT#1{~\newline\textbf{DRAFT:}\textsc{{#1}}\textbf{:END}\newline~}
+\def\DRAFT#1{~\newline\colorbox{yellow}{#1}\newline~}
+%\def\DRAFT#1{}
 
 \begin{document}
 
