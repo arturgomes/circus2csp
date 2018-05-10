@@ -234,7 +234,7 @@ and use a channel called $do$ to observe them.
 \t1 \circstate PMMState \defs PROCMODE \land RUNNING \\
 \t1 PMMInit \circdef (procm,running := SUP,KNL) \\
 \t1 GO \circdef
-   cid : CODEID \circspot
+   \circval cid : CODEID \circspot
       \lcircguard running = cid \rcircguard \circguard \Skip \\
 \t1 \circspot PMMInit \circseq
                ( procm := USR )

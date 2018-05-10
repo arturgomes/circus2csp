@@ -75,10 +75,35 @@ Partially, we can get rid of v_sv_running being out of scope
 However, the cid problem still persists.
 
 --------------------------------------------------------------------------------
-2018-mm-dd (n)
+2018-05-10 (3)
 Relevant Circus extracts:
+
+\t1 GO \circdef
+   \circval cid : CODEID \circspot
+      \lcircguard running = cid \rcircguard \circguard \Skip \\
+\t1 \circspot PMMInit \circseq
+               ( procm := USR )
+               \circseq ( do.KNL.OP1 \then GO(KNL) )
+               \circseq ( do.AUP.OP2 \then GO(AUP) )
+               \circseq ( do.2.OP3 \then GO(2) )\\
+
 Error found in generated CSPm:
+
+Rqmts-PMM.csp>
+/Users/butrfeld/REPOS/jazaextended/exs/cases/kernel/gCSPm/Rqmts-PMM.csp:120:10-11:
+    Unexpected token )
+
 Fixed (by hacking generated CSPm file) to:
+
+No fix - what we see is, from 117 onwards:
+  within ( ( ( mset.sv_procm.(PRO.SUP) ->
+    mset.sv_running.(COD.KNL) ->
+    mset.sv_procm.(PRO.USR) ->
+    ( ( ();
+      () );
+      () );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_PRO,b_COD))\MEMI )
 
 
 --------------------------------------------------------------------------------
