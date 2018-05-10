@@ -105,6 +105,8 @@ No fix - what we see is, from 117 onwards:
       terminate -> SKIP )
       [| MEMI |] Memory(b_PRO,b_COD))\MEMI )
 
+Looking at the output from the "omega" command,
+we see that all references to "GO" have disappeared.
 
 --------------------------------------------------------------------------------
 2018-mm-dd (n)
