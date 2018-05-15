@@ -19,6 +19,7 @@ library
                      , Errors
                      , Animate
                      -- , PrintTex
+                     , RepParamAction
                      , CRL
                      , EParseLib
                      , FiniteSets

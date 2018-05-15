@@ -136,6 +136,7 @@ help =
    fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
    fmtcmd "reconv"                 "repeat 'conv' on previous file",
    fmtcmd "show"                   "Display a summary of whole spec.",
+   fmtcmd "orig"                   "Display the whole spec originally loaded.",
    fmtcmd "quit"                   "Exit the animator",
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
@@ -198,6 +199,8 @@ do_cmd cmd args anim fn
       done_cmd (resetanimator anim)
   | cmd == "show" =
       done_cmd (anim, showC,fn)
+  | cmd == "original" =
+      done_cmd (anim, showO,fn)
   | cmd == "latex" =
       done_cmd (anim, latexCircus anim fn, fn)
   | otherwise =
@@ -207,6 +210,7 @@ do_cmd cmd args anim fn
   -- rd is used to read input values from user
   rd p = getLineEdit ("    Input " ++ p ++ " = ")
   showC = showCircus anim
+  showO = showOrigSpec anim
 
 
 done_cmd :: (Animator, Answer,String) -> IO ()

@@ -1290,7 +1290,7 @@ mapping_ZExpr lst (ZCall (ZVar ("\\dres",[],[])) (ZTuple [n,m])) = "dres("++mapp
 mapping_ZExpr lst (ZCall (ZVar ("\\comp",[],[])) (ZTuple [n,m])) = "comp("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\rres",[],[])) (ZTuple [n,m])) = "rres("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\pfun",[],[])) (ZTuple [n,m])) = "pfun("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\negate",[],[])) n) = "- " ++ mapping_ZExpr lst (n)
+mapping_ZExpr lst (ZCall (ZVar ("\\negate",[],[])) n) = " -" ++ (mapping_ZExpr lst (n))
 mapping_ZExpr lst (ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar (b,[],_),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar (n,[],_),ZVar (x,[],_)])]])) = "over("++b++","++n++","++x++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\power",[],[])) a) ="Set("++(mapping_ZExpr lst a)++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\ran",[],[])) a) = "set("++(mapping_ZExpr lst a)++")"
@@ -1365,7 +1365,7 @@ get_min_val n _ = []
 
 make_binding :: [ZPara] -> ZName -> ZVar -> String
 make_binding spec n (a,b,c)
-  | Subs.isPrefixOf "P" c
+  | Subs.isPrefixOf "_" c
       = "("++a++", "++ c++".{"++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
                             else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++"})"
   | "NAT" == c

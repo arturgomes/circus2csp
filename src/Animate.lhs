@@ -18,7 +18,8 @@ module Animate
   isUndefMsg,       -- recognises the 'undefined result' message
   isDone,           -- tests an animator result to see if it succeeded
   pushfile, resetanimator, -- extending/deleting the spec.
-  showCircus,       -- similar to showspec but with DoneCirc -- Artur Gomes
+  showCircus,       -- display the spec after omega -- Andrew (May 2018)
+  showOrigSpec,       -- similar to showspec but with DoneCirc -- Artur Gomes
   SyntaxError,       -- from Errors module
   omegaCircus,       -- Omega function for the Circus translator
   upslonCircus,       -- Upslon function for the Circus translator
@@ -145,7 +146,7 @@ pushfile filename contents anim
    (if ndefs > 1 then "s." else ".")
 
 
--- Artur:
+-- Andrew:
 showCircus :: Animator  -> Answer
 showCircus anim
  = Done $ unlines ( [ ""
@@ -168,6 +169,17 @@ showInteresting _ = "?"
 showCDeclName (CChan nm)             =  nm
 showCDeclName (CChanDecl nm _)       =  nm++":T"
 showCDeclName (CGenChanDecl nm _ _)  =  "["++nm++"]"
+
+-- Artur
+-- 15/05/2018
+-- I'm putting back the old showCircus but renamed to showOrigSpec
+-- So I can have a look at what the original spec looks like
+-- I'm debugging and I might take it out later on..
+
+showOrigSpec :: Animator  -> Answer
+showOrigSpec spec@Anim{spec=sp} = Done (unlines $ map fmtpara $ reverse sp)
+
+--
 
 getspecHC :: String -> Animator -> Answer
 getspecHC args s@(Anim{spec=x}) = DoneOmega (unlines ( map fmtpara ( reverse x))) args

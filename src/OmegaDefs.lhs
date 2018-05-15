@@ -8,6 +8,7 @@ module OmegaDefs where
 import Subs
 import AST
 import Errors
+import RepParamAction
 
 \end{code}
 }
@@ -841,7 +842,7 @@ expand_action_names_CAction lst param (CSPHide c cs)
 expand_action_names_CAction lst param (CSPParAction nm xp)
  -- = (CSPParAction nm xp)
  | (take 2 nm) == "mu" = (CSPParAction nm xp)
- | otherwise = get_action nm lst param lst
+ | otherwise = get_action' nm lst param lst xp
 expand_action_names_CAction lst param (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
 expand_action_names_CAction lst param (CSPRecursion n (CSPSeq c (CActionName n1)))
@@ -905,7 +906,24 @@ get_if lst param (CircThenElse (CircGAction p a) gb)
 -- get_if lst param (CircElse (ParamActionDecl x (CircusAction a)))
 --  = (CircElse (ParamActionDecl x (CircusAction (expand_action_names_CAction lst param a))))
 \end{code}
+% 15/05/2018 - Artur
+Here we replace the variable names of a CValDecl with the parameters of the action.
+% let's see how it goes...
+\begin{code}
+get_action' :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> [ZGenFilt] -> CAction
+-- get_action _ _ _ [] = error "Action list is empty"
+get_action' nn lst param [(CParAction n (CircusAction (CActionCommand (CValDecl zfs ma))))] xfs
+  | nn == ma = replace_ParamAction_CAction1 (expand_action_names_CAction lst param ma) zfs xfs
+  | otherwise = error ("Action "++(name)++" not found")
+get_action nn lst param ((CParAction n (CircusAction (CActionCommand (CValDecl zfs ma)))):xs)
+  | (nn == n) = replace_ParamAction_CAction1 (expand_action_names_CAction lst param ma) zfs
+  | otherwise = get_action' name lst param xs
 
+replace_ParamAction_CAction1 x [a] [b]
+  = (replace_ParamAction_CAction x a)
+replace_ParamAction_CAction1 x (a:as) (b:bs)
+  = replace_ParamAction_CAction1 (replace_ParamAction_CAction x a) as bs
+\end{code}
 \begin{code}
 get_action :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> CAction
 -- get_action _ _ _ [] = error "Action list is empty"
@@ -913,6 +931,9 @@ get_action name lst param [(CParAction n (CircusAction a))]
   | name == n = expand_action_names_CAction lst param a
   | otherwise = error ("Action "++(name)++" not found")
 get_action name lst param ((CParAction n (CircusAction a)):xs)
+  | (name == n) = expand_action_names_CAction lst param a
+  | otherwise = get_action name lst param xs
+get_action name lst param ((CParAction n (CircusAction (CActionCommand (CValDecl zfs ma)))):xs)
   | (name == n) = expand_action_names_CAction lst param a
   | otherwise = get_action name lst param xs
 get_action name lst param [(CParAction n (ParamActionDecl p (CircusAction a)))]
@@ -1628,9 +1649,9 @@ def_universe_aux [ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar (c,
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar ("\\nat",[],_)])):xs) = ((b,"U_NAT", "NAT", "NatValue"):(def_universe_aux xs))
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_),ZVar (c,[],_)])):xs) = ((b,(def_U_NAME c), (def_U_prefix c), c):(def_universe_aux xs))
 def_universe_aux [(ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_), ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_))]))]
-  = [(b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")"))]
+  = [(b,(def_U_NAME ("_"++c)), (def_U_prefix ("_"++c)), ("Set("++c++")"))]
 def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_), ZCall (ZVar ("\\power",[],_)) (ZVar (c,[],_))])):xs)
-  = ((b,(def_U_NAME ("P"++c)), (def_U_prefix ("P"++c)), ("Set("++c++")")):(def_universe_aux xs))
+  = ((b,(def_U_NAME ("_"++c)), (def_U_prefix ("_"++c)), ("Set("++c++")")):(def_universe_aux xs))
 \end{code}
 
 \begin{code}
