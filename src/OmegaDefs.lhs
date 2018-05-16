@@ -842,7 +842,7 @@ expand_action_names_CAction lst param (CSPHide c cs)
 expand_action_names_CAction lst param (CSPParAction nm xp)
  -- = (CSPParAction nm xp)
  | (take 2 nm) == "mu" = (CSPParAction nm xp)
- | otherwise = get_action' nm lst param lst xp
+ | otherwise = rename_action (get_action nm lst param lst) xp
 expand_action_names_CAction lst param (CSPRenAction nm cr)
  = (CSPRenAction nm cr)
 expand_action_names_CAction lst param (CSPRecursion n (CSPSeq c (CActionName n1)))
@@ -910,19 +910,20 @@ get_if lst param (CircThenElse (CircGAction p a) gb)
 Here we replace the variable names of a CValDecl with the parameters of the action.
 % let's see how it goes...
 \begin{code}
-get_action' :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> [ZGenFilt] -> CAction
+-- get_action' :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> [ZGenFilt] -> CAction
 -- get_action _ _ _ [] = error "Action list is empty"
-get_action' nn lst param [(CParAction n (CircusAction (CActionCommand (CValDecl zfs ma))))] xfs
-  | nn == ma = replace_ParamAction_CAction1 (expand_action_names_CAction lst param ma) zfs xfs
-  | otherwise = error ("Action "++(name)++" not found")
-get_action nn lst param ((CParAction n (CircusAction (CActionCommand (CValDecl zfs ma)))):xs)
-  | (nn == n) = replace_ParamAction_CAction1 (expand_action_names_CAction lst param ma) zfs
-  | otherwise = get_action' name lst param xs
+rename_action (CActionCommand (CValDecl zfs ma)) xfs
+  = (replace_ParamAction_CAction1 ma (concat $ get_var_Choose zfs) xfs)
+-- rename_action x xfs = x
+
+get_var_Choose [] = []
+get_var_Choose ((Choose a b):xs) = [a]:(get_var_Choose xs)
+get_var_Choose (_:xs) = (get_var_Choose xs)
 
 replace_ParamAction_CAction1 x [a] [b]
-  = (replace_ParamAction_CAction x a)
+  = (repParamActionCAction a b x)
 replace_ParamAction_CAction1 x (a:as) (b:bs)
-  = replace_ParamAction_CAction1 (replace_ParamAction_CAction x a) as bs
+  = replace_ParamAction_CAction1 (repParamActionCAction a b x) as bs
 \end{code}
 \begin{code}
 get_action :: ZName -> [PPar] -> [ZGenFilt] -> [PPar] -> CAction
@@ -931,9 +932,6 @@ get_action name lst param [(CParAction n (CircusAction a))]
   | name == n = expand_action_names_CAction lst param a
   | otherwise = error ("Action "++(name)++" not found")
 get_action name lst param ((CParAction n (CircusAction a)):xs)
-  | (name == n) = expand_action_names_CAction lst param a
-  | otherwise = get_action name lst param xs
-get_action name lst param ((CParAction n (CircusAction (CActionCommand (CValDecl zfs ma)))):xs)
   | (name == n) = expand_action_names_CAction lst param a
   | otherwise = get_action name lst param xs
 get_action name lst param [(CParAction n (ParamActionDecl p (CircusAction a)))]
@@ -945,6 +943,14 @@ get_action name lst param ((CParAction n (ParamActionDecl p (CircusAction a))):x
 get_action name lst param (_:xs)
   = get_action name lst param xs
 get_action n _ _ [] = error ("Action list is empty"++n)
+\end{code}
+
+\begin{code}
+getChanDotExpVar :: [CParameter] -> [ZExpr]
+getChanDotExpVar [] = []
+getChanDotExpVar ((ChanDotExp e):xs) = [e]++(get_chan_param xs)
+getChanDotExpVar ((ChanOutExp e):xs) = [e]++(get_chan_param xs)
+getChanDotExpVar (_:xs) = (get_chan_param xs)
 \end{code}
 
 \begin{code}
@@ -2817,4 +2823,57 @@ getType_CGActions (CircThenElse v1CGActions v2CGActions)
 rename_ftv nm (ZBranch0 (a,b,c)) = (ZBranch0 (a,b,nm))
 
 
+\end{code}
+\begin{code}
+-- getting all ZVar from a ZPredicate
+
+get_v_ZGenFilt (Include _ZSExpr) = []
+get_v_ZGenFilt (Choose _ZVar _ZExpr) = get_v_ZExpr _ZExpr
+get_v_ZGenFilt (Check _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZGenFilt (Evaluate _ZVar _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
+
+get_v_ZExpr :: ZExpr -> [ZVar]
+get_v_ZExpr (ZVar v) = get_ZVar_st v
+get_v_ZExpr (ZInt _ZInt) = []
+get_v_ZExpr (ZGiven _GivenValue) = []
+get_v_ZExpr (ZFree0 _ZVar) = []
+get_v_ZExpr (ZFree1 _ZVar _ZExpr) = get_v_ZExpr _ZExpr
+get_v_ZExpr (ZTuple _ZExpr_lst) = (concat $ map get_v_ZExpr _ZExpr_lst)
+get_v_ZExpr (ZBinding _ZVar_ZExpr_lst) = (concat $ map (\(a,b) -> [a]++(get_v_ZExpr b)) _ZVar_ZExpr_lst)
+get_v_ZExpr (ZSetDisplay _ZExpr_lst) = (concat $ map get_v_ZExpr _ZExpr_lst)
+get_v_ZExpr (ZSeqDisplay _ZExpr_lst) = (concat $ map get_v_ZExpr _ZExpr_lst)
+get_v_ZExpr (ZFSet _ZFSet) = []
+get_v_ZExpr (ZIntSet mze mze2) = []
+get_v_ZExpr (ZGenerator _ZReln _ZExpr) = get_v_ZExpr _ZExpr
+get_v_ZExpr (ZCross _ZExpr_lst) = (concat $ map get_v_ZExpr _ZExpr_lst)
+get_v_ZExpr (ZFreeType _ZVar _ZBranch_lst) = []
+
+get_v_ZExpr (ZSetComp _ZGenFilt_lst mze) = concat $ map get_v_ZGenFilt _ZGenFilt_lst
+get_v_ZExpr (ZLambda _ZGenFilt_lst _ZExpr) = (get_v_ZExpr _ZExpr)
+get_v_ZExpr (ZESchema _ZSExpr) = []
+get_v_ZExpr (ZGivenSet _GivenSet) = []
+get_v_ZExpr (ZUniverse) = undefined
+get_v_ZExpr (ZCall _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
+get_v_ZExpr (ZReln _ZReln) = []
+get_v_ZExpr (ZFunc1 _ZFunc1) = []
+get_v_ZExpr (ZFunc2 _ZFunc2) = []
+get_v_ZExpr (ZStrange _ZStrange) = []
+get_v_ZExpr (ZMu _ZGenFilt_lst mze) = []
+get_v_ZExpr (ZELet _ZVar_ZExpr_lst _ZExpr) = (get_v_ZExpr _ZExpr) ++ (concat $ map (\(a,b) -> [a]++(get_v_ZExpr b)) _ZVar_ZExpr_lst)
+get_v_ZExpr (ZIf_Then_Else _ZPred _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
+get_v_ZExpr (ZSelect _ZExpr _ZVar) = get_v_ZExpr _ZExpr
+get_v_ZExpr _ = []
+
+get_v_ZPred (ZAnd _ZPred1 _ZPred2) = (get_v_ZPred _ZPred1) ++ (get_v_ZPred _ZPred2)
+get_v_ZPred (ZOr _ZPred1 _ZPred2) = (get_v_ZPred _ZPred1) ++ (get_v_ZPred _ZPred2)
+get_v_ZPred (ZImplies _ZPred1 _ZPred2) = (get_v_ZPred _ZPred1) ++ (get_v_ZPred _ZPred2)
+get_v_ZPred (ZIff _ZPred1 _ZPred2) = (get_v_ZPred _ZPred1) ++ (get_v_ZPred _ZPred2)
+get_v_ZPred (ZNot _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZPred (ZExists _ZGenFilt_lst _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZPred (ZExists_1 _ZGenFilt_lst _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZPred (ZForall _ZGenFilt_lst _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZPred (ZPLet _ZVar_ZExpr_lst _ZPred) = (get_v_ZPred _ZPred)
+get_v_ZPred (ZEqual _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
+get_v_ZPred (ZMember _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
+get_v_ZPred _ = []
 \end{code}

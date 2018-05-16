@@ -109,11 +109,21 @@ Looking at the output from the "omega" command,
 we see that all references to "GO" have disappeared.
 
 --------------------------------------------------------------------------------
-2018-mm-dd (n)
+2018-05-16 (Artur)
 Relevant Circus extracts:
-Error found in generated CSPm:
-Fixed (by hacking generated CSPm file) to:
 
+\\ \circchannel do : (CODEID,OPS)
+
+Error found in generated CSPm:
+
+do.KNL.OP1 -> ...
+
+The types are not the same. Instead, we could do:
+1- do.(KNL,OP1) \then
+or
+2 - \\ \circchannel do : CODEID \cross OPS
+
+I changed the tex file with (2), changing the channel to CODEID \cross OPS 
 
 --------------------------------------------------------------------------------
 2018-mm-dd (n)

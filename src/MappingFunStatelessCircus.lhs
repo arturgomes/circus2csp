@@ -596,6 +596,32 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 
 is written in Haskell as:
 \begin{code}
+omega_CAction (CSPCommAction (ChanComm c fe) a) =
+  case lxs of
+      [] -> (CSPCommAction (ChanComm c fe) (omega_CAction a))
+      _ -> make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c fe) (omega_prime_CAction a)))
+  where e = getChanDotExpVar fe
+        lxs = (remdups $ concat $ map get_ZVar_st $ concat $ map varset_to_zvars $ map free_var_ZExpr e)
+\end{code}
+\end{omegaenv}
+
+Included by Artur - any prefixed action which does not uses any state variables should propagate $\Omega_A$ and not $\Omega'_A$.
+
+
+\begin{omegaenv}
+\begin{circus}
+\Omega_A (c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
+\\\t2 mget.v_0?vv_0 \then \ldots \then mget.v_n?vv_n \then
+\\\t2 mget.l_0?vl_0 \then \ldots \then mget.l_m?vl_m \then
+\\\t2 c.e(vv_0,\ldots,vv_n,vl_0,\ldots,vl_m) \then \Omega'_{A} (A)
+\end{circus}
+where
+\begin{circus}
+FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
+\end{circus}
+
+is written in Haskell as:
+\begin{code}
 omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (omega_prime_CAction a)))
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
@@ -604,6 +630,7 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
 \end{code}
 \end{omegaenv}
+
 
 Included by Artur - An input carrying a value named with a state variable is defined as an assignment to that, but as assignments are not allowed,
 we directly make a mset with that value.
@@ -646,6 +673,7 @@ omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
 \end{code}
 \end{omegaenv}
+
 \begin{omegaenv}
 \begin{code}
 omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAction b))
@@ -674,9 +702,10 @@ is written in Haskell as:
 \begin{code}
 omega_CAction (CSPGuard g a)
   -- 24/01/2018 - I think CSP won't accept the mgets before the guard, and therefore, it needs to be omega_CAction again.
-  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_CAction a)))
   -- = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
-  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred g))
+  where lxs = concat (map get_ZVar_st $ get_v_ZPred g)
+  -- where lxs = remdups $ concat (map get_ZVar_st $ get_v_ZPred g)
 \end{code}
 
 \end{omegaenv}

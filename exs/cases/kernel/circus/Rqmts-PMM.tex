@@ -220,7 +220,7 @@ Assume simple operations,
 and use a channel called $do$ to observe them.
 \begin{circus}
    OPS ::= OP1 | OP2 | OP3 | INC
-\\ \circchannel do : (CODEID,OPS)
+\\ \circchannel do : CODEID \cross OPS
 \end{circus}
 
 
