@@ -82,8 +82,8 @@ find_facts2 vars fv (Check (ZMember (ZTuple [a,b]) (ZReln r))) =
     -- thm: a < b  => a in (? < b) & b in (? > a)
     mem_facts vars fv a r b ++
     (if invertible r
-	then mem_facts vars fv b (invert r) a
-	else [])
+  then mem_facts vars fv b (invert r) a
+  else [])
 find_facts2 vars fv (Check (ZMember (ZTuple [a,b]) e2)) =
     -- thm: (a,b) \in rhs  =>  a \in \dom rhs & b \in \ran rhs
     find_facts2 vars fv (Check (ZMember a (ZCall (ZFunc1 ZDom) e2))) ++
@@ -113,14 +113,14 @@ mem_facts vars fv _ _ _ =
 
 
 makefact :: [ZVar] -> (ZExpr -> VarSet) -> ZVar -> ZExpr -> ZPred
-	    -> UsefulFacts
+      -> UsefulFacts
 -- This is a helper function that discards facts that are recursive,
 -- or do not involve interesting variables.
 makefact vars fv v e fact
     | v `elem` vars && not (ZVar v `in_varset` evars)
-	= [(fact, evars)]
+  = [(fact, evars)]
     | otherwise
-	= []
+  = []
     where
     evars = fv e
 
@@ -161,7 +161,7 @@ eq_facts vars fv (ZBinding es1) (ZBinding es2) =
     -- just use any names that happen to be in common.
     -- (We could raise an error, but this function doesn't return errors!)
     concat [eq_facts vars fv e1 e2
-	    | ((n1,e1),(n2,e2)) <- zip es1 es2, n1==n2]
+      | ((n1,e1),(n2,e2)) <- zip es1 es2, n1==n2]
 eq_facts vars fv (ZBinding bs) rhs =
     -- thm: <x==a,y==b>=rhs  =>  a=rhs.x & b=rhs.y
     concat [eq_facts vars fv e (ZSelect rhs v) | (v,e) <- bs]
@@ -188,8 +188,8 @@ reorder_gfs :: [ZGenFilt] -> UsefulFacts -> [ZGenFilt]
 -- This makes the following processing simpler.
 reorder_gfs gfs facts = result
     --debug2 "REORDER="(gfs++[Check ZFalse{reason=[]}]
-    --		      ++gfs2++[Check ZFalse{reason=[]}]
-    --		      ++result) result
+    --          ++gfs2++[Check ZFalse{reason=[]}]
+    --          ++result) result
     where
     gfs2   = simplify_gfs gfs
     result = reorder_gfs3 gfs2 facts
@@ -200,42 +200,42 @@ reorder_gfs2 []  _  =
     []
 reorder_gfs2 gfs facts
     | not(null usefuleqs) =
-	eqgen (head usefuleqs)
-	++ reorder_gfs3 (gfs \\ (eqused (head usefuleqs))) facts
+  eqgen (head usefuleqs)
+  ++ reorder_gfs3 (gfs \\ (eqused (head usefuleqs))) facts
     | not(null usefulmem) =
-	let (v,t,es) = snd (minimum usefulmem) in
-	[Choose v (bigcap (filter (/= ZUniverse) (t:es)))]
-	++ reorder_gfs3 (gfs \\ (Choose v t : concatMap (memused v) (t:es)))
-			facts
+  let (v,t,es) = snd (minimum usefulmem) in
+  [Choose v (bigcap (filter (/= ZUniverse) (t:es)))]
+  ++ reorder_gfs3 (gfs \\ (Choose v t : concatMap (memused v) (t:es)))
+      facts
     | not(null choices) =
-	-- output an arbitrary (Choose _ _) term.
-	head choices : reorder_gfs3 (gfs \\ [head choices]) facts
+  -- output an arbitrary (Choose _ _) term.
+  head choices : reorder_gfs3 (gfs \\ [head choices]) facts
     | otherwise =
-	-- output any remaining predicates
-	gfs
+  -- output any remaining predicates
+  gfs
   where
   bigcap []  = ZUniverse
   bigcap [s] = s
   bigcap ss  = ZCall (ZFunc1 ZBigCap) (ZSetDisplay ss)
   bndvars = varset_from_zvars (genfilt_names gfs)
   usefuleqs = [(v,e,t) |
-	       Choose v t <- gfs,
-	       (ZEqual (ZVar v2) e,fvars) <- facts,
-	       v2==v,
-	       fvars `inter_varset` bndvars == empty_varset,
-	       free_vars t `inter_varset` bndvars == empty_varset]
+         Choose v t <- gfs,
+         (ZEqual (ZVar v2) e,fvars) <- facts,
+         v2==v,
+         fvars `inter_varset` bndvars == empty_varset,
+         free_vars t `inter_varset` bndvars == empty_varset]
   eqgen (v,e,t) = [Evaluate v e t]
   eqused (v,e,t) = [Choose v t,
-		    Evaluate v e t,
-		    Check (ZEqual (ZVar v) e),
-		    Check (ZEqual e (ZVar v))]
+        Evaluate v e t,
+        Check (ZEqual (ZVar v) e),
+        Check (ZEqual e (ZVar v))]
   usefulmem = [(searchsize (t:es), (v,t,es)) |
-	       Choose v t <- gfs,
-	       let es = [e |
-			 (ZMember (ZVar v2) e,fvars) <- facts,
-			 v2 == v,
-			 fvars `inter_varset` bndvars == empty_varset]
-	       ]
+         Choose v t <- gfs,
+         let es = [e |
+                  (ZMember (ZVar v2) e,fvars) <- facts,
+                  v2 == v,
+                  fvars `inter_varset` bndvars == empty_varset]
+         ]
   choices = [c | c@(Choose _ _) <- gfs]
   memused v s@(ZGenerator r e) =
       [Check (ZMember (ZVar v) s),
@@ -253,10 +253,8 @@ reorder_gfs3 gfs facts =
     where
     bndvars = varset_from_zvars (genfilt_names gfs)
     preds = filter (does_not_depend_upon bndvars) gfs
-    does_not_depend_upon vs (Check p)
-	= free_vars p `inter_varset` vs == empty_varset
-    does_not_depend_upon vs _
-	= False
+    does_not_depend_upon vs (Check p) = free_vars p `inter_varset` vs == empty_varset
+    does_not_depend_upon vs _ = False
 
 
 -- Unfolds (Evaluate _ _ _) entries and complex intersection types.
@@ -265,13 +263,13 @@ simplify_gfs :: [ZGenFilt] -> [ZGenFilt]
 simplify_gfs gfs = concatMap expand gfs
     where
     expand (Choose x (ZCall (ZFunc1 ZBigCap) (ZSetDisplay (t:tt))))
-	   -- flatten any complex intersection types created by optimise
+     -- flatten any complex intersection types created by optimise
                             = [Choose x t] ++ map (makemem x) tt
     expand t@(Choose _ _)   = [t]
     expand t@(Check _)      = [t]
     expand (Evaluate x e t) = expand (Choose x t) ++ [Check (ZEqual (ZVar x) e)]
     expand t                = error ("reorder_gfs should not see: "
-					  ++ show t)
+            ++ show t)
     makemem x (ZGenerator r e) = Check (ZMember (ZTuple [ZVar x,e]) (ZReln r))
     makemem x t = Check (ZMember (ZVar x) t)
 

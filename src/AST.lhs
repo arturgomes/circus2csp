@@ -977,7 +977,41 @@ A \Circus\ specification is a list of paragraphs, $ZPara$. They can be either a 
   | CircChanSet ZName CSExp     -- \circchanset N == CSExp
   | Process ProcDecl            -- ProcDecl
   | Assert String            -- CSP Assertion text
+  -- | AssertFDR Assertion            -- CSP Assertion text
   deriving (Eq,Ord,Show)
+
+-- From and based on https://github.com/tomgr/libcspm/blob/master/src/CSPM/Syntax/AST.hs
+  -- data Assertion =
+  --     -- | A refinement assertion, e.g. @assert P [F= Q@.
+  --     Refinement {
+  --         refinementSpecification :: CAction,
+  --         refinementModel :: Model,
+  --         refinementImplementation :: CAction,
+  --     }
+  --     -- | A check of property, like deadlock freedom, e.g.
+  --     -- @assert P :[deadlock free [F]]@.
+  --     | PropertyCheck {
+  --         propertyCheckProcess :: CAction,
+  --         propertyCheckProperty :: SemanticProperty ,
+  --         propertyCheckModel :: Maybe Model,
+  --     }
+  --     deriving (Eq, Ord, Show)
+  --
+  -- data Model =
+  --     Traces
+  --     | Failures
+  --     | FailuresDivergences
+  --     | Refusals
+  --     | RefusalsDivergences
+  --     | Revivals
+  --     | RevivalsDivergences
+  --     deriving (Eq, Ord, Show)
+  --
+  -- data SemanticProperty =
+  --   DeadlockFreedom
+  --   | Deterministic
+  --   | LivelockFreedom
+  --   deriving (Eq, Ord, Show)
 
 type CProgram = [ZPara]
 \end{code}

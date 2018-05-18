@@ -914,7 +914,7 @@ Here we replace the variable names of a CValDecl with the parameters of the acti
 -- get_action _ _ _ [] = error "Action list is empty"
 rename_action (CActionCommand (CValDecl zfs ma)) xfs
   = (replace_ParamAction_CAction1 ma (concat $ get_var_Choose zfs) xfs)
--- rename_action x xfs = x
+rename_action x xfs = x
 
 get_var_Choose [] = []
 get_var_Choose ((Choose a b):xs) = [a]:(get_var_Choose xs)

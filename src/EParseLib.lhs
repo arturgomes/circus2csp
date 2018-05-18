@@ -133,22 +133,22 @@ data ParseResult tok ast
   --      yet, this will be 'no_error'.
   --
   = ParseResult{parses    :: [(ast, [ParseError], [Token tok])],
-		seencut   :: Bool,
-		besterror :: PossibleParseError tok
-		}
+    seencut   :: Bool,
+    besterror :: PossibleParseError tok
+    }
   deriving (Show)
 
 eof_parse :: ParseResult tok ast
 eof_parse
   = ParseResult{parses=[],
-		seencut=False,
-		besterror=parse_error [] "Unexpected end of input"}
+    seencut=False,
+    besterror=parse_error [] "Unexpected end of input"}
 
 error_parse :: [Token tok] -> ParseResult tok ast
 error_parse toks
   = ParseResult{parses=[],
-		seencut=False,
-		besterror=parse_error toks "Syntax error"}
+    seencut=False,
+    besterror=parse_error toks "Syntax error"}
 
 newtype EParser tok ast   = P ([Token tok] -> ParseResult tok ast)
 
@@ -172,25 +172,25 @@ instance Functor (EParser toks) where
   fmap  = liftM
 instance Applicative (EParser tok) where
   pure v = P (\toks -> ParseResult{parses=[(v,[],toks)],
-				     seencut=False,
-				     besterror=no_error})
+             seencut=False,
+             besterror=no_error})
   (<*>) = ap
 
 instance Monad (EParser tok) where
   return = pure
   fail msg = P (\toks -> ParseResult{parses=[],
-				     seencut=False,
-				     besterror=parse_error toks msg})
+             seencut=False,
+             besterror=parse_error toks msg})
   (P p) >>= q = P (\toks
-		   -> let pout = p toks in
-		      let q2 (t,es,ts) = epapply_with_errors (q t) es ts in
-		      let qout = takeUntil1 seencut (map q2 (parses pout)) in
-		      ParseResult{parses   = concatMap parses qout,
-				  seencut  = seencut pout
-					     || any seencut qout,
-				  besterror= choose_error (besterror pout
-						   : map besterror qout)
-				  })
+       -> let pout = p toks in
+          let q2 (t,es,ts) = epapply_with_errors (q t) es ts in
+          let qout = takeUntil1 seencut (map q2 (parses pout)) in
+          ParseResult{parses   = concatMap parses qout,
+          seencut  = seencut pout
+               || any seencut qout,
+          besterror= choose_error (besterror pout
+               : map besterror qout)
+          })
 
 instance Alternative (EParser tok) where
   (<|>) (P p) (P q)= P (\toks -> choose (p toks) (q toks))
@@ -198,8 +198,8 @@ instance Alternative (EParser tok) where
             choose r@ParseResult{seencut=True} _ = r
             choose pout qout
               = ParseResult{parses    = parses pout ++ parses qout,
-        		    seencut   = seencut pout || seencut qout,
-        		    besterror = choose_error [besterror pout, besterror qout]}
+                seencut   = seencut pout || seencut qout,
+                besterror = choose_error [besterror pout, besterror qout]}
   empty = P (\toks -> error_parse toks)
 
 instance MonadPlus (EParser tok) where
@@ -214,8 +214,8 @@ p +++ q = first (p `mplus` q)
 
 item :: EParser tok tok
 item = P (\inp -> case inp of
-		       []     -> eof_parse
-		       (x:xs) -> epapply (return (tokenValue x)) xs)
+           []     -> eof_parse
+           (x:xs) -> epapply (return (tokenValue x)) xs)
 
 -- We define sat as a primitive in order to return correct error positions.
 -- TODO: does this equal this?   No.
@@ -224,10 +224,10 @@ item = P (\inp -> case inp of
 sat :: (tok -> Bool) -> EParser tok tok
 sat p
   = P (\inp -> case inp of
-		    []     -> eof_parse
-		    (x:xs) -> if p (tokenValue x)
-			      then epapply (return (tokenValue x)) xs
-			      else error_parse inp)
+        []     -> eof_parse
+        (x:xs) -> if p (tokenValue x)
+            then epapply (return (tokenValue x)) xs
+            else error_parse inp)
 
 -- We define tok as a primitive in order to return a nicer error message.
 -- Apart from the error message, tok t = sat (== t)
@@ -235,10 +235,10 @@ sat p
 tok :: (Show tok,Eq tok) => tok -> EParser tok tok
 tok t
   = P (\inp -> case inp of
-		[]     -> eof_parse
-		(x:xs) -> if tokenValue x == t
-			  then epapply (return (tokenValue x)) xs
-			  else epapply (fail ("expected " ++ show t)) inp)
+    []     -> eof_parse
+    (x:xs) -> if tokenValue x == t
+        then epapply (return (tokenValue x)) xs
+        else epapply (fail ("expected " ++ show t)) inp)
 
 -- Read the original paper to find out why this strange definition
 -- is sometimes needed to improve laziness.
@@ -266,8 +266,8 @@ first (P p)        = P (\inp -> first_parse (p inp))
 --
 cut    :: EParser tok ()
 cut     = P (\toks -> ParseResult{parses=[((),[],toks)],
-					     seencut=True,
-					     besterror=no_error})
+               seencut=True,
+               besterror=no_error})
 
 -- To localize the effect of a cut, use:  localcut p.
 -- This still allows the parser p to return multiple parses,
@@ -290,9 +290,9 @@ localizecut (P p) = P (\toks -> (p toks){seencut=False})
 --  where
 --  recover [] = eof_parse
 --  recover toks = let result = p toks in
---		 if null (parses result)
---		 then recover (tail toks)
---		 else result{errors=[recovery_error]}  -- TODO improve
+--     if null (parses result)
+--     then recover (tail toks)
+--     else result{errors=[recovery_error]}  -- TODO improve
 
 
 
@@ -305,11 +305,11 @@ epapply :: EParser tok ast -> [Token tok] -> ParseResult tok ast
 epapply (P p) inp = p inp
 
 epapply_with_errors :: EParser tok ast -> [ParseError] -> [Token tok]
-		  -> ParseResult tok ast
+      -> ParseResult tok ast
 epapply_with_errors (P p) errs inp =
     let presult = p inp
-	adderrs (t,es,ts) = (t, errs++es, ts) in
-    presult{parses = map adderrs (parses presult)}
+        adderrs (t,es,ts) = (t, errs++es, ts) in
+        presult{parses = map adderrs (parses presult)}
 
 epapplystr :: EParser Char ast -> String -> ParseResult Char ast
 epapplystr (P p) = p . tokenise 1 0
@@ -408,11 +408,11 @@ chainr p op v
 chainr1 :: EParser tok a -> EParser tok (a -> a -> a) -> EParser tok a
 p `chainr1` op
         = do {x <- p; rest x}
-		     where
-			rest x = do {f <- op;
-				     y <- p `chainr1` op;
-				     return (f x y)}
-				 +++ return x
+         where
+      rest x = do {f <- op;
+             y <- p `chainr1` op;
+             return (f x y)}
+         +++ return x
 
 ops    :: [(EParser tok a, b)] -> EParser tok b
 ops xs
@@ -454,8 +454,8 @@ ident   = do {x <- lower; xs <- many alphanum; return (x:xs)}
 
 nat    :: Parser Int
 nat     = do {x <- digit; return (digitToInt x)} `chainl1` return op
-		     where
-			m `op` n = 10*m + n
+         where
+      m `op` n = 10*m + n
 
 int    :: Parser Int
 int     = do {char '-'; n <- nat; return (-n)} +++ nat
@@ -490,7 +490,7 @@ symbol xs          = token (string xs)
 
 identifier        :: [String] -> Parser String
 identifier ks      = token (do {x <- ident; if not (elem x ks) then return x
-							       else mzero})
+                     else mzero})
 
 ------------------------------------------------------------------------------
 \end{code}

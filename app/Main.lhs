@@ -20,6 +20,7 @@ import Control.Exception
 import Control.Monad
 import System.Directory
 import MappingFunStatelessCircus
+import System.Environment
 --import System.Console.Readline  -- was Readline
 
 prompt1 = "Circus2CSP> " -- prompt for each command
@@ -62,6 +63,30 @@ read_config anim
   = do txt <- readFile ".c2c"
        let anim' = parse_configs anim $ lines txt
        return anim'
+
+
+-- Print the current directory structure with files
+printM = do
+  txt <- readFile ".c2c"
+  mapM_ tl [getSrcDir $ parse_configs animator0 $ lines txt ]
+
+tl p = vs (if "/" `isPrefixOf` p then "" else ".") "" "" "" p
+
+vs p l t a n = do
+  putStrLn (l ++ a ++ t ++ n)
+  vsc (p ++ "/" ++ n) (l ++ exs)
+  where
+    exs = case a of ""  -> ""; "`" -> "    "; _   -> "|   "
+
+vsc p l =
+  wm (doesDirectoryExist p) $ do
+      cn <- getDirectoryContents p
+      let vi = sort . filter (`notElem` [".", ".."]) $ cn
+          as = replicate (length vi - 1) "|" ++ ["`"]
+      zipWithM_ (vs p l "-- ") as vi
+
+wm mtest ma = mtest >>= flip when ma
+
 
 parse_configs anim [] = anim
 parse_configs anim (ln:lns)
@@ -143,6 +168,7 @@ help =
    fmtcmd "tocsp"                  "Map the whole spec into CSP.",
    fmtcmd "reload"                 "Re-load Z specification from current file",
    fmtcmd "latex"                  "Pretty print into LaTeX.",
+   fmtcmd "list"                   "List the files in the current directory.",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
    fmtcmd "% comment"              "(Ignored)"
@@ -182,6 +208,8 @@ do_cmd cmd args anim fn
       done_cmd (omegaCircus anim fn)
   | cmd == "tocsp" =
       done_cmd (anim, upslonCircus anim fn, fn)
+  | cmd == "list" =
+      do{printM; get_cmd anim fn}
   | cmd == "conv"
      = catch
         (do let fname = getSrcDir anim++args
