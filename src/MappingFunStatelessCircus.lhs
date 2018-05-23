@@ -620,15 +620,15 @@ where
 FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 \end{circus}
 
-is written in Haskell as:
-\begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
-  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (omega_prime_CAction a)))
-  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
-omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
-  = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
-  where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
-\end{code}
+% is written in Haskell as:
+% \begin{code}
+% omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+%   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (omega_prime_CAction a)))
+%   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
+% omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+%   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
+%   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
+% \end{code}
 \end{omegaenv}
 
 
@@ -653,24 +653,24 @@ v_n \in StateVariables
 
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
-  = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
-      False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_CAction a))
-omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
-  = case is_ZVar_st e of
-      True -> (CSPCommAction
-        (ChanComm c
-          ( (ChanInp (join_name "t" e)):
-            ( map (\e -> (ChanInp (join_name "t" e))) ( map getChanName xs))))
-            (make_set_com
-              omega_CAction
-              ((e,[],""):( map (\e -> (e,[],"")) ( map getChanName xs)))
-              ((ZVar ((join_name "t" e),[],"")):
-                (map (\e -> (ZVar ((join_name "t" e),[],"")))
-                  ( map getChanName xs))) a))
-
-      False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
+-- omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+--   = case is_ZVar_st e of
+--       True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+--       False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_CAction a))
+-- omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+--   = case is_ZVar_st e of
+--       True -> (CSPCommAction
+--         (ChanComm c
+--           ( (ChanInp (join_name "t" e)):
+--             ( map (\e -> (ChanInp (join_name "t" e))) ( map getChanName xs))))
+--             (make_set_com
+--               omega_CAction
+--               ((e,[],""):( map (\e -> (e,[],"")) ( map getChanName xs)))
+--               ((ZVar ((join_name "t" e),[],"")):
+--                 (map (\e -> (ZVar ((join_name "t" e),[],"")))
+--                   ( map getChanName xs))) a))
+--
+--       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
 \end{code}
 \end{omegaenv}
 
@@ -684,12 +684,12 @@ omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAct
 \Omega_A (c!e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A) \circdef
 \\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
 \end{circus}
-\begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
-  = omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
-omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
-  = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
-\end{code}
+% \begin{code}
+% omega_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
+%   = omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+% omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
+%   = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+% \end{code}
 \end{omegaenv}
 \begin{omegaenv}
 \begin{circus}
@@ -724,13 +724,13 @@ x \in wrtV(A)
 
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  = case not (elem x (wrtV(a))) of
-    True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
-             (ChanComm c [ChanInpPred x p])
-                 (omega_prime_CAction a)))
-    _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
-  where lsx = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred p))
+-- omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+--   = case not (elem x (wrtV(a))) of
+--     True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
+--              (ChanComm c [ChanInpPred x p])
+--                  (omega_prime_CAction a)))
+--     _  -> (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+--   where lsx = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZPred p))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -836,57 +836,29 @@ omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZVar ("\\emptyset",[],
       (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip)))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
-omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZSetDisplay ns2] a1 a2)
+omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
   = make_get_com lsx
       (CSPNSParal [] cs []
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
+         ((mkZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns1))))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
+         ((mkZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns2))))
        (CSExpr "MEML")))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
-omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZVar ("\\emptyset",[],"")] a1 a2)
-  = make_get_com lsx
-      (CSPNSParal [] cs []
-      (CSPHide
-       (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
-        (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
-       (CSExpr "MEML"))
-      (CSPHide
-       (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
-        (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay []]))
-       (CSExpr "MEML")))
-   where
-    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
-omega_CAction (CSPNSParal [ZSetDisplay ns1] cs [ZSetDisplay ns2] a1 a2)
-  = make_get_com lsx
-      (CSPNSParal [] cs []
-      (CSPHide
-       (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
-        (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns1]))
-       (CSExpr "MEML"))
-      (CSPHide
-       (CSPNSParal [] (CSExpr "MEML") []
-        (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
-        (CSPParAction "MemoryMerge"
-         [ZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx),ZSeqDisplay ns2]))
-       (CSExpr "MEML")))
-   where
-    lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
+    mkZSetDisplay [] = []
+    mkZSetDisplay [x] = [ZSetDisplay [x]]
+    mkZSetDisplay (x:xs) = (mkZSetDisplay [x])++(mkZSetDisplay xs)
+    get_ns [ZVar ("\\emptyset",[],"")] = [ZSeqDisplay []]
+    get_ns [ZSetDisplay xs] = [ZSeqDisplay xs]
+    get_ns _ = []
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}

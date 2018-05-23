@@ -220,6 +220,7 @@ data ZToken
   | L_RANGLE               -- '\rangle'
   | L_LBLOT                -- '\lblot'  (these begin/end a literal binding)
   | L_RBLOT                -- '\rblot'
+  | L_SYM                  -- '\sym'
 
   -- schema operators and logical operators are overloaded.
   | L_FORALL               -- '\forall'
@@ -362,6 +363,8 @@ zlexz c ls ('\\':'t':'1':s) = zlexz (c+3) ls s -- Artur : producing \t1, \t2, \t
 zlexz c ls ('\\':'t':'2':s) = zlexz (c+3) ls s
 zlexz c ls ('\\':'t':'3':s) = zlexz (c+3) ls s
 zlexz c ls ('\\':'t':'4':s) = zlexz (c+3) ls s
+zlexz c ls ('\\':'q':'u':'a':'d':s) = zlexz (c+5) ls s
+zlexz c ls ('\\':'q':'q':'u':'a':'d':s) = zlexz (c+6) ls s
 -- LaTeX commands that start with a backslash
 zlexz c ls ('\\':'\\':s)
   = Token L_BACKSLASH_BACKSLASH (line ls) c : zlexz (c+2) ls s
@@ -438,6 +441,15 @@ zlexz c ls ('\\':s)
       = tok_1 (L_PRE_GEN ("\\finset_1"))
   | cmd=="finset" = tok (L_PRE_GEN ("\\finset"))  -- must come after \finset_1
   -- A.2.5.2 Section set_toolkit
+  {-
+  Artur (may 2018)
+  -- I'm trying to fix the ambiguity of f~i
+      1 - either constructor from free type f<<i>>
+      2 - return of a function f(i)
+
+    Therefore, I'll use \sym whenever a freetype is used
+  -}
+  | cmd=="sym" = tok (L_IN_FUN 1 ('\\':cmd))
   | cmd=="mapsto" = tok (L_IN_FUN 1 ('\\':cmd))
   | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="comp"   = tok (L_IN_FUN 4 ('\\':cmd))

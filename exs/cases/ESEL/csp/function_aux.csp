@@ -6,11 +6,14 @@
 -- Function is a set {(x1, y1),...,(xn, yn)}
 
 -- Transforms a singleton set into the element itself
+pick({}) = error("Empty set found for pick()")
 pick({x}) = x
-
 -- Returns the function return
 -- Raises error if z is not in the domain of the function
-apply(f,x) = pick({ v | (n,v) <- f, n==x})
+apply(f,x) =
+    let
+      ev = { v | (n,v) <- f, n==x}
+    within if empty(ev) then error("Can't use 'apply' within f: "^show(f)^" and x: "^show(x)) else pick(ev)
 
 -- domain antirestriction
 ddres(f,xs) = {(n,v) | (n,v) <- f, not member(n,xs)}
@@ -23,6 +26,10 @@ over(f,n,v) = union(ddres(f,{n}),{(n,v)})
 
 fst((a,b)) = a
 
+-- overriding
+oplus(s1,s2) = union(
+		{(x,y) | (x,y) <- s1, not member(x,dom(s2))},
+		{(u,v) | (u,v) <- s2, member(u,dom(s1))} )
 
 -- Returns the domain of a relation
 dom(f) = {n | (n,v) <- f}

@@ -1155,23 +1155,31 @@ rename_vars_CAction1 pn lst (CSPRenAction zn crpl)
 rename_vars_CAction1 pn lst (CSPRecursion zn a)
  = (CSPRecursion zn (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPUnParAction zgf a zn)
- = (CSPUnParAction zgf (rename_vars_CAction1 pn lst a) zn)
+ = (CSPUnParAction (map (rename_vars_ZGenFilt1 pn lst) zgf) (rename_vars_CAction1 pn lst a) zn)
 rename_vars_CAction1 pn lst (CSPRepSeq zgf a)
  = (CSPRepSeq zgf (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepExtChoice zgf a)
- = (CSPRepExtChoice zgf (rename_vars_CAction1 pn lst a))
+ = (CSPRepExtChoice (map (rename_vars_ZGenFilt1 pn lst) zgf) (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepIntChoice zgf a)
- = (CSPRepIntChoice zgf (rename_vars_CAction1 pn lst a))
+ = (CSPRepIntChoice (map (rename_vars_ZGenFilt1 pn lst) zgf) (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepParalNS cs zgf ns a)
- = (CSPRepParalNS cs zgf ns (rename_vars_CAction1 pn lst a))
+ = (CSPRepParalNS cs (map (rename_vars_ZGenFilt1 pn lst) zgf) ns (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepParal cs zgf a)
- = (CSPRepParal cs zgf (rename_vars_CAction1 pn lst a))
+ = (CSPRepParal cs (map (rename_vars_ZGenFilt1 pn lst) zgf) (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepInterlNS zgf ns a)
- = (CSPRepInterlNS zgf ns (rename_vars_CAction1 pn lst a))
+ = (CSPRepInterlNS (map (rename_vars_ZGenFilt1 pn lst) zgf) ns (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst (CSPRepInterl zgf a)
- = (CSPRepInterl zgf (rename_vars_CAction1 pn lst a))
+ = (CSPRepInterl (map (rename_vars_ZGenFilt1 pn lst) zgf) (rename_vars_CAction1 pn lst a))
 rename_vars_CAction1 pn lst x = x
 
+
+
+rename_vars_ZGenFilt1 pn  lst (Include s) = (Include s)
+rename_vars_ZGenFilt1 pn  lst (Choose va e)
+  = (Choose va (rename_vars_ZExpr1 pn lst e))
+    where newt = (def_U_prefix $ get_vars_ZExpr e)
+rename_vars_ZGenFilt1 pn  lst (Check p) = (Check (rename_vars_ZPred1 pn lst p))
+rename_vars_ZGenFilt1 pn  lst (Evaluate v e1 e2) = (Evaluate v (rename_vars_ZExpr1 pn lst e1) (rename_vars_ZExpr1 pn lst e2))
 \end{code}
 
 \begin{code}
@@ -2306,11 +2314,13 @@ Hoping to intercalate strings with something
 joinBy sep cont = drop (length sep) $ concat $ map (\w -> sep ++ w) cont
 \end{code}
 \begin{code}
+mk_var_v_var_bnds :: [ZExpr] -> [ZExpr]
 mk_var_v_var_bnds [] = []
 mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
   [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
 mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
 \end{code}
+
 \section{Auxiliary for Ref3}
 \begin{code}
 def_bndg_lhs [] = []
