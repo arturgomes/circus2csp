@@ -154,7 +154,7 @@ The process for overall control of the system, named $Controller$, is defined as
 % \begin{circusaction}
         %
         \t1 AUpdateUnitPrice \circdef uid:ESID; pid:PID \circspot \\
-            \t2 write.uid.(ppmap~pid) \then read.uid?y \then \\
+            \t2 write.uid.(ppmap\sym~pid) \then read.uid?y \then \\
             \t2 (\lcircguard y = (ppmap~pid) \rcircguard \circguard \Skip \\
             \t2 \extchoice \lcircguard y \neq (ppmap~pid) \rcircguard \circguard resp.pid.(fail~\sym~uid) \then \Skip) \\
 % \end{circusaction}

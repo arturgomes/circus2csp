@@ -370,17 +370,17 @@ zaxiomatic_box
 
 zschema_box :: EParser ZToken [ZPara]
 zschema_box
-  = do  tok L_BEGIN_SCHEMA
-	cut
-	tok L_OPENBRACE
-	name <- zschema_name
-	tok L_CLOSEBRACE
-	-- TODO: add generic formals
-	decls <- zdecl_part
-	ax <- opt [] (do {optnls; tok L_WHERE; cut; optnls; zaxiom_part })
-	optnls
-	tok L_END_SCHEMA
-	return [ZSchemaDef name (ZSchema (concat decls ++ ax))]
+  = do {tok L_BEGIN_SCHEMA;
+      	cut;
+      	tok L_OPENBRACE;
+      	name <- zschema_name;
+      	tok L_CLOSEBRACE;
+      	-- TODO: add generic formals
+      	decls <- zdecl_part;
+      	ax <- opt [] (do {optnls; tok L_WHERE; cut; optnls; zaxiom_part });
+      	optnls;
+      	tok L_END_SCHEMA;
+      	return [ZSchemaDef name (ZSchema (concat decls ++ ax))]}
 
 zmachine_box :: EParser ZToken [ZPara]
 zmachine_box
@@ -430,8 +430,7 @@ zbasic_decl
 	 optnls;
 	 e <- zexpression;
 	 return [Choose (make_zvar w d) e | (w,d,_) <- ws]}
-	 -- +++ do  {sr <- zschema_ref;
-	 -- return [Include sr]}
+	 +++ do  {sr <- zschema_ref; return [Include sr]}
 
 -- This differs slightly from the Breuer/Bowen grammar.
 -- To avoid reparsing parenthesized expressions, we define
@@ -775,10 +774,14 @@ zdecoration = many zstroke
 
 zstroke :: EParser ZToken ZDecor
 zstroke
-  = do  L_STROKE w <- sat isStroke
-	return w
+  = do  {L_STROKE w <- sat isStroke;
+	return w}
+  +++ do {L_CINPUT <- sat isStroke; return "?"}
+  +++ do {L_COUTPUT <- sat isStroke; return "!"}
     where
-    isStroke (L_STROKE _) = True
+    isStroke (L_CINPUT) = True;
+    isStroke (L_COUTPUT) = True;
+    isStroke (L_STROKE _) = True;
     isStroke _            = False
 
 zword :: EParser ZToken String
@@ -1471,7 +1474,7 @@ proc_par
 	  		return (concat cap)}
 
 proc_within_environments
-	= do {s <- zparagraph;
+	= do {s <- zschema_box;
 			return (takeZPara s)}
 	 +++
 	do {tok L_BEGIN_CIRCUSACTION;

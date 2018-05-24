@@ -2887,3 +2887,135 @@ get_v_ZPred (ZEqual _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExp
 get_v_ZPred (ZMember _ZExpr1 _ZExpr2) = (get_v_ZExpr _ZExpr1)++(get_v_ZExpr _ZExpr2)
 get_v_ZPred _ = []
 \end{code}
+
+
+
+\begin{code}
+{-
+
+I'm trying to make a translation from Z schemas to Circus actions
+
+Here is the Haskell representation of the scheduler from Jaza examples
+I'm pattern matching variables, so it is not that readable anymore.
+Just using the predicates
+ZSchemaDef sname (ZSchema [Choose ("active",[],"") (ZCall (ZVar ("\\finset",[],"")) (ZVar ("PID",[],""))),Choose ("ready",[],"") (ZCall (ZVar ("\\finset",[],"")) (ZVar ("PID",[],""))),Choose ("waiting",[],"") (ZCall (ZVar ("\\finset",[],"")) (ZVar ("PID",[],""))),
+	Check (ZMember (ZTuple [ZCall (ZVar ("\\#",[],"")) (ZVar ("active",[],"")),ZInt 1]) (ZVar ("\\leq",[],""))),
+	Check (ZEqual (ZCall (ZVar ("\\cap",[],"")) (ZTuple [ZVar ("ready",[],""),ZVar ("waiting",[],"")])) (ZVar ("\\emptyset",[],""))),
+	Check (ZEqual (ZCall (ZVar ("\\cap",[],"")) (ZTuple [ZVar ("active",[],""),ZVar ("waiting",[],"")])) (ZVar ("\\emptyset",[],""))),
+	Check (ZEqual (ZCall (ZVar ("\\cap",[],"")) (ZTuple [ZVar ("active",[],""),ZVar ("ready",[],"")])) (ZVar ("\\emptyset",[],""))),
+	Check (ZImplies (ZEqual (ZVar ("active",[],"")) (ZVar ("\\emptyset",[],""))) (ZEqual (ZVar ("ready",[],"")) (ZVar ("\\emptyset",[],""))))])
+ZSchemaDef sname (ZSchema [
+	Include (ZSRef sname [] []),
+	Check (ZAnd (ZEqual (ZVar ("active",[],"")) (ZVar ("ready",[],""))) (ZAnd (ZEqual (ZVar ("ready",[],"")) (ZVar ("waiting",[],""))) (ZEqual (ZVar ("waiting",[],"")) (ZSetDisplay []))))])
+ZSchemaDef sname (ZSchema [
+	Include (ZSRef (ZSDelta "Scheduler") [] []),
+  Choose ("pp",["?"],"") (ZVar ("PID",[],"")),
+	Check (ZNot (ZMember (ZVar ("pp",["?"],"")) (ZCall (ZVar ("\\cup",[],"")) (ZTuple [ZCall (ZVar ("\\cup",[],"")) (ZTuple [ZVar ("active",[],""),ZVar ("ready",[],"")]),ZVar ("waiting",[],"")])))),
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+ZSchemaDef sname (ZSchema [
+	Include (ZSRef (ZSDelta "Scheduler") [] []),
+  Choose ("pp",["?"],"") (ZVar ("PID",[],"")),
+	Check (ZMember (ZVar ("pp",["?"],"")) (ZVar ("waiting",[],""))),
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+	Check (ZImplies (ZEqual (ZVar (v,["'"],"")) (ZSetDisplay [ZVar (v,["'"],"")) (ZVar ("ready",[],""))))),
+	Check (ZImplies (ZNot (ZEqual (ZVar (v,["'"],"")) (ZVar (v,["'"],"")) (ZCall (ZVar ("\\cup",[],"")) (ZTuple [ZVar ("ready",[],""),ZSetDisplay [ZVar ("pp",["?"],"")]])))))])
+ZSchemaDef sname (ZSchema [
+	Include (ZSRef (ZSDelta "Scheduler") [] []),
+  Choose ("pp",["!"],"") (ZVar ("PID",[],"")),
+	Check (ZNot (ZEqual (ZVar ("active",[],"")) (ZSetDisplay []))),
+	Check (ZMember (ZVar ("pp",["!"],"")) (ZVar ("ready",[],""))),
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+ZSchemaDef sname (ZSchema [
+	Include (ZSRef (ZSDelta "Scheduler") [] []),
+	Check (ZNot (ZEqual (ZVar ("active",[],"")) (ZSetDisplay []))),
+	Check (ZEqual (ZVar ("ready",[],"")) (ZSetDisplay [])),
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+	Check (ZEqual (ZVar (v,["'"],"")) e)
+ZSchemaDef sname (ZSchema [
+  Choose ("state",[],"") (ZVar ("Scheduler",[],"")),
+  Choose ("init",[],"") (ZVar ("Init",[],"")),
+  Choose ("new",[],"") (ZVar ("New",[],"")),
+  Choose ("ready",[],"") (ZVar ("Ready",[],"")),
+  Choose ("swap",[],"") (ZVar ("Swap",[],""))])
+
+-}
+
+is_predicate :: ZPred -> Bool
+is_predicate (ZFalse{reason=_}) = True
+is_predicate (ZTrue{reason=_}) = True
+is_predicate (ZAnd a b) = is_predicate a && is_predicate b
+is_predicate (ZOr a b) = is_predicate a && is_predicate b
+is_predicate (ZImplies a b) = is_predicate a && is_predicate b
+is_predicate (ZIff a b) = is_predicate a && is_predicate b
+is_predicate (ZNot _ZPred) = True
+is_predicate (ZExists _ _) = True
+is_predicate (ZExists_1 _ _) = True
+is_predicate (ZForall _ _) = True
+is_predicate (ZPLet _ _) = True
+is_predicate (ZEqual (ZVar v) _) = not (is_primed_zvar v)
+is_predicate (ZMember _ _) = True
+is_predicate _ = True
+\end{code}
+
+Making any precondition as a predicate for guards in Circus
+\begin{code}
+get_schema_guards :: ZPara -> PPar
+get_schema_guards (ZSchemaDef (ZSPlain sname) (ZSchema xs))
+  = get_schema_guards' sname (concat $ map getChooseFrom_ZGenFilt xs)
+
+get_schema_guards' :: ZName -> [ZPred] -> PPar
+get_schema_guards' sname xs
+  | not(null(fst(find_schema_guards xs [] []))) = (CParAction sname (CircusAction (make_schema_guards xs)))
+  | otherwise = (CParAction sname (CircusAction (schema_to_cactions xs)))
+\end{code}
+
+Filtering Choose from ZGenFilt
+\begin{code}
+getChooseFrom_ZGenFilt :: ZGenFilt -> [ZPred]
+getChooseFrom_ZGenFilt (Include _) = []
+getChooseFrom_ZGenFilt (Choose _ _) = []
+getChooseFrom_ZGenFilt (Check e) = [e]
+getChooseFrom_ZGenFilt (Evaluate _ _ _) = []
+\end{code}
+
+Filtering preconditions for guards: g is a list of guards, e is the remaining elements of the xs list
+
+\begin{code}
+find_schema_guards [] g e = (concat g, concat e)
+find_schema_guards [x] g e
+  | is_predicate x = find_schema_guards [] ([x]:g) e
+  | otherwise = find_schema_guards [] g ([x]:e)
+find_schema_guards (x:xs) g e
+  | is_predicate x = find_schema_guards xs ([x]:g) e
+  | otherwise = find_schema_guards xs g ([x]:e)
+\end{code}
+
+\begin{code}
+make_schema_guards xs =
+    (CSPGuard (make_guards g) (schema_to_cactions e))
+    where
+      (g,e) = (find_schema_guards xs [] [])
+      make_guards [x] = x
+      make_guards (x:xs) = (ZAnd x (make_guards xs))
+\end{code}
+
+\begin{code}
+schema_to_cactions :: [ZPred] -> CAction
+schema_to_cactions [ZEqual (ZVar (v,["'"],"")) e]
+  = (CActionCommand (CAssign [(v,[],"")] [e]))
+schema_to_cactions [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
+  | (is_primed_zvar e1 && is_primed_zvar e3)
+          = (CSPSeq (schema_to_cactions [e]) (schema_to_cactions [f]))
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPGuard e (schema_to_cactions [f]))
+  | (is_predicate f && is_primed_zvar e1)
+          = (CSPGuard f (schema_to_cactions [e]))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions [ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPGuard e (schema_to_cactions [f]))
+  | otherwise = error "Could not translate to CAction"
+\end{code}
