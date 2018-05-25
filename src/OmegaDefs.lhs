@@ -3004,6 +3004,7 @@ make_schema_guards xs =
 
 \begin{code}
 schema_to_cactions :: [ZPred] -> CAction
+schema_to_cactions [] = CSPSkip
 schema_to_cactions [ZEqual (ZVar (v,["'"],"")) e]
   = (CActionCommand (CAssign [(v,[],"")] [e]))
 schema_to_cactions [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
@@ -3018,4 +3019,46 @@ schema_to_cactions [ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_predicate e && is_primed_zvar e3)
           = (CSPGuard e (schema_to_cactions [f]))
   | otherwise = error "Could not translate to CAction"
+schema_to_cactions [ZImplies e f@(ZEqual (ZVar e3) e4)]
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPGuard e (schema_to_cactions [f]))
+  | otherwise = error "Could not translate to CAction"
+
+schema_to_cactions ((ZEqual (ZVar (v,["'"],"")) e):xs)
+  = (CSPSeq (CActionCommand (CAssign [(v,[],"")] [e]))(schema_to_cactions xs))
+schema_to_cactions ((ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
+  | (is_primed_zvar e1 && is_primed_zvar e3)
+          = (CSPSeq (CSPSeq (schema_to_cactions [e]) (schema_to_cactions [f]))(schema_to_cactions xs))
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
+  | (is_predicate f && is_primed_zvar e1)
+          = (CSPSeq (CSPGuard f (schema_to_cactions [e]))(schema_to_cactions xs))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions ((ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions (_:xs) = (schema_to_cactions xs)
+\end{code}
+
+\begin{code}
+procZParaToCParAction (ProcZPara s) = get_schema_guards s
+procZParaToCParAction x = x
+\end{code}
+
+\begin{code}
+convert_schema_to_action [] = []
+convert_schema_to_action ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s ls ma))))):xs)
+  = ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s nls ma ))))):(convert_schema_to_action  xs))
+  where
+    nls = map procZParaToCParAction ls
+convert_schema_to_action ((Process (CProcess n (ProcDef (ProcMain s ls ma)))):xs)
+  = ((Process (CProcess n (ProcDef (ProcMain s nls ma )))):(convert_schema_to_action  xs))
+  where
+    nls = map procZParaToCParAction ls
+convert_schema_to_action (_:xs) = (convert_schema_to_action xs)
 \end{code}

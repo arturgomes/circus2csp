@@ -3,9 +3,9 @@ This section gives all basic definitions that will be used in all three \Circus\
 
 First of all, three constants are defined. $MAX\_ESEL$ and $MAX\_PID$ stand for maximum number of displays and maximum number of product categories (or, products for short) in the system separately. And constant $MAX\_GATEWAY$ stands for maximum number of gateways.
 \begin{zed}
-MAXESEL == 3\\
-\also MAXPID == 2\\
-NatValue == \{0 \upto MAXESEL\}
+    MAXESEL == 3 \\
+\also    MAXPID == 2
+NatValue == {0 \upto MAXESEL} \\
 %    MAX\_GATEWAY: \nat
 \end{zed}
 
@@ -154,9 +154,9 @@ The process for overall control of the system, named $Controller$, is defined as
 % \begin{circusaction}
         %
         \t1 AUpdateUnitPrice \circdef uid:ESID; pid:PID \circspot \\
-            \t2 write.uid.(ppmap\sym~pid) \then read.uid?y \then \\
+            \t2 write.uid.(ppmap~pid) \then read.uid?y \then \\
             \t2 (\lcircguard y = (ppmap~pid) \rcircguard \circguard \Skip \\
-            \t2 \extchoice \lcircguard y \neq (ppmap~pid) \rcircguard \circguard resp.pid.(fail~\sym~uid) \then \Skip) \\
+            \t2 \extchoice \lcircguard y \neq (ppmap~pid) \rcircguard \circguard resp.pid.(fail~uid) \then \Skip) \\
 % \end{circusaction}
 % The parameterised action $AUpdateProductUnits$ aims to update one product's price specified by the formal $pid$ parameter in case the product has associated displays. Since one product may have more than one associated displays, this action updates the product's price to all associated displays. Furthermore, the update to each display is independent. Therefore, they are combined together into an interleave. It is worth noting that each $AUpdateUnitPrice$ action will not update state or local variables and thus its name set is empty.
 % \begin{circusaction}
@@ -222,9 +222,9 @@ The process for overall control of the system, named $Controller$, is defined as
                 \t5 \circif\ pumap(uid) \notin \dom~response \circthen \\
                     \t6 ondisplay.uid \then \Skip\\
                 \t5 \circelse\ pumap(uid) \in \dom~response \circthen \\
-                    \t6 \circif\ (fail\sym~uid) \notin response(pumap(uid)) \circthen \\
+                    \t6 \circif\ (fail~uid) \notin response(pumap(uid)) \circthen \\
                     \t7 ondisplay.uid \then \Skip\\
-                    \t6 \circelse\ (fail\sym~uid) \in response(pumap(uid)) \circthen \\
+                    \t6 \circelse\ (fail~uid) \in response(pumap(uid)) \circthen \\
                     \t7 offdisplay.uid \then \Skip \\
                     \t6 \circfi \\
                 \t5 \circfi \\

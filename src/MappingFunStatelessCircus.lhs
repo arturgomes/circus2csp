@@ -46,7 +46,8 @@ omega_Circus spec =
          CircChanSet "MEML" (CChanSet ["lset","lget","lterminate"])]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
-         spec0 = normal_state_proc spec spec
+         specX = convert_schema_to_action spec
+         spec0 = (normal_state_proc specX specX)
          spec1 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec0 spec0)) spec0)
          (zb,para) = (omega_Circus_aux' spec1)
           -- renaming variables for highlighting which state var is from which process
