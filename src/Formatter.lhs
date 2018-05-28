@@ -548,7 +548,7 @@ print_sref :: PrintInfo -> ZSName -> [ZDecor] -> [ZReplace] -> Doc
 print_sref pi n dl rl
   =  print_sname pi n <> decs <+> repls
   where
-  decs     = text (concat dl)
+  decs     = text (concat (map show_zdecor dl))
   repls    = if null repllist
 	     then empty
 	     else brackets (fsep repllist)

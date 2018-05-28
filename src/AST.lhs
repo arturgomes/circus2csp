@@ -118,7 +118,9 @@ TODO: Make this a separate module, perhaps combined with \texttt{VarSet}.
 
 \subsection{Z Names and Decorations}
 \begin{code}
-type ZDecor = String      -- a decoration: ''', '!', '?' or '_N'
+data ZDecor
+  = ZPrime | ZInput | ZOutput |ZDelta | ZXi | ZUnI -- a decor: ''', '!', '?' or '_N'
+  deriving (Eq,Ord,Show)
 type ZVar = (String, [ZDecor], String) -- all kinds of Z names
 type ZName = String
 \end{code}
@@ -135,11 +137,11 @@ decorate_zvar :: ZVar -> [ZDecor] -> ZVar
 decorate_zvar (s,dl,t) d = (s,dl++d,t)
 
 prime_zvar :: ZVar -> ZVar
-prime_zvar v = decorate_zvar v ["'"]
+prime_zvar v = decorate_zvar v [ZPrime]
 
 unprime_zvar :: ZVar -> ZVar
 -- Pre: is_primed_zvar v
-unprime_zvar (n,["'"],t) = (n,[],t)
+unprime_zvar (n,[ZPrime],t) = (n,[],t)
 
 string_to_zvar :: String -> ZVar
 string_to_zvar s = make_zvar s []
@@ -162,21 +164,27 @@ is_unprimed_zvar (_,[],_)  = True
 is_unprimed_zvar _       = False
 
 is_primed_zvar :: ZVar -> Bool
-is_primed_zvar (_,["'"],_) = True
+is_primed_zvar (_,[ZPrime],_) = True
 is_primed_zvar _         = False
 
 is_input_zvar :: ZVar -> Bool
-is_input_zvar (_,["?"],_)  = True
+is_input_zvar (_,[ZInput],_)  = True
 is_input_zvar _          = False
 
 is_output_zvar :: ZVar -> Bool
-is_output_zvar (_,["!"],_) = True
+is_output_zvar (_,[ZOutput],_) = True
 is_output_zvar _         = False
 
 
 show_zvar :: ZVar -> String
-show_zvar (s,dl,t) = s ++ concat dl
+show_zvar (s,dl,t) = s ++ (concat $ map show_zdecor dl)
 
+show_zdecor ZPrime = "'"
+show_zdecor ZInput = "?"
+show_zdecor ZOutput = "!"
+show_zdecor ZDelta = "Delta"
+show_zdecor ZXi = "Xi"
+show_zdecor ZUnI = "_i"
 show_zvars :: [ZVar] -> String
 show_zvars = concatMap ((' ':) . show_zvar)
 \end{code}

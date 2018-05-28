@@ -567,6 +567,19 @@ zexpression_4a
    return (ZSeqDisplay el)} +++
     zexpression_4b
 
+zexpression_4a1 :: EParser ZToken ZExpr
+zexpression_4a1
+  = do  {vn <- zvar_name1; return (ZVar vn)} +++
+-- TODO Gen_Actuals
+  do  {i <- znumber; return (ZInt i)} +++
+  do  {s <- zgivenval; return (ZGiven s)} +++
+  do  {zset_exp} +++
+  do  {tok L_LANGLE;
+  el <- opt [] zexpressions;
+  tok L_RANGLE;
+  return (ZSeqDisplay el)} +++
+  zexpression_4b
+
 zexpression_4b :: EParser ZToken ZExpr
 zexpression_4b
   = do  {tok L_OPENPAREN;
@@ -732,8 +745,15 @@ zvar_name
   = do  {tok L_OPENPAREN; vn <- zop_name; tok L_CLOSEPAREN; return vn} +++
     zident
 
+zvar_name1 :: EParser ZToken ZVar
+zvar_name1
+  = do  {tok L_OPENPAREN; vn <- zop_name; tok L_CLOSEPAREN; return vn} +++
+    zident1
 zdecl_name :: EParser ZToken ZVar
 zdecl_name = zop_name +++ zident
+
+zdecl_name1 :: EParser ZToken ZVar
+zdecl_name1 = zop_name +++ zident1
 
 zop_name :: EParser ZToken ZVar
 zop_name =
@@ -769,6 +789,9 @@ zpre_sym_decor = zpre_gen_decor +++ zpre_rel_decor
 zident :: EParser ZToken ZVar
 zident = do {w <- zword; d <- zdecoration; return (make_zvar w d)}
 
+zident1 :: EParser ZToken ZVar
+zident1 = do {w <- zword; return (make_zvar w [])}
+
 
 zdecoration :: EParser ZToken [ZDecor]
 zdecoration = many zstroke
@@ -776,10 +799,13 @@ zdecoration = many zstroke
 zstroke :: EParser ZToken ZDecor
 zstroke
   = do  L_STROKE w <- sat isStroke
-	return w
+	return (mk_stroke w)
     where
     isStroke (L_STROKE _) = True
     isStroke _            = False
+    mk_stroke "'" = ZPrime
+    mk_stroke "?" = ZInput
+    mk_stroke "!" = ZOutput
 
 zword :: EParser ZToken String
 zword =
@@ -1919,7 +1945,7 @@ circus_comm_param_output_exp
 circus_comm_param_dot_exp :: EParser ZToken [CParameter]
 circus_comm_param_dot_exp
   = do {tok L_POINT;
-      	p <- zexpression_4a;
+      	p <- zexpression_4a1;
       return [ChanDotExp p]}
 
 --Command 	::= N^{+} := Exp^{+}

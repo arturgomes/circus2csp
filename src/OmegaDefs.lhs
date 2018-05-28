@@ -2962,14 +2962,22 @@ is_predicate _ = True
 
 Making any precondition as a predicate for guards in Circus
 \begin{code}
-get_schema_guards :: ZPara -> PPar
-get_schema_guards (ZSchemaDef (ZSPlain sname) (ZSchema xs))
-  = get_schema_guards' sname (concat $ map getChooseFrom_ZGenFilt xs)
+get_schema_guards :: ZSExpr -> CAction
+get_schema_guards (ZSRef (ZSPlain x) [] [])
+  = (CActionName x)
+get_schema_guards (ZS2 ZSAnd (ZSchema x1) (ZSchema x2))
+  = (get_schema_guards (ZSchema (x1++x2)))
+get_schema_guards (ZS2 ZSOr x1 x2)
+  = (CSPExtChoice (CActionSchemaExpr x1) (CActionSchemaExpr x2))
+get_schema_guards (ZS2 ZSSemi x1 x2)
+  = (CSPSeq (get_schema_guards x1) (get_schema_guards x2))
+get_schema_guards (ZSchema xs)
+  = get_schema_guards' (concat $ map getChooseFrom_ZGenFilt xs)
 
-get_schema_guards' :: ZName -> [ZPred] -> PPar
-get_schema_guards' sname xs
-  | not(null(fst(find_schema_guards xs [] []))) = (CParAction sname (CircusAction (make_schema_guards xs)))
-  | otherwise = (CParAction sname (CircusAction (schema_to_cactions xs)))
+get_schema_guards' :: [ZPred] -> CAction
+get_schema_guards' xs
+  | not(null(fst(find_schema_guards xs [] []))) = (make_schema_guards xs)
+  | otherwise = (schema_to_cactions xs)
 \end{code}
 
 Filtering Choose from ZGenFilt
@@ -3005,7 +3013,7 @@ make_schema_guards xs =
 \begin{code}
 schema_to_cactions :: [ZPred] -> CAction
 schema_to_cactions [] = CSPSkip
-schema_to_cactions [ZEqual (ZVar (v,["'"],"")) e]
+schema_to_cactions [ZEqual (ZVar (v,[ZPrime],"")) e]
   = (CActionCommand (CAssign [(v,[],"")] [e]))
 schema_to_cactions [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_primed_zvar e1 && is_primed_zvar e3)
@@ -3024,7 +3032,7 @@ schema_to_cactions [ZImplies e f@(ZEqual (ZVar e3) e4)]
           = (CSPGuard e (schema_to_cactions [f]))
   | otherwise = error "Could not translate to CAction"
 
-schema_to_cactions ((ZEqual (ZVar (v,["'"],"")) e):xs)
+schema_to_cactions ((ZEqual (ZVar (v,[ZPrime],"")) e):xs)
   = (CSPSeq (CActionCommand (CAssign [(v,[],"")] [e]))(schema_to_cactions xs))
 schema_to_cactions ((ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
   | (is_primed_zvar e1 && is_primed_zvar e3)
@@ -3046,8 +3054,8 @@ schema_to_cactions (_:xs) = (schema_to_cactions xs)
 \end{code}
 
 \begin{code}
-procZParaToCParAction (ProcZPara s)
-  = get_schema_guards s
+procZParaToCParAction (ProcZPara (ZSchemaDef (ZSPlain sname) s))
+  = (CParAction sname (CircusAction (get_schema_guards s)))
 procZParaToCParAction (CParAction n p)
   = (CParAction n (pZPtoCA_ParAction p))
 pZPtoCA_PPar x = x

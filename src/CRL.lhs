@@ -221,7 +221,7 @@ crl_var_exp_par e@(CSPNSParal ns1 cs ns2 (CActionCommand (CVarDecl [(Choose (d,[
   = Done{orig = Just e, refined = Just ref, proviso = [p1]}
     where
       ref = (CActionCommand (CVarDecl [(Choose (d,[],tx) t)] (CSPNSParal ns1 cs ns2 a1 a2)))
-      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay [ZVar (d,[],tx),ZVar (d,["'"],tx)],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[],[])))
+      p1 = (ZEqual (ZCall (ZVar ("\\cap",[],[])) (ZTuple [ZSetDisplay [ZVar (d,[],tx),ZVar (d,[ZPrime],tx)],ZSetDisplay $ zvar_to_zexpr $ varset_to_zvars (free_var_CAction a2)])) (ZVar ("\\emptyset",[],[])))
 crl_var_exp_par _ = None
 \end{code}
 % law 2

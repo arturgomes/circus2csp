@@ -176,16 +176,16 @@ unfold_name n =
     unfoldToolkit n
 	| is_unprimed_zvar n = lookup_toolkit (get_zvar_name n)
 	| otherwise = unfoldError (IllFormed [])
-    unfoldDeltaXi n | get_zvar_decor n == ["Delta"] =
+    unfoldDeltaXi n | get_zvar_decor n == [ZDelta] =
       do let sname = get_zvar_name n
 	 let delta = ZSchema [ Include (ZSRef (ZSPlain sname) [] []),
-			       Include (ZSRef (ZSPlain sname) ["'"] []) ]
+			       Include (ZSRef (ZSPlain sname) [ZPrime] []) ]
 	 ZSchema gfs <- unfsexpr delta
 	 return (ZESchema (ZSchema gfs))
-    unfoldDeltaXi n | get_zvar_decor n == ["Xi"] =
+    unfoldDeltaXi n | get_zvar_decor n == [ZXi] =
       do let sname  = get_zvar_name n
 	 let unprimed = ZSRef (ZSPlain sname) [] []
-	 let primed   = ZSRef (ZSPlain sname) ["'"] []
+	 let primed   = ZSRef (ZSPlain sname) [ZPrime] []
 	 let xi = ZSchema [ Include unprimed,
 			    Include primed,
 			    Check (ZEqual (ZTheta primed) (ZTheta unprimed)) ]
@@ -455,7 +455,7 @@ schema_localize vartest1 s1 vartest2 s2 =
 	localEnv (pushNames (genfilt_names (d1++d2))
 		  >> rest hide (rem1,p1) (rem2,p2))
     where
-    hidden_name v = make_zvar (get_zvar_name v) ["_i"]
+    hidden_name v = make_zvar (get_zvar_name v) [ZUnI]
     subsCheck sub (Check p) = subspred sub p >>= (return . Check)
     rest hide (rem1,p1) (rem2,p2) =
      do let hdecls = map (\ ((v,t),_) -> Choose (hidden_name v) t) hide
@@ -756,8 +756,8 @@ characteristic_tuple gfs
 -- (to avoid complicating all the lookup data structures with \Delta+\Xi).
 make_schema_name :: ZSName -> ZVar
 make_schema_name (ZSPlain n) = make_zvar n []
-make_schema_name (ZSDelta n) = make_zvar n ["Delta"]
-make_schema_name (ZSXi n) = make_zvar n ["Xi"]
+make_schema_name (ZSDelta n) = make_zvar n [ZDelta]
+make_schema_name (ZSXi n) = make_zvar n [ZXi]
 
 
 schema_set :: [ZGenFilt] -> ZExpr

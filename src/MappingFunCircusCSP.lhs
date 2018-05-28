@@ -1314,12 +1314,14 @@ mapping_ZExpr lst (ZSeqDisplay []) = "<>"
 mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
   | Subs.isPrefixOf "b_" a ="<"++a++">"
   | Subs.isPrefixOf "sv_" a ="<"++a++">"
+  | "ns" == a ="<y | y <- ns,member(y,dom(bd))>"
   | otherwise = "<y | y <- "++a++">"
 mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple xs)) ]) = joinBy "^" $ map (\x -> "< "++(mapping_ZExpr lst x)++">") xs
 mapping_ZExpr lst (ZSeqDisplay x) = "<"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++">"
 -- mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ filter_ZGenFilt_Choose a)++")"
+mapping_ZExpr lst (ZCall c d) = "apply("++(mapping_ZExpr lst c)++","++(mapping_ZExpr lst d)++")"
 mapping_ZExpr lst x = ""
 -- mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 
