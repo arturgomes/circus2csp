@@ -3046,10 +3046,92 @@ schema_to_cactions (_:xs) = (schema_to_cactions xs)
 \end{code}
 
 \begin{code}
-procZParaToCParAction (ProcZPara s) = get_schema_guards s
-procZParaToCParAction x = x
+procZParaToCParAction (ProcZPara s)
+  = get_schema_guards s
+procZParaToCParAction (CParAction n p)
+  = (CParAction n (pZPtoCA_ParAction p))
+pZPtoCA_PPar x = x
 \end{code}
-
+\subsection{Parametrised Actions}
+\begin{code}
+pZPtoCA_ParAction (CircusAction ca)
+  = (CircusAction (pZPtoCAca ca))
+pZPtoCA_ParAction (ParamActionDecl _zgf_lst _ParAction)
+  = (ParamActionDecl _zgf_lst (pZPtoCA_ParAction _ParAction))
+\end{code}
+\subsection{\Circus\ Actions}
+\begin{code}
+pZPtoCAca (CActionSchemaExpr (ZSRef (ZSPlain nm) [] []))
+  = (CActionName nm)
+pZPtoCAca (CActionCommand c)
+  = (CActionCommand (pZPtoCA_CCommand c))
+pZPtoCAca (CSPCommAction _Comm ca)
+  = (CSPCommAction _Comm (pZPtoCAca ca))
+pZPtoCAca (CSPGuard _ZPred ca)
+  = (CSPGuard _ZPred (pZPtoCAca ca))
+pZPtoCAca (CSPSeq ca1 ca2)
+  = (CSPSeq (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPExtChoice ca1 ca2)
+  = (CSPExtChoice (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPIntChoice ca1 ca2)
+  = (CSPIntChoice (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPNSParal _zx_lst c _zx_lst1 ca1 ca2)
+  = (CSPNSParal _zx_lst c _zx_lst1 (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPParal _CSExp ca1 ca2)
+  = (CSPParal _CSExp (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPNSInter _zx_lst _zx_lst1 ca1 ca2)
+  = (CSPNSInter _zx_lst _zx_lst1 (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPInterleave ca1 ca2)
+  = (CSPInterleave (pZPtoCAca ca1) (pZPtoCAca ca2))
+pZPtoCAca (CSPHide ca _CSExp)
+  = (CSPHide (pZPtoCAca ca) _CSExp)
+pZPtoCAca (CSPParAction _ZName _zx_lst)
+  = (CSPParAction _ZName _zx_lst)
+pZPtoCAca (CSPRenAction _ZName _CReplace)
+  = (CSPRenAction _ZName _CReplace)
+pZPtoCAca (CSPRecursion _ZName ca)
+  = (CSPRecursion _ZName (pZPtoCAca ca))
+pZPtoCAca (CSPUnfAction _ZName ca)
+  = (CSPUnfAction _ZName (pZPtoCAca ca))
+pZPtoCAca (CSPUnParAction _zgf_lst ca n)
+  = (CSPUnParAction _zgf_lst (pZPtoCAca ca) n)
+pZPtoCAca (CSPRepSeq _zgf_lst ca)
+  = (CSPRepSeq _zgf_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepExtChoice _zgf_lst ca)
+  = (CSPRepExtChoice _zgf_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepIntChoice _zgf_lst ca)
+  = (CSPRepIntChoice _zgf_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepParalNS _CSExp _zgf_lst _zx_lst ca)
+  = (CSPRepParalNS _CSExp _zgf_lst _zx_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepParal _CSExp _zgf_lst ca)
+  = (CSPRepParal _CSExp _zgf_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepInterlNS _zgf_lst _zx_lst ca)
+  = (CSPRepInterlNS _zgf_lst _zx_lst (pZPtoCAca ca))
+pZPtoCAca (CSPRepInterl _zgf_lst ca)
+  = (CSPRepInterl _zgf_lst (pZPtoCAca ca))
+pZPtoCAca x = x
+\end{code}
+\subsection{\Circus\ Commands}
+\begin{code}
+pZPtoCA_CCommand (CIf g)
+  = (CIf (pZPtoCA_CGActions g))
+pZPtoCA_CCommand (CVarDecl _zgf_lst ca)
+  = (CVarDecl _zgf_lst (pZPtoCAca ca))
+pZPtoCA_CCommand (CValDecl _zgf_lst ca)
+  = (CValDecl _zgf_lst (pZPtoCAca ca))
+pZPtoCA_CCommand (CResDecl _zgf_lst ca)
+  = (CResDecl _zgf_lst (pZPtoCAca ca))
+pZPtoCA_CCommand (CVResDecl _zgf_lst ca)
+  = (CVResDecl _zgf_lst (pZPtoCAca ca))
+pZPtoCA_CCommand x = x
+\end{code}
+\subsection{\Circus\ Guards}
+\begin{code}
+pZPtoCA_CGActions (CircGAction _ZPred ca)
+  = (CircGAction _ZPred (pZPtoCAca ca))
+pZPtoCA_CGActions (CircThenElse g g1)
+  = (CircThenElse (pZPtoCA_CGActions g) (pZPtoCA_CGActions g1))
+\end{code}
 \begin{code}
 convert_schema_to_action [] = []
 convert_schema_to_action ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s ls ma))))):xs)

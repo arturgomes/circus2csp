@@ -775,14 +775,10 @@ zdecoration = many zstroke
 
 zstroke :: EParser ZToken ZDecor
 zstroke
-  = do  {L_STROKE w <- sat isStroke;
-  return w}
-  +++ do {L_CINPUT <- sat isStroke; return "?"}
-  +++ do {L_COUTPUT <- sat isStroke; return "!"}
+  = do  L_STROKE w <- sat isStroke
+	return w
     where
-    isStroke (L_CINPUT) = True;
-    isStroke (L_COUTPUT) = True;
-    isStroke (L_STROKE _) = True;
+    isStroke (L_STROKE _) = True
     isStroke _            = False
 
 zword :: EParser ZToken String
@@ -1882,13 +1878,11 @@ circus_comm
 -- CParameter* -- list of parameters
 circus_comm_params :: EParser ZToken [CParameter]
 circus_comm_params
-  = do  {e <- circus_comm_param;
-      el <- many (do {e1 <- circus_comm_param;
-      				return e1});
-   return (e : el)}
+  = do {el <- circus_comm_param;
+   return el}
 
 --CParameter	::= ?N | ?N : Pred | !Exp | .Exp
-circus_comm_param :: EParser ZToken CParameter
+circus_comm_param :: EParser ZToken [CParameter]
 circus_comm_param
   = circus_comm_param_dot_exp +++ -- .Exp
     circus_comm_param_input_pred +++ -- ?N : Pred
@@ -1897,36 +1891,36 @@ circus_comm_param
 
 
  -- ?N
-circus_comm_param_input :: EParser ZToken CParameter
+circus_comm_param_input :: EParser ZToken [CParameter]
 circus_comm_param_input
-  = do {tok L_CINPUT;
+  = do {tok (L_STROKE "?");
       	zn <- zword;
-      return (ChanInp zn)}
+      return [ChanInp zn]}
 
 -- ?N : Pred
-circus_comm_param_input_pred :: EParser ZToken CParameter
+circus_comm_param_input_pred :: EParser ZToken [CParameter]
 circus_comm_param_input_pred
-  = do {tok L_CINPUT;
+  = do {tok (L_STROKE "?");
       	zn <- zword;
       optnls;
       tok L_COLON;
       optnls;
       	p <- zpredicate;
-      return (ChanInpPred zn p)}
+      return [ChanInpPred zn p]}
 
 -- !Exp
-circus_comm_param_output_exp:: EParser ZToken CParameter
+circus_comm_param_output_exp:: EParser ZToken [CParameter]
 circus_comm_param_output_exp
-  = do {tok L_COUTPUT;
+  = do {tok (L_STROKE "!");
       	p <- zexpression;
-      return (ChanOutExp p)}
+      return [ChanOutExp p]}
 
 -- .Exp
-circus_comm_param_dot_exp :: EParser ZToken CParameter
+circus_comm_param_dot_exp :: EParser ZToken [CParameter]
 circus_comm_param_dot_exp
   = do {tok L_POINT;
       	p <- zexpression_4a;
-      return (ChanDotExp p)}
+      return [ChanDotExp p]}
 
 --Command 	::= N^{+} := Exp^{+}
 -- | \circif GActions \cirfi
