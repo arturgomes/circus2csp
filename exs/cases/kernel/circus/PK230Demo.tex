@@ -1,62 +1,11 @@
 \chapter{PK230 Demo (DASIA 2018)}
 
-\section{System Steady State}
-
-We start by considering the system in a steady state,
-with no partitions being started or stopped.
-We should see the appropriate partition's code running
-during its timeslots,
-interleaved with occaisional bursts of kernel code.
-Between partition timeslots we see the kernel at work
-(context-switiching, scheduler),
-while during a timeslot the kernel may take over to service
-a trap (partition hypercalls, external interrupt).
-The starting type status and partition mode shall also be observable.
-The relevant requirements in the steady state are
-\PK{230}, \PK{97}, \PK{547}, \PK{96}, \PK{286}.
+We simplify matters a lot.
 
 
-\subsection{System State}
-
-The state of the system comprises:
-\begin{itemize}
-  \item Current processor mode (Supervisor/User)
-  \item Set of partitions.
-  \item Mapping from partition to:
-    \begin{itemize}
-      \item entry start address [fixed]
-      \item starting type (COLD,WARM)
-      \item partition mode (STOPPED,ACTIVE)
-      \item Timeslots
-    \end{itemize}
-  \item Fixed Partition Schedule
-\end{itemize}
-
-\section{\Circus\ Model}
-
-\subsection{Top-Level Declarations}
-
-We need to careful how we model state.
-Some components might be variables defined using schemas.
-\begin{eqnarray*}
-   x &:& \{A,B\}
-\\ ABA &\defs& x := A ; x:= B ; x := A
-\\ Watch &\defs& x = a \& XisA \extchoice x = b \& XisB
-\end{eqnarray*}
-Others might be captured implicitly.
-For example, we could model state changes by events,
-with processes switching on these events.
-\begin{eqnarray*}
-   \circchannel x &:& \{A,B\}
-\\ ABA &\defs&  x.A \then x.B \then x.A \then \Skip
-\\ Watch &\defs& x.A \then XisA \extchoice x.B \then XisB
-\end{eqnarray*}
-
-Processor mode, starting type, and partition mode:
+Processor mode:
 \begin{circus}
    PROCMODES ::= SUP | USR
-\\ STARTTYPES ::= COLD | WARM
-\\ PARTMODES ::= STOPPED | ACTIVE
 \end{circus}
 
 State variables, for now just the processor mode.
@@ -69,81 +18,13 @@ For now we use numbers, with the kernel being -1,
 0 denoting one authorised partition,
 and 1 standing for an ordinary partition.
 \begin{circus}
-   MAXP   == 2
-\\ CODEID == -1 \upto (MAXP-1)
-\\ KNL    == -1
-\\ AUP    == 0
+   KNL    == 0
+\\ PRT    == 1
+\\ CODEID == KNL \upto PRT
 \end{circus}
-
-We would like to define a function that selects the ``next'' partition,
-here defined properly using a Z/\Circus\ schema.
-\begin{schema}{INC}
-  nxt : \nat \fun \nat
-\where
-  \forall n : \nat @ nxt n = (n + 1) \mod MAXP
-\end{schema}
-However this is not translated through at present,
-so for now we have to fake it using the \texttt{assert} environment.
 \begin{assert}
-"next(codeid) = (codeid+1) % MAXP"
+"next(codeid) = (codeid+1) % 2"
 \end{assert}
-
-An implicit part of the state is all the program
-contexts for the kernel and partitions.
-For our purposes these include the code itself (instruction sequence),
-and the program counter, and, for the partitions,
-their entry start address.
-
-First, let us determine what ``instructions'' we require.
-
-Kernel code has four components:
-initialisation, scheduler, hypercall-handlers,
-and external interrupt-handlers (incl. timing).
-The scheduler:
-\begin{enumerate}
-  \item saves ``current'' partition context (PC, vars)
-  \item identifies next partition
-  \item restores next partition context
-  \item sets scheduled timeout for this slot
-  \item jumps to the next partition (at its just restored PC)
-\end{enumerate}
-Traps and their Handlers will typically do something simple,
-perhaps just declaring that they were called.
-One thing we do need to provide are instructions
-to change the processor mode, and to reset the vCPU.
-
-Partition instructions are mainly hypercalls to attempt
-things like starting or stopping a partition,
-accessing the mode of other partitions,
-or accessing its own starting type status.
-We may want a neutral/NOP instruction so we can show a partition
-being allowed to execute in its own time slot.
-
-We will model every instruction as being tagged with the code entity to
-which it belongs.
-In principle, we can always determine this because kernel configuration
-explicitly assigns every code segment,
-for the kernel or any partition,
-to a fixed known set of addresses.
-So by observing the CPU bus address value during an instruction fetch cycle
-we can always determine whose code is running.
-
-Many operations will be two-phase,
-consisting of a first phase that attempts to do something,
-and, if successful, a second phase where that something becomes visible.
-This allows for the detection and prevention of bad behaviour to be modelled.
-For example, when a partition tries to read a memory address,
-it may succeed, if that address has been assigned to that partition.
-However, if not, then the MMU will raise a memory access excpetion,
-and the kernel handler will initiate appropriate remedial action.
-
-We model code as a dynamic process that does operations in sequence,
-provided it is enabled.
-When disabled, it does nothing, and ignores all events in the system
-other than its own enabled indicator.
-At most one code entity is enabled at any one time.
-The only mechanism to change the enabled code is via
-traps.
 
 We shall use a global variable containing a $CODEID$ to indicate
 what code is enabled.
@@ -151,36 +32,36 @@ what code is enabled.
 RUNNING \defs [running:CODEID]
 \end{circus}
 
-\DRAFT{Prototyping begins\dots}
-Assume simple operations,
+Assume ``operations'' to switch processor mode ($UP$,$DOWN$),
+do context switches ($SW$)
+and and some other generic instruction ($GOP$).
 and use a channel called $do$ to observe them.
 \begin{circus}
-   OPS ::= OP1 | OP2 | OP3 | INC
+   OPS ::= UP | DOWN | SW | GOP
 \\ \circchannel do : CODEID \cross OPS
+\\ \circchannel scream
 \end{circus}
 
-
-\DRAFT{\dots end of Prototype.}
-
-\newpage
-\subsection{Main \Circus\ Process}
 
 \begin{circus}
-\circprocess\ PMM \circdef \circbegin \\
+\circprocess\ Demo \circdef \circbegin \\
 \t1 \circstate PMMState \defs PROCMODE \land RUNNING \\
+\\
 \t1 PMMInit \circdef (procm,running := SUP,KNL) \\
-\t1 GO \circdef
-   \circval cid : CODEID \circspot
-      \lcircguard running = cid \rcircguard \circguard \Skip \\
-\t1 \circspot PMMInit \circseq
-               ( procm := USR ) \\
-\t2 \circseq ( do.KNL.OP1 \then GO(KNL) ) \\
-\t2 \circseq ( do.AUP.OP2 \then GO(AUP) ) \\
-\t2 \circseq ( do.1.OP3 \then GO(1) )\\
+\\
+\t1 PMMStep \circdef \\
+\t2             do?i!UP \then (procm := SUP) \circseq \Skip \\
+\t2 \extchoice  do?i!DOWN \then (procm := USR) \circseq \Skip \\
+\t2 \extchoice  do?i!GOP \then \Skip \\
+\t2 \extchoice  do?i!SW \then (running := next(running)) \circseq \Skip \\
+\\
+\t1 PK230Step \circdef \\
+\t2 \lcircguard running = KNL \rcircguard \circguard (do?i?op \then \Skip)\\
+\t2 \extchoice \lcircguard procm = USR \rcircguard \circguard (do?i?op \then \Skip)\\
+\t2 \extchoice \lcircguard running = PRT \land procm = SUP \rcircguard \circguard (scream \then \Stop)\\
+\\
+\t1 RUN \circdef (PMMStep \interleave PK230Step) \circseq RUN \\
+\\
+\t1 \circspot PMMInit \circseq RUN \\
 \circend
 \end{circus}
-% \DRAFT{This is translated into broken \CSPM.
-% All references to action $GO$ are missing.
-% See \textsf{GenerationBugs.tex}, issue \texttt{2018-05-10 (3)}.
-% }
-\
