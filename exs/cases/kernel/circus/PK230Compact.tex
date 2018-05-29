@@ -1,0 +1,37 @@
+\chapter{PK230 Demo (DASIA 2018)}
+
+\newpage
+\begin{circus}
+PROCMODES ::= SUP | USR \\
+PROCMODE \defs [ procm : PROCMODES ] \\
+   KNL    == 0
+\\ PRT    == 1
+\\ CODEID == KNL \upto PRT
+\\ next(cid) = (cid+1) \mod 2
+\\
+RUNNING \defs [running:CODEID] \\
+   OPS ::= UP | DOWN | SW | GOP
+\\ \circchannel do : CODEID \cross OPS
+\\ \circchannel scream \\
+\\
+\circprocess\ Demo \circdef \circbegin \\
+\t1 \circstate PMMState \defs PROCMODE \land RUNNING \\
+\\
+\t1 PMMInit \circdef (procm,running := SUP,KNL) \\
+\\
+\t1 PMMStep \circdef \\
+\t2             do?i!UP \then (procm := SUP) \circseq \Skip \\
+\t2 \extchoice  do?i!DOWN \then (procm := USR) \circseq \Skip \\
+\t2 \extchoice  do?i!GOP \then \Skip \\
+\t2 \extchoice  do?i!SW \then (running := next(running)) \circseq \Skip \\
+\\
+\t1 PK230Step \circdef \\
+\t2 \lcircguard running = KNL \rcircguard \circguard (do?i?op \then \Skip)\\
+\t2 \extchoice \lcircguard procm = USR \rcircguard \circguard (do?i?op \then \Skip)\\
+\t2 \extchoice \lcircguard running = PRT \land procm = SUP \rcircguard \circguard (scream \then \Stop)\\
+\\
+\t1 RUN \circdef (PMMStep \interleave PK230Step) \circseq RUN \\
+\\
+\t1 \circspot PMMInit \circseq RUN \\
+\circend
+\end{circus}
