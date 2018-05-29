@@ -1128,7 +1128,7 @@ crl_parSeqStep e@(CSPNSParal ns1 (CChanSet cs) ns2 (CSPSeq a1 a2) a3)
       p3 = null $ (zname_to_zexpr $ wrtV a1) `intersect` (zname_to_zexpr $ wrtV a3)
       p4 = True -- a3 is divergence-free -- implement that!!
       p5 = (subset (zname_to_zexpr $ wrtV a1) (zname_to_zexpr cs))
-      pred = p1 && p2 && p3 && p4 && p5
+      pred1 = p1 && p2 && p3 && p4 && p5
 crl_parSeqStep _ = None
 \end{code}
 
@@ -1246,7 +1246,7 @@ endPrefWithSkip _ = False
 remPrefSkip :: CAction -> CAction -> CAction
 remPrefSkip a2 (CSPCommAction c CSPSkip) = (CSPCommAction c a2)
 remPrefSkip a2 (CSPCommAction c c1) = (CSPCommAction c (remPrefSkip a2 c1))
-remPrefSkip a2 _ = error "Unable to get the remPrefSkip"
+remPrefSkip _ _ = error "Unable to get the remPrefSkip"
 -- remPrefSkip a2 a1 = (CSPSeq a1 a2)
 
 crl_prefixSkip_backwards :: CAction -> Refinement CAction
@@ -1519,7 +1519,7 @@ crl_hidingCombination _ = None
 crl_parallelismDeadlocked3 :: CAction -> Refinement CAction
 crl_parallelismDeadlocked3
   e@(CSPNSParal ns1 (CChanSet cs) ns2
-      (CSPRepExtChoice i (CSPCommAction ci ai))
+      (CSPRepExtChoice _ (CSPCommAction ci _))
       (CSPRepExtChoice j (CSPCommAction cj aj)))
   = Done{orig = Just e, refined = Just ref, proviso=[]}
   where

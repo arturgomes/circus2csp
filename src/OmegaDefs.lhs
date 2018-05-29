@@ -2963,23 +2963,22 @@ is_predicate _ = True
 This function will convert the structure of schemas into Circus actions.
 It also will transform any precondition as a predicate for guards in Circus
 \begin{code}
-get_schema_guards :: ZSExpr -> CAction
-get_schema_guards (ZSRef (ZSPlain x) [] [])
+get_schema_guards :: [ZPara] -> ZSExpr -> CAction
+get_schema_guards xls (ZSRef (ZSPlain x) [] [])
   = (CActionName x)
-get_schema_guards (ZS2 ZSAnd (ZSchema x1) (ZSchema x2))
-  = (get_schema_guards (ZSchema (x1++x2)))
-get_schema_guards (ZS2 ZSAnd (ZSRef (ZSPlain x1) _ _) (ZSRef (ZSPlain x2) _ _))
-get_schema_guards (ZS2 ZSOr x1 x2)
-  = (CSPExtChoice (CActionSchemaExpr x1) (CActionSchemaExpr x2))
-get_schema_guards (ZS2 ZSSemi x1 x2)
-  = (CSPSeq (get_schema_guards x1) (get_schema_guards x2))
-get_schema_guards (ZSchema xs)
-  = get_schema_guards' (concat $ map getChooseFrom_ZGenFilt xs)
+get_schema_guards xls (ZS2 ZSAnd (ZSchema x1) (ZSchema x2))
+  = (get_schema_guards xls (ZSchema (x1++x2)))
+get_schema_guards xls (ZS2 ZSOr x1 x2)
+  = (CSPExtChoice (get_schema_guards xls x1) (get_schema_guards xls x2))
+get_schema_guards xls (ZS2 ZSSemi x1 x2)
+  = (CSPSeq (get_schema_guards xls x1) (get_schema_guards xls x2))
+get_schema_guards xls (ZSchema xs)
+  = get_schema_guards' xls (concat $ map getChooseFrom_ZGenFilt xs)
 
-get_schema_guards' :: [ZPred] -> CAction
-get_schema_guards' xs
-  | not(null(fst(find_schema_guards xs [] []))) = (make_schema_guards xs)
-  | otherwise = (schema_to_cactions xs)
+get_schema_guards' :: [ZPara] -> [ZPred] -> CAction
+get_schema_guards' schls xs
+  | not(null(fst(find_schema_guards schls xs [] []))) = (make_schema_guards schls xs)
+  | otherwise = (schema_to_cactions schls xs)
 \end{code}
 
 Filtering Choose from ZGenFilt
@@ -2994,165 +2993,168 @@ getChooseFrom_ZGenFilt (Evaluate _ _ _) = []
 Filtering preconditions for guards: g is a list of guards, e is the remaining elements of the xs list
 
 \begin{code}
-find_schema_guards [] g e = (concat g, concat e)
-find_schema_guards [x] g e
-  | is_predicate x = find_schema_guards [] ([x]:g) e
-  | otherwise = find_schema_guards [] g ([x]:e)
-find_schema_guards (x:xs) g e
-  | is_predicate x = find_schema_guards xs ([x]:g) e
-  | otherwise = find_schema_guards xs g ([x]:e)
+find_schema_guards xs [] g e = (concat g, concat e)
+find_schema_guards xs [x] g e
+  | is_predicate x = find_schema_guards xs [] ([x]:g) e
+  | otherwise = find_schema_guards xs [] g ([x]:e)
+find_schema_guards xls (x:xs) g e
+  | is_predicate x = find_schema_guards xls xs ([x]:g) e
+  | otherwise = find_schema_guards xls xs g ([x]:e)
 \end{code}
 
 \begin{code}
-make_schema_guards xs =
-    (CSPGuard (make_guards g) (schema_to_cactions e))
+make_schema_guards xls xs =
+    (CSPGuard (make_guards g) (schema_to_cactions xls e))
     where
-      (g,e) = (find_schema_guards xs [] [])
+      (g,e) = (find_schema_guards xls xs [] [])
       make_guards [x] = x
       make_guards (x:xs) = (ZAnd x (make_guards xs))
 \end{code}
 
 \begin{code}
-schema_to_cactions :: [ZPred] -> CAction
-schema_to_cactions [] = CSPSkip
-schema_to_cactions [ZEqual (ZVar (v,[ZPrime],"")) e]
+schema_to_cactions :: [ZPara] -> [ZPred] -> CAction
+schema_to_cactions _ [] = CSPSkip
+schema_to_cactions xs [ZEqual (ZVar (v,[ZPrime],"")) e]
   = (CActionCommand (CAssign [(v,[],"")] [e]))
-schema_to_cactions [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
+schema_to_cactions xs [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_primed_zvar e1 && is_primed_zvar e3)
-          = (CSPSeq (schema_to_cactions [e]) (schema_to_cactions [f]))
-  | (is_predicate e && is_primed_zvar e3)
-          = (CSPGuard e (schema_to_cactions [f]))
-  | (is_predicate f && is_primed_zvar e1)
-          = (CSPGuard f (schema_to_cactions [e]))
+          = (CSPSeq (schema_to_cactions xs [e]) (schema_to_cactions xs [f]))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions [ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
-  | (is_predicate e && is_primed_zvar e3)
-          = (CSPGuard e (schema_to_cactions [f]))
+schema_to_cactions xs [ZAnd e f]
+  | (is_predicate e && not(is_predicate f))
+          = (CSPGuard e (schema_to_cactions xs [f]))
+  | (is_predicate f && not(is_predicate e))
+          = (CSPGuard f (schema_to_cactions xs [e]))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions [ZImplies e f@(ZEqual (ZVar e3) e4)]
+schema_to_cactions xs [ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_predicate e && is_primed_zvar e3)
-          = (CSPGuard e (schema_to_cactions [f]))
+          = (CSPGuard e (schema_to_cactions xs [f]))
   | otherwise = error "Could not translate to CAction"
-
-schema_to_cactions ((ZEqual (ZVar (v,[ZPrime],"")) e):xs)
-  = (CSPSeq (CActionCommand (CAssign [(v,[],"")] [e]))(schema_to_cactions xs))
-schema_to_cactions ((ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
+schema_to_cactions xs [ZImplies e f@(ZEqual (ZVar e3) e4)]
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPGuard e (schema_to_cactions xs [f]))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions xls ((ZEqual (ZVar (v,[ZPrime],"")) e):xs)
+  = (CSPSeq (CActionCommand (CAssign [(v,[],"")] [e]))(schema_to_cactions xls xs))
+schema_to_cactions xls ((ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
   | (is_primed_zvar e1 && is_primed_zvar e3)
-          = (CSPSeq (CSPSeq (schema_to_cactions [e]) (schema_to_cactions [f]))(schema_to_cactions xs))
-  | (is_predicate e && is_primed_zvar e3)
-          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
-  | (is_predicate f && is_primed_zvar e1)
-          = (CSPSeq (CSPGuard f (schema_to_cactions [e]))(schema_to_cactions xs))
+          = (CSPSeq (CSPSeq (schema_to_cactions xls [e]) (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions ((ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)):xs)
-  | (is_predicate e && is_primed_zvar e3)
-          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
+schema_to_cactions xls ((ZAnd e f):xs)
+  | (is_predicate e && not(is_predicate f))
+          = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
+  | (is_predicate f && not(is_predicate e))
+          = (CSPSeq (CSPGuard f (schema_to_cactions xls [e]))(schema_to_cactions xls xs))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
+schema_to_cactions xls ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
   | (is_predicate e && is_primed_zvar e3)
-          = (CSPSeq (CSPGuard e (schema_to_cactions [f]))(schema_to_cactions xs))
+          = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions (_:xs) = (schema_to_cactions xs)
+schema_to_cactions xls ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
+  | (is_predicate e && is_primed_zvar e3)
+          = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
+  | otherwise = error "Could not translate to CAction"
+schema_to_cactions xls (_:xs) = (schema_to_cactions xls xs)
 \end{code}
 
 \begin{code}
-procZParaToCParAction (ProcZPara (ZSchemaDef (ZSPlain sname) s))
-  = (CParAction sname (CircusAction (get_schema_guards s)))
-procZParaToCParAction (CParAction n p)
-  = (CParAction n (pZPtoCA_ParAction p))
+procZParaToCParAction xs (ProcZPara (ZSchemaDef (ZSPlain sname) s))
+  = (CParAction sname (CircusAction (get_schema_guards xs s)))
+procZParaToCParAction xs (CParAction n p)
+  = (CParAction n (pZPtoCA_ParAction xs p))
 pZPtoCA_PPar x = x
 \end{code}
 \subsection{Parametrised Actions}
 \begin{code}
-pZPtoCA_ParAction (CircusAction ca)
-  = (CircusAction (pZPtoCAca ca))
-pZPtoCA_ParAction (ParamActionDecl _zgf_lst _ParAction)
-  = (ParamActionDecl _zgf_lst (pZPtoCA_ParAction _ParAction))
+pZPtoCA_ParAction xs (CircusAction ca)
+  = (CircusAction (pZPtoCAca xs ca))
+pZPtoCA_ParAction xs (ParamActionDecl _zgf_lst _ParAction)
+  = (ParamActionDecl _zgf_lst (pZPtoCA_ParAction xs _ParAction))
 \end{code}
 \subsection{\Circus\ Actions}
 \begin{code}
-pZPtoCAca (CActionSchemaExpr nm)
-  = (get_schema_guards nm)
-pZPtoCAca (CActionCommand c)
-  = (CActionCommand (pZPtoCA_CCommand c))
-pZPtoCAca (CSPCommAction _Comm ca)
-  = (CSPCommAction _Comm (pZPtoCAca ca))
-pZPtoCAca (CSPGuard _ZPred ca)
-  = (CSPGuard _ZPred (pZPtoCAca ca))
-pZPtoCAca (CSPSeq ca1 ca2)
-  = (CSPSeq (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPExtChoice ca1 ca2)
-  = (CSPExtChoice (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPIntChoice ca1 ca2)
-  = (CSPIntChoice (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPNSParal _zx_lst c _zx_lst1 ca1 ca2)
-  = (CSPNSParal _zx_lst c _zx_lst1 (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPParal _CSExp ca1 ca2)
-  = (CSPParal _CSExp (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPNSInter _zx_lst _zx_lst1 ca1 ca2)
-  = (CSPNSInter _zx_lst _zx_lst1 (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPInterleave ca1 ca2)
-  = (CSPInterleave (pZPtoCAca ca1) (pZPtoCAca ca2))
-pZPtoCAca (CSPHide ca _CSExp)
-  = (CSPHide (pZPtoCAca ca) _CSExp)
-pZPtoCAca (CSPParAction _ZName _zx_lst)
+pZPtoCAca xs (CActionSchemaExpr nm)
+  = (get_schema_guards xs nm)
+pZPtoCAca xs (CActionCommand c)
+  = (CActionCommand (pZPtoCA_CCommand xs c))
+pZPtoCAca xs (CSPCommAction _Comm ca)
+  = (CSPCommAction _Comm (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPGuard _ZPred ca)
+  = (CSPGuard _ZPred (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPSeq ca1 ca2)
+  = (CSPSeq (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPExtChoice ca1 ca2)
+  = (CSPExtChoice (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPIntChoice ca1 ca2)
+  = (CSPIntChoice (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPNSParal _zx_lst c _zx_lst1 ca1 ca2)
+  = (CSPNSParal _zx_lst c _zx_lst1 (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPParal _CSExp ca1 ca2)
+  = (CSPParal _CSExp (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPNSInter _zx_lst _zx_lst1 ca1 ca2)
+  = (CSPNSInter _zx_lst _zx_lst1 (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPInterleave ca1 ca2)
+  = (CSPInterleave (pZPtoCAca xs ca1) (pZPtoCAca xs ca2))
+pZPtoCAca xs (CSPHide ca _CSExp)
+  = (CSPHide (pZPtoCAca xs ca) _CSExp)
+pZPtoCAca xs (CSPParAction _ZName _zx_lst)
   = (CSPParAction _ZName _zx_lst)
-pZPtoCAca (CSPRenAction _ZName _CReplace)
+pZPtoCAca xs (CSPRenAction _ZName _CReplace)
   = (CSPRenAction _ZName _CReplace)
-pZPtoCAca (CSPRecursion _ZName ca)
-  = (CSPRecursion _ZName (pZPtoCAca ca))
-pZPtoCAca (CSPUnfAction _ZName ca)
-  = (CSPUnfAction _ZName (pZPtoCAca ca))
-pZPtoCAca (CSPUnParAction _zgf_lst ca n)
-  = (CSPUnParAction _zgf_lst (pZPtoCAca ca) n)
-pZPtoCAca (CSPRepSeq _zgf_lst ca)
-  = (CSPRepSeq _zgf_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepExtChoice _zgf_lst ca)
-  = (CSPRepExtChoice _zgf_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepIntChoice _zgf_lst ca)
-  = (CSPRepIntChoice _zgf_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepParalNS _CSExp _zgf_lst _zx_lst ca)
-  = (CSPRepParalNS _CSExp _zgf_lst _zx_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepParal _CSExp _zgf_lst ca)
-  = (CSPRepParal _CSExp _zgf_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepInterlNS _zgf_lst _zx_lst ca)
-  = (CSPRepInterlNS _zgf_lst _zx_lst (pZPtoCAca ca))
-pZPtoCAca (CSPRepInterl _zgf_lst ca)
-  = (CSPRepInterl _zgf_lst (pZPtoCAca ca))
-pZPtoCAca x = x
+pZPtoCAca xs (CSPRecursion _ZName ca)
+  = (CSPRecursion _ZName (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPUnfAction _ZName ca)
+  = (CSPUnfAction _ZName (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPUnParAction _zgf_lst ca n)
+  = (CSPUnParAction _zgf_lst (pZPtoCAca xs ca) n)
+pZPtoCAca xs (CSPRepSeq _zgf_lst ca)
+  = (CSPRepSeq _zgf_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepExtChoice _zgf_lst ca)
+  = (CSPRepExtChoice _zgf_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepIntChoice _zgf_lst ca)
+  = (CSPRepIntChoice _zgf_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepParalNS _CSExp _zgf_lst _zx_lst ca)
+  = (CSPRepParalNS _CSExp _zgf_lst _zx_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepParal _CSExp _zgf_lst ca)
+  = (CSPRepParal _CSExp _zgf_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepInterlNS _zgf_lst _zx_lst ca)
+  = (CSPRepInterlNS _zgf_lst _zx_lst (pZPtoCAca xs ca))
+pZPtoCAca xs (CSPRepInterl _zgf_lst ca)
+  = (CSPRepInterl _zgf_lst (pZPtoCAca xs ca))
+pZPtoCAca xs x = x
 \end{code}
 \subsection{\Circus\ Commands}
 \begin{code}
-pZPtoCA_CCommand (CIf g)
-  = (CIf (pZPtoCA_CGActions g))
-pZPtoCA_CCommand (CVarDecl _zgf_lst ca)
-  = (CVarDecl _zgf_lst (pZPtoCAca ca))
-pZPtoCA_CCommand (CValDecl _zgf_lst ca)
-  = (CValDecl _zgf_lst (pZPtoCAca ca))
-pZPtoCA_CCommand (CResDecl _zgf_lst ca)
-  = (CResDecl _zgf_lst (pZPtoCAca ca))
-pZPtoCA_CCommand (CVResDecl _zgf_lst ca)
-  = (CVResDecl _zgf_lst (pZPtoCAca ca))
-pZPtoCA_CCommand x = x
+pZPtoCA_CCommand xs (CIf g)
+  = (CIf (pZPtoCA_CGActions xs g))
+pZPtoCA_CCommand xs (CVarDecl _zgf_lst ca)
+  = (CVarDecl _zgf_lst (pZPtoCAca xs ca))
+pZPtoCA_CCommand xs (CValDecl _zgf_lst ca)
+  = (CValDecl _zgf_lst (pZPtoCAca xs ca))
+pZPtoCA_CCommand xs (CResDecl _zgf_lst ca)
+  = (CResDecl _zgf_lst (pZPtoCAca xs ca))
+pZPtoCA_CCommand xs (CVResDecl _zgf_lst ca)
+  = (CVResDecl _zgf_lst (pZPtoCAca xs ca))
+pZPtoCA_CCommand xs x = x
 \end{code}
 \subsection{\Circus\ Guards}
 \begin{code}
-pZPtoCA_CGActions (CircGAction _ZPred ca)
-  = (CircGAction _ZPred (pZPtoCAca ca))
-pZPtoCA_CGActions (CircThenElse g g1)
-  = (CircThenElse (pZPtoCA_CGActions g) (pZPtoCA_CGActions g1))
+pZPtoCA_CGActions xs (CircGAction _ZPred ca)
+  = (CircGAction _ZPred (pZPtoCAca xs ca))
+pZPtoCA_CGActions xs (CircThenElse g g1)
+  = (CircThenElse (pZPtoCA_CGActions xs g) (pZPtoCA_CGActions xs g1))
 \end{code}
 \begin{code}
-convert_schema_to_action [] = []
-convert_schema_to_action ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s ls ma))))):xs)
-  = ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s nls ma ))))):(convert_schema_to_action  xs))
+convert_schema_to_action schls [] = []
+convert_schema_to_action schls ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s ls ca))))):xs)
+  = ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain s nls (pZPtoCAca schls ca) ))))):(convert_schema_to_action schls xs))
   where
-    nls = map procZParaToCParAction ls
-convert_schema_to_action ((Process (CProcess n (ProcDef (ProcMain s ls ma)))):xs)
-  = ((Process (CProcess n (ProcDef (ProcMain s nls ma )))):(convert_schema_to_action  xs))
+    nls = map (procZParaToCParAction schls) ls
+convert_schema_to_action schls ((Process (CProcess n (ProcDef (ProcMain s ls ca)))):xs)
+  = ((Process (CProcess n (ProcDef (ProcMain s nls (pZPtoCAca schls ca) )))):(convert_schema_to_action schls xs))
   where
-    nls = map procZParaToCParAction ls
-convert_schema_to_action (_:xs) = (convert_schema_to_action xs)
+    nls = map (procZParaToCParAction schls) ls
+convert_schema_to_action schls (_:xs) = (convert_schema_to_action schls xs)
 \end{code}
 
 
@@ -3160,13 +3162,15 @@ convert_schema_to_action (_:xs) = (convert_schema_to_action xs)
 
 \section{Z Paragraphs}
 \begin{code}
-retr_sch_ZPara e@(ZSchemaDef _ZSName _ZSExpr)
-  = [e]
+retr_sch_ZPara :: ZPara -> [ZPara]
+retr_sch_ZPara (ZSchemaDef _ZSName _ZSExpr)
+  = [(ZSchemaDef _ZSName _ZSExpr)]
 retr_sch_ZPara (Process p) = (retr_sch_ProcDecl p)
 retr_sch_ZPara x = []
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+retr_sch_ProcDecl :: ProcDecl -> [ZPara]
 retr_sch_ProcDecl (CProcess _ p)
   = retr_sch_ProcessDef p
 retr_sch_ProcDecl (CParamProcess _ _ p)
@@ -3176,6 +3180,7 @@ retr_sch_ProcDecl (CGenProcess _ _ p)
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+retr_sch_ProcessDef :: ProcessDef -> [ZPara]
 retr_sch_ProcessDef (ProcDefSpot _ p)
   = retr_sch_ProcessDef p
 retr_sch_ProcessDef (ProcDefIndex _ p)
@@ -3185,6 +3190,7 @@ retr_sch_ProcessDef (ProcDef cp)
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+retr_sch_CProc :: CProc -> [ZPara]
 retr_sch_CProc (CRepSeqProc _ cp)
   = (retr_sch_CProc cp)
 retr_sch_CProc (CRepExtChProc _ cp)
@@ -3207,7 +3213,7 @@ retr_sch_CProc (CInterleave cp cp2)
   = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
 retr_sch_CProc (CSeq cp cp2)
   = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
-retr_sch_CProc (ProcMain e@(ZSchemaDef n f) pl ca)
+retr_sch_CProc (ProcMain e pl ca)
   = (concat $ map retr_sch_PPar pl)++(retr_sch_ZPara e)
 retr_sch_CProc (ProcStalessMain pl _CAction)
   = (concat $ map retr_sch_PPar pl)
@@ -3215,6 +3221,7 @@ retr_sch_CProc x = []
 \end{code}
 \subsection{Process paragraphs}
 \begin{code}
+retr_sch_PPar :: PPar -> [ZPara]
 retr_sch_PPar (ProcZPara e)
   = (retr_sch_ZPara e)
 retr_sch_PPar x = []
@@ -3225,15 +3232,17 @@ retr_sch_PPar x = []
 
 \subsection{Z Schemas}
 \begin{code}
-get_schema_def n [] = error "schema was not found (generated by get_schema_def)"
+get_schema_def :: ZSName -> [ZPara] -> ZSExpr
+get_schema_def n [] = error "schema was not found (generated by get_schema_def) empty"
 get_schema_def n [(ZSchemaDef sn sex)]
   | n == sn = sex
-  | otherwise = error "schema was not found (generated by get_schema_def)"
+  | otherwise = error "schema was not found (generated by get_schema_def) single1"
+get_schema_def n [_] = error "schema was not found (generated by get_schema_def) single2"
 get_schema_def n ((ZSchemaDef sn sex):xs)
   | n == sn = sex
   | otherwise = get_schema_def n xs
-get_schema_def n (_:xs) = get_schema_def n xs
 
+repl_sch_ZSExpr :: [ZPara] -> ZSExpr -> ZSExpr
 repl_sch_ZSExpr schls (ZSchema _zgfs)
   = (ZSchema _zgfs)
 repl_sch_ZSExpr schls (ZSRef sn _ _)
@@ -3253,6 +3262,7 @@ repl_sch_ZSExpr schls (ZSForall _zgfs _ZSExpr)
 \end{code}
 \section{Z Paragraphs}
 \begin{code}
+repl_sch_ZPara :: [ZPara] -> ZPara -> ZPara
 repl_sch_ZPara schls (ZSchemaDef _ZSName _ZSExpr)
   = (ZSchemaDef _ZSName (repl_sch_ZSExpr schls _ZSExpr))
 repl_sch_ZPara schls (Process p)
@@ -3261,6 +3271,7 @@ repl_sch_ZPara schls x = x
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+repl_sch_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
 repl_sch_ProcDecl schls (CProcess _zn p)
   = (CProcess _zn (repl_sch_ProcessDef schls p))
 repl_sch_ProcDecl schls (CParamProcess _zn _zn2_lst p)
@@ -3270,6 +3281,7 @@ repl_sch_ProcDecl schls (CGenProcess _zn _zn2_lst p)
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+repl_sch_ProcessDef :: [ZPara] -> ProcessDef -> ProcessDef
 repl_sch_ProcessDef schls (ProcDefSpot _zgfs p)
   = (ProcDefSpot _zgfs (repl_sch_ProcessDef schls p))
 repl_sch_ProcessDef schls (ProcDefIndex _zgfs p)
@@ -3279,6 +3291,7 @@ repl_sch_ProcessDef schls (ProcDef _cp)
 \end{code}
 \subsection{\Circus\ Process}
 \begin{code}
+repl_sch_CProc :: [ZPara] -> CProc -> CProc
 repl_sch_CProc schls (CRepSeqProc _zgfs _cp)
   = (CRepSeqProc _zgfs (repl_sch_CProc schls _cp))
 repl_sch_CProc schls (CRepExtChProc _zgfs _cp)
@@ -3318,14 +3331,17 @@ repl_sch_CProc schls (ProcStalessMain _PPar_lst _cact)
 \end{code}
 \subsection{Process paragraphs}
 \begin{code}
-repl_sch_PPar schls (ProcZPara _ZPara) = (ProcZPara _ZPara)
-repl_sch_PPar schls (CParAction _zn _ParAction) = (CParAction _zn _ParAction)
-repl_sch_PPar schls (CNameSet _zn _zexls) = (CNameSet _zn _zexls)
+repl_sch_PPar :: [ZPara] -> PPar -> PPar
+repl_sch_PPar schls (ProcZPara _ZPara)
+  = (ProcZPara (repl_sch_ZPara schls _ZPara))
+repl_sch_PPar schls (CParAction _zn _ParAction)
+  = (CParAction _zn (repl_sch_ParAction schls _ParAction))
+repl_sch_PPar schls x = x
 \end{code}
 \subsection{Parametrised Actions}
 \begin{code}
-repl_sch_ParAction schls (CircusAction _cact) = (CircusAction _cact)
-repl_sch_ParAction schls (ParamActionDecl _zgfs _ParAction) = (ParamActionDecl _zgfs _ParAction)
+repl_sch_ParAction schls (CircusAction _cact) = (CircusAction (repl_sch_CAction schls _cact))
+repl_sch_ParAction schls (ParamActionDecl _zgfs _ParAction) = (ParamActionDecl _zgfs (repl_sch_ParAction schls _ParAction))
 \end{code}
 \subsection{\Circus\ Actions}
 \begin{code}
