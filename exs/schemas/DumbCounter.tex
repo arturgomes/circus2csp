@@ -1,0 +1,21 @@
+\begin{circus}
+NatValue == \{0\upto 4\}\\
+MinMax \defs [min, max : NatValue]\\
+Count \defs [counter: NatValue]\\
+\circprocess DumbCounter \circdef \circbegin
+\circstate\ St \defs MinMax \land Count\\
+Init \defs [\Delta St | min' = 0; max' = 3; counter' = min']\\
+PreAdd \defs [\Xi St | counter+1 < max]\\
+Add \defs [\Delta St | counter' = (counter + 1)]\\
+ResetCounter \defs [\Delta St | counter = max \implies counter' = min]
+\circspot Init \circseq (\circmu X \circspot ((\lschexpract (PreAdd \land Add) \lor ResetCounter \rschexpract) \circseq X))
+\circend
+\end{circus}
+\begin{assert}
+"DumbCounterSpec = (DumbCounter(b_NAT1))"
+\also "MAIN = DumbCounterSpec"
+\also "-- assertions"
+\also "assert MAIN :[ deterministic ]"
+\also "assert MAIN :[ livelock free ]"
+\also "assert MAIN :[ deadlock free [FD] ]"
+\end{assert}
