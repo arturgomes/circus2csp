@@ -2889,7 +2889,7 @@ get_v_ZPred _ = []
 \end{code}
 
 
-
+\section{Schemas to Circus Actions}
 \begin{code}
 {-
 
@@ -3152,4 +3152,67 @@ convert_schema_to_action ((Process (CProcess n (ProcDef (ProcMain s ls ma)))):xs
   where
     nls = map procZParaToCParAction ls
 convert_schema_to_action (_:xs) = (convert_schema_to_action xs)
+\end{code}
+
+
+\section{Retrieve Z Schemas into a list}
+
+\section{Z Paragraphs}
+\begin{code}
+retr_sch_ZPara e@(ZSchemaDef _ZSName _ZSExpr)
+  = [e]
+retr_sch_ZPara (Process p) = (retr_sch_ProcDecl p)
+\end{code}
+\subsection{\Circus\ Process}
+\begin{code}
+retr_sch_ProcDecl (CProcess _ p)
+  = retr_sch_ProcessDef p
+retr_sch_ProcDecl (CParamProcess _ _ p)
+  = retr_sch_ProcessDef p
+retr_sch_ProcDecl (CGenProcess _ _ p)
+  = retr_sch_ProcessDef p
+\end{code}
+\subsection{\Circus\ Process}
+\begin{code}
+retr_sch_ProcessDef (ProcDefSpot _ p)
+  = retr_sch_ProcessDef p
+retr_sch_ProcessDef (ProcDefIndex _ p)
+  = retr_sch_ProcessDef p
+retr_sch_ProcessDef (ProcDef cp)
+  = (retr_sch_CProc cp)
+\end{code}
+\subsection{\Circus\ Process}
+\begin{code}
+retr_sch_CProc (CRepSeqProc _ cp)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CRepExtChProc _ cp)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CRepIntChProc _ cp)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CRepParalProc _ _ cp)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CRepInterlProc _ cp)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CHide cp _)
+  = (retr_sch_CProc cp)
+retr_sch_CProc (CExtChoice cp cp2)
+  = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
+retr_sch_CProc (CIntChoice cp cp2)
+  = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
+retr_sch_CProc (CParParal _CSExp cp cp2)
+  = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
+retr_sch_CProc (CInterleave cp cp2)
+  = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
+retr_sch_CProc (CSeq cp cp2)
+  = (retr_sch_CProc cp)++(retr_sch_CProc cp2)
+retr_sch_CProc (ProcMain e@(ZSchemaDef n f) pl ca)
+  = (concat $ map retr_sch_PPar pl)++(retr_sch_ZPara e)
+retr_sch_CProc (ProcStalessMain pl _CAction)
+  = (concat $ map retr_sch_PPar pl)
+\end{code}
+\subsection{Process paragraphs}
+\begin{code}
+retr_sch_PPar (ProcZPara e)
+  = (retr_sch_ZPara e)
+retr_sch_PPar x = []
 \end{code}
