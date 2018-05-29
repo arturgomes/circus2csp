@@ -2960,7 +2960,8 @@ is_predicate (ZMember _ _) = True
 is_predicate _ = True
 \end{code}
 
-Making any precondition as a predicate for guards in Circus
+This function will convert the structure of schemas into Circus actions.
+It also will transform any precondition as a predicate for guards in Circus
 \begin{code}
 get_schema_guards :: ZSExpr -> CAction
 get_schema_guards (ZSRef (ZSPlain x) [] [])
@@ -3069,8 +3070,8 @@ pZPtoCA_ParAction (ParamActionDecl _zgf_lst _ParAction)
 \end{code}
 \subsection{\Circus\ Actions}
 \begin{code}
-pZPtoCAca (CActionSchemaExpr (ZSRef (ZSPlain nm) [] []))
-  = (CActionName nm)
+pZPtoCAca (CActionSchemaExpr nm)
+  = (get_schema_guards nm)
 pZPtoCAca (CActionCommand c)
   = (CActionCommand (pZPtoCA_CCommand c))
 pZPtoCAca (CSPCommAction _Comm ca)
