@@ -66,6 +66,10 @@ mapping_Circus spec (x:xs)
 \begin{code}
 
 mapping_CircParagraphs :: [ZPara] -> ZPara -> String
+
+mapping_CircParagraphs spec (ZAxDef [Choose _ (ZCall (ZVar ("\\fun",[],"")) tp),Check (ZEqual (ZVar (f,_,_)) (ZLambda a b))])
+  = "\n"++f++"("++(joinBy "," $ map (mapping_ZExpr (get_delta_names1 spec)) $ map (\(Choose v t) -> ZVar v) $ filter_ZGenFilt_Choose a)++") = "++(mapping_ZExpr (get_delta_names1 spec) b)
+
 mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) []) = ""
 mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) univ)
   = case res of
@@ -1303,7 +1307,7 @@ mapping_ZExpr lst (ZCall (ZVar ("\\seq",[],[])) a) = "Seq("++(mapping_ZExpr lst 
 mapping_ZExpr lst (ZCall (ZVar ("\\setminus",[],[])) (ZTuple [a,b])) = "diff("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst (ZCall (ZVar ("head",[],[])) s) = "head("++mapping_ZExpr lst (s)++")"
 mapping_ZExpr lst (ZCall (ZVar ("tail",[],[])) s) = "tail("++mapping_ZExpr lst (s)++")"
-mapping_ZExpr lst (ZCall (ZVar a) (ZVar b)) = "apply("++(mapping_ZExpr lst (ZVar a))++","++(mapping_ZExpr lst (ZVar b))++")"
+-- mapping_ZExpr lst (ZCall (ZVar a) (ZVar b)) = "apply("++(mapping_ZExpr lst (ZVar a))++","++(mapping_ZExpr lst (ZVar b))++")"
 mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
   = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
 mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(mapping_ZExpr1 a)++".."++(mapping_ZExpr1 b)++"}"
@@ -1321,7 +1325,8 @@ mapping_ZExpr lst (ZSeqDisplay x) = "<"++(mapping_ZExpr_def_f mapping_ZExpr1 x)+
 -- mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
 mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
 mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ filter_ZGenFilt_Choose a)++")"
-mapping_ZExpr lst (ZCall c d) = "apply("++(mapping_ZExpr lst c)++","++(mapping_ZExpr lst d)++")"
+-- mapping_ZExpr lst (ZCall c d) = "apply("++(mapping_ZExpr lst c)++","++(mapping_ZExpr lst d)++")"
+mapping_ZExpr lst (ZCall a b) = (mapping_ZExpr lst a)++"("++(mapping_ZExpr lst b)++")"
 mapping_ZExpr lst x = ""
 -- mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
 

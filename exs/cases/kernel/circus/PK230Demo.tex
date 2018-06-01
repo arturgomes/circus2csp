@@ -22,9 +22,15 @@ and 1 standing for an ordinary partition.
 \\ PRT    == 1
 \\ CODEID == KNL \upto PRT
 \end{circus}
-\begin{assert}
-"next(codeid) = (codeid+1) % 2"
-\end{assert}
+
+\begin{axdef}
+ next : CODEID \fun CODEID
+\where
+ next = (\lambda codeid : CODEID @ (codeid+1) \mod 2)
+\end{axdef}
+% \begin{assert}
+% "next(codeid) = (codeid+1) % 2"
+% \end{assert}
 
 We shall use a global variable containing a $CODEID$ to indicate
 what code is enabled.

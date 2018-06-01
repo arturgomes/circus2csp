@@ -59,6 +59,7 @@ setFName fn anim = anim{filename = fn}
 
 data ZParaInfo
   = ZParaDefn{origpara::ZPara, defname::ZVar, defunfolded::ZExpr}
+  | ZAxDefDefn{origpara::ZPara,axdefunfolded::[ZGenFilt]}
   | ZParaPred{origpara::ZPara, predunfolded::ZPred}
   | CircusChannel{origpara::ZPara, chanunfolded::[CDecl]}
   | CircusChanSet{origpara::ZPara, defcname::ZName, chansetunfolded::CSExp}
@@ -345,6 +346,11 @@ process_paras spec (p@(Assert s) : ps)
           assertunfolded=s}
       let newspec = newp:spec
       process_paras newspec ps
+process_paras spec (p@(ZAxDef v) : ps)
+  = do let newp = ZAxDefDefn{origpara=p,
+           axdefunfolded=v}
+       let newspec = newp:spec
+       process_paras newspec ps
 process_paras spec (para : ps)
   = fail ("Not implemented yet: " ++ show para)
 
