@@ -1,0 +1,14 @@
+ZAxDef
+  [ Choose ("f",[],"")
+           (ZCall (ZVar ("\\fun",[],"")) (ZTuple [ZVar ("NAT",[],""),ZVar ("NAT",[],"")]))
+  , Check ( ZEqual
+            (ZVar ("f",[],""))
+            (ZLambda [Choose ("x",[],"") (ZVar ("NAT",[],""))]
+                     (ZCall (ZVar ("+",[],""))
+                            (ZTuple [ZVar ("x",[],""),ZInt 1]))
+            )
+           )
+  ]
+
+
+f(x) = x + 1

@@ -1,0 +1,18 @@
+\chapter{Function Test}
+
+\begin{zed}
+  NAT == 0 \upto 9
+\end{zed}
+
+\begin{axdef}
+ f : NAT \fun NAT
+\where
+ f = (\lambda x : NAT @ x + 1)
+\end{axdef}
+
+\begin{circus}
+\circchannel do : NAT \\
+\circprocess\ FuncTest \circdef \circbegin \\
+\t1 \circspot do.(f(3)) \then \Skip \\
+\circend
+\end{circus}
