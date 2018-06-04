@@ -70,6 +70,9 @@ mapping_CircParagraphs :: [ZPara] -> ZPara -> String
 mapping_CircParagraphs spec (ZAxDef [Choose _ (ZCall (ZVar ("\\fun",[],"")) tp),Check (ZEqual (ZVar (f,_,_)) (ZLambda a b))])
   = "\n"++f++"("++(joinBy "," $ map (mapping_ZExpr (get_delta_names1 spec)) $ map (\(Choose v t) -> ZVar v) $ filter_ZGenFilt_Choose a)++") = "++(mapping_ZExpr (get_delta_names1 spec) b)
 
+mapping_CircParagraphs spec (ZAxDef [Choose _ (ZCall (ZVar ("\\pfun",[],"")) tp),Check (ZEqual (ZVar (f,_,_)) (ZLambda a b))])
+  = "\n"++f++"("++(joinBy "," $ map (mapping_ZExpr (get_delta_names1 spec)) $ map (\(Choose v t) -> ZVar v) $ filter_ZGenFilt_Choose a)++") = "++(mapping_ZExpr (get_delta_names1 spec) b)
+
 mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) []) = ""
 mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) univ)
   = case res of
