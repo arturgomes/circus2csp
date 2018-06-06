@@ -161,14 +161,14 @@ help =
   ["Available commands:",
    fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
    fmtcmd "reconv"                 "repeat 'conv' on previous file",
-   fmtcmd "show"                   "Display a summary of whole spec.",
-   fmtcmd "orig"                   "Display the whole spec originally loaded.",
+   -- fmtcmd "show"                   "Display a summary of whole spec.",
+   -- fmtcmd "orig"                   "Display the whole spec originally loaded.",
    fmtcmd "quit"                   "Exit the animator",
    fmtcmd "load filename"          "Load a Z specification from a file",
    fmtcmd "omega"                  "Apply the Omega function to Circus spec",
    fmtcmd "tocsp"                  "Map the whole spec into CSP.",
    fmtcmd "reload"                 "Re-load Z specification from current file",
-   fmtcmd "latex"                  "Pretty print into LaTeX.",
+   -- fmtcmd "latex"                  "Pretty print into LaTeX.",
    fmtcmd "list"                   "List the files in the current directory.",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
@@ -225,8 +225,14 @@ do_cmd cmd args anim fn
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
 
   | cmd == "refines"
-     = do  putStrLn ("Running FDR4 with '"++(getFName anim)++"' ...")
-           fdr4 ((getFName anim)++".csp")
+     = do  putStrLn "--------------------------------------------------------------------------------------------------"
+           putStrLn ("---------- Running FDR4 using the file '"++"\x1b[32m" ++ (getDstDir anim++args)++(getFName anim)++".csp"++ "\x1b[0m"++"' ...")
+           putStrLn "--------------------------------------------------------------------------------------------------"
+
+-- "Welcome to FDR Version 4.2.3 copyright 2016 Oxford University Innovation Ltd. All Rights Reserved."
+-- "--------------------------------------------------------------------------------------------------"
+           fdr4 ((getDstDir anim++args)++(getFName anim)++".csp")
+           putStrLn ("\x1b[32m" ++ "End of the execution of FDR4 ..."++ "\x1b[0m")
            get_cmd anim fn
   | cmd == "reconv"
      = do_cmd "conv" (getFName anim) anim fn
