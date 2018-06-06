@@ -1,0 +1,116 @@
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+-- Function auxiliary operations
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+-- Function is a set {(x1, y1),...,(xn, yn)}
+
+-- Transforms a singleton set into the element itself
+pick({}) = error("Empty set found for pick()")
+pick({x}) = x
+-- Returns the function return
+-- Raises error if z is not in the domain of the function
+apply(f,x) =
+    let
+      ev = { v | (n,v) <- f, n==x}
+    within if empty(ev) then error("Can't use 'apply' within f: "^show(f)^" and x: "^show(x)) else pick(ev)
+
+-- domain antirestriction
+ddres(f,xs) = {(n,v) | (n,v) <- f, not member(n,xs)}
+
+-- domain restriction
+dres(f,xs) = {(n,v) | (n,v) <- f, member(n,xs)}
+
+-- Overwrites the fuction
+over(f,n,v) = union(ddres(f,{n}),{(n,v)})
+
+fst((a,b)) = a
+
+-- overriding
+oplus(s1,s2) = union(
+		{(x,y) | (x,y) <- s1, not member(x,dom(s2))},
+		{(u,v) | (u,v) <- s2, member(u,dom(s1))} )
+
+-- Returns the domain of a relation
+dom(f) = {n | (n,v) <- f}
+
+-- Returns the domain of a relation
+ran(f) = {v | (n,v) <- f}
+
+--- Artur Gomes - 23.03.17
+sequence({n}) = <n>
+
+-- Returns the domain of a relation
+name(f) = {n | (n,t,v) <- f}
+
+-- Returns the domain of a relation
+nvalue(f) = {v | (n,t,v) <- f}
+
+-- Returns the function return
+-- Raises error if z is not in the domain of the function
+applyf(f,x) = pick({ v | (n,t,v) <- f, n==x})
+
+-- range restriction
+rres(f,xs) = {(n,v) | (n,v) <- f, member(v,xs)}
+
+-- partial function
+----------------------------------- pfun [START] ----------------------------------------
+-- a partial function pfun(X, Y) finally is a set of (set of pairs)
+-- {{(x1,y1), (x2, y2) ... }, {(x1, y2)...}, {()}}
+-- in its subset, the source of each pair (X) shall not be unique, therefore
+-- 	{(x1, y1), (x1, y2)} is not allowed
+-- however the destination of each pair (y) don't have to be unique, therefore
+--	{(x1, y1), (x2, y2)} is valid
+--
+-- the algorithms to calculate a partial function of X and Y, shown below
+-- 1. generally it is a union of
+--	a) taking zero item from X, => {}
+--	b) taking one item from X, => {{(x1,y1)}, {(x1,y2)}, ... {(x2,y1)}, ...}
+--	c) taking two items from X, => {{(x1,y1), (x2, y1)}, ...}
+--	i) ...
+--	n) taking n items from X, => {{(x1,y1), (x2, y1), ..., (xn, y1)}, ...}
+-- 2. for each small step a), b), ..., n), use pcomb(X, Y, n)
+--	pcomb(X, Y, n) is used to compute all possible pairs which size is n.
+--	for example, pcomp({1,2},{3},1) gets {{(1,3)},{(2,3)}} and the cardinality is one
+-- 3. for pcomp,
+--	a) at first, calculate all possible subset of X and its cardinality is n (by select2)
+--	for example, select2({1,2,3}, 2) = {<1,2>,<1,3>,<2,3>}
+--	b) then calculate all possible combination of elements from Y and its size is n as well.
+--	for example, select1({1,2}, 2) = {<1,1>, <1,2>, <2,1>, <2,2>}
+--	c) join the sequences from select2 and select1 together to get pcomp
+
+-- select n items from x, order matters and duplicate items are allowed
+-- select1({1,2}, 2) = {<1,1>, <1,2>, <2,1>, <2,2>}
+select1(Y, 0) = { <> }
+select1(Y, 1) = { <y> | y <- Y}
+select1(Y, n) = { <y>^ss | y <- Y, ss <- select1(Y, n-1) }
+
+-- select n items from x, order doesn't matter and duplicate items are not allowed
+-- select({1,2}, 1) = {<1>,<2>}
+-- select({1,2}, 2) = {<1,2>}
+select2_1(X, 0) = {}
+-- choose more than 1 from <x> leads to emptyset
+select2_1(<x>, n) = if n > 1 then {} else { <x> }
+select2_1(X, 1) = { <x> | x <- set(X) }
+select2_1(<x>^s, n) = union({ <x> ^ ss | ss <- select2_1(s, n-1)}, select2_1(s, n))
+
+select2(X, n) = select2_1(seq(X), n)
+
+-- join(s1, s2) to form a {(s11, s21), (s12, s22), ..., (s1n, s2n)}
+-- s1 and s2 are the same size sequences
+-- s1 = <s11, s12, ..., s1n>
+-- s2 = <s21, s22, ..., s2n>
+pjoin(<x>, <y>) = {(x,y)}
+pjoin(<x>^s1, <y>^s2) = union({(x,y)}, pjoin(s1, s2))
+
+--
+pcomb(X, Y, n) = { pjoin(s1, s2) | s1 <- select2(X, n), s2 <- select1(Y, n)}
+
+pfun1(X, Y, 1) = {{(x,y)} | x <- X, y <- Y}
+pfun1(X, Y, n) = union(pfun1(X, Y, n-1), pcomb(X, Y, n))
+
+pfun(X, Y) = union(pfun1(X, Y, card(X)), {{}})
+----------------------------------- pfun [END] ---------------------------------------
+
+-- composition
+comp(f,g) = {y | x <- f, y <- g(x)}

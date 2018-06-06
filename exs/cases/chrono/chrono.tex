@@ -1,0 +1,114 @@
+\subsection{$AChrono$}
+
+A specification:
+\begin{circus}
+RANGE == 0 \upto 3
+\also \circchannel tick,time
+\also \circchannel out : \{min,sec : RANGE @ (min,sec)\}
+\also
+\circprocess\ AChrono \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ sec, min : RANGE ]\\
+\t1 AInit \defs [AState' | sec' = min' = 0]\\
+\t1 IncSec \defs [AState' | sec' = (sec+1)\mod 3; min' = min]\\
+\t1 IncMin \defs [AState' | min' = (min+1)\mod 3; sec' = sec]\\
+\t1 Run \circdef \\
+\t2 (
+(
+  tick \then \lschexpract IncSec \rschexpract \circseq \\
+      (
+        \circif sec = 0 \circthen \lschexpract IncMin \rschexpract\\
+        \circelse sec \neq 0 \circthen \Skip \circfi
+      )
+)\\
+    \extchoice~ time \then out!(min, sec) \then \Skip \\
+)\\
+\t1 \circspot (\lschexpract AInit \rschexpract \circseq (\circmu X \circspot (Run \circseq X)))\\
+\circend
+\end{circus}
+
+\subsection{$Chrono$}
+\begin{circus}
+\circchannel inc, minsReq\\
+\also SecSt \defs [sec : RANGE]\\
+\also MinSt \defs [min : RANGE]\\
+\also \circchannel ans : RANGE
+\also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
+\also \circprocess Chrono \circdef\ \circbegin\\
+\circstate State \defs SecSt \land MinSt\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+ SecInit \defs [SecSt' | sec'=0 ]\\
+ IncSec \defs [\Delta SecSt; \Xi MinSt | sec'= (sec+1)\mod 3]\\
+ RunSec \circdef\\
+((tick \then \lschexpract IncSec \rschexpract\circseq\\
+    (\circif  sec = 0 \circthen inc \then \Skip\\
+    \circelse sec \neq 0 \circthen \Skip \circfi))\\
+  \extchoice time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip )  \\
+ Seconds \circdef \lschexpract SecInit\rschexpract \circseq (\circmu X \circspot (RunSec \circseq X))\\
+ MinInit \defs [MinSt' | min'=0 ]\\
+ IncMin \defs [\Delta MinSt; \Xi SecSt | min'= (min+1)\mod 3]\\
+ RunMin \circdef (inc \then \lschexpract IncMin\rschexpract ) \extchoice (minsReq \then ans!min \then \Skip)\\
+ Minutes \circdef \lschexpract MinInit \rschexpract \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
+\circend
+\end{circus}
+\subsection{Distributed processes - $ChronometerFull$}
+\subsubsection{$Seconds$}
+\begin{circus}
+\circprocess Seconds \circdef\ \\
+\circbegin\\
+\t1\circstate StateSeconds \defs SecSt\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+\t1 SecInit \defs [SecSt' | sec'=0 ]\\
+\t1 IncSec \defs [\Delta SecSt | sec'= (sec+1)\mod 3]\\
+\t1 RunSec \circdef
+\\\t2
+(
+(
+tick \then \lschexpract IncSec \rschexpract \circseq\\
+    (
+      \circif  sec = 0 \circthen inc \then \Skip\\
+      \circelse sec \neq 0 \circthen \Skip \circfi
+    )\\
+    )\\
+  \extchoice~time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip
+)\\
+ \t1\circspot \lschexpract SecInit \rschexpract \circseq (\circmu X \circspot (RunSec \circseq X))\\
+\circend
+\end{circus}
+\subsubsection{$Minutes$}
+
+\begin{circus}
+\circprocess Minutes \circdef\\\ \circbegin\\
+\t1\circstate StateMinutes \defs MinSt\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+MinInit \defs [MinSt' | min'=0 ]\\
+IncMin \defs [\Delta MinSt; \Xi SecSt | min'= (min+1)\mod 3]\\
+\t1 RunMin \circdef\\\t2
+(
+  (inc \then \lschexpract IncMin\rschexpract )\\
+  \extchoice (minsReq \then ans!min \then \Skip)\\
+)\\
+ \t1\circspot \lschexpract MinInit\rschexpract  \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circend
+\end{circus}
+% \subsubsection{$ChronometerFull$}
+%
+% \begin{circus}
+%   \circprocess ChronometerFull \circdef ((Seconds \lpar Sync \rpar Minutes) \circhide Sync)
+% \end{circus}
+% %
+
+
+\begin{assert}
+"ChronometerFull = ( ( Seconds(b_RAN1) [| Sync |] Minutes(b_RAN1) ) \ Sync )"\\
+\also "HAChrono = AChrono(b_RAN1) \{| tick|}"\\
+\also "HChrono = Chrono(b_RAN1) \ Sync"\\
+\also "-- assert ChronometerFull:[deterministic [FD]]"\\
+\also "-- assert HAChrono :[deterministic [FD]]"\\
+\also "-- assert HChrono :[deterministic [FD]]"\\
+\also "assert ChronometerFull [FD= HAChrono"\\
+\also "assert HAChrono [FD= ChronometerFull"\\
+\end{assert}

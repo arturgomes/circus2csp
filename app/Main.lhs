@@ -16,6 +16,7 @@ import Data.Char
 import Data.Char
 import Formatter
 import System.IO          -- Standard IO library, so we can catch IO errors etc.
+import System.Process
 import Control.Exception
 import Control.Monad
 import System.Directory
@@ -171,6 +172,7 @@ help =
    fmtcmd "list"                   "List the files in the current directory.",
    fmtcmd "reset"                  "Reset the whole specification",
    fmtcmd "help"                   "Display this message",
+   fmtcmd "refines"                "Run FDR4 in command line mode",
    fmtcmd "% comment"              "(Ignored)"
   ]
 
@@ -221,6 +223,11 @@ do_cmd cmd args anim fn
             done_cmd (anim2, upslonCircus anim2 fn2, fn2))
         (\err ->
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+
+  | cmd == "refines"
+     = do  putStrLn ("Running FDR4 with '"++(getFName anim)++"' ...")
+           fdr4 ((getFName anim)++".csp")
+           get_cmd anim fn
   | cmd == "reconv"
      = do_cmd "conv" (getFName anim) anim fn
   | cmd == "reset" && args == "" =
@@ -288,6 +295,8 @@ writeStr fp c =
       hClose
       (\h -> hPutStr h c)
 
+
+
 fmtgfs :: (Int,ZGenFilt) -> String
 fmtgfs (n,Check ZFalse{reason=(r:rs)}) =
    show n ++ "  " ++ "false  \\because{"
@@ -336,4 +345,12 @@ getLineEdit prompt
 --	   then return ()
 --	   else addHistory s
 --	return s
+
+
+-- Print the current directory structure with files
+fdr4 spec =
+  do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines -qb "++spec]){ std_out = CreatePipe }
+     grepBytes <- hGetContents hout
+     putStrLn grepBytes
+
 \end{code}

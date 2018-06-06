@@ -846,22 +846,17 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         ((mkZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns1))))
+         ((mkZSetDisplay (map_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns1))))
        (CSExpr "MEML"))
       (CSPHide
        (CSPNSParal [] (CSExpr "MEML") []
         (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
         (CSPParAction "MemoryMerge"
-         ((mkZSetDisplay (mk_var_v_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns2))))
+         ((mkZSetDisplay ( map_var_bnds $ zvar_to_zexpr lsx))++(get_ns ns2))))
        (CSExpr "MEML")))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
-    mkZSetDisplay [] = []
-    mkZSetDisplay [x] = [ZSetDisplay [x]]
-    mkZSetDisplay (x:xs) = (mkZSetDisplay [x])++(mkZSetDisplay xs)
-    get_ns [ZVar ("\\emptyset",[],"")] = [ZSeqDisplay []]
-    get_ns [ZSetDisplay xs] = [ZSeqDisplay xs]
-    get_ns _ = []
+
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}

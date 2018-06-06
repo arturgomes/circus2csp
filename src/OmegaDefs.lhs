@@ -2316,9 +2316,33 @@ joinBy sep cont = drop (length sep) $ concat $ map (\w -> sep ++ w) cont
 \begin{code}
 mk_var_v_var_bnds :: [ZExpr] -> [ZExpr]
 mk_var_v_var_bnds [] = []
-mk_var_v_var_bnds ((ZVar (x,b,c)):xs) =
-  [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
-mk_var_v_var_bnds (_:xs) = mk_var_v_var_bnds xs
+mk_var_v_var_bnds ((ZVar (x,b,c)):xs)
+  | c == [] = []++(mk_var_v_var_bnds xs)
+  | otherwise = [(ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,b,c),ZVar (join_name "v" x,b,c)]))]++(mk_var_v_var_bnds xs)
+
+map_var_bnds :: [ZExpr] -> [[ZExpr]]
+map_var_bnds xs
+  = map mk_var_v_var_bnds (map (filter_mergeV_by_type xs) (get_type_v xs))
+
+filter_mergeV_by_type :: [ZExpr] -> String -> [ZExpr]
+filter_mergeV_by_type [] _ = []
+filter_mergeV_by_type ((ZVar (x,b,c)):xs) v
+  | c == [] = (filter_mergeV_by_type xs v)
+  | v == c = [ZVar (x,b,c)]++(filter_mergeV_by_type xs v)
+  | otherwise = (filter_mergeV_by_type xs v)
+
+get_type_v :: [ZExpr] -> [String]
+get_type_v xs = remdups $ map (\(ZVar (x,b,c)) -> c) xs
+
+mkZSetDisplay :: [[ZExpr]] -> [ZExpr]
+mkZSetDisplay [] = []
+mkZSetDisplay ([]:xs) = (mkZSetDisplay xs)
+mkZSetDisplay (x:xs) = [ZSetDisplay x]++(mkZSetDisplay xs)
+
+get_ns :: [ZExpr] -> [ZExpr]
+get_ns [ZVar ("\\emptyset",[],"")] = [ZSeqDisplay []]
+get_ns [ZSetDisplay xs] = [ZSeqDisplay xs]
+get_ns _ = []
 \end{code}
 
 \section{Auxiliary for Ref3}
