@@ -1,0 +1,8 @@
+-- lib_card 
+
+-- calculate cardinality of set and sequence using the same function "len"
+len(<>) = 0
+len(<x>) = 1
+len(<x>^s) = len(s) + 1
+len(s) = len(seq(s))
+

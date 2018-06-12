@@ -1,0 +1,67 @@
+-- lib_rel.csp
+
+--rel(X, Y) = { (x,y) | x<-X, y<-Y }
+rel(X, Y) = Set(cross(X, Y))
+
+-- id
+id(s) = {(x,x) | x <- s}
+
+-- first and second
+first((x,y)) = x
+second((x,y)) = y
+
+-- domain and range
+dom(s) = { x | (x,y)<-s }
+ran(s) = { y | (x,y)<-s }
+
+-- comp
+comp(s1,s2) = {(x,v) | (x,y)<-s1, (u,v)<-s2, y==u}
+
+-- circ (functional composition or backward relation composition) 
+circ(s1,s2) = comp(s2,s1) 
+
+-- domain restriction
+dres(rs,s) = {(x,y) | (x,y)<-s, member(x,rs)}
+
+-- range restriction
+rres(s,rs) = {(x,y) | (x,y)<-s, member(y,rs)}
+
+-- domain subtraction
+ndres(rs,s) = {(x,y) | (x,y)<-s, not member(x,rs)}
+
+-- range subtraction
+nrres(s,rs) = {(x,y) | (x,y)<-s, not member(y,rs)}
+
+-- inv
+inv(s) = {(y,x) | (x,y)<-s}
+
+-- image
+-- relational image
+--img(A,s) = ran(dres(A,s))
+img(s,r) = {y | (x,y)<-r, member(x,s)}
+
+-- overriding 
+oplus(s1,s2) = union(
+		{(x,y) | (x,y) <- s1, not member(x,dom(s2))}, 
+		{(u,v) | (u,v) <- s2, member(u,dom(s1))} )
+
+-- iter (s is a homogeneous relation X <--> X - source and target have the same type)
+iter(s,0) = id(dom(s))
+iter(s,1) = s
+iter(s,n) = comp(s,iter(s,n-1))
+-- negative number is not supported in pattern match
+-- iter(s, -1) = iter(inv(s), 1)
+-- iter(s,n) = comp(inv(s),iter(s,n+1))
+itern(s,n) = if n < 0 then iter(inv(s), 0 - n) else iter(s,n)
+-- iter(s,n) = if n < 0 then comp(inv(s), iter(s, n+1)) else iterr(s,n)
+
+-- _+ and _*: transitive closure and reflexive-transitive closure
+iters(s,1) = iter(s,1)
+iters(s,n) = Union({iters(s,n-1), iter(s,n)})
+star(s) = iters(s,10)
+
+--iterp(s,0) = iter(s,0)
+--iterp(s,1) = Union({iterp(s,0), iter(s,1)})
+--iterp(s,n) = Union({iterp(s,n-1), iter(s,n)})
+--plus(s) = iterp(s,10)
+plus(s) = union(star(s), iter(s,0))

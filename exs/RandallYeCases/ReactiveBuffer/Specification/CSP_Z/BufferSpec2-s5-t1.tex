@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{fuzz}
+
+\begin{document} 
+\begin{axdef}
+    maxbuff: \nat_1
+\where
+    maxbuff = 5 
+\end{axdef}
+
+\begin{zed}
+Buffer\_State \defs [~ Buffer\_buff: \seq~\nat; Buffer\_size: 0 \upto maxbuff | Buffer\_size = \#Buffer\_buff \leq maxbuff ~] \\
+\end{zed}
+
+%Buffer\_Init \defs [~ Buffer\_State' | Buffer\_buff' = \langle\rangle \land Buffer\_size' = 0 ~] \\
+\begin{zed}
+Buffer\_Init \defs [~ Buffer\_State' | Buffer\_buff' = \langle\rangle \land Buffer\_size' = 0 ~] \\
+Init \defs [~ Buffer\_State' | Buffer\_buff' = \langle\rangle \land Buffer\_size' = 0 ~]\\
+\end{zed}
+
+\begin{zed}
+Buffer\_InputCmd \defs [~ \Delta Buffer\_State; x? : \nat | Buffer\_size < maxbuff \land Buffer\_buff' = Buffer\_buff \cat \langle x? \rangle \land Buffer\_size' = Buffer\_size + 1 ~] \\
+Buffer\_InputCmd\_f \defs [~ \Xi Buffer\_State; x? : \nat | \lnot \pre Buffer\_InputCmd ~] \\
+\end{zed}
+
+\begin{zed}
+Buffer\_OutputCmd \defs [~ \Delta Buffer\_State | Buffer\_size > 0 \land Buffer\_buff' = tail~Buffer\_buff \land Buffer\_size' = Buffer\_size - 1 ~] \\
+Buffer\_OutputCmd\_f \defs [~ \Xi Buffer\_State | \lnot \pre Buffer\_OutputCmd ~] \\
+\end{zed}
+
+\begin{zed}
+Buffer\_Op\_buff \defs [~ \Xi Buffer\_State; buff!: \seq~\nat | buff! = Buffer\_buff ~] \\
+\end{zed}
+
+\begin{zed}
+Buffer\_Op\_size \defs [~ \Xi Buffer\_State; size!: 0 \upto maxbuff | size! = Buffer\_size ~] \\
+\end{zed}
+
+\end{document} 

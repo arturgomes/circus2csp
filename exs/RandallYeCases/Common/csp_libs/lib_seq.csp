@@ -1,0 +1,107 @@
+-- lib_seq.csp
+
+-- reverse(s) = if null(s) then <> else reverse(tail(s)) ^ <head(s)>
+reverse(<>) = <>
+reverse(<x>^s) = reverse(s)^<x>
+
+-- last
+last(s) = if null(s) then <> else head(reverse(s))
+
+-- front
+front(s) = reverse(tail(reverse(s)))
+
+-- Injective sequence
+--unique(s) = < x | x<-s, y<-s, x==y>
+unique(<>) = true
+unique(<x>) = true
+unique(<x>^s) = if not elem(x,s) then unique(s) else false
+
+-- for seq
+fseq(s) = {squash(ss) | ss <- pfun({1..MAXINS}, s) }
+
+-- seq_1
+seq1(s) = diff(Seq(s), {<>})
+
+-- iseq: injective sequence. No duplicate elements in the sequence
+	-- perm(s): calculate all permutation of set s
+	-- perm({1,2,3}) = {<1,2,3>, <1,3,2>, <2,1,3>, <2,3,1>, <3,1,2>, <3,2,1>}
+	perm({}) = {<>}
+	perm({x}) = {<x>}
+	perm(s) = { <x>^z | x <- s, y <- Set(s), y == diff(s, {x}), z <- perm(y)}
+
+iseq(s) = { y | ss <- Set(s), y <- perm(ss)}
+
+-- squash
+-- such as Z:squash({1 |-> a, 5 |-> b, 3 |-> c}) = <a, c, b>
+-- such as csp:squash({(1,a), (5,b),(3,c)}) = <a, c, b>
+-- limited: the elements in s can not have the same x value. For example, for {(1,a), (1,b)}, squash will fail
+squash(s) = 
+  let
+	pick({x}) = x
+	-- how many items which 1st item x are below b
+	below(b) = card({ x | (x,y)<-s, x <= b })
+	-- get all pairs, such as {(a,1),(b,3),(c,2)}
+	pairs    = { (y, below(x)) | (x,y)<-s }
+	-- return the y value of a x below which there are i number of items
+	select(i)= pick({ y | (y,n)<-pairs, i==n })
+  within < select(i) | i <- <1..card(s)> >
+
+-- A is a subset of domain of s (sequence)
+--extract(A,s)
+extract(A, s) = squash(dres(A, s))
+
+-- filter(s,A)
+filter(s, A) = squash(rres(A, s))
+
+-- prefix
+-- prefix
+prefix(<>,<>) = true
+prefix(<>,t) = true
+prefix(<x>^s, <>) = false
+prefix(<x>^s, <y>^t) = if x==y then prefix(s,t) else false
+
+-- suffix
+suffix(<>,<>) = true
+suffix(<>,t) = true
+suffix(s^<x>, <>) = false
+suffix(s^<x>, t^<y>) = if x==y then suffix(s,t) else false
+
+-- infix(s,t)
+infix(_, <>) = false -- tested
+infix(s, <x>) = if s==<x> then true else false
+infix(s, <x>^t) = if prefix(s,<x>^t) then true else infix(s,t)
+
+-- distributed concatenation
+-- distributed concatenation
+-- \dcat(s) and s is a sequence of sequence
+dconcat(<>) = <>
+dconcat(<s>) = s
+dconcat(<x>^s) = x^dconcat(s)
+dconcat(<x>^s^<y>) = x^dconcat(s)^y
+
+
+-- disjoint(s) 
+--   - s is a sequence of set
+disjoint(<>) = true
+disjoint(<x>) = true
+disjoint(<sx>^<sy>) = empty(inter(sx, sy))
+disjoint(<sx>^ss^<sy>) = 
+    if disjoint(<sx>^<sy>) then 
+        disjoint(<sx>^ss) and disjoint(ss^<sy>)
+    else false
+
+-- partition(s, S)
+--   - s is a sequence of set
+--   - S is a set
+partition(<>,{}) = true
+partition(<sx>, C) = 
+    if equal(sx,C) then true
+    else false
+partition(<sx>^<sy>, C) = 
+    if disjoint(<sx>^<sy>) and equal(union(sx, sy), C) then true
+    else false
+partition(<sx>^ss^<sy>, C) = 
+    if disjoint(<sx>^ss^<sy>) and leq(union(sx, sy), C) then
+        partition(ss, diff(C, union(sx, sy)))
+    else false
+

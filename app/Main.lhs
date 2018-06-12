@@ -188,6 +188,8 @@ do_cmd :: [Char] -> String -> Animator -> String -> IO ()
 do_cmd cmd args anim fn
   | cmd == "quit" =
       return ()
+  | cmd == ":q" =
+      return ()
   | cmd == ":load" =
       do {putStrLn ("ERROR \"" ++ args
       ++ "\" (Line 1): You did not quit JAZA."
@@ -355,7 +357,8 @@ getLineEdit prompt
 
 -- Print the current directory structure with files
 fdr4 spec =
-  do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines -qb "++spec]){ std_out = CreatePipe }
+  do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines "++spec]){ std_out = CreatePipe }
+  -- do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines -qb "++spec]){ std_out = CreatePipe }
      grepBytes <- hGetContents hout
      putStrLn grepBytes
 

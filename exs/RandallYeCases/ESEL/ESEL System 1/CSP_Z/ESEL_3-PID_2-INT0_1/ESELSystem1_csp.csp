@@ -1,0 +1,222 @@
+-- This CSP specification is translated from a Circus program by Circus2ZCSP translator.
+
+-- Minimum and maximum integers for model checking. Make sure they are set in advance.
+MININT = 0
+MAXINT = 1
+
+-- Maximum instances generated for iseq.  Make sure it is set in advance.
+MAXINS = 3
+
+-- include a set of libraries
+include "lib_basic.csp"
+include "lib_num.csp"
+include "lib_card.csp"
+include "lib_log.csp"
+include "lib_set.csp"
+include "lib_rel.csp"
+include "lib_fun.csp"
+include "lib_seq.csp"
+
+
+-- Axiomatic definition (Constant)
+-- They should be assigned manually to meet its type and predicate restriction
+-- and match the values assigned in Z as well
+-- The variables defined below should meet the predicate below
+--       (MAX_ESEL == 3 and MAX_PID == 2)
+MAX_ESEL = 3
+MAX_PID = 2
+
+-- type
+Price = Nat
+
+datatype ESID = ES.{1 .. MAX_ESEL}
+datatype PID = PD.{1 .. MAX_PID}
+datatype FStatus = fail.ESID | NA
+datatype UStatus = uok | ufail
+
+
+-- channel declarations
+channel div
+channel updateallmap : pfun(ESID, PID)
+channel updatemap : pfun(ESID, PID)
+channel updateallprice : pfun(PID, Price)
+channel updateprice : pfun(PID, Price)
+channel update
+channel failures : pfun(PID, Set(FStatus))
+channel resp : PID.FStatus
+channel terminate
+channel uupdate : ESID.Price
+channel ures : ESID.UStatus
+channel init
+channel display
+channel finishdisplay
+channel write : ESID.Price
+channel read : ESID.Price
+channel ondisplay : ESID
+channel offdisplay : ESID
+channel Controller_Init-- 
+channel Controller_Init_fOp -- 
+channel Controller_UpdateMap: pfun(ESID, PID)-- !map
+channel Controller_UpdateMap_fOp: pfun(ESID, PID) -- !map
+channel Controller_UpdateAllMap: pfun(ESID, PID)-- !map
+channel Controller_UpdateAllMap_fOp: pfun(ESID, PID) -- !map
+channel Controller_NewPrice: pfun(PID, Price)-- !price
+channel Controller_NewPrice_fOp: pfun(PID, Price) -- !price
+channel Controller_AllNewPrice: pfun(PID, Price)-- !price
+channel Controller_AllNewPrice_fOp: pfun(PID, Price) -- !price
+channel Controller_AssgnOp0-- 
+channel Controller_AddOneFailure: FStatus.PID-- !fst!pid
+channel Controller_AddOneFailure_fOp: FStatus.PID -- !fst!pid
+channel ESEL_ES1_Init-- 
+channel ESEL_ES1_Init_fOp -- 
+channel ESEL_ES1_AssgnOp1: Price-- !x
+channel ESEL_ES1_AssgnOp2-- 
+channel ESEL_ES1_AssgnOp3-- 
+channel ESEL_ES3_Init-- 
+channel ESEL_ES3_Init_fOp -- 
+channel ESEL_ES3_AssgnOp4: Price-- !x
+channel ESEL_ES3_AssgnOp5-- 
+channel ESEL_ES3_AssgnOp6-- 
+channel ESEL_ES2_Init-- 
+channel ESEL_ES2_Init_fOp -- 
+channel ESEL_ES2_AssgnOp7: Price-- !x
+channel ESEL_ES2_AssgnOp8-- 
+channel ESEL_ES2_AssgnOp9-- 
+channel Controller_OP_pumap : pfun(ESID, PID)
+channel Controller_OP_ppmap : pfun(PID, Price)
+channel Controller_OP_response : pfun(PID, Set(FStatus))
+channel ESEL_ES1_OP_price : Price
+channel ESEL_ES1_OP_status : UStatus
+channel ESEL_ES3_OP_price : Price
+channel ESEL_ES3_OP_status : UStatus
+channel ESEL_ES2_OP_price : Price
+channel ESEL_ES2_OP_status : UStatus
+
+-- channel set declarations
+RespInterface = {| resp, terminate |}
+InterESELInterface = {| init, display, finishdisplay |}
+ESELInterface = {| uupdate, ures, init, display, finishdisplay |}
+
+-- hidden event
+HIDE_CSPB = {|Controller_OP_pumap, Controller_OP_ppmap, Controller_OP_response, ESEL_ES1_OP_price, ESEL_ES1_OP_status, ESEL_ES3_OP_price, ESEL_ES3_OP_status, ESEL_ES2_OP_price, ESEL_ES2_OP_status, Controller_Init, Controller_Init_fOp, Controller_UpdateMap, Controller_UpdateMap_fOp, Controller_UpdateAllMap, Controller_UpdateAllMap_fOp, Controller_NewPrice, Controller_NewPrice_fOp, Controller_AllNewPrice, Controller_AllNewPrice_fOp, Controller_AssgnOp0, Controller_AddOneFailure, Controller_AddOneFailure_fOp, ESEL_ES1_Init, ESEL_ES1_Init_fOp, ESEL_ES1_AssgnOp1, ESEL_ES1_AssgnOp2, ESEL_ES1_AssgnOp3, ESEL_ES3_Init, ESEL_ES3_Init_fOp, ESEL_ES3_AssgnOp4, ESEL_ES3_AssgnOp5, ESEL_ES3_AssgnOp6, ESEL_ES2_Init, ESEL_ES2_Init_fOp, ESEL_ES2_AssgnOp7, ESEL_ES2_AssgnOp8, ESEL_ES2_AssgnOp9|}
+
+-- processes for variable storing and retrieving 
+
+-- processes 
+-- Divergent Process 
+DIV = div -> STOP
+
+
+Controller = 
+   ( (
+  (   Controller_Init ->  SKIP
+   [] Controller_Init_fOp -> DIV
+  ) ; init -> SKIP)  ; 
+  let X = 
+     (
+    (   
+      (   
+        (   updatemap?map -> 
+          (   Controller_UpdateMap!map ->  SKIP
+           [] Controller_UpdateMap_fOp!map -> DIV
+          )
+         [] updateallmap?map -> 
+          (   Controller_UpdateAllMap!map ->  SKIP
+           [] Controller_UpdateAllMap_fOp!map -> DIV
+          )
+        )
+       [] 
+        (   updateprice?price -> 
+          (   Controller_NewPrice!price ->  SKIP
+           [] Controller_NewPrice_fOp!price -> DIV
+          )
+         [] updateallprice?price -> 
+          (   Controller_AllNewPrice!price ->  SKIP
+           [] Controller_AllNewPrice_fOp!price -> DIV
+          )
+        )
+      )
+     []  ( (update -> (Controller_AssgnOp0 ->  SKIP) ; Controller_OP_ppmap?ppmap -> Controller_OP_pumap?pumap -> (( (( ||| pid:dom(ppmap) @ (
+      (   (member(pid, ran(pumap)) & ( ||| uid:dom(rres(pumap, {pid})) @ (uupdate.(uid).(fa(ppmap, pid)) -> ures.(uid)?rst -> 
+        (   (rst == ufail & resp.(pid).((fail.uid)) -> SKIP)
+         [] (rst == uok & SKIP)
+        ))))
+       [] (not member(pid, ran(pumap)) & resp.(pid).(NA) -> SKIP)
+      ))) ; terminate -> SKIP)  [| RespInterface |] 
+      let X = 
+        (    (resp?pid?fst -> 
+          (   Controller_AddOneFailure!fst!pid ->  SKIP
+           [] Controller_AddOneFailure_fOp!fst!pid -> DIV
+          ) ; X) 
+         [] terminate -> SKIP
+        )
+      within X) \ RespInterface))  ; display -> finishdisplay -> Controller_OP_response?response -> failures.(response) -> SKIP) 
+    ) ; X) 
+  within X) 
+
+ESELS =  [| InterESELInterface |] eid:ESID @ (eid == (ES.3) & ESEL_ES3 [] (eid == (ES.1) & ESEL_ES1 [] eid == (ES.2) & ESEL_ES2))
+
+ESELSystem1 = ( Controller [| ESELInterface |] ESELS ) \ ESELInterface
+
+ESEL_ES1 = 
+   ( (
+  (   ESEL_ES1_Init ->  SKIP
+   [] ESEL_ES1_Init_fOp -> DIV
+  ) ; offdisplay.((ES.1)) -> init -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.1))?x -> (ESEL_ES1_AssgnOp1!x ->  SKIP) ; ESEL_ES1_OP_price?price -> write.((ES.1)).(price) -> read.((ES.1))?y -> ESEL_ES1_OP_price?price -> 
+      (   (y == price & ures.((ES.1)).(uok) -> (ESEL_ES1_AssgnOp2 ->  SKIP))
+       [] ((y != price) & ures.((ES.1)).(ufail) -> (ESEL_ES1_AssgnOp3 ->  SKIP))
+      ))  ;  (display -> ESEL_ES1_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.1)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.1)) -> SKIP)
+      ) ; finishdisplay -> SKIP) ) 
+     [] display -> offdisplay.((ES.1)) -> finishdisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+ESEL_ES3 = 
+   ( (
+  (   ESEL_ES3_Init ->  SKIP
+   [] ESEL_ES3_Init_fOp -> DIV
+  ) ; offdisplay.((ES.3)) -> init -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.3))?x -> (ESEL_ES3_AssgnOp4!x ->  SKIP) ; ESEL_ES3_OP_price?price -> write.((ES.3)).(price) -> read.((ES.3))?y -> ESEL_ES3_OP_price?price -> 
+      (   (y == price & ures.((ES.3)).(uok) -> (ESEL_ES3_AssgnOp5 ->  SKIP))
+       [] ((y != price) & ures.((ES.3)).(ufail) -> (ESEL_ES3_AssgnOp6 ->  SKIP))
+      ))  ;  (display -> ESEL_ES3_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.3)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.3)) -> SKIP)
+      ) ; finishdisplay -> SKIP) ) 
+     [] display -> offdisplay.((ES.3)) -> finishdisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+ESEL_ES2 = 
+   ( (
+  (   ESEL_ES2_Init ->  SKIP
+   [] ESEL_ES2_Init_fOp -> DIV
+  ) ; offdisplay.((ES.2)) -> init -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.2))?x -> (ESEL_ES2_AssgnOp7!x ->  SKIP) ; ESEL_ES2_OP_price?price -> write.((ES.2)).(price) -> read.((ES.2))?y -> ESEL_ES2_OP_price?price -> 
+      (   (y == price & ures.((ES.2)).(uok) -> (ESEL_ES2_AssgnOp8 ->  SKIP))
+       [] ((y != price) & ures.((ES.2)).(ufail) -> (ESEL_ES2_AssgnOp9 ->  SKIP))
+      ))  ;  (display -> ESEL_ES2_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.2)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.2)) -> SKIP)
+      ) ; finishdisplay -> SKIP) ) 
+     [] display -> offdisplay.((ES.2)) -> finishdisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+MAIN = ESELSystem1
+
+
+-- assertions 
+assert MAIN :[ livelock free ]
+assert MAIN :[ deadlock free [F] ]
+assert MAIN :[ deadlock free [FD] ]
+

@@ -1,0 +1,796 @@
+\documentclass{article}
+\usepackage{fuzz}
+
+\begin{document} 
+
+\begin{axdef}
+    maxbuff: \nat_1 \\
+    maxring: \nat_1 
+    \where %
+    maxring = maxbuff - 1 \\
+% rye: add for model checking when guided by CSP specification together
+    maxbuff = 9 \\
+    maxring = 8
+\end{axdef}
+
+\begin{zed}
+    RingIndex ~~==~~ 1 \upto maxring
+\end{zed}
+
+\begin{zed}
+Controller\_ControllerState \defs [~ Controller\_size: 0 \upto maxbuff; \\ 
+    \t1 Controller\_ringsize: 0 \upto maxring; \\
+    \t1 Controller\_cache: \nat; \\
+    \t1 Controller\_top, Controller\_bot: RingIndex | \\
+    \t1 Controller\_ringsize \mod maxring  = (Controller\_top - Controller\_bot) \mod maxring \land \\
+    \t1 ((Controller\_size = 0 \land Controller\_ringsize = 0) 
+        \lor (Controller\_size \neq 0 \land Controller\_ringsize = Controller\_size - 1)
+        )
+    % rye: not sure what's the problem with this predicate???
+%    \t1 Controller\_ringsize = max~\{~0, Controller\_size - 1 ~\} 
+~] \\
+\end{zed}
+
+\begin{zed}
+RingCell\_CellState \defs [~ RingCell\_v: \nat | true ~] \\
+IRCell\_1\_CellState \defs [~ IRCell\_1\_v: \nat | true ~] \\
+IRCell\_2\_CellState \defs [~ IRCell\_2\_v: \nat | true ~] \\
+IRCell\_3\_CellState \defs [~ IRCell\_3\_v: \nat | true ~] \\
+IRCell\_4\_CellState \defs [~ IRCell\_4\_v: \nat | true ~] \\
+IRCell\_5\_CellState \defs [~ IRCell\_5\_v: \nat | true ~] \\
+IRCell\_6\_CellState \defs [~ IRCell\_6\_v: \nat | true ~] \\
+IRCell\_7\_CellState \defs [~ IRCell\_7\_v: \nat | true ~] \\
+IRCell\_8\_CellState \defs [~ IRCell\_8\_v: \nat | true ~] \\
+IRCell\_9\_CellState \defs [~ IRCell\_9\_v: \nat | true ~] \\
+State \defs Controller\_ControllerState \land RingCell\_CellState \land IRCell\_1\_CellState \land IRCell\_2\_CellState \land IRCell\_3\_CellState \land IRCell\_4\_CellState \land IRCell\_5\_CellState \land IRCell\_6\_CellState \land IRCell\_7\_CellState \land IRCell\_8\_CellState \land IRCell\_9\_CellState \\
+\end{zed}
+
+\begin{zed}
+Init \defs [~ State' | \\
+    Controller\_top' = 1 \land 
+    Controller\_bot' = 1 \land 
+    Controller\_size' = 0 \land
+    Controller\_ringsize' = 0 \land
+    Controller\_cache' = 0 \land 
+    RingCell\_v' = 0 \land 
+    IRCell\_1\_v' = 0 \land 
+    IRCell\_2\_v' = 0 \land 
+    IRCell\_3\_v' = 0 \land
+    IRCell\_4\_v' = 0 \land
+    IRCell\_5\_v' = 0 \land
+    IRCell\_6\_v' = 0 \land
+    IRCell\_7\_v' = 0 \land
+    IRCell\_8\_v' = 0 \land
+    IRCell\_9\_v' = 0
+    ~] \\
+%Init \defs [~ State' |  Controller\_top' = 1 \land Controller\_bot' = 1 \land Controller\_size' = 0 ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_Op\_size \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\ 
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    size!: 0 \upto maxbuff | \\
+    \t1 size! = Controller\_size ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_Op\_ringsize \defs [~ 
+    \Xi Controller\_ControllerState;
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    ringsize!: 0 \upto maxring | \\
+    \t1 ringsize! = Controller\_ringsize ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_Op\_cache \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    cache!: \nat | \\
+    \t1 cache! = Controller\_cache ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_Op\_top \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    top!: RingIndex | \\
+    \t1 top! = Controller\_top ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_Op\_bot \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    bot!: RingIndex | \\
+    \t1 bot! = Controller\_bot ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_CacheInput \defs [~ 
+    \Delta Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    x? : \nat | \\
+    \t1 Controller\_size = 0 \land 
+    Controller\_size' = 1 \land \\
+    \t1 Controller\_cache' = x? \land 
+    Controller\_bot' = Controller\_bot \land 
+    Controller\_top' = Controller\_top ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_CacheInput\_f \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    x? : \nat | \\
+    \lnot \pre Controller\_CacheInput ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_StoreInputController \defs [~ 
+    \Delta Controller\_ControllerState; 
+    \Xi RingCell\_CellState;
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi IRCell\_4\_CellState | \\ 
+    \t1 0 < Controller\_size \land 
+    Controller\_size < maxbuff \land 
+    Controller\_size' = Controller\_size + 1 \land \\
+        \t1 Controller\_cache' = Controller\_cache \land 
+        Controller\_bot' = Controller\_bot \land \\
+        \t1 Controller\_top' = (Controller\_top \mod maxring) + 1 ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_StoreInputController\_f \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState;
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi IRCell\_4\_CellState | \\ 
+     \lnot \pre Controller\_StoreInputController ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_NoNewCache \defs [~ 
+    \Delta Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState ;
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi IRCell\_4\_CellState | \\ 
+        \t1 Controller\_size = 1 \land 
+        Controller\_size' = 0 \land 
+        Controller\_cache' = Controller\_cache \land \\
+        \t1 Controller\_bot' = Controller\_bot \land 
+        Controller\_top' = Controller\_top ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_NoNewCache\_f \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi IRCell\_4\_CellState | \\ 
+    \lnot \pre Controller\_NoNewCache ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_StoreNewCacheController \defs [~ 
+    \Delta Controller\_ControllerState; 
+    \Xi RingCell\_CellState; \\
+    \t1 \Xi IRCell\_1\_CellState; 
+    \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    x?: \nat | \\
+        \t1 Controller\_size > 1 \land 
+        Controller\_size' = Controller\_size - 1 \land \\
+        \t1 Controller\_cache' = x? \land 
+        Controller\_bot' = (Controller\_bot \mod maxring) + 1 \land \\
+        \t1 Controller\_top' = Controller\_top ~] \\
+\end{zed}
+
+\begin{zed}
+Controller\_StoreNewCacheController\_f \defs [~ 
+    \Xi Controller\_ControllerState; 
+    \Xi RingCell\_CellState; \\
+    \t1 \Xi IRCell\_1\_CellState; 
+    \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    x?: \nat | \\
+    \lnot \pre Controller\_StoreNewCacheController ~] \\
+\end{zed}
+
+\begin{zed}
+RingCell\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = RingCell\_v ~] \\
+\end{zed}
+
+\begin{zed}
+RingCell\_CellWrite ~~\defs~~ [~ 
+    \Delta RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 RingCell\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+RingCell\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre RingCell\_CellWrite ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_1\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_1\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_1\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Delta IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_1\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_1\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_1\_CellWrite ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_2\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_2\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_2\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Delta IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_2\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_2\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_2\_CellWrite ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_3\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_3\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_3\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Delta IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_3\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_3\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_3\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_4\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_4\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_4\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_4\_CellState;
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_4\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_4\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_4\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_5\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_5\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_5\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_5\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_5\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_5\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_5\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_6\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_6\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_6\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_6\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_6\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_6\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_6\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_7\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_7\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_7\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_7\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_7\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_7\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_7\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_8\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_8\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_8\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_8\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_8\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_8\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_8\_CellWrite ~] \\
+\end{zed}
+\begin{zed}
+IRCell\_9\_Op\_v ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; v!: \nat | \\
+    \t1 v! = IRCell\_9\_v ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_9\_CellWrite ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState; 
+    \Delta IRCell\_9\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \t1 IRCell\_9\_v' = x? ~] \\
+\end{zed}
+
+\begin{zed}
+IRCell\_9\_CellWrite\_f ~~\defs~~ [~ 
+    \Xi RingCell\_CellState; 
+    \Xi IRCell\_1\_CellState; \\
+    \t1 \Xi IRCell\_2\_CellState; 
+    \Xi IRCell\_3\_CellState;
+    \Xi IRCell\_4\_CellState; 
+    \Xi IRCell\_5\_CellState; 
+    \Xi IRCell\_6\_CellState; 
+    \Xi IRCell\_7\_CellState; 
+    \Xi IRCell\_8\_CellState; 
+    \Xi IRCell\_9\_CellState; 
+    \Xi Controller\_ControllerState; 
+    x?: \nat | \\
+    \lnot \pre IRCell\_9\_CellWrite ~] \\
+\end{zed}
+\end{document} 

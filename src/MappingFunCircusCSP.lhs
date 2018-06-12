@@ -475,6 +475,8 @@ mapping_ProcessDef procn args spec (ProcDef cp)
   = " = " ++ (mapping_CProc procn args spec cp)
 mapping_ProcessDef procn args spec (ProcDefSpot xl pd)
   = "("++(mapping_ZGenFilt_list spec xl ) ++ ")" ++ (mapping_ProcessDef procn (mapping_ZGenFilt_list spec xl ) spec pd)
+mapping_ProcessDef procn args spec (ProcDefIndex xl pd)
+  = "("++(mapping_ZGenFilt_list spec xl ) ++ ")" ++ (mapping_ProcessDef procn (mapping_ZGenFilt_list spec xl ) spec pd)
 -- mapping_ProcessDef procn args spec (ProcDefIndex (x:xs) pd)
 --  = "("++(getZGenFilt (x:xs)) ++ ") = " ++ (mapping_CProc procn args spec cp)
 \end{code}

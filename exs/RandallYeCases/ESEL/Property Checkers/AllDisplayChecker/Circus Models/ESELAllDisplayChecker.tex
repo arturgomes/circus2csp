@@ -1,0 +1,29 @@
+\begin{zsection}
+	\SECTION\ ESELAllDisplayChecker \parents\ ESELHeader
+\end{zsection}
+
+\begin{circus}
+	\circprocess\ AllDisplayChecker \circdef \circbegin \\
+        \t1 \circstate\ State == [~ dummy: \{0\} ~] \\
+    	\t1	Init == [~ (State)' | dummy' = 0 ~] \\
+        \t1 ADisplay \circdef eid:ESID \circspot \\
+            \t2 (offdisplay.eid \then \Skip \extchoice ondisplay.eid \then \Skip) \\
+        \t1 AAllDisplay \circdef (\Interleave e: ESID \circspot ADisplay(e)) \\
+        \t1 ACheck \circdef (AAllDisplay \extchoice \\
+            \t2 updateprice?x \then \Skip \extchoice \\
+            \t2 updateprice?x \then \Skip \extchoice \\
+            \t2 updatemap?x \then \Skip \extchoice \\
+            \t2 updatemap?x \then \Skip \extchoice \\
+            \t2 update \then \Skip \extchoice \\
+            \t2 write?x \then \Skip \extchoice \\
+            \t2 read?x \then \Skip \extchoice \\
+            \t2 failures?x \then \Skip) \\ 
+	    \t1 \circspot \lschexpract Init \rschexpract \circseq \circmu X \circspot (ACheck \circseq X) \\
+	\circend
+\end{circus}
+
+\begin{circus}
+   \circchannelset\ ESELSystemInterface == \lchanset updateallprice, updateprice, \\
+    \t2 updatemap, updateallmap, update, ondisplay, offdisplay, \\
+    \t2 write, read, failures \rchanset \\
+\end{circus}

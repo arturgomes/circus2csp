@@ -1,0 +1,39 @@
+\begin{zsection}
+	\SECTION\ ESELPriceChecker \parents\ ESELHeader
+\end{zsection}
+
+\begin{circus}
+	\circprocess\ PriceChecker \circdef \circbegin \\
+        \t1 \circstate\ State == [~ dummy: \{0\} ~] \\
+    	\t1	Init == [~ (State)' | dummy' = 0 ~] \\
+        \t1 AOnDisplay \circdef eid:ESID \circspot ondisplay.eid \then \\
+            \t2 (\Interleave e: (ESID \setminus (\{eid\})) \linter \emptyset \rinter \circspot (offdisplay.e \then \Skip)) \\
+        \t1 AOffDisplay \circdef (\Interleave e: ESID \linter \emptyset \rinter \circspot (offdisplay.e \then \Skip)) \\
+        \t1 ACheckMap \circdef p: Price; eid: ESID; pid:PID \circspot \\
+            \t2 (updateallmap.(\{eid \mapsto pid\}) \then updateallprice.(\{pid \mapsto p\}) \then \\
+            \t2 update \then write.eid.p \then ( \\
+                \t3 \,\,\,\,\,\,(read.eid.p \then AOnDisplay(eid) \circseq failures.(\{\}) \then \Skip) \\
+                \t3 \extchoice (read.eid?x \prefixcolon (x \neq p) \then AOffDisplay \circseq \\
+                \t4 failures.(\{pid \mapsto \{(fail~eid)\}\}) \then \Skip) \\
+                \t3 ) \\
+            \t2 ) \\
+        \t1 ACheckNoMap \circdef p: Price; eid: ESID; pid:PID \circspot \\
+            \t2 (updateallmap.(\{\}) \then updateallprice.(\{pid \mapsto p\}) \then update \then \\
+            \t2 AOffDisplay \circseq failures.(\{pid \mapsto \{NA\}\}) \then \Skip) \\
+        \t1 ACheck \circdef \circvar p: Price; eid: ESID; pid:PID \circspot \\
+            \t2 ACheckMap(p, eid, pid) \extchoice ACheckNoMap(p, eid, pid) \\
+	    \t1 \circspot \lschexpract Init \rschexpract \circseq AOffDisplay \circseq (\circmu X \circspot (ACheck) \circseq X) \\
+	\circend
+\end{circus}
+
+\begin{circus}
+   \circchannelset\ ESELSystemInterface == \lchanset updateallprice, updateprice, \\
+    \t2 updatemap, updateallmap, update, ondisplay, offdisplay, \\
+    \t2 write, read, failures \rchanset \\
+%   \circprocess\ SpecChecker \circdef (PriceChecker \lpar ESELSystemInterface \rpar ESELSpec) \\
+%    \t2 \circhide ESELSystemInterface \\
+%   \circprocess\ System1Checker \circdef (PriceChecker \lpar ESELSystemInterface \rpar ESELSystem1) \\
+%    \t2 \circhide ESELSystemInterface \\
+%   \circprocess\ System2Checker \circdef (PriceChecker \lpar ESELSystemInterface \rpar ESELSystem2) \\
+%    \t2 \circhide ESELSystemInterface 
+\end{circus}

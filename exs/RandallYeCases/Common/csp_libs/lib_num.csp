@@ -1,0 +1,24 @@
+-- natural number
+Nat={0..MAXINT}
+Nat1={1..MAXINT}
+
+-- succ
+succ(n)=n+1
+
+-- define them for num1
+-- MAXINT=1000
+-- MININT=-1000
+
+-- num1
+num1={x | x <- {MININT..MAXINT}, x != 0}
+
+-- min and max
+min(<x>) = x
+min(<x>^s^<y>) = if x <= y then min(<x>^s) else min(<y>^s)
+
+min(s) = min(seq(s))
+
+max(<x>) = x
+max(<x>^s^<y>) = if x >= y then max(<x>^s) else max(<y>^s)
+
+max(s) = max(seq(s))

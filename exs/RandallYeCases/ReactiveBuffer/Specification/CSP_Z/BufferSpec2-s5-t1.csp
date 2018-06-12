@@ -1,0 +1,70 @@
+MAXINT = 1
+-- Maximum Instances
+MAXINS = 9 
+maxbuff = 5 
+Nat = {0..MAXINT}
+
+-- Cartesian Product
+cross(X, Y) = {(x,y) | x <- X, y <- Y}
+
+--rel(X, Y) = { (x,y) | x<-X, y<-Y }
+rel(X, Y) = Set(cross(X, Y))
+
+-- partial function: not every element in X has the corresponding value in Y
+pfun(X, Y) = { s | s<-rel(X,Y), empty({x1 | (x1,y1)<-s, (x2,y2)<-s, x1 == x2 and y1 != y2})}
+
+-- -- get a sequence with all same element but its size is specified
+-- nseq({x}, 0) = <>
+-- nseq({x}, 1) = <x>
+-- nseq({x}, n) = <x> ^ nseq({x}, n-1)
+-- 
+-- -- get a set of sequence which only includes x
+-- sseq({x}, 0) = {<>}
+-- sseq({x}, 1) = {<>,<x>}
+-- sseq({x}, n) = union(sseq({x}, n-1), {nseq({x}, n)})
+-- 
+-- fseq({}) = {<>}
+-- fseq({x}) = sseq({x}, 4) 
+-- -- fseq({x}) = { s1^<x> | s1 <- fseq({x}), member(set(s1), {x}) and #s1 < 4}
+-- fseq(s) = {<x>^_ | }
+
+squash(s) = 
+  let
+	pick({x}) = x
+	-- how many items which 1st item x are below b
+	below(b) = card({ x | (x,y)<-s, x <= b })
+	-- get all pairs, such as {(a,1),(b,3),(c,2)}
+	pairs    = { (y, below(x)) | (x,y)<-s }
+	-- return the y value of a x below which there are i number of items
+	select(i)= pick({ y | (y,n)<-pairs, i==n })
+  within < select(i) | i <- <1..card(s)> >
+
+fseq(s) = {squash(s) | s <- pfun({1..MAXINS}, s) }
+
+channel input, output: Nat
+channel Buffer_Init
+channel Buffer_Op_size: {0 .. maxbuff}
+channel Buffer_Op_buff: fseq(Nat)
+channel Buffer_InputCmd: Nat
+channel Buffer_InputCmd_f: Nat
+channel Buffer_OutputCmd
+channel Buffer_OutputCmd_f
+channel div
+
+DIV = div -> STOP
+
+HIDE_CSPB={|Buffer_Init, Buffer_Op_size, Buffer_Op_buff, Buffer_InputCmd, Buffer_InputCmd_f, Buffer_OutputCmd, Buffer_OutputCmd_f|}
+
+Buffer = Buffer_Init -> SKIP ;
+        let X = (Buffer_Op_size?size -> Buffer_Op_buff?buff -> (
+                    (size < maxbuff) & input?x -> (Buffer_InputCmd!x -> SKIP [] Buffer_InputCmd_f!x -> DIV)
+                    []
+                    (size > 0) & output!(head(buff)) -> (Buffer_OutputCmd -> SKIP [] Buffer_OutputCmd_f -> DIV)
+                )) ; X 
+        within X
+
+MAIN = Buffer
+
+assert MAIN :[ livelock free ]
+assert MAIN :[ deadlock free [F] ]
+assert MAIN :[ deadlock free [FD] ]

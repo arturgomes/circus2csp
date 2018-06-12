@@ -1,0 +1,27 @@
+-- lib_set.csp
+
+-- MAXINS for given set, should be defined in the beginning of specification
+-- MAXINS = 3
+
+-- compare of two sets: equal(s1,s2) or "=="
+equal(s1,s2)=empty({x | x <- s1, not member(x, s2)}) and empty({x | x <- s2, not member(x, s1)})
+
+-- compare of two sets: less than or equal
+-- CSPM (<=) can compare the subset but not supported in ProB by now
+leq(s1,s2)=empty({x | x <- s1, not member(x,s2)})
+
+-- compare of two sets: less than or equal
+-- CSPM (<) can compare the subset but not supported in ProB by now
+le(s1,s2)=leq(s1,s2) and not empty({x | x <- s2, not member(x, s1)})
+
+-- \power_1
+power_1(s) = diff(Set(s), {{}})
+
+-- \symdiff
+symdiff(s1, s2) = union(diff(s1,s2), diff(s2,s1))
+
+-- Cartesian Product
+cross(X, Y) = {(x,y) | x <- X, y <- Y}
+
+-- finset_1
+finset_1(s) = {x | x <- s, x != {}}

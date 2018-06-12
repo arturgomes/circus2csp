@@ -1,0 +1,13 @@
+-- lib_basic.csp 
+
+-- lambda
+undefined({}) = {}
+
+-- mu
+-- \mu x:T | p @ e
+-- there exists exactly one x which makes p hold, and return the expression
+mu(s, P, e) =
+    let
+       pick({x}) = x
+       r = pick({e(x) | x <- s, P(x)})
+    within r

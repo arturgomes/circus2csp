@@ -12,7 +12,6 @@
 test_haskabelle
 bin
 *.hc
-*.csp
 *.spec.txt
 *.pretty.tex
 

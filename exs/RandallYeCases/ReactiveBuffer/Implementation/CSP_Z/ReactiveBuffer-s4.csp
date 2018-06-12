@@ -1,0 +1,173 @@
+MAXINT = 1
+-- Maximum Instances
+MAXINS = 3
+Nat = {0..MAXINT}
+
+-- Cartesian Product
+cross(X, Y) = {(x,y) | x <- X, y <- Y}
+
+c = 4
+maxbuff = c
+maxring = c - 1
+
+nametype RingIndex = {1 .. maxring}
+channel input, output: Nat
+channel read, write: RingIndex.Nat
+channel rd, wrt: Nat
+channel Controller_ControllerInit 
+channel Controller_Op_size: {0..maxbuff} 
+channel Controller_Op_cache: Nat 
+channel Controller_Op_top: RingIndex 
+channel Controller_Op_bot: RingIndex 
+channel Controller_CacheInput: Nat 
+channel Controller_CacheInput_f: Nat 
+channel Controller_StoreInputController 
+channel Controller_StoreInputController_f 
+channel Controller_StoreNewCacheController: Nat 
+channel Controller_StoreNewCacheController_f: Nat 
+channel Controller_NoNewCache 
+channel Controller_NoNewCache_f 
+channel RingCell_Init 
+channel RingCell_Op_v: Nat 
+channel RingCell_CellWrite: Nat 
+channel RingCell_CellWrite_f: Nat 
+channel IRCell_1_Init 
+channel IRCell_1_Op_v: Nat 
+channel IRCell_1_CellWrite: Nat 
+channel IRCell_1_CellWrite_f: Nat 
+channel IRCell_2_Init 
+channel IRCell_2_Op_v: Nat 
+channel IRCell_2_CellWrite: Nat 
+channel IRCell_2_CellWrite_f: Nat 
+channel IRCell_3_Init 
+channel IRCell_3_Op_v: Nat 
+channel IRCell_3_CellWrite: Nat 
+channel IRCell_3_CellWrite_f: Nat 
+channel IRCell_4_Init 
+channel IRCell_4_Op_v: Nat 
+channel IRCell_4_CellWrite: Nat 
+channel IRCell_4_CellWrite_f: Nat 
+channel div
+
+DIV = div -> STOP
+
+HIDE_CSPB={|Controller_ControllerInit, 
+    Controller_Op_size,
+    Controller_Op_cache,
+    Controller_Op_top,
+    Controller_Op_bot,
+    Controller_CacheInput,
+    Controller_CacheInput_f,
+    Controller_StoreInputController, 
+    Controller_StoreInputController_f, 
+    Controller_StoreNewCacheController,
+    Controller_StoreNewCacheController_f,
+    Controller_NoNewCache, 
+    Controller_NoNewCache_f,
+    RingCell_Init, 
+    RingCell_Op_v,
+    RingCell_CellWrite,
+    RingCell_CellWrite_f,
+    IRCell_1_Init,
+    IRCell_1_Op_v,
+    IRCell_1_CellWrite,
+    IRCell_1_CellWrite_f,
+    IRCell_2_Init, 
+    IRCell_2_Op_v,
+    IRCell_2_CellWrite,
+    IRCell_2_CellWrite_f,
+    IRCell_3_Init, 
+    IRCell_3_Op_v,
+    IRCell_3_CellWrite,
+    IRCell_3_CellWrite_f,
+    IRCell_4_Init, 
+    IRCell_4_Op_v,
+    IRCell_4_CellWrite,
+    IRCell_4_CellWrite_f
+|}
+
+Controller = Controller_ControllerInit -> SKIP ;  
+    let 
+        X = Controller_Op_size?size -> Controller_Op_cache?cache -> ( 
+                -- input
+                (size < maxbuff) & (input?x -> Controller_Op_size?size -> Controller_Op_top?top -> (
+                    (size == 0) & (Controller_CacheInput!x -> SKIP [] Controller_CacheInput_f!x -> DIV)
+                    [] 
+                    (size > 0) & write.top!x -> (Controller_StoreInputController -> SKIP [] Controller_StoreInputController_f -> DIV)
+                    )
+                )
+                [] 
+                -- output
+                (size > 0) & (output!(cache) -> Controller_Op_size?size -> Controller_Op_bot?bot -> (
+                    (size > 1) & read.bot?x -> ( Controller_StoreNewCacheController!x -> SKIP [] Controller_StoreNewCacheController_f!x -> DIV )
+                    []
+                    (size == 1) & (Controller_NoNewCache -> SKIP [] Controller_NoNewCache_f -> DIV)
+                    )
+                )
+           ) ; X 
+    within X
+
+-- RingCell
+RingCell = RingCell_Init -> SKIP ;  
+    let 
+        X = RingCell_Op_v?v -> (
+            rd!v -> SKIP 
+            [] 
+            wrt?x -> (RingCell_CellWrite!x -> SKIP [] RingCell_CellWrite_f!x -> DIV)
+        ) ; X 
+    within X
+-- 1
+IRCell_1 = IRCell_1_Init -> SKIP ;  
+    let 
+        X = IRCell_1_Op_v?v -> ( 
+                read.1!v -> SKIP
+                []
+                write.1?x -> ( IRCell_1_CellWrite!x -> SKIP [] IRCell_1_CellWrite_f!x -> DIV)
+            ) ; X 
+    within X
+
+-- 2
+IRCell_2 = IRCell_2_Init -> SKIP ;  
+    let 
+        X = IRCell_2_Op_v?v -> ( 
+                read.2!v -> SKIP
+                []
+                write.2?x -> ( IRCell_2_CellWrite!x -> SKIP [] IRCell_2_CellWrite_f!x -> DIV)
+            ) ; X 
+    within X
+-- 3
+IRCell_3 = IRCell_3_Init -> SKIP ;  
+    let 
+        X = IRCell_3_Op_v?v -> ( 
+                read.3!v -> SKIP
+                []
+                write.3?x -> ( IRCell_3_CellWrite!x -> SKIP [] IRCell_3_CellWrite_f!x -> DIV)
+            ) ; X 
+    within X
+-- 4
+IRCell_4 = IRCell_4_Init -> SKIP ;  
+    let 
+        X = IRCell_4_Op_v?v -> ( 
+                read.4!v -> SKIP
+                []
+                write.4?x -> ( IRCell_4_CellWrite!x -> SKIP [] IRCell_4_CellWrite_f!x -> DIV)
+            ) ; X 
+    within X
+-- 
+Ring = ||| i: RingIndex @ (
+    (i == 1) & IRCell_1
+    []
+    (i == 2) & IRCell_2
+    []
+    (i == 3) & IRCell_3
+    []
+    (i == 4) & IRCell_4
+    )
+
+Buffer = (Controller [|{|read,write|}|] Ring ) \ {|read, write|}
+
+MAIN = Buffer
+
+assert MAIN :[ livelock free ]
+assert MAIN :[ deadlock free [F] ]
+assert MAIN :[ deadlock free [FD] ]

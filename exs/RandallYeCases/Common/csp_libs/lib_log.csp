@@ -1,0 +1,20 @@
+-- lib_log.csp
+
+-- implies
+implies(p1, p2) = ((not p1) or p2)
+
+-- iff
+iff(p1, p2) = implies(p1, p2) and implies(p2, p1) 
+
+-- forall 
+-- example: forall x:N @ x + 1 > x    =>    forall(N, \ x @ x + 1 > x)
+-- there doesn't exist a x from s such that P(x) is false
+forall(s,P) = empty({x | x<-s, not P(x)})
+
+-- exist
+-- example: exist x:N @ x*x=25
+-- there does exist at least one x from s such that P(x) is true
+exists(s,P) = not empty({x | x<-s, P(x)})
+
+-- exist_1
+exists_1(s,P) = card({x | x<-s, P(x)}) == 1

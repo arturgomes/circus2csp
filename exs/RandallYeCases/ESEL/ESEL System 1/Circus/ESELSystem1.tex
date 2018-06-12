@@ -1,0 +1,172 @@
+\begin{zsection}
+	\SECTION\ ESELSystem1 \parents\ ESELHeader 
+\end{zsection}
+
+\paragraph{Controller Process}
+The process for overall control of the system, named $Controller$, is defined as an explicitly defined process.
+
+\begin{circus}
+	\circprocess\ Controller1 \circdef \circbegin \\
+\end{circus}
+
+$Controller$ has three state components: $pumap$ for mapping from ESELs to products, $ppmap$ for mapping from products to their price, and $response$ for the response of one update to the environment.
+\begin{circusaction}
+    	\t1 \circstate\ State == [~ pumap: ESID \pfun PID; ppmap: PID \pfun Price; \\
+%            \t2 response: PID \pfun FStatus ~]
+            \t2 response: PID \pfun (\power~FStatus) ~]
+\end{circusaction}
+Initially, these three state components all are empty.
+\begin{zed}
+    	\t1	Init == [~ (State)' | pumap' = \emptyset \land ppmap' = \emptyset \land response' = \emptyset ~]
+\end{zed}
+The $UpdateMap$ schema updates part of the ESELs to products map according to the input map, while the $UpdateAllMap$ schema discards all map and uses new input map as $pumap$. 
+\begin{zed}
+        \t1 UpdateMap == [~ \Delta State; map?: ESID \pfun PID | \\
+            \t2 pumap' = pumap \oplus map? \land ppmap' = ppmap \land response' = response ~] \\
+        \t1 UpdateAllMap == [~ \Delta State; map?: ESID \pfun PID | \\
+            \t2 pumap' = map? \land ppmap' = ppmap \land response' = response ~] 
+\end{zed}
+The $NewPrice$ updates part of price information stored, while the $AllNewPrice$ discards all price information stored and uses input price as $ppmap$. 
+\begin{zed}
+        \t1 NewPrice == [~ \Delta State; price?: PID \pfun Price | \\
+            \t2 ppmap' = ppmap \oplus price? \land pumap' = pumap \land response' = response ~] \\
+        \t1 AllNewPrice == [~ \Delta State; price?: PID \pfun Price | \\
+            \t2 ppmap' = price? \land pumap' = pumap \land response' = response ~]
+\end{zed}
+$AUpdatemap$ is an action defined to update ESELs to products map: either partial update by $updatemap$ event or complete update by $updateallmap$ event.
+\begin{circusaction}
+        \t1 AUpdatemap \circdef updatemap?map \then \lschexpract UpdateMap \rschexpract \\
+            \t2 \extchoice updateallmap?map \then \lschexpract UpdateAllMap \rschexpract \\
+\end{circusaction}
+Similarly, $ANewPrice$ is an action defined to update products to price map: either partial update by $updateprice$ event or complete update by $updateallprice$ event.
+\begin{circusaction}
+        \t1 ANewPrice \circdef updateprice?price \then \lschexpract NewPrice \rschexpract \\
+            \t2 \extchoice updateallprice?price \then \lschexpract AllNewPrice \rschexpract \\
+\end{circusaction}
+A parameterised action, $AUpdateUnitPrice$, is given to update the price (specified by the formal $pid$ parameter) to an ESEL (given by the formal $uid$ parameter). It sends the price to the specified ESEL by the $uupdate$ event, and then waits for the response from the ESEL. If the return status is not successful ($ufail$), it sends the result to response collection action $CollectResp$ below, then terminates. Otherwise, it terminates immediately.
+\begin{circusaction}
+        %
+        \t1 AUpdateUnitPrice \circdef uid:ESID; pid:PID \circspot \\
+            \t2 uupdate.uid.(ppmap~pid) \then ures.uid?rst \then \\
+            \t2 (\lcircguard rst = ufail \rcircguard \circguard resp.pid.(fail~uid) \then \Skip \\
+            \t2 \extchoice \lcircguard rst = uok \rcircguard \circguard \Skip)\\
+\end{circusaction}
+The parameterised action $AUpdateProductUnits$ aims to update one product's price specified by the formal $pid$ parameter in case the product has associated ESELs. Since one product may have more than one associated ESELs, this action updates the product's price to all associated ESELs. Furthermore, the update to each ESEL is independent. Therefore, they are combined together into a interleave. It is worth noting that each $AUpdateUnitPrice$ action will not update state or local variables and thus its name set is empty. 
+\begin{circusaction}
+%        %
+        \t1 AUpdateProductUnits \circdef pid:PID \circspot \\
+            \t2 (\Interleave uid: (\dom~(pumap \rres \{pid\})) \linter \emptyset \rinter \circspot AUpdateUnitPrice(uid, pid)) \\
+\end{circusaction}
+Otherwise, if the product has not been allocated the corresponding ESELs, it sends back a response to state this error $NA$. The behaviour is defined in the $AUpdateNoUnit$ action. 
+\begin{circusaction}
+        \t1 AUpdateNoUnit \circdef  pid:PID \circspot resp.pid.NA \then \Skip \\ 
+\end{circusaction}
+
+The behaviour of the price update for a product given in $pid$ is the update of product either with associated ESELs, guarded $AUpdateProductUnits$, or without associated ESELs, guarded $AUpdateNoUnit$.  
+\begin{circusaction}
+        \t1 AUpdateProduct \circdef pid:PID \circspot \\
+            \t2 \,\,\,\, \lcircguard pid \in \ran~pumap \rcircguard \circguard AUpdateProductUnits(pid) \\
+            \t2 \extchoice \lcircguard pid \notin \ran~pumap \rcircguard \circguard AUpdateNoUnit(pid) \\
+\end{circusaction}
+
+Then the update of all products is given in the action $AUpdateProducts$. At first, it is an interleave of all updates of the products which have associated price, then follows a $terminate$ event to finish the update.
+\begin{circusaction}
+        \t1 AUpdateProducts \circdef ((\Interleave pid: (\dom~ppmap) \linter \emptyset \rinter \circspot AUpdateProduct(pid)) \\
+        \t2 \circseq terminate \then \Skip) \\
+\end{circusaction}
+
+\begin{zed}
+    \t1 AddOneFailure == [~ \Delta State; pid?:PID; fst?:FStatus | \\
+        \t2 (pid? \in \dom~response \implies \\
+            \t3 response' = response \oplus \{pid? \mapsto (response(pid?) \cup \{fst?\}) \}) \land \\
+        \t2 (pid? \notin \dom~response \implies \\
+            \t3 response' = response \cup \{pid? \mapsto \{fst?\} \}) \land \\
+        \t2 ppmap' = ppmap \land pumap' = pumap ~]
+\end{zed}
+The $CollectResp$ action is to collect responses from all units and write them into the $response$ variable. It recursively waits for the response from the units, or terminates if required.
+\begin{circusaction}
+        \t1 CollectResp \circdef \circmu X \circspot \\
+            \t2 ((resp?pid?fst \then \lschexpract AddOneFailure \rschexpract \circseq X) \extchoice terminate \then \Skip) \\
+%            \t2 (resp?pid?fst \then response := response \oplus \{pid \mapsto fst \} \circseq X) \\
+%            \t2 ((resp?pid?fst \then \lschexpract AddOneFailure \rschexpract \circseq X) \\
+%            \t2 \extchoice terminate \then \Skip) \\
+\end{circusaction}
+
+Then update of all products and response collection behaviours are put together into $AUpdateResp$ action. It is a parallel composition of $AUpdateProducts$ and $CollectResp$ actions and they are synchronised with $resp$ and $terminate$ events. Finally, these internal events are hidden.
+\begin{circusaction}
+        \t1 AUpdateResp \circdef \\
+        \t2 (AUpdateProducts \lpar \emptyset | RespInterface | \{ response \} \rpar CollectResp ) \\
+        \t2 \circhide RespInterface \\
+\end{circusaction}
+
+The overall price update action is given in $AUpdatePrice$, which accepts a $update$ event from its environment, then clears $response$, updates the price, sends $display$ event to make all ESELs show their price at the same time, then feeds back the response to the environment.
+\begin{circusaction}
+        \t1 AUpdatePrice \circdef update \then response := \emptyset \circseq \\
+            \t2 AUpdateResp \circseq display \then finishdisplay \then failures.response \then \Skip \\ 
+\end{circusaction}
+
+The overall behaviour of the $Controller$ process is given by its main action. It initializes at first, then repeatedly provides ESEL map update, price map, or price update to its environment.
+\begin{circusaction}
+	\t1 \circspot \lschexpract Init \rschexpract \circseq init \then \Skip \circseq \\
+    \t2 (\circmu X \circspot (AUpdatemap \extchoice ANewPrice \extchoice AUpdatePrice) \circseq X) \\
+\end{circusaction}
+\begin{circus}
+	\circend
+\end{circus}
+
+\paragraph{ESEL Process}
+Each ESEL is defined as a parameterised process with the formal parameter---ESEL ID.
+\begin{circus}
+	\circprocess\ ESEL1 \circdef eid:ESID \circspot \circbegin \\
+\end{circus}
+
+The process has two state components: $price$ for the price to display, and $status$ for the status of ESEL.
+\begin{circusaction}
+    	\t1 \circstate\ State == [~ price: Price; status: UStatus ~] \\
+\end{circusaction}
+Initially, the price is equal to 0 and the status is $uok$.
+\begin{zed}
+    	\t1	Init == [~ (State)' | price' = 0 \land status' = uok ~] \\
+\end{zed}
+
+The $Update$ action provides its environment ($Controller$) the update of price for the associated product. It accepts the $uupdate$ event with the price, then writes the price to $price$. After that, it writes the price to the display unit, and reads back the value to compare with the original price. If it is equal, it sends back status $uok$ by the $ures$ event. Otherwise, it sends back status $ufail$. Accordingly, $status$ is updated.
+\begin{circusaction}
+        \t1 Update \circdef uupdate.eid?x \then price := x \circseq write.eid.price \then read.eid?y \\
+            \t2 \then (\lcircguard y = price \rcircguard \circguard ures.eid.uok \then status := uok \\
+            \t2 \,\,\,\,\,\, \extchoice \lcircguard y \neq price \rcircguard \circguard ures.eid.ufail \then status := ufail) \\
+\end{circusaction}
+The $Display$ action accepts the $display$ event. If the status is $uok$, then the associated display is turned on. Otherwise, the display is turned off.
+\begin{circusaction}
+        \t1 Display \circdef display \then (\\
+            \t2 \,\,\,\, \lcircguard status = uok \rcircguard \circguard ondisplay.eid \then \Skip \\
+            \t2 \extchoice \lcircguard status = ufail \rcircguard \circguard offdisplay.eid \then \Skip) \\
+            \t2 \circseq finishdisplay \then \Skip
+\end{circusaction}
+\begin{circusaction}
+        \t1 NotUpdateDisplay \circdef display \then offdisplay.eid \then finishdisplay \then \Skip \\
+\end{circusaction}
+The initial behaviour of the process is given in the action $AInit$ which initialises the state at first, and then turns off the display.
+\begin{circusaction}
+        \t1 AInit \circdef \lschexpract Init \rschexpract \circseq offdisplay.eid \then init \then \Skip\\
+\end{circusaction}
+The overall behaviour of the process is given by its main action. It specifies that after initialisation the process repeatedly provides update or display to its environment.
+\begin{circusaction}
+	    \t1 \circspot AInit \circseq (\circmu X \circspot ( (Update \circseq Display) \extchoice NotUpdateDisplay) \circseq X) \\
+\end{circusaction}
+\begin{circus}
+	\circend
+\end{circus}
+
+The behaviour of all ESELs together is formed by iterated parallel composition of $ESEL$ process. The only communication between them is to display at the same time.
+\begin{circus}
+    \circchannelset\ InterESELInterface1 == \lchanset init, display, finishdisplay \rchanset \\
+    \circprocess\ ESELS1 \circdef \Parallel eid: ESID \lpar InterESELInterface1 \rpar \circspot ESEL1(eid)
+\end{circus}
+
+\paragraph{System}
+Finally, the whole system is defined as the parallel between the $Controller$ process and the $ESELS$ process. They synchronise with the $uupdate$, $ures$, $display$, and $finishdisplay$ events.
+\begin{circus}
+    \circchannelset\ ESELInterface1 == \lchanset uupdate, ures, init, display, finishdisplay \rchanset \\
+    \circprocess\ ESELSystem1 \circdef (Controller1 \lpar ESELInterface1 \rpar ESELS1) \circhide ESELInterface1
+\end{circus}
+

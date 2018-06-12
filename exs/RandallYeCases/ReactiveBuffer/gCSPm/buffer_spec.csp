@@ -1,0 +1,122 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+maxbuff = 3
+NatValue = {0..maxbuff}
+sNatValue = Seq(NatValue)
+channel input, output : NatValue
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = SNA.sNatValue | NAT.NatValue
+--Conversions
+valueSNA(SNA.v) = v
+valueNAT(NAT.v) = v
+
+typeSNA(x) = U_SNA
+typeNAT(x) = U_NAT
+
+tagSNA(x) = SNA
+tagNAT(x) = NAT
+
+-- subtypes of UNIVERSE for SNA
+subtype U_SNA = SNA.sNatValue
+
+-- subtypes of UNIVERSE for NAT
+subtype U_NAT = NAT.NatValue
+
+-- definition of NAME for the entire spec
+datatype NAME = sv_buff | sv_size
+
+-- Subtype definition for SNA
+b_SNA1 = {(sv_buff, SNA.<>)}
+subtype NAME_SNA = sv_buff
+NAMES_VALUES_SNA = seq({seq({(n,v) | v <- typeSNA(n)}) | n <- NAME_SNA})
+
+-- Subtype definition for NAT
+b_NAT1 = {(sv_size, NAT.0)}
+subtype NAME_NAT = sv_size
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+
+-- Bindings definitions for SNA
+BINDINGS_SNA = {set(b) | b <- set(distCartProd(NAMES_VALUES_SNA))}
+
+-- Bindings definitions for NAT
+BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
+
+
+--------------------------------
+ -- mget, mset and terminate --
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI --
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+Buffer(b_SNA,b_NAT) =
+  let
+     MemorySNAVar(n,b_SNA) =
+        ( ( mget.n.apply(b_SNA,n) ->
+    MemorySNAVar(n,b_SNA)
+      [] mset.n?nv:typeSNA(n) ->
+    MemorySNAVar(n,over(b_SNA,n,nv)))
+      [] terminate -> SKIP)
+     MemoryNATVar(n,b_NAT) =
+        ( ( mget.n.apply(b_NAT,n) ->
+    MemoryNATVar(n,b_NAT)
+      [] mset.n?nv:typeNAT(n) ->
+    MemoryNATVar(n,over(b_NAT,n,nv)))
+      [] terminate -> SKIP)
+     MemorySNA(b_SNA) =
+        ( [| {| terminate |} |] n : dom(b_SNA) @ MemorySNAVar(n,b_SNA) )
+     MemoryNAT(b_NAT) =
+        ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
+     Memory(b_SNA,b_NAT) =
+        ( MemoryNAT(b_NAT)
+      [| {| terminate |} |]
+      MemorySNA(b_SNA) )
+     MemoryMergeSNAVar(n,b_SNA,ns) =
+        ( ( lget.n.apply(b_SNA,n) ->
+    MemoryMergeSNAVar(n,b_SNA,ns)
+      [] lset.n?nv:typeSNA(n) ->
+    MemoryMergeSNAVar(n,over(b_SNA,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_SNA> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeNATVar(n,b_NAT,ns) =
+        ( ( lget.n.apply(b_NAT,n) ->
+    MemoryMergeNATVar(n,b_NAT,ns)
+      [] lset.n?nv:typeNAT(n) ->
+    MemoryMergeNATVar(n,over(b_NAT,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_NAT> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeSNA(b_SNA,ns) =
+        ( [| {| lterminate |} |] n : dom(b_SNA) @ MemoryMergeSNAVar(n,b_SNA,ns) )
+     MemoryMergeNAT(b_NAT,ns) =
+        ( [| {| lterminate |} |] n : dom(b_NAT) @ MemoryMergeNATVar(n,b_NAT,ns) )
+     MemoryMerge(b_SNA,b_NAT,ns) =
+        ( MemoryMergeNAT(b_NAT,ns)
+      [| {| lterminate |} |]
+      MemoryMergeSNA(b_SNA,ns) )
+
+  within ( ( ( mset.sv_buff.(SNA.<>) ->
+    mset.sv_size.(NAT.0) ->
+    ( let X = mget.sv_buff?v_sv_buff:(typeSNA(sv_buff)) ->
+    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+    ( ( (valueNAT(v_sv_size) < maxbuff) & input?x ->
+    ( (valueNAT(v_sv_size) < maxbuff) & mset.sv_buff.(SNA.(valueSNA(v_sv_buff)^<x>)) ->
+    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
+    mset.sv_size.(NAT.(valueNAT(v_sv_size) + 1)) ->
+    X ) )
+      [] ( (valueNAT(v_sv_size) > 0) & output.head(valueSNA(v_sv_buff)) ->
+    ( (valueNAT(v_sv_size) > 0) & mset.sv_size.(NAT.(valueNAT(v_sv_size) - 1)) ->
+    mget.sv_buff?v_sv_buff:(typeSNA(sv_buff)) ->
+    mset.sv_buff.(SNA.tail(valueSNA(v_sv_buff))) ->
+    X ) )) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_SNA,b_NAT))\MEMI )

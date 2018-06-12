@@ -1,0 +1,291 @@
+-- This CSP specification is translated from a Circus program by Circus2ZCSP translator.
+
+-- Minimum and maximum integers for model checking. Make sure they are set in advance.
+MININT = 0
+MAXINT = 1
+
+-- Maximum instances generated for iseq.  Make sure it is set in advance.
+MAXINS = 3
+
+-- include a set of libraries
+include "lib_basic.csp"
+include "lib_num.csp"
+include "lib_card.csp"
+include "lib_log.csp"
+include "lib_set.csp"
+include "lib_rel.csp"
+include "lib_fun.csp"
+include "lib_seq.csp"
+
+
+-- Axiomatic definition (Constant)
+-- They should be assigned manually to meet its type and predicate restriction
+-- and match the values assigned in Z as well
+-- The variables defined below should meet the predicate below
+--       ((MAX_ESEL == 3 and MAX_PID == 2) and MAX_GATEWAY == 2)
+MAX_ESEL = 3
+MAX_PID = 2
+MAX_GATEWAY = 2
+--       gwmap == {((ES.1), (GW.1)), ((ES.2), (GW.1)), ((ES.3), (GW.2))}
+gwmap = {((ES.1), (GW.1)), ((ES.2), (GW.1)), ((ES.3), (GW.2))}-- must be choose from tfun(ESID, GID)
+
+
+-- type
+Price = Nat
+
+datatype ESID = ES.{1 .. MAX_ESEL}
+datatype PID = PD.{1 .. MAX_PID}
+datatype FStatus = fail.ESID | NA
+datatype GID = GW.{1 .. MAX_GATEWAY}
+datatype UStatus = uok | ufail
+
+
+-- channel declarations
+channel div
+channel updateallmap : pfun(ESID, PID)
+channel updatemap : pfun(ESID, PID)
+channel updateallprice : pfun(PID, Price)
+channel updateprice : pfun(PID, Price)
+channel update
+channel failures : pfun(PID, Set(FStatus))
+channel resp : PID.FStatus
+channel terminate
+channel gupdateprice : GID.pfun(ESID, Price)
+channel gfailure : GID.Set(ESID)
+channel gresp : ESID
+channel gterminate
+channel uupdate : ESID.Price
+channel ures : ESID.UStatus
+channel uinit,finishuinit
+channel udisplay
+channel finishudisplay
+channel init,finishinit
+channel display
+channel finishdisplay
+channel write : ESID.Price
+channel read : ESID.Price
+channel ondisplay : ESID
+channel offdisplay : ESID
+channel ESELServer_Init-- 
+channel ESELServer_Init_fOp -- 
+channel ESELServer_UpdateMap: pfun(ESID, PID)-- !map
+channel ESELServer_UpdateMap_fOp: pfun(ESID, PID) -- !map
+channel ESELServer_UpdateAllMap: pfun(ESID, PID)-- !map
+channel ESELServer_UpdateAllMap_fOp: pfun(ESID, PID) -- !map
+channel ESELServer_NewPrice: pfun(PID, Price)-- !price
+channel ESELServer_NewPrice_fOp: pfun(PID, Price) -- !price
+channel ESELServer_AllNewPrice: pfun(PID, Price)-- !price
+channel ESELServer_AllNewPrice_fOp: pfun(PID, Price) -- !price
+channel ESELServer_AssgnOp0-- 
+channel ESELServer_AddOneFailure: FStatus.PID-- !fst!pid
+channel ESELServer_AddOneFailure_fOp: FStatus.PID -- !fst!pid
+channel Gateway_GW1_Init-- 
+channel Gateway_GW1_Init_fOp -- 
+channel Gateway_GW1_UpdateAllMap: pfun(ESID, Price)-- !map
+channel Gateway_GW1_UpdateAllMap_fOp: pfun(ESID, Price) -- !map
+channel Gateway_GW1_AssgnOp1-- 
+channel Gateway_GW1_AssgnOp2: ESID-- !uid
+channel Gateway_GW2_Init-- 
+channel Gateway_GW2_Init_fOp -- 
+channel Gateway_GW2_UpdateAllMap: pfun(ESID, Price)-- !map
+channel Gateway_GW2_UpdateAllMap_fOp: pfun(ESID, Price) -- !map
+channel Gateway_GW2_AssgnOp3-- 
+channel Gateway_GW2_AssgnOp4: ESID-- !uid
+channel ESEL_ES3_Init-- 
+channel ESEL_ES3_Init_fOp -- 
+channel ESEL_ES3_AssgnOp5: Price-- !x
+channel ESEL_ES3_AssgnOp6-- 
+channel ESEL_ES3_AssgnOp7-- 
+channel ESEL_ES2_Init-- 
+channel ESEL_ES2_Init_fOp -- 
+channel ESEL_ES2_AssgnOp8: Price-- !x
+channel ESEL_ES2_AssgnOp9-- 
+channel ESEL_ES2_AssgnOp10-- 
+channel ESEL_ES1_Init-- 
+channel ESEL_ES1_Init_fOp -- 
+channel ESEL_ES1_AssgnOp11: Price-- !x
+channel ESEL_ES1_AssgnOp12-- 
+channel ESEL_ES1_AssgnOp13-- 
+channel ESELServer_OP_ppmap : pfun(PID, Price)
+channel ESELServer_OP_pumap : pfun(ESID, PID)
+channel ESELServer_OP_response : pfun(PID, Set(FStatus))
+channel Gateway_GW1_OP_pumap : pfun(ESID, Price)
+channel Gateway_GW1_OP_failed : Set(ESID)
+channel Gateway_GW2_OP_pumap : pfun(ESID, Price)
+channel Gateway_GW2_OP_failed : Set(ESID)
+channel ESEL_ES3_OP_price : Price
+channel ESEL_ES3_OP_status : UStatus
+channel ESEL_ES2_OP_price : Price
+channel ESEL_ES2_OP_status : UStatus
+channel ESEL_ES1_OP_price : Price
+channel ESEL_ES1_OP_status : UStatus
+
+-- channel set declarations
+RespInterface = {| resp, terminate |}
+GRespInterface = {| gresp, gterminate |}
+InterESELInterface = {| uinit, finishuinit, udisplay, finishudisplay |}
+InterGWInterface = {| init, finishinit, display, finishdisplay |}
+GWESELInterface = {| uinit, finishuinit, uupdate, ures, udisplay, finishudisplay |}
+ServerGWInterface = {| init, finishinit, gupdateprice, gfailure, display, finishdisplay |}
+
+-- hidden event
+HIDE_CSPB = {|ESELServer_OP_ppmap, ESELServer_OP_pumap, ESELServer_OP_response, Gateway_GW1_OP_pumap, Gateway_GW1_OP_failed, Gateway_GW2_OP_pumap, Gateway_GW2_OP_failed, ESEL_ES3_OP_price, ESEL_ES3_OP_status, ESEL_ES2_OP_price, ESEL_ES2_OP_status, ESEL_ES1_OP_price, ESEL_ES1_OP_status, ESELServer_Init, ESELServer_Init_fOp, ESELServer_UpdateMap, ESELServer_UpdateMap_fOp, ESELServer_UpdateAllMap, ESELServer_UpdateAllMap_fOp, ESELServer_NewPrice, ESELServer_NewPrice_fOp, ESELServer_AllNewPrice, ESELServer_AllNewPrice_fOp, ESELServer_AssgnOp0, ESELServer_AddOneFailure, ESELServer_AddOneFailure_fOp, Gateway_GW1_Init, Gateway_GW1_Init_fOp, Gateway_GW1_UpdateAllMap, Gateway_GW1_UpdateAllMap_fOp, Gateway_GW1_AssgnOp1, Gateway_GW1_AssgnOp2, Gateway_GW2_Init, Gateway_GW2_Init_fOp, Gateway_GW2_UpdateAllMap, Gateway_GW2_UpdateAllMap_fOp, Gateway_GW2_AssgnOp3, Gateway_GW2_AssgnOp4, ESEL_ES3_Init, ESEL_ES3_Init_fOp, ESEL_ES3_AssgnOp5, ESEL_ES3_AssgnOp6, ESEL_ES3_AssgnOp7, ESEL_ES2_Init, ESEL_ES2_Init_fOp, ESEL_ES2_AssgnOp8, ESEL_ES2_AssgnOp9, ESEL_ES2_AssgnOp10, ESEL_ES1_Init, ESEL_ES1_Init_fOp, ESEL_ES1_AssgnOp11, ESEL_ES1_AssgnOp12, ESEL_ES1_AssgnOp13|}
+
+-- processes for variable storing and retrieving 
+
+-- processes 
+-- Divergent Process 
+DIV = div -> STOP
+
+
+ESELServer = 
+   ( (
+  (   ESELServer_Init ->  SKIP
+   [] ESELServer_Init_fOp -> DIV
+  ) ; init -> finishinit -> SKIP)  ; 
+  let X = 
+     (
+    (   
+      (   
+        (   updatemap?map -> 
+          (   ESELServer_UpdateMap!map ->  SKIP
+           [] ESELServer_UpdateMap_fOp!map -> DIV
+          )
+         [] updateallmap?map -> 
+          (   ESELServer_UpdateAllMap!map ->  SKIP
+           [] ESELServer_UpdateAllMap_fOp!map -> DIV
+          )
+        )
+       [] 
+        (   updateprice?price -> 
+          (   ESELServer_NewPrice!price ->  SKIP
+           [] ESELServer_NewPrice_fOp!price -> DIV
+          )
+         [] updateallprice?price -> 
+          (   ESELServer_AllNewPrice!price ->  SKIP
+           [] ESELServer_AllNewPrice_fOp!price -> DIV
+          )
+        )
+      )
+     []  ( (update -> (ESELServer_AssgnOp0 ->  SKIP) ; ESELServer_OP_pumap?pumap -> ESELServer_OP_ppmap?ppmap -> (( ((( ||| gid:GID @ (gupdateprice.(gid).(dres(dom(rres(gwmap, {gid})), comp(pumap, ppmap))) -> gfailure.(gid)?uids -> ESELServer_OP_pumap?pumap -> ( ||| uid:uids @ (resp.(fa(pumap, uid)).((fail.uid)) -> SKIP)))) ||| ( ||| pid:diff(dom(ppmap), ran(pumap)) @ (resp.(pid).(NA) -> SKIP))) ; terminate -> SKIP)  [| RespInterface |] 
+      let X = 
+        (    (resp?pid?fst -> 
+          (   ESELServer_AddOneFailure!fst!pid ->  SKIP
+           [] ESELServer_AddOneFailure_fOp!fst!pid -> DIV
+          ) ; X) 
+         [] terminate -> SKIP
+        )
+      within X) \ RespInterface))  ; display -> finishdisplay -> ESELServer_OP_response?response -> failures.(response) -> SKIP) 
+    ) ; X) 
+  within X) 
+
+Gateways =  [| InterGWInterface |] gid:GID @ ( (gid == (GW.1) & Gateway_GW1 [] gid == (GW.2) & Gateway_GW2) [| GWESELInterface |] (gid == (GW.1) & ESELS_GW1 [] gid == (GW.2) & ESELS_GW2) ) \ GWESELInterface
+
+ESELSystem2 = ( ESELServer [| ServerGWInterface |] Gateways ) \ ServerGWInterface
+
+Gateway_GW1 = 
+   ( (
+  (   Gateway_GW1_Init ->  SKIP
+   [] Gateway_GW1_Init_fOp -> DIV
+  ) ; init -> uinit -> finishuinit -> finishinit -> SKIP)  ; 
+  let X = 
+     ( ( ( (gupdateprice.((GW.1))?map -> 
+    (   Gateway_GW1_UpdateAllMap!map ->  SKIP
+     [] Gateway_GW1_UpdateAllMap_fOp!map -> DIV
+    ) ; (Gateway_GW1_AssgnOp1 ->  SKIP))  ; Gateway_GW1_OP_pumap?pumap -> (( (( ||| eid:dom(pumap) @ (uupdate.(eid).(fa(pumap, eid)) -> ures.(eid)?rst -> 
+    (   (rst == ufail & gresp.(eid) -> SKIP)
+     [] (rst == uok & SKIP)
+    ))) ; gterminate -> SKIP)  [| GRespInterface |] 
+    let X = 
+      (    (gresp?uid -> (Gateway_GW1_AssgnOp2!uid ->  SKIP) ; X) 
+       [] gterminate -> SKIP
+      )
+    within X) \ GRespInterface))  ; Gateway_GW1_OP_failed?failed -> gfailure.((GW.1)).(failed) -> display -> udisplay -> finishudisplay -> finishdisplay -> SKIP)  ; X) 
+  within X) 
+
+Gateway_GW2 = 
+   ( (
+  (   Gateway_GW2_Init ->  SKIP
+   [] Gateway_GW2_Init_fOp -> DIV
+  ) ; init -> uinit -> finishuinit -> finishinit -> SKIP)  ; 
+  let X = 
+     ( ( ( (gupdateprice.((GW.2))?map -> 
+    (   Gateway_GW2_UpdateAllMap!map ->  SKIP
+     [] Gateway_GW2_UpdateAllMap_fOp!map -> DIV
+    ) ; (Gateway_GW2_AssgnOp3 ->  SKIP))  ; Gateway_GW2_OP_pumap?pumap -> (( (( ||| eid:dom(pumap) @ (uupdate.(eid).(fa(pumap, eid)) -> ures.(eid)?rst -> 
+    (   (rst == ufail & gresp.(eid) -> SKIP)
+     [] (rst == uok & SKIP)
+    ))) ; gterminate -> SKIP)  [| GRespInterface |] 
+    let X = 
+      (    (gresp?uid -> (Gateway_GW2_AssgnOp4!uid ->  SKIP) ; X) 
+       [] gterminate -> SKIP
+      )
+    within X) \ GRespInterface))  ; Gateway_GW2_OP_failed?failed -> gfailure.((GW.2)).(failed) -> display -> udisplay -> finishudisplay -> finishdisplay -> SKIP)  ; X) 
+  within X) 
+
+ESEL_ES3 = 
+   ( (
+  (   ESEL_ES3_Init ->  SKIP
+   [] ESEL_ES3_Init_fOp -> DIV
+  ) ; uinit -> offdisplay.((ES.3)) -> finishuinit -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.3))?x -> (ESEL_ES3_AssgnOp5!x ->  SKIP) ; ESEL_ES3_OP_price?price -> write.((ES.3)).(price) -> read.((ES.3))?y -> ESEL_ES3_OP_price?price -> 
+      (   (y == price & ures.((ES.3)).(uok) -> (ESEL_ES3_AssgnOp6 ->  SKIP))
+       [] ((y != price) & ures.((ES.3)).(ufail) -> (ESEL_ES3_AssgnOp7 ->  SKIP))
+      ))  ;  (udisplay -> ESEL_ES3_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.3)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.3)) -> SKIP)
+      ) ; finishudisplay -> SKIP) ) 
+     [] udisplay -> offdisplay.((ES.3)) -> finishudisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+ESEL_ES2 = 
+   ( (
+  (   ESEL_ES2_Init ->  SKIP
+   [] ESEL_ES2_Init_fOp -> DIV
+  ) ; uinit -> offdisplay.((ES.2)) -> finishuinit -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.2))?x -> (ESEL_ES2_AssgnOp8!x ->  SKIP) ; ESEL_ES2_OP_price?price -> write.((ES.2)).(price) -> read.((ES.2))?y -> ESEL_ES2_OP_price?price -> 
+      (   (y == price & ures.((ES.2)).(uok) -> (ESEL_ES2_AssgnOp9 ->  SKIP))
+       [] ((y != price) & ures.((ES.2)).(ufail) -> (ESEL_ES2_AssgnOp10 ->  SKIP))
+      ))  ;  (udisplay -> ESEL_ES2_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.2)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.2)) -> SKIP)
+      ) ; finishudisplay -> SKIP) ) 
+     [] udisplay -> offdisplay.((ES.2)) -> finishudisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+ESEL_ES1 = 
+   ( (
+  (   ESEL_ES1_Init ->  SKIP
+   [] ESEL_ES1_Init_fOp -> DIV
+  ) ; uinit -> offdisplay.((ES.1)) -> finishuinit -> SKIP)  ; 
+  let X = 
+     (
+    (    ( (uupdate.((ES.1))?x -> (ESEL_ES1_AssgnOp11!x ->  SKIP) ; ESEL_ES1_OP_price?price -> write.((ES.1)).(price) -> read.((ES.1))?y -> ESEL_ES1_OP_price?price -> 
+      (   (y == price & ures.((ES.1)).(uok) -> (ESEL_ES1_AssgnOp12 ->  SKIP))
+       [] ((y != price) & ures.((ES.1)).(ufail) -> (ESEL_ES1_AssgnOp13 ->  SKIP))
+      ))  ;  (udisplay -> ESEL_ES1_OP_status?status -> 
+      (   (status == uok & ondisplay.((ES.1)) -> SKIP)
+       [] (status == ufail & offdisplay.((ES.1)) -> SKIP)
+      ) ; finishudisplay -> SKIP) ) 
+     [] udisplay -> offdisplay.((ES.1)) -> finishudisplay -> SKIP
+    ) ; X) 
+  within X) 
+
+ESELS_GW2 =  [| InterESELInterface |] eid:dom(rres(gwmap, {(GW.2)})) @ (eid == (ES.1) & ESEL_ES1 [] (eid == (ES.3) & ESEL_ES3 [] eid == (ES.2) & ESEL_ES2))
+
+ESELS_GW1 =  [| InterESELInterface |] eid:dom(rres(gwmap, {(GW.1)})) @ (eid == (ES.3) & ESEL_ES3 [] (eid == (ES.2) & ESEL_ES2 [] eid == (ES.1) & ESEL_ES1))
+
+MAIN = ESELSystem2
+
+
+-- assertions 
+assert MAIN :[ livelock free ]
+assert MAIN :[ deadlock free [F] ]
+assert MAIN :[ deadlock free [FD] ]
+

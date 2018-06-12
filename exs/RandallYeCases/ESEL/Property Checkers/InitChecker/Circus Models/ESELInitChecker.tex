@@ -1,0 +1,24 @@
+\begin{zsection}
+	\SECTION\ ESELInitChecker \parents\ ESELHeader
+\end{zsection}
+
+%\begin{gendef}[X]
+%    Set2Seq: \iseq~X
+%    \where
+%    \ran~Set2Seq = X
+%\end{gendef}
+
+\begin{circus}
+	\circprocess\ InitChecker \circdef \circbegin \\
+        \t1 \circstate\ State == [~ dummy: \{0\} ~] \\
+    	\t1	Init == [~ (State)' | dummy' = 0 ~] \\
+        \t1 AOffDisplay \circdef (\Interleave e: ESID \circspot (offdisplay.e \then \Skip)) \\
+	    \t1 \circspot \lschexpract Init \rschexpract \circseq AOffDisplay \circseq update \then \Skip \\
+	\circend
+\end{circus}
+
+\begin{circus}
+   \circchannelset\ ESELSystemInterface == \lchanset updateallprice, updateprice, \\
+    \t2 updatemap, updateallmap, update, ondisplay, offdisplay, \\
+    \t2 write, read, failures \rchanset \\
+\end{circus}

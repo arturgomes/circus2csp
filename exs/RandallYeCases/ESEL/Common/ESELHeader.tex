@@ -1,0 +1,113 @@
+\begin{zsection}
+	\SECTION\ ESELHeader \parents\ circus\_toolkit
+\end{zsection}
+
+This section gives all basic definitions that will be used in all three \Circus\ models. And gateway related definitions are only used in the ESEL System 2.
+
+First of all, three constants are defined. $MAX\_ESEL$ and $MAX\_PID$ stand for maximum number of displays and maximum number of product categories (or, products for short) in the system separately. And constant $MAX\_GATEWAY$ stands for maximum number of gateways.
+\begin{axdef}
+    MAX\_ESEL: \nat \\
+    MAX\_PID: \nat \\
+%    MAX\_GATEWAY: \nat
+\end{axdef}
+
+Then all displays and products are identified by a tag plus a unique number which are defined in the free types $ESID$ and $PID$ below where the constructors $ES$ and $PD$ are the tags for displays and products. For an instance, number ten of the display is given $ES~10$ or $ES(10)$. Similarly, $GID$ gives all identities for gateways.
+\begin{zed}
+    ESID ::= ES \ldata 1 \upto MAX\_ESEL \rdata \\
+    PID ::= PD \ldata 1 \upto MAX\_PID \rdata \\
+%    GID ::= GW \ldata 1 \upto MAX\_GATEWAY \rdata 
+\end{zed}
+
+%The map from ESELs to gateways, $gwmap$, is defined as a total function. One ESEL is linked to up to one gateway. However, one gateway may associate with multiple ESELs.
+%\begin{axdef}
+%    % total function and each ESEL must be assigned to corresponding gateway
+%    gwmap: ESID \fun GID
+%    \where
+%    gwmap = \{(ES~1, GW~1), (ES~2, GW~1), (ES~3, GW~2)\}
+%\end{axdef}
+
+The type of product price is defined as an abbreviation to natural numbers $\nat$.
+\begin{zed}
+    Price == \nat
+\end{zed}
+
+The unit response is defined as a free type with two constants: $uok$ and $ufail$.
+\begin{zed}
+    UStatus ::= uok | ufail
+\end{zed}
+
+The response from this program to the environment is a set of product identities of which the price is not updated successfully due to 1) no linked ESEL ID to the product or 2) failed update to its linked ESEL. The first reason is given the status constant $NA$ and the second is provided the constructor $fail\ldata ESID \rdata$.
+\begin{zed}
+    % NA - no correponding ESEL ID for the product
+    FStatus ::= fail \ldata ESID \rdata | NA 
+\end{zed}
+
+Two channels are provided to update the map from ESEL ID to product ID. $updateallmap$ will clear all stored map and use the input map as new map, while $updatemap$ just updates a partial map. In this map, one ESEL can be linked to up to one product. However, one product may associate with multiple ESELs. 
+\begin{circus}
+	\circchannel\ updateallmap: ESID \pfun PID \\
+	\circchannel\ updatemap: ESID \pfun PID
+\end{circus}
+
+Similarly, two channels are provided to update the price information. $updateallprice$ will clear all price information and use the input price information as new price, while $updateprice$ just updates price partially.  
+\begin{circus}
+	\circchannel\ updateallprice: PID \pfun Price \\
+	\circchannel\ updateprice: PID \pfun Price
+\end{circus}
+
+The $update$ channel gives a signal to the program to start update process.
+\begin{circus}
+	\circchannel\ update
+\end{circus}
+
+The $failures$ channel returns all failed products and related error reasons after update. Since one product may associate with multiple displays, the return status is a power set of $FStatus$ to denote which specific displays that the product links are updated unsuccessfully. But it is worth noting that $NA$ and $fail$ must not occur in a product's return set at the same time because they can not be both no associate display and associate display update fail.
+\begin{circus}
+	\circchannel\ failures: PID \pfun \power~FStatus 
+\end{circus}
+
+The internal $resp$ event is used to collect update responses from all displays and $terminate$ event is for completing the collection.
+\begin{circus}
+    % inside
+	\circchannel\ resp: PID \cross FStatus \\
+    \circchannel\ terminate \\
+    \circchannelset\ RespInterface == \lchanset resp, terminate \rchanset 
+\end{circus}
+
+%The channels below are used to communicate between the server and gateways, or between gateway internals. The server uses $gupdateprice$ to send price information with ESEL IDs to the corresponding gateway, while $gfailure$ is used to get back the udpate result from the gateway.
+%\begin{circus}
+%    % price info to start a new update
+%	\circchannel\ gupdateprice: GID \cross (ESID \pfun Price) \\
+%    % update result response
+%	\circchannel\ gfailure: GID \cross \power~ESID \\
+%\end{circus}
+%
+%$gresp$ and $gterminate$ are used in the internal of gateways to collection update results from each ESEL and terminate after collection.
+%\begin{circus}
+%    % gateway internal response collection
+%	\circchannel\ gresp: ESID \\
+%	\circchannel\ gterminate \\
+%    \circchannelset\ GRespInterface == \lchanset gresp, gterminate \rchanset 
+%\end{circus}
+
+This $uupdate$ event is to update one ESEL to the specific price, and $ures$ for update response from this ESEL.
+And $udisplay$ is used to synchronise the show of price on all ESELs at the same time and $finishdisplay$ is used to wait for display completion of all ESELs. That is the similar case for $uinit$ and $ufinishinit$ that are for initialisation synchronisation. 
+\begin{circus}
+    % unit
+	\circchannel\ uupdate: ESID \cross Price \\
+	\circchannel\ ures: ESID \cross UStatus \\
+	\circchannel\ uinit, finishuinit\\
+	\circchannel\ udisplay, finishudisplay
+\end{circus}
+
+And $display$ is used to synchronise the show of price on all gateways (or ESELs) at the same time and $finishdisplay$ is used to wait for display completion of all gateways (or ESELs). That is the similar case for $init$ and $finishinit$ that are for initialisation synchronisation. 
+\begin{circus}
+	\circchannel\ init, finishinit \\
+	\circchannel\ display, finishdisplay
+\end{circus}
+
+The channels below are for communication between the ESEL system and displays. The $write$ event writes price to a display, and the $read$ event reads price from the display. $ondisplay$ turns on the related display and $offdisplay$ turns off it conversely.
+\begin{circus}
+	\circchannel\ write: ESID \cross Price \\
+	\circchannel\ read: ESID \cross Price \\
+	\circchannel\ ondisplay: ESID \\
+	\circchannel\ offdisplay: ESID 
+\end{circus}
