@@ -139,6 +139,7 @@ zitem :: EParser ZToken [ZPara]
 zitem
   = zitem_givensets +++
   zitem_sdef +++
+  zitem_sdef1 +++
   zitem_abbrev +++
   zitem_freetype +++
   zitem_pred
@@ -160,6 +161,18 @@ zitem_sdef
     optnls;
     se <- zschema_exp;
     return [ZSchemaDef name se]}
+
+zitem_sdef1 :: EParser ZToken [ZPara]
+zitem_sdef1
+  = do  {name <- zschema_name;
+    optnls;
+    dn <- opt [] gen_zvar;
+    optnls;
+    tok L_DEFS;
+    cut;
+    optnls;
+    se <- zschema_exp;
+    return [ZSchemaDefP name dn se]}
 
 zitem_abbrev :: EParser ZToken [ZPara]
 zitem_abbrev
@@ -299,7 +312,8 @@ zschema_exp_u
          se <- zschema_exp;
          tok L_CLOSEPAREN;
    return se} +++
-    zschema_ref
+    -- zschema_ref +++
+     zschema_ref1
 
 zschema_ref :: EParser ZToken ZSExpr
 zschema_ref
@@ -307,8 +321,20 @@ zschema_ref
          dec <- zdecoration;
          reps <- opt [] zreplace;
          return (ZSRef zn dec reps)}
--- TODO Gen_Actuals
 
+zschema_ref1 :: EParser ZToken ZSExpr
+zschema_ref1
+ = do  {zn <- zschema_name;
+        dec <- zdecoration;
+        dn <- opt [] gen_zvar;
+        reps <- opt [] zreplace;
+        return (ZSRefP zn dec dn reps)}
+-- TODO Gen_Actuals
+gen_zvar
+  = do { tok L_OPENBRACKET;
+          dn <- zdecl_name `sepby1` comma;
+          tok L_CLOSEBRACKET;
+        return dn}
 zreplace :: EParser ZToken [ZReplace]
 zreplace
   = do  {tok L_OPENBRACKET;
@@ -329,9 +355,9 @@ zrename_or_repl
 
 zschema_name :: EParser ZToken ZSName
 zschema_name
-  = do  {tok L_DELTA; name <- zword; return (ZSDelta name)} +++
-    do  {tok L_XI; name <- zword; return (ZSXi name)} +++
-    do  {name <- zword; return (ZSPlain name)}
+  = do  {tok L_DELTA; name <- zword; dn <- opt [] gen_zvar; return (ZSDelta name dn)} +++
+    do  {tok L_XI; name <- zword; dn <- opt [] gen_zvar; return (ZSXi name dn )} +++
+    do  {name <- zword; dn <- opt [] gen_zvar; return (ZSPlain name dn)}
 
 
 zschema_text :: EParser ZToken [ZGenFilt]
@@ -434,7 +460,7 @@ zbasic_decl
          optnls;
          e <- zexpression;
          return [Choose (make_zvar w d) e | (w,d,_) <- ws]}
-   +++ do  {sr <- zschema_ref; return [Include sr]}
+   +++ do  {sr <- zschema_ref1; return [Include sr]}
 
 -- This differs slightly from the Breuer/Bowen grammar.
 -- To avoid reparsing parenthesized expressions, we define
@@ -605,9 +631,10 @@ zexpression_4b
     do  {tok L_THETA;
    sn <- zschema_name;
    dec <- zdecoration;
+   dn <- opt [] gen_zvar;
    reps <- opt [] zreplace;
-   return (ZTheta (ZSRef sn dec reps))} +++
-    do  {sr <- zschema_ref;
+   return (ZTheta (ZSRefP sn dec dn reps))} +++
+    do  {sr <- zschema_ref1;
    return (ZESchema sr)}
 
 
@@ -703,7 +730,7 @@ zpredicate_u
       do  {op <- zpre_rel_decor;
      e <- zexpression;
      return (ZMember e (ZVar op))} +++
-      do  {tok L_PRE; sr <- zschema_ref; return (ZPre sr)} +++
+      do  {tok L_PRE; sr <- zschema_ref1; return (ZPre sr)} +++
       do  {tok L_TRUE; return ztrue} +++
       do  {tok L_FALSE; return zfalse} +++
       do  {tok L_LNOT;
@@ -713,7 +740,7 @@ zpredicate_u
      p <- zpredicate;
      tok L_CLOSEPAREN;
      return p;} +++
-      do  {sr <- zschema_ref;
+      do  {sr <- zschema_ref1;
      return (ZPSchema sr)}
 
 it_pred :: ZExpr -> [(ZExpr -> ZExpr -> ZPred, ZExpr)] -> ZPred
@@ -1534,7 +1561,7 @@ circus_action_p
               ax <- zaxiom_part ;
               tok L_CLOSEBRACKET;
               return (ZSchema (concat decls ++ ax))};
-    return [ProcZPara (ZSchemaDef (ZSPlain name) se)]}
+    return [ProcZPara (ZSchemaDef (ZSPlain name []) se)]}
   -- N
   -- +++ do {nmp <- zitem;
   --     	return (takeZPara nmp)}

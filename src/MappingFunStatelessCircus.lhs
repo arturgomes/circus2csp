@@ -234,32 +234,32 @@ proc_ref1 x = ([],x)
 \begin{code}
 proc_ref2 :: ZPara -> ([ZGenFilt],ZPara)
 proc_ref2 e@(Process (CProcess p (ProcDef
-      (ProcMain (ZSchemaDef (ZSPlain x) (ZSchema zs)) aclst ma))))
+      (ProcMain (ZSchemaDef (ZSPlain x _) (ZSchema zs)) aclst ma))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDef
-          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
+          (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa)))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDef
-          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa)))) ->
+          (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa)))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef
-      (ProcMain (ZSchemaDef (ZSPlain x) (ZSchema zs)) aclst ma)))))
+      (ProcMain (ZSchemaDef (ZSPlain x _) (ZSchema zs)) aclst ma)))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
-          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
+          (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa))))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst ma)))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
-          (ProcMain (ZSchemaDef (ZSPlain xa) (ZSchema xzs)) aclsta maa))))) ->
+          (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa))))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
   where ref = runRefinementZp e
@@ -285,14 +285,14 @@ proc_ref2 x = ([],x)
 \end{argue}
 \begin{code}
 proc_ref3 (Process (CProcess p
-   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma))))
+   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma))))
   =  proc_ref4 (Process (CProcess p
-   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
+   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma))))
   where bst = data_refinement stv
 proc_ref3 (Process (CProcess p
-  (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema stv)) aclst ma)))))
+  (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma)))))
   =  proc_ref4 (Process (CProcess p
-    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
+    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma)))))
   where bst = data_refinement stv
 proc_ref3 x = proc_ref4 x
 \end{code}
@@ -316,9 +316,9 @@ proc_ref3 x = proc_ref4 x
   \\= & Action Refinement\\
 \end{argue}
 \begin{code}
-proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma))))
+proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema bst)) aclst ma))))
   =  proc_ref5 (Process (CProcess p
-    (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
+    (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
     ((nmem_mkMemoryTYPVar bst)++
     (nmem_mkMemoryTYP bst)++
     (nmem_mkMemory bst)++
@@ -336,9 +336,9 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSch
             (head $ filter_ZGenFilt_Check bst)
     nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
     nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
-proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst)) aclst ma)))))
+proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema bst)) aclst ma)))))
   =  proc_ref5 (Process (CProcess p
-    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn) (ZSchema bst))
+    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
     ((nmem_mkMemoryTYPVar bst)++
     (nmem_mkMemoryTYP bst)++
     (nmem_mkMemory bst)++

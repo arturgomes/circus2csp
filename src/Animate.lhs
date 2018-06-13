@@ -294,6 +294,13 @@ process_paras spec (p@(ZSchemaDef name se) : ps)
            defunfolded=(ZESchema (ZSchema gfs))}
        newspec <- adddefn newp spec
        process_paras newspec ps
+process_paras spec (p@(ZSchemaDefP name px se) : ps)
+  = do gfs <- unfoldsexpr (uenv spec) se
+       let newp = ZParaDefn{origpara=p,
+           defname=make_schema_name name,
+           defunfolded=(ZESchema (ZSchema gfs))}
+       newspec <- adddefn newp spec
+       process_paras newspec ps
 process_paras spec (p@ZMachineDef{} : ps)
   = do let e = uenv spec
        state <- unfoldsexpr e . sref . machState $ p
@@ -305,7 +312,7 @@ process_paras spec (p@ZMachineDef{} : ps)
        let newspec = newp:spec
        process_paras newspec ps
   where
-  sref name = ZSRef (ZSPlain name) [] []
+  sref name = ZSRef (ZSPlain name []) [] []
 process_paras spec (p@(ZAbbreviation n e) : ps)
   = do ue <- unfoldexpr (uenv spec) e
        let newp = ZParaDefn{origpara=p,

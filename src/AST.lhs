@@ -366,6 +366,7 @@ data ZExpr
   | ZSetComp [ZGenFilt] (Maybe ZExpr) -- set comprehensions
   | ZLambda [ZGenFilt] ZExpr          -- only for parsing (removed in Unfold)
   | ZESchema ZSExpr                   -- sets of bindings (removed in Unfold)
+  | ZESchemaP [ZVar] ZSExpr                   -- sets of bindings (removed in Unfold)
   | ZGivenSet GivenSet                -- an entire given set
   | ZUniverse               -- the set of all Z values! (a unit for \cap)
   ---------- Z constructs that are not necessarily sets ----------
@@ -454,6 +455,7 @@ zfalse = ZFalse{reason=[]}
 data ZSExpr
   = ZSchema [ZGenFilt]
   | ZSRef ZSName [ZDecor] [ZReplace]
+  | ZSRefP ZSName [ZDecor] [ZVar] [ZReplace]
   | ZS1 ZS1 ZSExpr              -- unary schema operators
   | ZS2 ZS2 ZSExpr ZSExpr       -- binary schema operators
   | ZSHide ZSExpr [ZVar]
@@ -472,7 +474,7 @@ data ZReplace
   deriving (Eq,Ord,Show)
 
 data ZSName                     -- schema names including prefix.
-  = ZSPlain String | ZSDelta String | ZSXi String
+  = ZSPlain String [ZVar] | ZSDelta String [ZVar] | ZSXi String [ZVar]
   deriving (Eq,Ord,Show)
 
 data ZS1
@@ -961,7 +963,8 @@ traverseTerm (ZNull)    = return ZNull
 data ZPara
   = ZGivenSetDecl GivenSet       -- [XXX]
   | ZSchemaDef ZSName ZSExpr     -- \begin{schema}{XXX}...\end{schema}
-                                 -- or XXX \defs [...|...]
+  -- or XXX \defs [...|...]
+  | ZSchemaDefP ZSName [ZVar] ZSExpr     -- XXX[Y] \defs [...|...]
   | ZAbbreviation ZVar ZExpr     -- XXX == expression
   | ZFreeTypeDef ZVar [ZBranch]  -- XXX ::= A | B | ...
   | ZPredicate ZPred

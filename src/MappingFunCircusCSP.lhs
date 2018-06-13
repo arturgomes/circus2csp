@@ -1058,7 +1058,7 @@ mapping_CParameter :: ZName -> [ZPara] -> CParameter -> ZName
 mapping_CParameter procn spec (ChanInp zn)
   = "?"++zn
 
-mapping_CParameter procn spec (ChanInpPred zn (ZPSchema (ZSRef (ZSPlain p) [] [])))
+mapping_CParameter procn spec (ChanInpPred zn (ZPSchema (ZSRef (ZSPlain p _) [] [])))
   = "?"++zn ++":"++ p
 mapping_CParameter procn spec (ChanInpPred zn zp)
   = "?"++zn ++":"++ (mapping_predicate (get_delta_names1 spec) zp)
@@ -1117,9 +1117,9 @@ mapping_predicate lst (ZAnd a b)
   = "(" ++ (mapping_predicate lst a) ++ " and " ++ (mapping_predicate lst b)++")"
 mapping_predicate lst ( (ZNot b))
   = "not (" ++ (mapping_predicate lst b)++")"
-mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\true") [] []))
+mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\true" _) [] []))
   = "true"
-mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\false") [] []))
+mapping_predicate lst (ZPSchema (ZSRef (ZSPlain "\\false" _) [] []))
   = "false"
 mapping_predicate lst (ZTrue{reason=[]})
   = "true"
@@ -1189,7 +1189,7 @@ get_channel_name_cont spec ((ChanDotExp v) : xs)
   = "."++(mapping_ZExpr (get_delta_names1 spec) v)++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInp v) : xs)
   = "?"++v++(get_channel_name_cont spec xs)
-get_channel_name_cont spec ((ChanInpPred v (ZPSchema (ZSRef (ZSPlain p) [] []))) : xs)
+get_channel_name_cont spec ((ChanInpPred v (ZPSchema (ZSRef (ZSPlain p _) [] []))) : xs)
   = "?"++v++":"++p++(get_channel_name_cont spec xs)
 get_channel_name_cont spec ((ChanInpPred v x) : xs)
   = "?"++v++":"++(mapping_predicate (get_delta_names1 spec) x)++(get_channel_name_cont spec xs)

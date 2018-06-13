@@ -1793,12 +1793,12 @@ def_mem_st_Circus_aux spec (x:xs)
 
 \begin{code}
 
-rename_z_schema_state spec (CProcess p (ProcDefSpot aa (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) schlst) proclst ma))))
-  = (CProcess p (ProcDefSpot aa (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSchema xs)) proclst ma))))
+rename_z_schema_state spec (CProcess p (ProcDefSpot aa (ProcDef (ProcMain (ZSchemaDef (ZSPlain n _) schlst) proclst ma))))
+  = (CProcess p (ProcDefSpot aa (ProcDef (ProcMain (ZSchemaDef (ZSPlain n []) (ZSchema xs)) proclst ma))))
     where
       xs = retrive_schemas spec schlst
-rename_z_schema_state spec (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) schlst) proclst ma)))
-  = (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n) (ZSchema xs)) proclst ma)))
+rename_z_schema_state spec (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n _) schlst) proclst ma)))
+  = (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain n []) (ZSchema xs)) proclst ma)))
     where
       xs = retrive_schemas spec schlst
 rename_z_schema_state spec x = x
@@ -1806,7 +1806,7 @@ rename_z_schema_state spec x = x
 
 \begin{code}
 retrive_schemas spec (ZSchema lstx) = lstx
-retrive_schemas spec (ZSRef (ZSPlain nn) [] [])
+retrive_schemas spec (ZSRef (ZSPlain nn _) [] [])
   = case res of
       Just e' -> e'
       Nothing -> error "Schema definition not found!"
@@ -1824,11 +1824,11 @@ retrive_schemas spec _ = error "Schema def not implemented yet"
 \end{code}
 
 \begin{code}
-retrieve_z_schema_state n [(ZSchemaDef (ZSPlain nn) (ZSchema lstx))]
+retrieve_z_schema_state n [(ZSchemaDef (ZSPlain nn _) (ZSchema lstx))]
   | n == nn = Just lstx
   | otherwise = Nothing
 retrieve_z_schema_state n [_] = Nothing
-retrieve_z_schema_state n ((ZSchemaDef (ZSPlain nn) (ZSchema lstx)):xs)
+retrieve_z_schema_state n ((ZSchemaDef (ZSPlain nn _) (ZSchema lstx)):xs)
   | n == nn = Just lstx
   | otherwise = retrieve_z_schema_state n xs
 retrieve_z_schema_state n (_:xs) = retrieve_z_schema_state n xs
@@ -1872,7 +1872,7 @@ def_mem_st_CProc spec name x
 
 \begin{code}
 get_state_var :: [ZPara] -> ZName -> ZSExpr -> [(ZName, ZVar, ZExpr)]
-get_state_var spec name (ZSRef (ZSPlain nn) [] [])
+get_state_var spec name (ZSRef (ZSPlain nn _) [] [])
   = case statev of
       Just s -> concat (map (get_state_var_aux name) s)
       Nothing -> []
@@ -2501,19 +2501,19 @@ union_ml_mr (x:xs) = ((ZCall (ZVar ("\\cup",[],"")) (ZTuple (x:xs))))
 -- ZSchemaDef (ZSPlain nn) zs
 -- Process (CProcess "SysClock" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "SysClockSt") (ZSRef (ZSPlain "SysC
 get_state_from_spec [] n = error "no schema found in the current spec"
-get_state_from_spec ((ZSchemaDef (ZSPlain nn) zs):xs) n
+get_state_from_spec ((ZSchemaDef (ZSPlain nn _) zs):xs) n
   | n == nn = zs
   | otherwise = (get_state_from_spec xs n)
 get_state_from_spec (_:xs) n = (get_state_from_spec xs n)
 
 normal_state_proc spec [] = []
-normal_state_proc spec ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) std) ls ma))))):xs)
-  = ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSchema nstn))  ls ma ))))):(normal_state_proc spec xs))
+normal_state_proc spec ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain (ZSchemaDef (ZSPlain st _) std) ls ma))))):xs)
+  = ((Process (CProcess n (ProcDefSpot ff (ProcDef (ProcMain (ZSchemaDef (ZSPlain st []) (ZSchema nstn))  ls ma ))))):(normal_state_proc spec xs))
   where
     nstn = restruct_state_proc spec std
 
-normal_state_proc spec ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) std) ls ma)))):xs)
-  = ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st) (ZSchema nstn))  ls ma )))):(normal_state_proc spec xs))
+normal_state_proc spec ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st _) std) ls ma)))):xs)
+  = ((Process (CProcess n (ProcDef (ProcMain (ZSchemaDef (ZSPlain st []) (ZSchema nstn))  ls ma )))):(normal_state_proc spec xs))
   where
     nstn = restruct_state_proc spec std
 normal_state_proc spec (_:xs) = (normal_state_proc spec xs)
@@ -2521,7 +2521,7 @@ normal_state_proc spec (_:xs) = (normal_state_proc spec xs)
 restruct_state_proc spec (ZSchema s) = s
 restruct_state_proc spec (ZS2 ZSAnd s1 s2)
   = restruct_state_proc spec s1 ++ restruct_state_proc spec s2
-restruct_state_proc spec (ZSRef (ZSPlain s) [] [])
+restruct_state_proc spec (ZSRef (ZSPlain s _) [] [])
   = restruct_state_proc spec $ get_state_from_spec spec s
 
 \end{code}
@@ -2988,7 +2988,7 @@ This function will convert the structure of schemas into Circus actions.
 It also will transform any precondition as a predicate for guards in Circus
 \begin{code}
 get_schema_guards :: [ZPara] -> ZSExpr -> CAction
-get_schema_guards xls (ZSRef (ZSPlain x) [] [])
+get_schema_guards xls (ZSRef (ZSPlain x _) [] [])
   = (CActionName x)
 get_schema_guards xls (ZS2 ZSAnd (ZSchema x1) (ZSchema x2))
   = (get_schema_guards xls (ZSchema (x1++x2)))
@@ -3044,16 +3044,16 @@ schema_to_cactions xs [ZAnd e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_primed_zvar e1 && is_primed_zvar e3)
           = (CSPSeq (schema_to_cactions xs [e]) (schema_to_cactions xs [f]))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions xs [ZAnd e f]
+schema_to_cactions xs [axs@(ZAnd e f)]
   | (is_predicate e && not(is_predicate f))
           = (CSPGuard e (schema_to_cactions xs [f]))
   | (is_predicate f && not(is_predicate e))
           = (CSPGuard f (schema_to_cactions xs [e]))
-  | otherwise = error "Could not translate to CAction"
+  | otherwise = error ("Could not translate ZAnd to CAction" ++ show axs)
 schema_to_cactions xs [ZImplies e@(ZEqual (ZVar e1) e2) f@(ZEqual (ZVar e3) e4)]
   | (is_predicate e && is_primed_zvar e3)
           = (CSPGuard e (schema_to_cactions xs [f]))
-  | otherwise = error "Could not translate to CAction"
+  | otherwise = error "Could not translate ZImplies to CAction"
 schema_to_cactions xs [ZImplies e f@(ZEqual (ZVar e3) e4)]
   | (is_predicate e && is_primed_zvar e3)
           = (CSPGuard e (schema_to_cactions xs [f]))
@@ -3082,7 +3082,7 @@ schema_to_cactions xls (_:xs) = (schema_to_cactions xls xs)
 \end{code}
 
 \begin{code}
-procZParaToCParAction xs (ProcZPara (ZSchemaDef (ZSPlain sname) s))
+procZParaToCParAction xs (ProcZPara (ZSchemaDef (ZSPlain sname _) s))
   = (CParAction sname (CircusAction (get_schema_guards xs s)))
 procZParaToCParAction xs (CParAction n p)
   = (CParAction n (pZPtoCA_ParAction xs p))
@@ -3270,6 +3270,8 @@ repl_sch_ZSExpr :: [ZPara] -> ZSExpr -> ZSExpr
 repl_sch_ZSExpr schls (ZSchema _zgfs)
   = (ZSchema _zgfs)
 repl_sch_ZSExpr schls (ZSRef sn _ _)
+  = get_schema_def sn schls
+repl_sch_ZSExpr schls (ZSRefP sn _ _ _)
   = get_schema_def sn schls
 repl_sch_ZSExpr schls (ZS1 _ZS1 _ZSExpr)
   = (ZS1 _ZS1 (repl_sch_ZSExpr schls _ZSExpr))

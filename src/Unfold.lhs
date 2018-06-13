@@ -178,17 +178,29 @@ unfold_name n =
 	| otherwise = unfoldError (IllFormed [])
     unfoldDeltaXi n | get_zvar_decor n == [ZDelta] =
       do let sname = get_zvar_name n
-	 let delta = ZSchema [ Include (ZSRef (ZSPlain sname) [] []),
-			       Include (ZSRef (ZSPlain sname) [ZPrime] []) ]
+	 let delta = ZSchema [ Include (ZSRef (ZSPlain sname []) [] []),
+			       Include (ZSRef (ZSPlain sname []) [ZPrime] []) ]
 	 ZSchema gfs <- unfsexpr delta
 	 return (ZESchema (ZSchema gfs))
     unfoldDeltaXi n | get_zvar_decor n == [ZXi] =
       do let sname  = get_zvar_name n
-	 let unprimed = ZSRef (ZSPlain sname) [] []
-	 let primed   = ZSRef (ZSPlain sname) [ZPrime] []
+	 let unprimed = ZSRef (ZSPlain sname []) [] []
+	 let primed   = ZSRef (ZSPlain sname []) [ZPrime] []
 	 let xi = ZSchema [ Include unprimed,
 			    Include primed,
 			    Check (ZEqual (ZTheta primed) (ZTheta unprimed)) ]
+	 ZSchema gfs <- unfsexpr xi
+	 return (ZESchema (ZSchema gfs))
+    unfoldDeltaXi n | get_zvar_decor n == [ZDelta] =
+      do let sname = get_zvar_name n
+	 let delta = (ZSchema [ Include (ZSRefP (ZSPlain sname []) [] [] []),Include (ZSRefP (ZSPlain sname []) [ZPrime] [] []) ])
+	 ZSchema gfs <- unfsexpr delta
+	 return (ZESchema (ZSchema gfs))
+    unfoldDeltaXi n | get_zvar_decor n == [ZXi] =
+      do let sname  = get_zvar_name n
+	 let unprimed = ZSRefP (ZSPlain sname []) [] [] []
+	 let primed = ZSRefP (ZSPlain sname []) [ZPrime] [] []
+	 let xi = (ZSchema [ Include unprimed, Include primed, Check (ZEqual (ZTheta primed) (ZTheta unprimed)) ])
 	 ZSchema gfs <- unfsexpr xi
 	 return (ZESchema (ZSchema gfs))
     unfoldDeltaXi n = unfoldError (IllFormed [MStr "unknown name: ",
@@ -204,7 +216,7 @@ unfexpr (ZVar v) =
     -- ZVar, never as ZSRef, so here we correct this by translating
     -- (ZVar s') into a schema reference, whenever s is a schema name.
     do  env <- currEnv
-	let sref = ZSRef (ZSPlain (get_zvar_name v)) (get_zvar_decor v) []
+	let sref = ZSRef (ZSPlain (get_zvar_name v) [] ) (get_zvar_decor v) []
 	if envIsSchema env (get_zvar_name v)
 	    then unfexpr (ZESchema sref)
 	    else unfold_name v
@@ -221,7 +233,7 @@ unfexpr (ZSetDisplay [ZESchema se@(ZSRef _ _ _)]) =
     unfexpr (ZSetComp [Include se] Nothing)
 unfexpr (ZSetDisplay es@[ZVar v]) =
     do  env <- currEnv
-	let sref = ZSRef (ZSPlain (get_zvar_name v)) (get_zvar_decor v) []
+	let sref = ZSRef (ZSPlain (get_zvar_name v) []) (get_zvar_decor v) []
 	if envIsSchema env (get_zvar_name v)
 	   then unfexpr (ZSetComp [Include sref] Nothing)
 	   else do {ues <- mapM visitExpr es; return (ZSetDisplay ues)}
@@ -350,6 +362,14 @@ unfsexpr :: ZSExpr -> UnfoldVisitor ZSExpr
 unfsexpr (ZSchema gfs)
   = do	(ugfs, _, _) <- visitBinder gfs ZNull
 	return (ZSchema ugfs)
+unfsexpr (ZSRefP n decors pr replaces0)
+  = do	ZESchema (ZSchema ugfs) <- unfold_name (make_schema_name n)
+	ugfs2 <- decorate_schema ugfs decors
+	-- Finally, we apply the renamings/assignments.
+	-- First we unfold the expressions in the assignments
+	replaces <- sequence (map unfold_replace replaces0)
+	ugfs3 <- replace_schema ugfs2 replaces
+	return (ZSchema ugfs3)
 unfsexpr (ZSRef n decors replaces0)
   = do	ZESchema (ZSchema ugfs) <- unfold_name (make_schema_name n)
 	ugfs2 <- decorate_schema ugfs decors
@@ -755,9 +775,9 @@ characteristic_tuple gfs
 -- The \Delta and \Xi names are encoded into ZVar's as decorations
 -- (to avoid complicating all the lookup data structures with \Delta+\Xi).
 make_schema_name :: ZSName -> ZVar
-make_schema_name (ZSPlain n) = make_zvar n []
-make_schema_name (ZSDelta n) = make_zvar n [ZDelta]
-make_schema_name (ZSXi n) = make_zvar n [ZXi]
+make_schema_name (ZSPlain n _) = make_zvar n []
+make_schema_name (ZSDelta n _) = make_zvar n [ZDelta]
+make_schema_name (ZSXi n _) = make_zvar n [ZXi]
 
 
 schema_set :: [ZGenFilt] -> ZExpr

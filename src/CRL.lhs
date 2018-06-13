@@ -39,7 +39,7 @@ support schemas as actions in our tool, and as we expand the definition of all
 actions to the main action $MA$, we'll have the following implementation.
 \begin{code}
 crl_prom_var_state :: ZPara -> Refinement ZPara
-crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2))))))
+crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s []) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
         fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
@@ -49,8 +49,8 @@ crl_prom_var_state e@(Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlai
         nl = rename_list_lv p (varset_to_zvars ffvs) va2
         subs = make_subinfo nl fvs2
         finalsubs = sub_CAction subs ma2
-        ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs))))
-crl_prom_var_state e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2)))))))
+        ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain s []) (ZSchema (zs++gfs))) aclst finalsubs))))
+crl_prom_var_state e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s []) (ZSchema zs)) aclst (CActionCommand (CVarDecl va2 ma2)))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
         fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
@@ -60,7 +60,7 @@ crl_prom_var_state e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (Z
         nl = rename_list_lv p (varset_to_zvars ffvs) va2
         subs = make_subinfo nl fvs2
         finalsubs = sub_CAction subs ma2
-        ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s) (ZSchema (zs++gfs))) aclst finalsubs)))))
+        ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain s []) (ZSchema (zs++gfs))) aclst finalsubs)))))
 crl_prom_var_state _ = None
 \end{code}
 
@@ -90,7 +90,7 @@ crl_prom_var_state2 :: ZPara -> Refinement ZPara
 crl_prom_var_state2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst (CActionCommand (CVarDecl va2 ma2))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
-  ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p)) (ZSchema gfs)) aclst finalsubs))))
+  ref = (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p) []) (ZSchema gfs)) aclst finalsubs))))
   fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
   fvs2 = free_var_CAction ma2
   ffvs = diff_varset fvs2 fvs1
@@ -101,7 +101,7 @@ crl_prom_var_state2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst (CAct
 crl_prom_var_state2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst (CActionCommand (CVarDecl va2 ma2)))))))
   = Done{orig = Just e, refined = Just ref, proviso = []}
       where
-  ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p)) (ZSchema gfs)) aclst finalsubs)))))
+  ref = (Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcMain (ZSchemaDef (ZSPlain ("S"++p) []) (ZSchema gfs)) aclst finalsubs)))))
   fvs1 = free_var_CAction (CActionCommand (CVarDecl va2 ma2))
   fvs2 = free_var_CAction ma2
   ffvs = diff_varset fvs2 fvs1
@@ -188,7 +188,7 @@ get_provisoZp (Done{orig=_,refined=_,proviso=c}) = c
 testproc1 :: ZPara
 testproc1 = (Process (CProcess "P" (ProcDef (ProcStalessMain [CParAction "L" (CircusAction (CActionCommand (CVarDecl [Choose ("x",[],[]) (ZVar ("T",[],[]))] CSPSkip)))] (CActionCommand (CVarDecl [Choose ("x",[],[]) (ZVar ("T",[],[]))] CSPSkip))))))
 testproc2 :: ZPara
-testproc2 = (Process (CProcess "AChrono" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CActionCommand (CAssign [("sec",[],[]),("min",[],[])] [ZVar ("ms",[],[]),ZInt 0]))))))))
+testproc2 = (Process (CProcess "AChrono" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "AState" []) (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CActionCommand (CAssign [("sec",[],[]),("min",[],[])] [ZVar ("ms",[],[]),ZInt 0]))))))))
 
 -- testcac0 = (Process (CProcess "LocWakeUp" (ProcDef (ProcMain (ZSchemaDef (ZSPlain "WState") (ZSchema [Choose ("sec",[],[]) (ZVar ("RANGE",[],[])),Choose ("min",[],[]) (ZVar ("RANGE",[],[])),Choose ("buzz",[],[]) (ZVar ("ALARM",[],[]))])) [] (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))))) )
 -- testcac2 = (CActionCommand (CVarDecl [Choose ("ms",[],[]) (ZVar ("RANGE",[],[]))] (CSPSeq (CActionCommand (CAssign [("sec",[],[])] [ZVar ("ms",[],[])])) (CSPSeq (CActionCommand (CAssign [("sec",[],[]),("min",[],[]),("buzz",[],[])] [ZInt 0,ZInt 0,ZVar ("OFF",[],[])])) (CSPRecursion "X" (CSPSeq (CSPHide (CSPCommAction (ChanComm "tick" []) (CSPSeq (CActionName "WIncSec") (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPExtChoice (CSPGuard (ZEqual (ZVar ("sec",[],[])) (ZInt 0)) (CActionName "WIncMin")) (CSPGuard (ZNot (ZEqual (ZVar ("sec",[],[])) (ZInt 0))) CSPSkip)) (CSPGuard (ZEqual (ZVar ("min",[],[])) (ZInt 1)) (CSPCommAction (ChanComm "radioOn" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("ON",[],[])]))))) (CSPCommAction (ChanComm "time" []) (CSPCommAction (ChanComm "out" [ChanOutExp (ZTuple [ZVar ("min",[],[]),ZVar ("sec",[],[])])]) CSPSkip))) (CSPCommAction (ChanComm "snooze" []) (CActionCommand (CAssign [("buzz",[],[])] [ZVar ("OFF",[],[])])))))) (CChanSet ["tick"])) (CActionName "X")))))))
@@ -994,7 +994,7 @@ crl_channelExtension4 _ _ = None
 crl_promVarState :: CProc -> Refinement CProc
 crl_promVarState
   e@(ProcMain
-      (ZSchemaDef (ZSPlain st) s)
+      (ZSchemaDef (ZSPlain st []) s)
       [CParAction l (CircusAction (CActionCommand (CValDecl [Choose (x,[],tx1) (ZVar (t,[],tx2))] a)))]
       (CActionCommand (CValDecl [Choose (x1,[],_) (ZVar (t1,[],_))] ma)))
   = case (x==x1 && t == t1) of
@@ -1002,7 +1002,7 @@ crl_promVarState
         False -> None
     where
       ref = (ProcMain
-                  (ZSchemaDef (ZSPlain st) (ZS2 ZSAnd s (ZSchema [Choose (x,[],tx1) (ZVar (t,[],tx2))])))
+                  (ZSchemaDef (ZSPlain st []) (ZS2 ZSAnd s (ZSchema [Choose (x,[],tx1) (ZVar (t,[],tx2))])))
                   [CParAction l (CircusAction a)] ma)
 
 crl_promVarState _ = None
@@ -1587,11 +1587,11 @@ crl_innocuousAssignment _ = None
 \begin{code}
 crl_variableSubstitution2 :: CAction -> ZName -> Refinement CAction
 crl_variableSubstitution2
-    e@(CActionCommand (CVarDecl [Include (ZSRef (ZSPlain _) [] [])]
+    e@(CActionCommand (CVarDecl [Include (ZSRef (ZSPlain _ []) [] [])]
              (CSPParAction a [ZVar _]))) y
   =  Done{orig = Just e, refined = Just ref, proviso=[]}
     where
-      ref = (CActionCommand (CVarDecl [Include (ZSRef (ZSPlain y) [] [])]
+      ref = (CActionCommand (CVarDecl [Include (ZSRef (ZSPlain y []) [] [])]
         (CSPParAction a [ZVar (y,[],[])])))
 crl_variableSubstitution2 _ _ = None
 \end{code}
@@ -1748,12 +1748,12 @@ crl_internalChoiceHidingDistribution _ = None
 crl_assignmentSkip :: CAction -> Refinement CAction
 crl_assignmentSkip
     ei@(CActionCommand (CValDecl
-        [Include (ZSRef (ZSPlain x) [] [])]
+        [Include (ZSRef (ZSPlain x []) [] [])]
         (CActionCommand (CAssign [_] [ZVar _]))))
   =  Done{orig = Just ei, refined = Just ref, proviso=[]}
     where
       ref = (CActionCommand (CValDecl
-        [Include (ZSRef (ZSPlain x) [] [])] CSPSkip))
+        [Include (ZSRef (ZSPlain x []) [] [])] CSPSkip))
 crl_assignmentSkip _ = None
 \end{code}
 

@@ -561,9 +561,9 @@ print_replace pi (ZAssign x y) = print_declname pi x <> text ":=" <> print_expr 
 
 
 print_sname :: PrintInfo -> ZSName -> Doc
-print_sname pi (ZSPlain s) =  text s
-print_sname pi (ZSDelta s) =  text "\\Delta" <+> text s
-print_sname pi (ZSXi s)    =  text "\\Xi" <+> text s
+print_sname pi (ZSPlain s x) =  text s
+print_sname pi (ZSDelta s x) =  text "\\Delta" <+> text s
+print_sname pi (ZSXi s x)    =  text "\\Xi" <+> text s
 
 
 print_s1op :: PrintInfo -> OpInfo -> ZSExpr-> Doc
