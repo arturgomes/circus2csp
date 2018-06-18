@@ -24,8 +24,8 @@ make\_get\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 make_get_com :: [ZVar] -> CAction -> CAction
 make_get_com [] c = c
 make_get_com ((x,y,z):xs) c
-  = (CSPCommAction (ChanComm "mget"
-    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) (make_get_com xs c))
+  = (CSPCommAction (ChanComm ("mget_"++x)
+    [ChanInp ("v_"++x)]) (make_get_com xs c))
 \end{code}
 \subsection{$make\_set\_com$}
 This function updates the values of the $Memory$ process by generating a sequence of $mset$ communications and then it behaves like $f~c$, where $f$ may be the $omega\_CAction$ or $omega\_prime\_CAction$.
@@ -33,8 +33,8 @@ This function updates the values of the $Memory$ process by generating a sequenc
 make_set_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
 make_set_com f [] [] c = (f c)
 make_set_com f ((x,_,t):xs) (y:ys) c
-  = (CSPCommAction (ChanComm "mset"
-     [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_set_com f xs ys c))
+  = (CSPCommAction (ChanComm ("mset_"++x)
+     [ChanDotExp y]) (make_set_com f xs ys c))
 \end{code}
 
 \section{Local $MemoryMerge$ functions}
@@ -48,11 +48,11 @@ make\_lget\_com\ (v_0,\ldots,v_n,l_0,\ldots,l_m)~A \defs
 \begin{code}
 make_lget_com :: [ZVar] -> CAction -> CAction
 make_lget_com [(x,y,z)] c
-  = (CSPCommAction (ChanComm "lget"
-    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) c)
+  = (CSPCommAction (ChanComm ("lget"++x)
+    [ChanInp ("v_"++x)]) c)
 make_lget_com ((x,y,z):xs) c
-  = (CSPCommAction (ChanComm "lget"
-    [ChanDotExp (ZVar (x,[],z)),ChanInp ("v_"++x)]) (make_lget_com xs c))
+  = (CSPCommAction (ChanComm ("lget"++x)
+    [ChanInp ("v_"++x)]) (make_lget_com xs c))
 make_lget_com x c = c
 \end{code}
 \subsection{$make\_lset\_com$}
@@ -60,11 +60,11 @@ This function updates the values of the $Memory$ process by generating a sequenc
 \begin{code}
 make_lset_com :: (CAction -> CAction) -> [ZVar] -> [ZExpr] -> CAction -> CAction
 make_lset_com f [(x,_,t)] [y] c
-  = (CSPCommAction (ChanComm "lset"
-    [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (f c))
+  = (CSPCommAction (ChanComm ("lset"++x)
+    [ChanDotExp y]) (f c))
 make_lset_com f ((x,_,t):xs) (y:ys) c
-  = (CSPCommAction (ChanComm "lset"
-     [ChanDotExp (ZVar (x,[],t)),ChanDotExp y]) (make_lset_com f xs ys c))
+  = (CSPCommAction (ChanComm ("lset"++x)
+     [ChanDotExp y]) (make_lset_com f xs ys c))
 \end{code}
 
 \subsection{$get\_guard\_pair$}
@@ -1614,9 +1614,16 @@ mk_BINDINGS_TYPE n
 -- make restrict functions within main action
 mk_binding_list n
   = "b_"++n++" : BINDINGS_" ++ n
+
 get_binding_types :: [ZGenFilt] -> [String]
 get_binding_types [] = []
 get_binding_types ((Choose (v,a,b) t):ts) = (lastN 3 v):get_binding_types ts
+
+
+get_bindings_v :: [ZGenFilt] -> [String]
+get_bindings_v [] = []
+get_bindings_v ((Choose (v,a,b) t):ts) = (lastN 3 v):get_bindings_v ts
+
 
 mk_restrict vlst n
     = " restrict"++n++"(bs) = dres(bs,{"++(mk_charll_to_charl ", " $ (lst_subtype n vlst))++"})"
@@ -2643,20 +2650,116 @@ nmem_mkMemoryTYPVar bst
 
 
 \begin{code}
--- 1. get_binding_types takes a ZGenFilt as input and gets the type of a Choose x T in a binding b_TYP.
+-- I'll produce one mget, mset, lget, and lset for each state variable
 
-{-
-Basically, we need to produce three types of actions:
+nmem_mkMemoryMergeInternal1 :: [String] -> CAction
+nmem_mkMemoryMergeInternal1 [x] = (CSPParAction ("MemoryMerge"++x) [ZVar ((join_name "b" x),[],x),ZVar ("ns",[],"")])
+nmem_mkMemoryMergeInternal1 (x:xs)
+  = (CSPNSParal
+      [ZVar ("\\emptyset",[],"")]
+      (CChanSet ["lterminate"])
+      [ZVar ("\\emptyset",[],"")]
+      (nmem_mkMemoryMergeInternal1 xs)
+      (nmem_mkMemoryMergeInternal1 [x]))
 
-[CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl [Choose ("bala",[],"") (ZVar ("BINDINGala",[],"")),Choose ("bran",[],"") (ZVar ("BINDINGran",[],""))] (CSPNSParal [ZVar ("\\emptyset",[],"")] (CChanSet ["lterminate"]) [ZVar ("\\emptyset",[],"")] (CSPParAction "MemoryMergeala" [ZVar ("bala",[],"")]) (CSPParAction "MemoryMergeran" [ZVar ("bran",[],"")]))))),
-CParAction "MemoryMergeala" (CircusAction (CSPRepParal (CChanSet ["lterminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ("bala",[],"")))] (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZVar ("bala",[],"")]))) -- ok
-CParAction "MemoryMergealavar" (CircusAction (CActionCommand (CVResDecl [Choose ("n",[],"") (ZVar ("NAMEala",[],"")),Choose ("bala",[],"") (ZVar ("BINDINGala",[],""))] (CSPExtChoice (CSPExtChoice (CSPUnfAction "\\qquad" (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ("bala",[],"")) (ZVar ("n",[],"")))]) (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZVar ("bala",[],"")]))) (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\deltaala",[],"")) (ZVar ("n",[],""))))]) (CSPParAction "MemoryMergealavar" [ZVar ("n",[],""),ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ("bala",[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]])]))) (CSPCommAction (ChanComm "lterminate" []) CSPSkip)))))]
+nmem_mkMemoryMerge1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMerge1 bst =
+  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl ((remdups $ filter_ZGenFilt_Choose bst)++[Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))]) (nmem_mkMemoryMergeInternal1 bstTypes))))]
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
 
-MemoryMerge - for the main memory (with parallel between type actions)
-MemoryMergeTYP - for replicated paralelism synchronising on "lterminate"
-MemoryMergeTYPVar - for each variable in the bindings of TYP
+nmem_mkMemoryMergeTYPInternal1 :: [String] -> [PPar]
+nmem_mkMemoryMergeTYPInternal1 [x] =
+  [CParAction ("MemoryMerge"++x) (CircusAction (CActionCommand (CVResDecl [Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],"")),Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))] (CSPRepParal (CChanSet ["lterminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ((join_name "b" x),[],"")))] (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],""),ZVar ("ns",[],"")])))))]
+nmem_mkMemoryMergeTYPInternal1 (x:xs) =
+  (nmem_mkMemoryMergeTYPInternal1 [x])++(nmem_mkMemoryMergeTYPInternal1 xs)
 
--}
+nmem_mkMemoryMergeTYP1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMergeTYP1 bst
+  =  (nmem_mkMemoryMergeTYPInternal1 bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
+
+
+nmem_mkMemoryMergeTYPVarInternal1 :: [String] -> [PPar]
+nmem_mkMemoryMergeTYPVarInternal1 [x]
+  = [CParAction ("MemoryMerge"++x++"Var") (CircusAction (CActionCommand (CVResDecl [Choose ("n",[],"") (ZVar ((join_name "NAME" x),[],"")),Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++x,[],"")),Choose ("ns",[],"") (ZCall (ZVar ("\\seq",[],"")) (ZVar ("NAME",[],"")))] (CSPExtChoice (CSPExtChoice (CSPCommAction (ChanComm "lget" [ChanDotExp (ZVar ("n",[],"")),ChanOutExp (ZCall (ZVar ((join_name "b" x),[],"")) (ZVar ("n",[],"")))]) (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],""),ZVar ("ns",[],"")])) (CSPCommAction (ChanComm "lset" [ChanDotExp (ZVar ("n",[],"")),ChanInpPred "nv" (ZMember (ZVar ("nv",[],"")) (ZCall (ZVar ("\\delta",[],x)) (ZVar ("n",[],""))))]) (CSPParAction ("MemoryMerge"++x++"Var") [ZVar ("n",[],""),ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar ((join_name "b" x),[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar ("n",[],""),ZVar ("nv",[],"")])]]),ZVar ("ns",[],"")]))) (CSPCommAction (ChanComm "lterminate" [])
+  (CSPRepSeq [Choose ("bd",[],"")
+    (ZSeqDisplay [ZVar ((join_name "b" x),[],"")]),
+    Choose ("n",[],"") (ZSeqDisplay [(ZVar ("ns",[],""))])]
+  (CSPCommAction (ChanComm "mset" [ChanDotExp (ZVar ("n",[],"")),
+    ChanOutExp (ZCall (ZVar ("bd",[],"")) (ZVar ("n",[],"")))]) CSPSkip)))))))]
+nmem_mkMemoryMergeTYPVarInternal1 (x:xs) =
+  (nmem_mkMemoryMergeTYPVarInternal1 [x])++(nmem_mkMemoryMergeTYPVarInternal1 xs)
+
+nmem_mkMemoryMergeTYPVar1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryMergeTYPVar1 bst
+  = (nmem_mkMemoryMergeTYPVarInternal1 bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( get_binding_types nbst)
+
+\end{code}
+
+
+\subsection{New Memory model - distributed for state/local variables}
+
+Here I'll put all the infrastructure whilst desigining the new distributed Memory Model,
+but I'll keep any previous code above this section.
+
+\begin{code}
+nmem_mkMemory1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemory1 bst =
+  [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose (data_refinement bst)) (nmem_mkMemoryInternal1 bstTypes))))]
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( mk_st_zvar nbst)
+
+nmem_mkMemoryInternal1 :: [ZVar] -> CAction
+nmem_mkMemoryInternal1 [(x,_,y)] = (CSPParAction ("Memory_"++x) [ZVar ((join_name "b" (lastN 3 y)),[],x)])
+nmem_mkMemoryInternal1 ((x,_,y):xs)
+  = (CSPNSParal
+      [ZVar ("\\emptyset",[],"")]
+      (CChanSet ["terminate"])
+      [ZVar ("\\emptyset",[],"")]
+      (CSPParAction ("Memory_"++x) [ZVar ((join_name "b" (lastN 3 y)),[],x)])
+      (nmem_mkMemoryInternal1 xs))
+
+nmem_mkMemoryTYP1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryTYP1 bst
+  =  (nmem_mkMemoryTYPInternal1 bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( mk_st_zvar nbst)
+
+nmem_mkMemoryTYPInternal1 :: [ZVar] -> [PPar]
+nmem_mkMemoryTYPInternal1 [] = []
+nmem_mkMemoryTYPInternal1 [(x,_,y)] =
+  [CParAction ("Memory"++x) (CircusAction (CActionCommand (CVResDecl [Choose ((join_name "b" x),[],"") (ZVar ("BINDING_"++y,[],""))] (CSPRepParal (CChanSet ["terminate"]) [Choose ("n",[],"") (ZCall (ZVar ("\\dom",[],"")) (ZVar ((join_name "b" x),[],"")))] (CSPParAction ("Memory"++x++"Var") [ZVar ("n",[],""),ZVar ((join_name "b" x),[],"")])))))]
+nmem_mkMemoryTYPInternal1 (x:xs) =
+  (nmem_mkMemoryTYPInternal1 [x])++(nmem_mkMemoryTYPInternal1 xs)
+
+nmem_mkMemoryTYPVar1 :: [ZGenFilt] -> [PPar]
+nmem_mkMemoryTYPVar1 bst
+  = (nmem_mkMemoryTYPVarInternal1 bstTypes)
+  where
+    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    bstTypes = ( mk_st_zvar nbst)
+
+nmem_mkMemoryTYPVarInternal1 :: [ZVar] -> [PPar]
+nmem_mkMemoryTYPVarInternal1 [] = []
+nmem_mkMemoryTYPVarInternal1 [(x,_,y)]
+  = [CParAction ("Memory_"++x) (CircusAction (CSPRecursion "M" (CActionCommand (CVarDecl [Choose (("b_"++(lastN 3 y)),[],"") (ZVar (("BINDINGS_"++(lastN 3 y)),[],""))] (CSPExtChoice (CSPExtChoice (CSPCommAction (ChanComm ("mget_"++x) [ChanDotExp (ZCall (ZVar (("b_"++(lastN 3 y)),[],"")) (ZVar (x,[],"")))]) (CSPParAction "M" [ZVar (("b_"++(lastN 3 y)),[],"")])) (CSPCommAction (ChanComm ("mset_"++x) [ChanInp "nv"]) (CSPParAction "M" [ZCall (ZVar ("\\oplus",[],"")) (ZTuple [ZVar (("b_"++(lastN 3 y)),[],""),ZSetDisplay [ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [ZVar (x,[],y),ZVar ("nv",[],y)])]])]))) (CSPCommAction (ChanComm "terminate" []) CSPSkip))))))]
+nmem_mkMemoryTYPVarInternal1 (x:xs) =
+  (nmem_mkMemoryTYPVarInternal1 [x])++(nmem_mkMemoryTYPVarInternal1 xs)
+
+
+\end{code}
+
+
+\begin{code}
 nmem_mkMemoryMergeInternal :: [String] -> CAction
 nmem_mkMemoryMergeInternal [x] = (CSPParAction ("MemoryMerge"++x) [ZVar ((join_name "b" x),[],x),ZVar ("ns",[],"")])
 nmem_mkMemoryMergeInternal (x:xs)
@@ -3074,10 +3177,10 @@ schema_to_cactions xls ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
   | (is_predicate e && is_primed_zvar e3)
           = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
   | otherwise = error "Could not translate to CAction"
-schema_to_cactions xls ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
-  | (is_predicate e && is_primed_zvar e3)
-          = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
-  | otherwise = error "Could not translate to CAction"
+-- schema_to_cactions xls ((ZImplies e f@(ZEqual (ZVar e3) e4)):xs)
+--   | (is_predicate e && is_primed_zvar e3)
+--           = (CSPSeq (CSPGuard e (schema_to_cactions xls [f]))(schema_to_cactions xls xs))
+--   | otherwise = error "Could not translate to CAction"
 schema_to_cactions xls (_:xs) = (schema_to_cactions xls xs)
 \end{code}
 
@@ -3440,4 +3543,40 @@ repl_sch_CGActions schls (CircGAction _zpr _cact)
   = (CircGAction _zpr (repl_sch_CAction schls _cact))
 repl_sch_CGActions schls (CircThenElse _CGActions _CGActions1)
   = (CircThenElse _CGActions _CGActions1)
+\end{code}
+
+
+\section{Making mgets and msets to variables}
+
+\begin{code}
+mk_mget_mset_vars :: [ZBranch] -> [ZPara]
+mk_mget_mset_vars [ZBranch0 (x,_,y)]
+  = [CircChannel [CChanDecl ("mget_"++x) (ZVar ("U_"++y,[],"")), CChanDecl ("mset_"++x) (ZVar ("U_"++y,[],""))]]
+mk_mget_mset_vars ((ZBranch0 (x,_,y)):xs)
+  = [CircChannel [CChanDecl ("mget_"++x) (ZVar ("U_"++y,[],"")), CChanDecl ("mset_"++x) (ZVar ("U_"++y,[],""))]]++(mk_mget_mset_vars xs)
+mk_mget_mset_vars (_:xs) = (mk_mget_mset_vars xs)
+
+mk_mget_mset_chanset :: [ZBranch] -> [ZName]
+mk_mget_mset_chanset [ZBranch0 (x,_,y)] = ["mget_"++x,"mset_"++x]
+mk_mget_mset_chanset ((ZBranch0 (x,_,y)):xs) = ["mget_"++x,"mset_"++x]++(mk_mget_mset_chanset xs)
+mk_mget_mset_chanset (_:xs) = (mk_mget_mset_chanset xs)
+\end{code}
+
+\begin{code}
+mk_lget_lset_vars :: [ZBranch] -> [ZPara]
+mk_lget_lset_vars [ZBranch0 (x,_,y)]
+  = [CircChannel [CChanDecl ("lget_"++x) (ZVar ("U_"++y,[],"")), CChanDecl ("lset_"++x) (ZVar ("U_"++y,[],""))]]
+mk_lget_lset_vars ((ZBranch0 (x,_,y)):xs)
+  = [CircChannel [CChanDecl ("lget_"++x) (ZVar ("U_"++y,[],"")), CChanDecl ("lset_"++x) (ZVar ("U_"++y,[],""))]]++(mk_lget_lset_vars xs)
+mk_lget_lset_vars (_:xs) = (mk_lget_lset_vars xs)
+
+mk_lget_lset_chanset :: [ZBranch] -> [ZName]
+mk_lget_lset_chanset [ZBranch0 (x,_,y)] = ["lget_"++x,"lset_"++x]
+mk_lget_lset_chanset ((ZBranch0 (x,_,y)):xs) = ["lget_"++x,"lset_"++x]++(mk_lget_lset_chanset xs)
+mk_lget_lset_chanset (_:xs) = (mk_lget_lset_chanset xs)
+
+mk_st_zvar :: [ZGenFilt] -> [ZVar]
+mk_st_zvar [Choose x y] = [x]
+mk_st_zvar ((Choose x y):xs) = [x]++(mk_st_zvar xs)
+mk_st_zvar (_:xs) = (mk_st_zvar xs)
 \end{code}

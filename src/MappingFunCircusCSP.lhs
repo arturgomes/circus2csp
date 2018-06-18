@@ -833,6 +833,13 @@ mapping_CAction procn args spec (CSPParAction zn xl)
 \Upsilon (\circmu X \circspot\ A(X )) \circdef~\tco{let Arec =}~\Upsilon_A(A(A_{rec}))~\tco{within Arec}
 \end{circus}
 \begin{code}
+mapping_CAction procn args spec (CSPRecursion x (CActionCommand (CVarDecl [Choose (b,[],"") (ZVar (c,[],""))] cs)))
+  = "( " ++ "let "
+    ++ x ++ "("++b++")"
+    ++ " = "
+    ++ mapping_CAction procn args spec (cs)
+    ++ " within "
+    ++ x ++ "("++b++")" ++ " )"
 mapping_CAction procn args spec (CSPRecursion x a)
   = "( " ++ "let "
     ++ x
@@ -840,6 +847,7 @@ mapping_CAction procn args spec (CSPRecursion x a)
     ++ mapping_CAction procn args spec (a)
     ++ " within "
     ++ x ++ " )"
+
 \end{code}
 
 \begin{circus}
@@ -1223,11 +1231,13 @@ mapping_ZTuple [ZCall (ZVar (a,[],"")) c] = a++"."++(mapping_ZExpr [] c)
 mapping_ZTuple [ZVar ("\\nat_1",_,[])] = "NatValue"
 -- mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
 mapping_ZTuple [ZVar (v,_,t)]
-  | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"
+  | (is_ZVar_v_st v) = v
+  -- | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"
   | otherwise = v
 mapping_ZTuple [ZInt x] = show (fromIntegral x)
 mapping_ZTuple ((ZVar (v,_,t)):xs)
-  | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
+  | (is_ZVar_v_st v) = v++ "," ++ (mapping_ZTuple xs)
+  -- | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
   | otherwise = v ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZCall (ZVar (a,[],"")) c):xs) = a++"."++(mapping_ZExpr [] c) ++ "," ++ (mapping_ZTuple xs)
@@ -1275,9 +1285,12 @@ mapping_ZExpr lst (ZVar ("\\nat",_,_)) = "NatValue"
 -- mapping_ZExpr lst (ZVar (a,_)) = a
 mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
 mapping_ZExpr lst (ZVar (a,_,t))
-  | (inListVar a lst) = "value"++(def_U_prefix t)++"(v_"++a++")"
-  | (is_ZVar_v_st a) = "value"++(def_U_prefix t)++"("++a++")"
-  | otherwise = a
+  -- | (inListVar a lst) = "value"++(def_U_prefix t)++"(v_"++a++")"
+  -- | (inListVar a lst) = "v_"++a
+  -- | (is_ZVar_v_st a) = a
+  -- | (is_ZVar_v_st a) = "value"++(def_U_prefix t)++"("++a++")"
+  -- | otherwise = a
+  = a
 mapping_ZExpr lst (ZBinding _) = ""
 mapping_ZExpr lst (ZCall (ZVar ("*",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
 mapping_ZExpr lst (ZCall (ZVar ("+",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
