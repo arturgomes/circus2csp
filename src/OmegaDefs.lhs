@@ -1725,20 +1725,25 @@ def_delta_name [] = []
 def_delta_name ((Choose v t):xs) = [ZBranch0 v] ++ (def_delta_name xs)
 def_delta_name (_:xs) = (def_delta_name xs)
 
+-- Updated on 19 jun 2018 - removing tags from universe
 def_new_universe [] = []
 def_new_universe ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
-  = (ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))):(def_new_universe xs)
+  = (ZBranch0 (tt,[],"")):(def_new_universe xs)
+  -- = (ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))):(def_new_universe xs)
 def_new_universe ((Choose (_,_,_) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
-  = (ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))):(def_new_universe xs)
+  = (ZBranch0 ((def_U_prefix ("P"++c)),[],"")):(def_new_universe xs)
+  -- = (ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))):(def_new_universe xs)
 def_new_universe (_:xs) = (def_new_universe xs)
 
 def_sub_univ [] = []
 def_sub_univ ((Choose (_,_,tx) (ZVar (tt,_,_))):xs)
   = (ZFreeTypeDef (join_name "U" (def_U_prefix tt),[],"")
-      [ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
+      [ZBranch0  (tt,[],"")]):(def_sub_univ xs)
+      -- [ZBranch1 ((def_U_prefix tt),[],"") (ZVar (tt,[],""))]):(def_sub_univ xs)
 def_sub_univ ((Choose (_,_,tx) (ZCall (ZVar ("\\power",_,_)) (ZVar (c,_,_)))):xs)
   = (ZFreeTypeDef (join_name "U" (def_U_prefix ("P"++c)),[],"")
-      [ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))]):(def_sub_univ xs)
+      [ZBranch0 ((def_U_prefix ("P"++c)),[],"")]):(def_sub_univ xs)
+      -- [ZBranch1 ((def_U_prefix ("P"++c)),[],"") (ZCall (ZVar ("\\power",[],"")) (ZVar (c,[],"")))]):(def_sub_univ xs)
 def_sub_univ (_:xs) = (def_sub_univ xs)
 
 def_sub_univ_set :: [ZGenFilt] -> [ZExpr]

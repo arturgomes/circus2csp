@@ -78,12 +78,12 @@ mapping_CircParagraphs spec (ZFreeTypeDef ("UNIVERSE",_,_) univ)
   = case res of
     False -> ("\n--------------------------------"++
             "\n-- The universe of values"++
-            "\n datatype UNIVERSE = " ++ (mapping_ZBranch_list univ)++
+            "\n datatype UNIVERSE = " ++ (mapping_ZBranch_list univ)) -- ++
             -- "\n NatValueMax = 4\nNatValue = {0..NatValueMax}"++
-            "\n--Conversions"++
-            "\n"++(mk_value (get_u_tag_ZBranch univ))++
-            "\n"++(mk_type (get_u_tag_ZBranch univ))++
-            "\n"++(mk_tag (get_u_tag_ZBranch univ)))
+            -- "\n--Conversions"++
+            -- "\n"++(mk_value (get_u_tag_ZBranch univ))++
+            -- "\n"++(mk_type (get_u_tag_ZBranch univ))++
+            -- "\n"++(mk_tag (get_u_tag_ZBranch univ)))
     True -> ""
   where
     univlst = (def_universe spec)
@@ -189,10 +189,9 @@ mapping_CircParagraphs spec (ZFreeTypeDef (nm,b,[]) zbs)
   | Subs.isPrefixOf "NAME" nm
       && (Data.List.length nm > Data.List.length "NAME")
         = "\n-- Subtype definition for "++(lastN 3 nm)++
-        "\nb_"++(lastN 3 nm)++
-        "1 = {"++
+        "\nb_"++ (lastN 3 nm)++ "1 = {"++
         (joinBy "," $ map (make_binding spec (lastN 3 nm)) (remdups $ map (\(ZBranch0 x) -> x) (map (rename_ftv (lastN 3 nm)) zbs)))++
-        "}"++
+        "}" ++
           "\nsubtype "++nm ++ " = "++
           (mapping_ZBranch_list (remdups zbs))++
           "\n" ++ mk_NAME_VALUES_TYPE (lastN 3 nm) ++ "\n"
@@ -1393,7 +1392,7 @@ get_min_val n (ZFreeTypeDef y xs)
   | (nfst n) == (nfst y) = [Data.List.head (map getZBranch xs)]
   | otherwise = []
 get_min_val n _ = []
-
+--Problem here in NULL
 make_binding :: [ZPara] -> ZName -> ZVar -> String
 make_binding spec n (a,b,c)
   | Subs.isPrefixOf "_" c
@@ -1405,6 +1404,6 @@ make_binding spec n (a,b,c)
                             else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
   where
     rtype = Data.List.head $ concat (map (get_type_universe c) spec)
-    getMinVal = (concat $ map (get_min_val rtype) spec)
+    getMinVal = (concat $ map (we rtype) spec)
 
 \end{code}
