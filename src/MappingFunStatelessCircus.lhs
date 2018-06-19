@@ -25,27 +25,24 @@ import CRL
 \begin{code}
 omega_Circus :: [ZPara] -> [ZPara]
 omega_Circus spec =
-   [ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
+   -- [ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
         subuniv ++
-\end{code}
-\end{omegaenv}
-\begin{omegaenv}
-\begin{code}
    [ZFreeTypeDef ("NAME",[],"") names]++
     (def_sub_name zb)++
-    (def_sub_bind zb) ++
-     [ZAbbreviation ("BINDINGS",[],"")
-        (ZCall (ZVar ("\\cup",[],""))
-          (ZTuple (remdups $ def_sub_bindn zb)))]++
-     (def_delta_mapping_t zb)++
-         (mk_mget_mset_vars names)++[
+    -- (def_sub_bind zb) ++
+     -- [ZAbbreviation ("BINDINGS",[],"")
+     --    (ZCall (ZVar ("\\cup",[],""))
+     --      (ZTuple (remdups $ def_sub_bindn zb)))]++
+     deltas++
+         (remdups (mk_mget_mset_vars zb))++[
          CircChannel [CChan "terminate"],
-         CircChanSet "MEMI" (CChanSet ((mk_mget_mset_chanset names)++["terminate"]))]++
-         (mk_lget_lset_vars names)++
+         CircChanSet "MEMI" (CChanSet ((mk_mget_mset_chanset zb)++["terminate"]))]++
+         (remdups (mk_lget_lset_vars zb))++
          [CircChannel [CChan "lterminate"],
-         CircChanSet "MEML" (CChanSet ((mk_lget_lset_chanset names)++["lterminate"]))]
+         CircChanSet "MEML" (CChanSet ((mk_lget_lset_chanset zb)++["lterminate"]))]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
+         deltas = (def_delta_mapping_t zb)
          spec1 = concat (map retr_sch_ZPara spec)
          spec2 = map (repl_sch_ZPara spec1) spec
          spec3 = convert_schema_to_action spec2 spec2
@@ -321,13 +318,9 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZS
   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema abst)) --[]
     -- (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
     ((nmem_mkMemoryTYPVar1 bst)++
-    (nmem_mkMemory1 bst))
-    -- ((nmem_mkMemoryTYPVar bst)++
-    -- (nmem_mkMemoryTYP bst)++
-    -- (nmem_mkMemory bst)++
-    -- (nmem_mkMemoryMergeTYPVar bst)++
-    -- (nmem_mkMemoryMergeTYP bst)++
-    -- (nmem_mkMemoryMerge bst))
+    (nmem_mkMemory1 bst)++
+    (nmem_mkMemoryMergeTYPVar1 bst)++
+    (nmem_mkMemoryMerge1 bst))
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
