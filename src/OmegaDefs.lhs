@@ -3441,3 +3441,16 @@ repl_sch_CGActions schls (CircGAction _zpr _cact)
 repl_sch_CGActions schls (CircThenElse _CGActions _CGActions1)
   = (CircThenElse _CGActions _CGActions1)
 \end{code}
+
+
+\section{Making mgets and msets to variables}
+
+\begin{code}
+mk_mget_mset_vars :: [ZBranch] -> [CDecl]
+mk_mget_mset_vars [ZBranch0 (x,_,y)]
+  = [CChanDecl ("mget_"++x) (ZVar (y,[],"")), CChanDecl ("mset_"++x) (ZVar (y,[],""))]
+mk_mget_mset_vars ((ZBranch0 (x,_,y)):xs)
+  = [CChanDecl ("mget_"++x) (ZVar (y,[],"")), CChanDecl ("mset_"++x) (ZVar (y,[],""))]++(mk_mget_mset_vars xs)
+mk_mget_mset_vars (_:xs) = (mk_mget_mset_vars xs)
+
+\end{code}

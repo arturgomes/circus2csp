@@ -38,7 +38,7 @@ omega_Circus spec =
         (ZCall (ZVar ("\\cup",[],""))
           (ZTuple (remdups $ def_sub_bindn zb)))]++
      (def_delta_mapping_t zb)++
-         [CircChannel [CChanDecl "mget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "mset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
+         [CircChannel (mk_mget_mset_vars names),
          CircChannel [CChan "terminate"],
          CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"]),
          CircChannel [CChanDecl "lget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "lset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
