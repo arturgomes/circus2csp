@@ -38,12 +38,12 @@ omega_Circus spec =
         (ZCall (ZVar ("\\cup",[],""))
           (ZTuple (remdups $ def_sub_bindn zb)))]++
      (def_delta_mapping_t zb)++
-         [CircChannel (mk_mget_mset_vars names),
+         (mk_mget_mset_vars names)++[
          CircChannel [CChan "terminate"],
-         CircChanSet "MEMI" (CChanSet ["mset","mget","terminate"]),
-         CircChannel [CChanDecl "lget" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")]), CChanDecl "lset" (ZCross [ZVar ("NAME",[],""),ZVar ("UNIVERSE",[],"")])],
-         CircChannel [CChan "lterminate"],
-         CircChanSet "MEML" (CChanSet ["lset","lget","lterminate"])]
+         CircChanSet "MEMI" (CChanSet ((mk_mget_mset_chanset names)++["terminate"]))]++
+         (mk_lget_lset_vars names)++
+         [CircChannel [CChan "lterminate"],
+         CircChanSet "MEML" (CChanSet ((mk_lget_lset_chanset names)++["lterminate"]))]
          ++ (map (upd_type_ZPara (genfilt_names zb)) para)
        where
          spec1 = concat (map retr_sch_ZPara spec)
@@ -284,16 +284,15 @@ proc_ref2 x = ([],x)
   \\= & Data Refinement\\
 \end{argue}
 \begin{code}
-proc_ref3 (Process (CProcess p
-   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma))))
-  =  proc_ref4 (Process (CProcess p
-   (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma))))
-  where bst = data_refinement stv
-proc_ref3 (Process (CProcess p
-  (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma)))))
-  =  proc_ref4 (Process (CProcess p
-    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma)))))
-  where bst = data_refinement stv
+-- Need to proceed with bindings in the next ref step
+-- proc_ref3 (Process (CProcess p
+   -- (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma))))
+  -- =  proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma))))
+  -- where bst = data_refinement stv
+-- proc_ref3 (Process (CProcess p
+  -- (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema stv)) aclst ma)))))
+  -- =  proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst)) aclst ma)))))
+  -- where bst = data_refinement stv
 proc_ref3 x = proc_ref4 x
 \end{code}
 
@@ -316,46 +315,54 @@ proc_ref3 x = proc_ref4 x
   \\= & Action Refinement\\
 \end{argue}
 \begin{code}
+
 proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema bst)) aclst ma))))
   =  proc_ref5 (Process (CProcess p
-    (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
-    ((nmem_mkMemoryTYPVar bst)++
-    (nmem_mkMemoryTYP bst)++
-    (nmem_mkMemory bst)++
-    (nmem_mkMemoryMergeTYPVar bst)++
-    (nmem_mkMemoryMergeTYP bst)++
-    (nmem_mkMemoryMerge bst))
+  (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema abst)) --[]
+    -- (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
+    ((nmem_mkMemoryTYPVar1 bst)++
+    (nmem_mkMemory1 bst))
+    -- ((nmem_mkMemoryTYPVar bst)++
+    -- (nmem_mkMemoryTYP bst)++
+    -- (nmem_mkMemory bst)++
+    -- (nmem_mkMemoryMergeTYPVar bst)++
+    -- (nmem_mkMemoryMergeTYP bst)++
+    -- (nmem_mkMemoryMerge bst))
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
+    abst = data_refinement bst
     nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
-            (head $ filter_ZGenFilt_Check bst)
-    nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
-    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
+            (head $ filter_ZGenFilt_Check abst)
+    nbd = ZSetComp ((filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose abst)
 proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema bst)) aclst ma)))))
   =  proc_ref5 (Process (CProcess p
-    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema bst))
-    ((nmem_mkMemoryTYPVar bst)++
-    (nmem_mkMemoryTYP bst)++
-    (nmem_mkMemory bst)++
-    (nmem_mkMemoryMergeTYPVar bst)++
-    (nmem_mkMemoryMergeTYP bst)++
-    (nmem_mkMemoryMerge bst))
+    (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema abst))
+    ((nmem_mkMemoryTYPVar1 bst)++
+    (nmem_mkMemory1 bst))
+    -- ((nmem_mkMemoryTYPVar bst)++
+    -- (nmem_mkMemoryTYP bst)++
+    -- (nmem_mkMemory bst)++
+    -- (nmem_mkMemoryMergeTYPVar bst)++
+    -- (nmem_mkMemoryMergeTYP bst)++
+    -- (nmem_mkMemoryMerge bst))
     (CActionCommand (CVarDecl [Choose ("b",[],[]) nbd]
     (CSPHide (CSPNSParal [] (CSExpr "MEMI") nbst
       (CSPSeq nma (CSPCommAction (ChanComm "terminate" []) CSPSkip))
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI")))))))))
   where
+    abst = data_refinement bst
     nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
-            (head $ filter_ZGenFilt_Check bst)
-    nbd = ZSetComp ((filter_ZGenFilt_Choose bst)++[Check ne]) Nothing
-    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose bst)
+            (head $ filter_ZGenFilt_Check abst)
+    nbd = ZSetComp ((filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose abst)
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
