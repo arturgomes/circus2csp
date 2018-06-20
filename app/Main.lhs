@@ -20,7 +20,7 @@ import System.Process
 import Control.Exception
 import Control.Monad
 import System.Directory
-import MappingFunStatelessCircus
+import PreVarMappingFunStatelessCircus
 import System.Environment
 --import System.Console.Readline  -- was Readline
 

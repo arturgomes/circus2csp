@@ -3,28 +3,28 @@ Mapping Omega Functions from \Circus\ to \Circus
 
 \ignore{
 \begin{code}
-module MappingFunStatelessCircus
+module PreVarMappingFunStatelessCircus
 (
-  omega_CAction,
-  omega_Circus,
-  omega_CProc,
-  omega_ParAction,
-  omega_ProcDecl,
-  omega_ProcessDef
+  prevar_omega_CAction,
+  prevar_omega_Circus,
+  prevar_omega_CProc,
+  prevar_omega_ParAction,
+  prevar_omega_ProcDecl,
+  prevar_omega_ProcessDef
 )
 where
 import Subs
 import AST
-import OmegaDefs
+import PreVarOmegaDefs
 import Data.List hiding (union, intersect)
 -- import FormatterToCSP
-import CRL
+import PreVarCRL
 \end{code}
 }
 \begin{omegaenv}
 \begin{code}
-omega_Circus :: [ZPara] -> [ZPara]
-omega_Circus spec =
+prevar_omega_Circus :: [ZPara] -> [ZPara]
+prevar_omega_Circus spec =
    -- [ZFreeTypeDef ("UNIVERSE",[],"") nuniv]++
         subuniv ++
    [ZFreeTypeDef ("NAME",[],"") names]++
@@ -48,7 +48,7 @@ omega_Circus spec =
          spec3 = convert_schema_to_action spec2 spec2
          spec4 = (normal_state_proc spec3 spec3)
          spec5 = (map (rename_vars_ZPara' (def_mem_st_Circus_aux spec4 spec4)) spec4)
-         (zb,para) = (omega_Circus_aux' spec5)
+         (zb,para) = (prevar_omega_Circus_aux' spec5)
           -- renaming variables for highlighting which state var is from which process
          names = remdups (def_delta_name zb)
          deltamap = (def_delta_mapping zb)
@@ -60,70 +60,70 @@ omega_Circus spec =
 \begin{omegaenv}
 \begin{code}
 
-omega_Circus_aux' :: [ZPara] -> ([ZGenFilt],[ZPara])
-omega_Circus_aux' spec
+prevar_omega_Circus_aux' :: [ZPara] -> ([ZGenFilt],[ZPara])
+prevar_omega_Circus_aux' spec
   = (zb,para)
   where
-    res =(omega_Circus_aux spec spec)
+    res =(prevar_omega_Circus_aux spec spec)
     zb = concat (map fst res)
     para = (map snd res)
 
-omega_Circus_aux :: [ZPara] -> [ZPara] -> [([ZGenFilt],ZPara)]
+prevar_omega_Circus_aux :: [ZPara] -> [ZPara] -> [([ZGenFilt],ZPara)]
 -- [x]
-omega_Circus_aux _ [] = []
-omega_Circus_aux spec
+prevar_omega_Circus_aux _ [] = []
+prevar_omega_Circus_aux spec
   [e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _)))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   [e@(Process (CProcess _ (ProcDef (ProcMain _ _ _))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   [e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcStalessMain _ _)))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   [e@(Process (CProcess _ (ProcDef (ProcStalessMain _ _))))]
   = [(zb,res)]
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec [(Process cp)]
-  = [((getType_ProcDecl cp),(Process (omega_ProcDecl spec cp)))]
-omega_Circus_aux spec [x] = [([],x)]
+prevar_omega_Circus_aux spec [(Process cp)]
+  = [((getType_ProcDecl cp),(Process (prevar_omega_ProcDecl spec cp)))]
+prevar_omega_Circus_aux spec [x] = [([],x)]
 -- e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _)))))
 -- x:xs
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   (e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcMain _ _ _))))):xs)
-  = [(zb,res)]++(omega_Circus_aux spec xs)
+  = [(zb,res)]++(prevar_omega_Circus_aux spec xs)
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   (e@(Process (CProcess _ (ProcDef (ProcMain _ _ _)))):xs)
-  = [(zb,res)]++(omega_Circus_aux spec xs)
+  = [(zb,res)]++(prevar_omega_Circus_aux spec xs)
   where
     (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   ((e@(Process (CProcess _ (ProcDefSpot _ (ProcDef (ProcStalessMain _ _)))))):xs)
-  = [(zb,res)]++(omega_Circus_aux spec xs)
+  = [(zb,res)]++(prevar_omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   ((e@(Process (CProcess _ (ProcDef (ProcStalessMain _ _))))):xs)
-  = [(zb,res)]++(omega_Circus_aux spec xs)
+  = [(zb,res)]++(prevar_omega_Circus_aux spec xs)
     where
       (zb,res) = proc_ref1 e
-omega_Circus_aux spec
+prevar_omega_Circus_aux spec
   ((Process cp):xs)
-  = [((getType_ProcDecl cp),(Process (omega_ProcDecl spec cp)))]
-      ++(omega_Circus_aux spec xs)
--- omega_Circus_aux spec ((Process cp):xs)
---   = [([],(Process (omega_ProcDecl spec cp)))]++(omega_Circus_aux spec xs)
-omega_Circus_aux spec (x:xs)
-  = [([],x)]++(omega_Circus_aux spec xs)
+  = [((getType_ProcDecl cp),(Process (prevar_omega_ProcDecl spec cp)))]
+      ++(prevar_omega_Circus_aux spec xs)
+-- prevar_omega_Circus_aux spec ((Process cp):xs)
+--   = [([],(Process (prevar_omega_ProcDecl spec cp)))]++(prevar_omega_Circus_aux spec xs)
+prevar_omega_Circus_aux spec (x:xs)
+  = [([],x)]++(prevar_omega_Circus_aux spec xs)
 \end{code}
 
 
@@ -132,24 +132,24 @@ omega_Circus_aux spec (x:xs)
 
 \begin{omegaenv}
 \begin{code}
-omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
-omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
-  = (CGenProcess zn (x:xs) (omega_ProcessDef zn spec pd))
-omega_ProcDecl spec (CProcess zn pd)
-  = (CProcess zn (omega_ProcessDef zn spec pd))
+prevar_omega_ProcDecl :: [ZPara] -> ProcDecl -> ProcDecl
+prevar_omega_ProcDecl spec (CGenProcess zn (x:xs) pd)
+  = (CGenProcess zn (x:xs) (prevar_omega_ProcessDef zn spec pd))
+prevar_omega_ProcDecl spec (CProcess zn pd)
+  = (CProcess zn (prevar_omega_ProcessDef zn spec pd))
 \end{code}
 \end{omegaenv}
 \section{Mapping Circus Processes Definition}
 \begin{omegaenv}
 
 \begin{code}
-omega_ProcessDef :: ZName -> [ZPara] -> ProcessDef -> ProcessDef
-omega_ProcessDef zn spec (ProcDefSpot xl pd)
-  = (ProcDefSpot xl (omega_ProcessDef zn spec pd))
-omega_ProcessDef zn spec (ProcDefIndex xl pd)
-  = (ProcDefIndex xl (omega_ProcessDef zn spec pd))
-omega_ProcessDef zn spec (ProcDef cp)
-  = (ProcDef (omega_CProc zn spec cp))
+prevar_omega_ProcessDef :: ZName -> [ZPara] -> ProcessDef -> ProcessDef
+prevar_omega_ProcessDef zn spec (ProcDefSpot xl pd)
+  = (ProcDefSpot xl (prevar_omega_ProcessDef zn spec pd))
+prevar_omega_ProcessDef zn spec (ProcDefIndex xl pd)
+  = (ProcDefIndex xl (prevar_omega_ProcessDef zn spec pd))
+prevar_omega_ProcessDef zn spec (ProcDef cp)
+  = (ProcDef (prevar_omega_CProc zn spec cp))
 \end{code}
 \end{omegaenv}
 \section{Mapping Circus Processes with $begin$ and $end$}
@@ -181,7 +181,7 @@ proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st aclst ma))))
     remRecAct = map recursive_PPar aclst
     expAct = map (expand_action_names_PPar remRecAct []) remRecAct
     nomegaAC = (expand_action_names_CAction expAct [] ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    refAC = prevar_isRefined' nomegaAC (prevar_runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcMain st [] refAC)))))
 
 proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain aclst ma)))))
@@ -190,7 +190,7 @@ proc_ref1 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain aclst ma
     remRecAct = map recursive_PPar aclst
     expAct = map (expand_action_names_PPar remRecAct []) remRecAct
     nomegaAC = (expand_action_names_CAction expAct [] ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    refAC = prevar_isRefined' nomegaAC (prevar_runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDefSpot x (ProcDef (ProcStalessMain [] refAC)))))
 proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
   = rest11
@@ -198,7 +198,7 @@ proc_ref1 (Process (CProcess p (ProcDef (ProcMain st aclst ma))))
     remRecAct = map recursive_PPar aclst
     expAct = map (expand_action_names_PPar remRecAct []) remRecAct
     nomegaAC = (expand_action_names_CAction expAct [] ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    refAC = prevar_isRefined' nomegaAC (prevar_runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcMain st [] refAC))))
 
 proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
@@ -207,7 +207,7 @@ proc_ref1 (Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
     remRecAct = map recursive_PPar aclst
     expAct = map (expand_action_names_PPar remRecAct []) remRecAct
     nomegaAC = (expand_action_names_CAction expAct [] ma)
-    refAC = isRefined' nomegaAC (runRefinement nomegaAC)
+    refAC = prevar_isRefined' nomegaAC (prevar_runRefinement nomegaAC)
     rest11 = proc_ref2 (Process (CProcess p (ProcDef (ProcStalessMain [] refAC))))
 proc_ref1 x = ([],x)
 \end{code}
@@ -237,14 +237,14 @@ proc_ref2 e@(Process (CProcess p (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa)))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
-  where ref = runRefinementZp e
+  where ref = prevar_runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDef (ProcStalessMain aclst ma))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa)))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
-  where ref = runRefinementZp e
+  where ref = prevar_runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef
       (ProcMain (ZSchemaDef (ZSPlain x _) (ZSchema zs)) aclst ma)))))
   = case ref of
@@ -252,14 +252,14 @@ proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa))))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing -> (zs++(getType_CAction ma),(proc_ref3 e))
-  where ref = runRefinementZp e
+  where ref = prevar_runRefinementZp e
 proc_ref2 e@(Process (CProcess p (ProcDefSpot x1a (ProcDef (ProcStalessMain aclst ma)))))
   = case ref of
       Just xe@(Process (CProcess pq (ProcDefSpot x1a (ProcDef
           (ProcMain (ZSchemaDef (ZSPlain xa _) (ZSchema xzs)) aclsta maa))))) ->
         (xzs++(getType_CAction ma),(proc_ref3 xe))
       Nothing ->([]++(getType_CAction ma),(proc_ref3 e))
-  where ref = runRefinementZp e
+  where ref = prevar_runRefinementZp e
 proc_ref2 x = ([],x)
 \end{code}
 \begin{argue}
@@ -327,12 +327,12 @@ proc_ref4 (Process (CProcess p (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZS
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI"))))))))
   where
     abst = data_refinement bst
-    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
+    nma = prevar_isRefined' (prevar_omega_CAction ma) (prevar_runRefinement (prevar_omega_CAction ma))
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
-            (head $ filter_ZGenFilt_Check abst)
-    nbd = ZSetComp ((filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
-    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose abst)
+            (head $ prevar_filter_ZGenFilt_Check abst)
+    nbd = ZSetComp ((prevar_filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ prevar_filter_ZGenFilt_Choose abst)
 proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn _) (ZSchema bst)) aclst ma)))))
   =  proc_ref5 (Process (CProcess p
     (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (ZSPlain sn []) (ZSchema abst))
@@ -350,12 +350,12 @@ proc_ref4 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcMain (ZSchemaDef (Z
        (CSPParAction "Memory" nbst)) (CSExpr "MEMI")))))))))
   where
     abst = data_refinement bst
-    nma = isRefined' (omega_CAction ma) (runRefinement (omega_CAction ma))
+    nma = prevar_isRefined' (prevar_omega_CAction ma) (prevar_runRefinement (prevar_omega_CAction ma))
     ne = sub_pred (make_subinfo (mk_subinfo_bndg nbst)
             (varset_from_zvars (map fst (mk_subinfo_bndg nbst))))
-            (head $ filter_ZGenFilt_Check abst)
-    nbd = ZSetComp ((filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
-    nbst = remdups (filter_bnd_var $ filter_ZGenFilt_Choose abst)
+            (head $ prevar_filter_ZGenFilt_Check abst)
+    nbd = ZSetComp ((prevar_filter_ZGenFilt_Choose abst)++[Check ne]) Nothing
+    nbst = remdups (filter_bnd_var $ prevar_filter_ZGenFilt_Choose abst)
 proc_ref4 x = proc_ref5 x
 \end{code}
 \begin{argue}
@@ -461,9 +461,9 @@ proc_ref5 x = proc_ref6 x
 \end{argue}
 \begin{code}
 proc_ref6 (Process (CProcess p (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose ("b",[],"") (ZSetComp bst Nothing)] ma ))))))
-  = Process (CProcess p (ProcDefSpot (filter_ZGenFilt_Choose bst) (ProcDef (ProcStalessMain mem ma))))
+  = Process (CProcess p (ProcDefSpot (prevar_filter_ZGenFilt_Choose bst) (ProcDef (ProcStalessMain mem ma))))
 proc_ref6 (Process (CProcess p (ProcDefSpot xa (ProcDef (ProcStalessMain mem (CActionCommand (CVarDecl [Choose ("b",[],"") (ZSetComp bst Nothing)] ma )))))))
-  = Process (CProcess p (ProcDefSpot ((filter_ZGenFilt_Choose bst)++xa) (ProcDef (ProcStalessMain mem ma))))
+  = Process (CProcess p (ProcDefSpot ((prevar_filter_ZGenFilt_Choose bst)++xa) (ProcDef (ProcStalessMain mem ma))))
 proc_ref6 x = x
 \end{code}
 \begin{argue}
@@ -507,38 +507,38 @@ proc_ref6 x = x
 So far we have no other mapping functions for these constructs. They are basically translated directly into CSP.
 % Note: $CGenProc$ ($N[Exp^{+}]$), $CSimpIndexProc$, and $CParamProc$ ($N(Exp^{+})$) are not yet implemented.
 \begin{code}
-omega_CProc :: ZName -> [ZPara] -> CProc -> CProc
-omega_CProc zn spec (CExtChoice a b)
-  = (CExtChoice (omega_CProc zn spec a) (omega_CProc zn spec b))
-omega_CProc zn spec (CHide a cs)
-  = (CHide (omega_CProc zn spec a) cs)
-omega_CProc zn spec (CIntChoice a b)
-  = (CIntChoice (omega_CProc zn spec a) (omega_CProc zn spec b))
-omega_CProc zn spec (CInterleave a b)
-  = (CInterleave (omega_CProc zn spec a) (omega_CProc zn spec b))
-omega_CProc zn spec (CircusProc zns)
+prevar_omega_CProc :: ZName -> [ZPara] -> CProc -> CProc
+prevar_omega_CProc zn spec (CExtChoice a b)
+  = (CExtChoice (prevar_omega_CProc zn spec a) (prevar_omega_CProc zn spec b))
+prevar_omega_CProc zn spec (CHide a cs)
+  = (CHide (prevar_omega_CProc zn spec a) cs)
+prevar_omega_CProc zn spec (CIntChoice a b)
+  = (CIntChoice (prevar_omega_CProc zn spec a) (prevar_omega_CProc zn spec b))
+prevar_omega_CProc zn spec (CInterleave a b)
+  = (CInterleave (prevar_omega_CProc zn spec a) (prevar_omega_CProc zn spec b))
+prevar_omega_CProc zn spec (CircusProc zns)
   = (CircusProc zns)
-omega_CProc zn spec (CParParal cs a b)
-  = (CParParal cs (omega_CProc zn spec a) (omega_CProc zn spec b))
-omega_CProc zn spec (CRepExtChProc [(Choose x s)] a)
-  = (CRepExtChProc [(Choose x s)] (omega_CProc zn spec a))
-omega_CProc zn spec (CRepIntChProc [(Choose x s)] a)
-  = (CRepIntChProc [(Choose x s)] (omega_CProc zn spec a))
-omega_CProc zn spec (CRepInterlProc [(Choose x s)] a)
-  = (CRepInterlProc [(Choose x s)] (omega_CProc zn spec a))
-omega_CProc zn spec (CRepParalProc cse [(Choose x s)] a)
-  = (CRepParalProc cse [(Choose x s)] (omega_CProc zn spec a))
-omega_CProc zn spec (CRepSeqProc [(Choose x s)] a)
-  = (CRepSeqProc [(Choose x s)] (omega_CProc zn spec a))
-omega_CProc zn spec (CSeq a b)
-  = (CSeq (omega_CProc zn spec a) (omega_CProc zn spec b))
-omega_CProc zn spec (CGenProc zns (x:xs))
+prevar_omega_CProc zn spec (CParParal cs a b)
+  = (CParParal cs (prevar_omega_CProc zn spec a) (prevar_omega_CProc zn spec b))
+prevar_omega_CProc zn spec (CRepExtChProc [(Choose x s)] a)
+  = (CRepExtChProc [(Choose x s)] (prevar_omega_CProc zn spec a))
+prevar_omega_CProc zn spec (CRepIntChProc [(Choose x s)] a)
+  = (CRepIntChProc [(Choose x s)] (prevar_omega_CProc zn spec a))
+prevar_omega_CProc zn spec (CRepInterlProc [(Choose x s)] a)
+  = (CRepInterlProc [(Choose x s)] (prevar_omega_CProc zn spec a))
+prevar_omega_CProc zn spec (CRepParalProc cse [(Choose x s)] a)
+  = (CRepParalProc cse [(Choose x s)] (prevar_omega_CProc zn spec a))
+prevar_omega_CProc zn spec (CRepSeqProc [(Choose x s)] a)
+  = (CRepSeqProc [(Choose x s)] (prevar_omega_CProc zn spec a))
+prevar_omega_CProc zn spec (CSeq a b)
+  = (CSeq (prevar_omega_CProc zn spec a) (prevar_omega_CProc zn spec b))
+prevar_omega_CProc zn spec (CGenProc zns (x:xs))
   = (CGenProc zns (x:xs))
-omega_CProc zn spec (CParamProc zns (x:xs))
+prevar_omega_CProc zn spec (CParamProc zns (x:xs))
   = (CParamProc zns (x:xs))
-omega_CProc zn spec (CSimpIndexProc zns (x:xs))
+prevar_omega_CProc zn spec (CSimpIndexProc zns (x:xs))
   = (CSimpIndexProc zns (x:xs))
-omega_CProc zn spec x
+prevar_omega_CProc zn spec x
   = x
 \end{code}
 
@@ -547,15 +547,15 @@ omega_CProc zn spec x
 \begin{code}
 omega_PPar :: PPar -> [PPar]
 omega_PPar (ProcZPara zp) = [(ProcZPara zp)]
-omega_PPar (CParAction n pa) = [(CParAction n (omega_ParAction pa))]
+omega_PPar (CParAction n pa) = [(CParAction n (prevar_omega_ParAction pa))]
 omega_PPar (CNameSet n ns) = [(CNameSet n ns)]
 \end{code}
 \begin{code}
-omega_ParAction :: ParAction -> ParAction
-omega_ParAction (CircusAction ca)
-  = (CircusAction (omega_CAction ca))
-omega_ParAction (ParamActionDecl xl pa)
-  = (ParamActionDecl xl (omega_ParAction pa))
+prevar_omega_ParAction :: ParAction -> ParAction
+prevar_omega_ParAction (CircusAction ca)
+  = (CircusAction (prevar_omega_CAction ca))
+prevar_omega_ParAction (ParamActionDecl xl pa)
+  = (ParamActionDecl xl (prevar_omega_ParAction pa))
 \end{code}
 
 \section{Stateless Circus - Actions}
@@ -568,10 +568,10 @@ omega_ParAction (ParamActionDecl xl pa)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction :: CAction -> CAction
-omega_CAction CSPSkip = CSPSkip
-omega_CAction CSPStop = CSPStop
-omega_CAction CSPChaos = CSPChaos
+prevar_omega_CAction :: CAction -> CAction
+prevar_omega_CAction CSPSkip = CSPSkip
+prevar_omega_CAction CSPStop = CSPStop
+prevar_omega_CAction CSPChaos = CSPChaos
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -581,8 +581,8 @@ omega_CAction CSPChaos = CSPChaos
 
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPCommAction (ChanComm c []) a)
-  = (CSPCommAction (ChanComm c []) (omega_CAction a))
+prevar_omega_CAction (CSPCommAction (ChanComm c []) a)
+  = (CSPCommAction (ChanComm c []) (prevar_omega_CAction a))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -599,9 +599,9 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPCommAction (ChanComm c fe) a) =
+prevar_omega_CAction (CSPCommAction (ChanComm c fe) a) =
   case lxs of
-      [] -> (CSPCommAction (ChanComm c fe) (omega_CAction a))
+      [] -> (CSPCommAction (ChanComm c fe) (prevar_omega_CAction a))
       _ -> make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c fe) (omega_prime_CAction a)))
   where e = getChanDotExpVar fe
         lxs = (remdups $ concat $ map get_ZVar_st $ concat $ map varset_to_zvars $ map free_var_ZExpr e)
@@ -625,10 +625,10 @@ FV (e) = (v_0,\ldots,v_n,l_0,\ldots,l_m)
 
 % is written in Haskell as:
 % \begin{code}
-% omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+% prevar_omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
 %   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) (omega_prime_CAction a)))
 %   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
-% omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+% prevar_omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
 %   = make_get_com lxs (rename_vars_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) (omega_prime_CAction a)))
 %   where lxs = remdups $ concat (map get_ZVar_st $ varset_to_zvars (free_var_ZExpr e))
 % \end{code}
@@ -656,30 +656,30 @@ v_n \in StateVariables
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
+-- prevar_omega_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
 --   = case is_ZVar_st e of
---       True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
---       False -> (CSPCommAction (ChanComm c [ChanInp e]) (omega_CAction a))
--- omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
+--       True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com prevar_omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+--       False -> (CSPCommAction (ChanComm c [ChanInp e]) (prevar_omega_CAction a))
+-- prevar_omega_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
 --   = case is_ZVar_st e of
 --       True -> (CSPCommAction
 --         (ChanComm c
 --           ( (ChanInp (join_name "t" e)):
 --             ( map (\e -> (ChanInp (join_name "t" e))) ( map getChanName xs))))
 --             (make_set_com
---               omega_CAction
+--               prevar_omega_CAction
 --               ((e,[],""):( map (\e -> (e,[],"")) ( map getChanName xs)))
 --               ((ZVar ((join_name "t" e),[],"")):
 --                 (map (\e -> (ZVar ((join_name "t" e),[],"")))
 --                   ( map getChanName xs))) a))
 --
---       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (omega_CAction a))
+--       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (prevar_omega_CAction a))
 \end{code}
 \end{omegaenv}
 
 \begin{omegaenv}
 \begin{code}
-omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAction b))
+prevar_omega_CAction (CSPInterleave a b) = (CSPInterleave (prevar_omega_CAction a) (prevar_omega_CAction b))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -688,10 +688,10 @@ omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAct
 \\\t2 c.e(v_0,\ldots,v_n,l_0,\ldots,l_m) \then A
 \end{circus}
 % \begin{code}
-% omega_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
-%   = omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
-% omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
-%   = omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
+% prevar_omega_CAction (CSPCommAction (ChanComm c [ChanOutExp e]) a)
+%   = prevar_omega_CAction (CSPCommAction (ChanComm c [ChanDotExp e]) a)
+% prevar_omega_CAction (CSPCommAction (ChanComm c ((ChanOutExp e):xs)) a)
+%   = prevar_omega_CAction (CSPCommAction (ChanComm c ((ChanDotExp e):xs)) a)
 % \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -703,9 +703,9 @@ omega_CAction (CSPInterleave a b) = (CSPInterleave (omega_CAction a) (omega_CAct
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPGuard g a)
-  -- 24/01/2018 - I think CSP won't accept the mgets before the guard, and therefore, it needs to be omega_CAction again.
-  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_CAction a)))
+prevar_omega_CAction (CSPGuard g a)
+  -- 24/01/2018 - I think CSP won't accept the mgets before the guard, and therefore, it needs to be prevar_omega_CAction again.
+  = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (prevar_omega_CAction a)))
   -- = make_get_com lxs (rename_vars_CAction (CSPGuard (rename_ZPred g) (omega_prime_CAction a)))
   where lxs = concat (map get_ZVar_st $ get_v_ZPred g)
   -- where lxs = remdups $ concat (map get_ZVar_st $ get_v_ZPred g)
@@ -727,7 +727,7 @@ x \in wrtV(A)
 
 is written in Haskell as:
 \begin{code}
--- omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
+-- prevar_omega_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 --   = case not (elem x (wrtV(a))) of
 --     True -> make_get_com lsx (rename_vars_CAction (CSPCommAction
 --              (ChanComm c [ChanInpPred x p])
@@ -744,8 +744,8 @@ is written in Haskell as:
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPSeq ca cb)
-  = (CSPSeq (omega_CAction ca) (omega_CAction cb))
+prevar_omega_CAction (CSPSeq ca cb)
+  = (CSPSeq (prevar_omega_CAction ca) (prevar_omega_CAction cb))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -754,8 +754,8 @@ omega_CAction (CSPSeq ca cb)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPIntChoice ca cb)
-  = (CSPIntChoice (omega_CAction ca) (omega_CAction cb))
+prevar_omega_CAction (CSPIntChoice ca cb)
+  = (CSPIntChoice (prevar_omega_CAction ca) (prevar_omega_CAction cb))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -768,7 +768,7 @@ omega_CAction (CSPIntChoice ca cb)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPExtChoice ca cb)
+prevar_omega_CAction (CSPExtChoice ca cb)
   = make_get_com lsx (CSPExtChoice (omega_prime_CAction ca) (omega_prime_CAction cb))
    where
     lsx = remdups $ concat $ map get_ZVar_st $ varset_to_zvars $ free_var_CAction (CSPExtChoice ca cb)
@@ -832,14 +832,14 @@ omega_CAction (CSPExtChoice ca cb)
 The definition of parallel composition (and interleaving), as defined in the D24.1, has a $MemoryMerge$, $MRG_I$ and $Merge$ components and channel sets. Whilst translating them into CSP, the tool would rather expand their definition
 
 \begin{code}
-omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZVar ("\\emptyset",[],"")] a1 a2)
+prevar_omega_CAction (CSPNSParal [ZVar ("\\emptyset",[],"")] cs [ZVar ("\\emptyset",[],"")] a1 a2)
   = make_get_com lsx
       (CSPNSParal [] cs []
       (CSPSeq (gamma_prime_CAction a1) (CSPCommAction (ChanComm "lterminate" []) CSPSkip))
       (CSPSeq (gamma_prime_CAction a2) (CSPCommAction (ChanComm "lterminate" []) CSPSkip)))
    where
     lsx = concat (map get_ZVar_st (remdups (varset_to_zvars (union_varset (free_var_CAction a1) (free_var_CAction a2)))))
-omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
+prevar_omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
   = make_get_com lsx
       (CSPNSParal [] cs []
       (CSPHide
@@ -866,13 +866,13 @@ omega_CAction (CSPNSParal ns1 cs ns2 a1 a2)
 is written in Haskell as:
 \begin{code}
 {-
-omega_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+prevar_omega_CAction (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
-    True -> omega_CAction (rep_CSPRepSeq act xs)
+    True -> prevar_omega_CAction (rep_CSPRepSeq act xs)
     _  -> (CSPRepSeq [Choose (x,[],tx) (ZSeqDisplay xs)]
           (CSPParAction act [ZVar (x1,[],tx1)]))-}
-omega_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
-  = (CSPRepSeq [Choose (x,[],tx) v] (omega_CAction act))
+prevar_omega_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
+  = (CSPRepSeq [Choose (x,[],tx) v] (prevar_omega_CAction act))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -881,13 +881,13 @@ omega_CAction (CSPRepSeq [Choose (x,[],tx) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
+prevar_omega_CAction (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)] (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
-    True -> omega_CAction (rep_CSPRepExtChoice act xs)
+    True -> prevar_omega_CAction (rep_CSPRepExtChoice act xs)
     _  -> (CSPRepExtChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
           (CSPParAction act [ZVar (x1,[],tx1)]))
-omega_CAction (CSPRepExtChoice [Choose (x,[],tx) v] act)
-  = (CSPRepExtChoice [Choose (x,[],tx) v] (omega_CAction act))
+prevar_omega_CAction (CSPRepExtChoice [Choose (x,[],tx) v] act)
+  = (CSPRepExtChoice [Choose (x,[],tx) v] (prevar_omega_CAction act))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -896,14 +896,14 @@ omega_CAction (CSPRepExtChoice [Choose (x,[],tx) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
+prevar_omega_CAction (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
           (CSPParAction act [ZVar (x1,[],tx1)]))
   = case x == x1 of
-    True -> omega_CAction(rep_CSPRepIntChoice act xs)
+    True -> prevar_omega_CAction(rep_CSPRepIntChoice act xs)
     _  -> (CSPRepIntChoice [Choose (x,[],tx) (ZSeqDisplay xs)]
           (CSPParAction act [ZVar (x1,[],tx1)]))
-omega_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
-  = (CSPRepIntChoice [Choose (x,[],tx) v] (omega_CAction act))
+prevar_omega_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
+  = (CSPRepIntChoice [Choose (x,[],tx) v] (prevar_omega_CAction act))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -922,16 +922,16 @@ omega_CAction (CSPRepIntChoice [Choose (x,[],tx) v] act)
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
+prevar_omega_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
           (CSPParAction a [ZVar (x2,[],tx2)]))
   = case (member (ZVar x) [ZVar (x1,[],tx1)]) && (member (ZVar x) [ZVar (x2,[],tx2)]) of
-    True -> omega_CAction (rep_CSPRepParalNS a cs (x1,[],tx1) x lsx)
+    True -> prevar_omega_CAction (rep_CSPRepParalNS a cs (x1,[],tx1) x lsx)
     _  -> (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
           (CSPParAction a [ZVar (x2,[],tx2)]))
-omega_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] act)
-  = (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] (omega_CAction act))
+prevar_omega_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] act)
+  = (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,[],tx1)] (prevar_omega_CAction act))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -940,8 +940,8 @@ omega_CAction (CSPRepParalNS (CSExpr cs) [Choose x (ZSetDisplay lsx)] [ZVar (x1,
 \end{circus}
 is written in Haskell as:
 \begin{code}
-omega_CAction (CActionCommand (CValDecl xs a))
-  = (CActionCommand (CValDecl xs (omega_CAction a)))
+prevar_omega_CAction (CActionCommand (CValDecl xs a))
+  = (CActionCommand (CValDecl xs (prevar_omega_CAction a)))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -955,8 +955,8 @@ omega_CAction (CActionCommand (CValDecl xs a))
 \end{circus}
 
 \begin{code}
-omega_CAction (CActionCommand (CAssign varls valls))
-  = make_get_com lxs (make_set_com omega_CAction varls (map rename_ZExpr valls) CSPSkip)
+prevar_omega_CAction (CActionCommand (CAssign varls valls))
+  = make_get_com lxs (make_set_com prevar_omega_CAction varls (map rename_ZExpr valls) CSPSkip)
     where
       lxsvalls = (concat (map get_ZVar_st (varset_to_zvars $ union_varsets (map fvars_expr valls))))
       lxs = remdups lxsvalls
@@ -970,7 +970,7 @@ omega_CAction (CActionCommand (CAssign varls valls))
 is written in Haskell as:
 
 \begin{code}
-omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
+prevar_omega_CAction (CSPHide a cs) = (CSPHide (prevar_omega_CAction a) cs)
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -991,9 +991,9 @@ omega_CAction (CSPHide a cs) = (CSPHide (omega_CAction a) cs)
 \end{circus}
 
 \begin{code}
-omega_CAction (CActionCommand (CIf gax))
+prevar_omega_CAction (CActionCommand (CIf gax))
 -- = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_prime_CAction (rename_guard_pair lsx gpair))))
-  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair omega_CAction (rename_guard_pair lsx gpair))))
+  = make_get_com lsx (CActionCommand (CIf (mk_guard_pair prevar_omega_CAction (rename_guard_pair lsx gpair))))
   where
    gpair = get_guard_pair gax
    lsx = concat (map get_ZVar_st (remdups (concat (map (varset_to_zvars . free_var_ZPred) (map fst gpair)))))
@@ -1005,7 +1005,7 @@ omega_CAction (CActionCommand (CIf gax))
 %    \\\t1\circif g (v_0,...,v_n,l_0,...,l_m) \circthen \Omega'_A (A) \circfi
 % \end{circus}
 % \begin{code}
-% omega_CAction (CActionCommand (CIf (CircGAction g a)))
+% prevar_omega_CAction (CActionCommand (CIf (CircGAction g a)))
 %   = make_get_com lsx (rename_vars_CAction (CActionCommand
 %              (CIf (CircGAction g (omega_prime_CAction a)))))
 %   where
@@ -1021,7 +1021,7 @@ is written in Haskell as:
 
 \begin{code}
 --  TODO Jun 30 2017: rename the recursion action name, so it won't clash with any Circus action name.
-omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
+prevar_omega_CAction (CSPRecursion x c) = (CSPRecursion x (prevar_omega_CAction c))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -1042,20 +1042,20 @@ omega_CAction (CSPRecursion x c) = (CSPRecursion x (omega_CAction c))
 is written in Haskell as:
 
 \begin{code}
-omega_CAction (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
+prevar_omega_CAction (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
           (CSPParAction a [ZVar (x2,[],tx2)]))
   = case (member (ZVar x) [ZVar (x1,[],tx1)]) && (member (ZVar x) [ZVar (x2,[],tx2)]) of
-    True -> omega_CAction (rep_CSPRepInterlNS a (x1,[],tx1) x lsx)
+    True -> prevar_omega_CAction (rep_CSPRepInterlNS a (x1,[],tx1) x lsx)
     _  ->  (CSPRepInterlNS [Choose x (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
           (CSPParAction a [ZVar (x2,[],tx2)]))
-omega_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
+prevar_omega_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
           act)
   = (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
           [ZVar (x1,[],tx1)]
-          (omega_CAction act))
+          (prevar_omega_CAction act))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -1064,8 +1064,8 @@ omega_CAction (CSPRepInterlNS [Choose (x,[],tx) (ZSetDisplay lsx)]
 \end{circus}
 
 \begin{code}
-omega_CAction (CActionCommand (CommandBrace g))
-  = omega_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
+prevar_omega_CAction (CActionCommand (CommandBrace g))
+  = prevar_omega_CAction (CActionCommand (CPrefix g (ZTrue {reason = []})))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -1074,8 +1074,8 @@ omega_CAction (CActionCommand (CommandBrace g))
 \end{circus}
 
 \begin{code}
-omega_CAction (CActionCommand (CommandBracket g))
-  = omega_CAction (CActionCommand (CPrefix1 g))
+prevar_omega_CAction (CActionCommand (CommandBracket g))
+  = prevar_omega_CAction (CActionCommand (CPrefix1 g))
 \end{code}
 \end{omegaenv}
 \begin{omegaenv}
@@ -1086,7 +1086,7 @@ omega_CAction (CActionCommand (CommandBracket g))
 \end{omegaenv}
 \begin{omegaenv}
 \begin{code}
-omega_CAction (CSPRenAction a (CRenameAssign left right))
+prevar_omega_CAction (CSPRenAction a (CRenameAssign left right))
   = (CSPRenAction a (CRename right left))
 \end{code}
 \end{omegaenv}
@@ -1096,27 +1096,27 @@ In order to pattern match any other \Circus\ construct not mentioned here, we pr
 
 \begin{omega
 \begin{code}
-omega_CAction (CActionSchemaExpr vZSExpr)
+prevar_omega_CAction (CActionSchemaExpr vZSExpr)
   = (CActionSchemaExpr vZSExpr)
-omega_CAction (CActionName vZName)
+prevar_omega_CAction (CActionName vZName)
   = (CActionName vZName)
-omega_CAction (CSPCommAction vComm vCAction)
-  = (CSPCommAction vComm (omega_CAction vCAction))
-omega_CAction (CSPParal vCSExp v1CAction v2CAction)
-  = (CSPParal vCSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction)
-  = (CSPNSInter v1NSExp v2NSExp (omega_CAction v1CAction) (omega_CAction v2CAction))
--- omega_CAction (CSPInterleave v1CAction v2CAction)
---   = (CSPInterleave (omega_CAction v1CAction) (omega_CAction v2CAction))
-omega_CAction (CSPParAction vZName vZExpr_lst)
+prevar_omega_CAction (CSPCommAction vComm vCAction)
+  = (CSPCommAction vComm (prevar_omega_CAction vCAction))
+prevar_omega_CAction (CSPParal vCSExp v1CAction v2CAction)
+  = (CSPParal vCSExp (prevar_omega_CAction v1CAction) (prevar_omega_CAction v2CAction))
+prevar_omega_CAction (CSPNSInter v1NSExp v2NSExp v1CAction v2CAction)
+  = (CSPNSInter v1NSExp v2NSExp (prevar_omega_CAction v1CAction) (prevar_omega_CAction v2CAction))
+-- prevar_omega_CAction (CSPInterleave v1CAction v2CAction)
+--   = (CSPInterleave (prevar_omega_CAction v1CAction) (prevar_omega_CAction v2CAction))
+prevar_omega_CAction (CSPParAction vZName vZExpr_lst)
   = (CSPParAction vZName vZExpr_lst)
-omega_CAction (CSPRenAction vZName vCReplace)
+prevar_omega_CAction (CSPRenAction vZName vCReplace)
   = (CSPRenAction vZName vCReplace)
-omega_CAction (CSPUnfAction vZName vCAction)
-  = (CSPUnfAction vZName (omega_CAction vCAction))
-omega_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName)
-  = (CSPUnParAction vZGenFilt_lst (omega_CAction vCAction) vZName)
-omega_CAction x = x
+prevar_omega_CAction (CSPUnfAction vZName vCAction)
+  = (CSPUnfAction vZName (prevar_omega_CAction vCAction))
+prevar_omega_CAction (CSPUnParAction vZGenFilt_lst vCAction vZName)
+  = (CSPUnParAction vZGenFilt_lst (prevar_omega_CAction vCAction) vZName)
+prevar_omega_CAction x = x
 \end{code}
 \end{omegaenv}
 % NOTE: Besides the transformation rules for $[g]$ and ${g}$, the remaining transformation rules from page 91 of the D24.1 document, were not yet implemented.
@@ -1234,7 +1234,7 @@ omega_prime_CAction (CSPCommAction (ChanComm c [ChanInpPred x p]) a)
 is written in Haskell as:
 \begin{code}
 omega_prime_CAction (CSPSeq ca cb)
-  = (CSPSeq (omega_prime_CAction ca) (omega_CAction cb))
+  = (CSPSeq (omega_prime_CAction ca) (prevar_omega_CAction cb))
 \end{code}
 
 \end{omegaprime}
@@ -1671,11 +1671,11 @@ is written in Haskell as:
 \begin{code}
 gamma_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com prevar_omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_CAction a))
 gamma_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com prevar_omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_CAction a))
 
 \end{code}
@@ -2161,11 +2161,11 @@ is written in Haskell as:
 
 gamma_prime_CAction (CSPCommAction (ChanComm c [ChanInp e]) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c [ChanInp (join_name "t" e)]) (make_set_com prevar_omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c [ChanInp e]) (gamma_prime_CAction a))
 gamma_prime_CAction (CSPCommAction (ChanComm c ((ChanInp e):xs)) a)
   = case is_ZVar_st e of
-      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
+      True -> (CSPCommAction (ChanComm c ((ChanInp (join_name "t" e)):xs)) (make_set_com prevar_omega_CAction [(e,[],"")] [ZVar ((join_name "t" e),[],"")] a))
       False -> (CSPCommAction (ChanComm c ((ChanInp e):xs)) (gamma_prime_CAction a))
 \end{code}
 \end{gammaprime}

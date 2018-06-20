@@ -35,8 +35,8 @@ import Eval
 import Errors
 import Data.Char
 import Data.List
-import MappingFunStatelessCircus
-import MappingFunCircusCSP
+import PreVarMappingFunStatelessCircus
+import PreVarMappingFunCircusCSP
 --import PrintTex
 
 
@@ -209,9 +209,9 @@ omegaCircus anim args
   msg = "Omega function applied to the current spec"
   newanim = anim{spec=(applyOmega anim)}
 
-applyOmega :: Animator -> [ZParaInfo]
-applyOmega anim
-  = fromOk (process_paras_omega (spec anim) (omega_Circus (map origpara (spec anim))))
+applyOmega :: Animator -> String -> [ZParaInfo]
+applyOmega anim typ
+  | typ == "prevar" = fromOk (process_paras_omega (spec anim) (prevar_omega_Circus (map origpara (spec anim))))
 
 -- This is my first attempt in trying to apply
 -- the Upsilon function into the spec

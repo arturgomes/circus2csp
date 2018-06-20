@@ -20,17 +20,17 @@ library
                      , Animate
                      -- , PrintTex
                      , RepParamAction
-                     , CRL
+                     , PreVarCRL
                      , EParseLib
                      , FiniteSets
                      , Lexer
-                     , OmegaDefs
+                     , PreVarOmegaDefs
                      , Parse
                      , Subs
                      , Formatter
-                     , MappingFunStatelessCircus
+                     , PreVarMappingFunStatelessCircus
                      , Eval
-                     , MappingFunCircusCSP
+                     , PreVarMappingFunCircusCSP
                      , Optimize
                      , Reorder
                      , SetSize

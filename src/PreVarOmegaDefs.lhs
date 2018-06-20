@@ -3,7 +3,7 @@ Functions used for manipulating lists (Z Sets and sequences, as well as calculat
 
 \ignore{
 \begin{code}
-module OmegaDefs where
+module PreVarOmegaDefs where
 -- import Data.Text hiding (map,concat,all,take)
 import Subs
 import AST
@@ -1677,13 +1677,13 @@ def_universe_aux ((ZCall (ZVar ("\\mapsto",[],_)) (ZTuple [ZVar (b,[],_), ZCall 
 
 \begin{code}
 -- (var name, U_TYP, TYP, Type)
-filter_types_universe [] = []
-filter_types_universe [(_,b,_,_)] = [b]
-filter_types_universe ((_,b,_,_):xs) = (b:(filter_types_universe xs))
+prevar_filter_types_universe [] = []
+prevar_filter_types_universe [(_,b,_,_)] = [b]
+prevar_filter_types_universe ((_,b,_,_):xs) = (b:(prevar_filter_types_universe xs))
 
-filter_types_universe' [] = []
-filter_types_universe' [(a,b,c,d)] = [(b,b,c,d)]
-filter_types_universe' ((a,b,c,d):xs) = ((b,b,c,d):(filter_types_universe' xs))
+prevar_filter_types_universe' [] = []
+prevar_filter_types_universe' [(a,b,c,d)] = [(b,b,c,d)]
+prevar_filter_types_universe' ((a,b,c,d):xs) = ((b,b,c,d):(prevar_filter_types_universe' xs))
 \end{code}
 
 
@@ -1703,7 +1703,7 @@ def_delta_mapping_t :: [ZGenFilt] -> [ZPara]
 def_delta_mapping_t xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v (ZVar (t,_,_))) -> t) $ filter_ZGenFilt_Choose xs
+        tlist = map (\(Choose v (ZVar (t,_,_))) -> t) $ prevar_filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZAbbreviation
                 (join_name "\\delta" tl,[],"")
@@ -1773,7 +1773,7 @@ def_sub_name :: [ZGenFilt] -> [ZPara]
 def_sub_name xs
     = map (subname xs) tlist
       where
-        tlist = map (\(Choose v (ZVar (tt,_,_))) -> (def_U_prefix tt)) $ filter_ZGenFilt_Choose xs
+        tlist = map (\(Choose v (ZVar (tt,_,_))) -> (def_U_prefix tt)) $ prevar_filter_ZGenFilt_Choose xs
         subname xs tl =
           (ZFreeTypeDef (join_name "NAME" tl,[],[]) (sub_name xs tl))
         sub_name [] _= []
@@ -2391,15 +2391,15 @@ data_refinement stv
 \begin{code}
 -- filtering ZGenFilt so only Choose are returned
 zexp_to_zvar (ZVar x) = x
-filter_ZGenFilt_Choose :: [ZGenFilt] -> [ZGenFilt]
-filter_ZGenFilt_Choose [] = []
-filter_ZGenFilt_Choose ((Choose b t):xs) = (Choose b t):(filter_ZGenFilt_Choose xs)
-filter_ZGenFilt_Choose (_:xs) = (filter_ZGenFilt_Choose xs)
+prevar_filter_ZGenFilt_Choose :: [ZGenFilt] -> [ZGenFilt]
+prevar_filter_ZGenFilt_Choose [] = []
+prevar_filter_ZGenFilt_Choose ((Choose b t):xs) = (Choose b t):(prevar_filter_ZGenFilt_Choose xs)
+prevar_filter_ZGenFilt_Choose (_:xs) = (prevar_filter_ZGenFilt_Choose xs)
 
-filter_ZGenFilt_Check :: [ZGenFilt] -> [ZPred]
-filter_ZGenFilt_Check [] = []
-filter_ZGenFilt_Check ((Check e):xs) = e:(filter_ZGenFilt_Check xs)
-filter_ZGenFilt_Check (_:xs) = (filter_ZGenFilt_Check xs)
+prevar_filter_ZGenFilt_Check :: [ZGenFilt] -> [ZPred]
+prevar_filter_ZGenFilt_Check [] = []
+prevar_filter_ZGenFilt_Check ((Check e):xs) = e:(prevar_filter_ZGenFilt_Check xs)
+prevar_filter_ZGenFilt_Check (_:xs) = (prevar_filter_ZGenFilt_Check xs)
 -- extracting ZVar from  ZGenFilt list
 filter_bnd_var :: [ZGenFilt] -> [ZExpr]
 filter_bnd_var [] = []
@@ -2608,9 +2608,9 @@ nmem_mkMemoryInternal (x:xs)
 
 nmem_mkMemory :: [ZGenFilt] -> [PPar]
 nmem_mkMemory bst =
-  [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose bst) (nmem_mkMemoryInternal bstTypes))))]
+  [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ prevar_filter_ZGenFilt_Choose bst) (nmem_mkMemoryInternal bstTypes))))]
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 nmem_mkMemoryTYPInternal :: [String] -> [PPar]
@@ -2626,7 +2626,7 @@ nmem_mkMemoryTYP :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryTYP bst
   =  (nmem_mkMemoryTYPInternal bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 
@@ -2641,7 +2641,7 @@ nmem_mkMemoryTYPVar :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryTYPVar bst
   = (nmem_mkMemoryTYPVarInternal bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 \end{code}
@@ -2662,9 +2662,9 @@ nmem_mkMemoryMergeInternal (x:xs)
 
 nmem_mkMemoryMerge :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMerge bst =
-  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose bst) (nmem_mkMemoryMergeInternal bstTypes))))]
+  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl (remdups $ prevar_filter_ZGenFilt_Choose bst) (nmem_mkMemoryMergeInternal bstTypes))))]
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 nmem_mkMemoryMergeTYPInternal :: [String] -> [PPar]
@@ -2680,7 +2680,7 @@ nmem_mkMemoryMergeTYP :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMergeTYP bst
   =  (nmem_mkMemoryMergeTYPInternal bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 
@@ -2695,7 +2695,7 @@ nmem_mkMemoryMergeTYPVar :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMergeTYPVar bst
   = (nmem_mkMemoryMergeTYPVarInternal bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( get_binding_types nbst)
 
 \end{code}
@@ -2709,9 +2709,9 @@ but I'll keep any previous code above this section.
 \begin{code}
 nmem_mkMemory1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemory1 bst =
-  [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose (data_refinement bst)) (nmem_mkMemoryInternal1 bstTypes))))]
+  [CParAction "Memory" (CircusAction (CActionCommand (CVResDecl (remdups $ prevar_filter_ZGenFilt_Choose (data_refinement bst)) (nmem_mkMemoryInternal1 bstTypes))))]
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryInternal1 :: [ZVar] -> CAction
@@ -2728,7 +2728,7 @@ nmem_mkMemoryTYP1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryTYP1 bst
   =  (nmem_mkMemoryTYPInternal1 bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryTYPInternal1 :: [ZVar] -> [PPar]
@@ -2742,7 +2742,7 @@ nmem_mkMemoryTYPVar1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryTYPVar1 bst
   = (nmem_mkMemoryTYPVarInternal1 bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryTYPVarInternal1 :: [ZVar] -> [PPar]
@@ -2759,9 +2759,9 @@ nmem_mkMemoryTYPVarInternal1 (x:xs) =
 \begin{code}
 nmem_mkMemoryMerge1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMerge1 bst =
-  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl (remdups $ filter_ZGenFilt_Choose (data_refinement bst)) (nmem_mkMemoryMergeInternal1 bstTypes))))]
+  [CParAction "MemoryMerge" (CircusAction (CActionCommand (CVResDecl (remdups $ prevar_filter_ZGenFilt_Choose (data_refinement bst)) (nmem_mkMemoryMergeInternal1 bstTypes))))]
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryMergeInternal1 :: [ZVar] -> CAction
@@ -2778,7 +2778,7 @@ nmem_mkMemoryMergeTYP1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMergeTYP1 bst
   =  (nmem_mkMemoryMergeTYPInternal1 bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryMergeTYPInternal1 :: [ZVar] -> [PPar]
@@ -2792,7 +2792,7 @@ nmem_mkMemoryMergeTYPVar1 :: [ZGenFilt] -> [PPar]
 nmem_mkMemoryMergeTYPVar1 bst
   = (nmem_mkMemoryMergeTYPVarInternal1 bstTypes)
   where
-    nbst = (remdups $ filter_ZGenFilt_Choose bst)
+    nbst = (remdups $ prevar_filter_ZGenFilt_Choose bst)
     bstTypes = ( mk_st_zvar nbst)
 
 nmem_mkMemoryMergeTYPVarInternal1 :: [ZVar] -> [PPar]
@@ -3618,18 +3618,18 @@ make_binding :: [ZPara] -> (ZVar,ZVar) -> String
 make_binding spec ((a,b,c),t)
   | Subs.isPrefixOf "_" c
       = "("++a++", {"++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
-                            else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++"})"
+                            else (prevar_mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++"})"
   | "NAT" == c
       = "("++a++", 0)"
   | otherwise = "("++a++", "++(if (Data.List.null getMinVal) then "DO_IT_MANUALLY"
-                            else (mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
+                            else (prevar_mapping_ZExpr (get_delta_names1 spec) (Data.List.head $ getMinVal)))++")"
   where
     getMinVal = (concat $ map (get_min_val t) spec)
 \end{code}
 
 \begin{code}
 mapping_ZTuple [ZVar ("\\nat",_,[])] = "NatValue"
-mapping_ZTuple [ZCall (ZVar (a,[],"")) c] = a++"."++(mapping_ZExpr [] c)
+mapping_ZTuple [ZCall (ZVar (a,[],"")) c] = a++"."++(prevar_mapping_ZExpr [] c)
 mapping_ZTuple [ZVar ("\\nat_1",_,[])] = "NatValue"
 -- mapping_ZTuple [ZVar (v,_)] = "value("++v++")"
 mapping_ZTuple [ZVar (v,_,t)]
@@ -3642,7 +3642,7 @@ mapping_ZTuple ((ZVar (v,_,t)):xs)
   -- | (is_ZVar_v_st v) = "value"++(def_U_prefix t)++"("++v++")"++ "," ++ (mapping_ZTuple xs)
   | otherwise = v ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple ((ZInt x):xs) = (show (fromIntegral x)) ++ "," ++ (mapping_ZTuple xs)
-mapping_ZTuple ((ZCall (ZVar (a,[],"")) c):xs) = a++"."++(mapping_ZExpr [] c) ++ "," ++ (mapping_ZTuple xs)
+mapping_ZTuple ((ZCall (ZVar (a,[],"")) c):xs) = a++"."++(prevar_mapping_ZExpr [] c) ++ "," ++ (mapping_ZTuple xs)
 mapping_ZTuple _ = ""
 \end{code}
 
@@ -3656,102 +3656,102 @@ mapping_ZCross _ = ""
 
 \begin{code}
 -- aux functions
-mapping_ZExpr_def :: [ZName] -> String
-mapping_ZExpr_def [x] = x
-mapping_ZExpr_def (x:xs) = x++","++(mapping_ZExpr_def xs)
+prevar_mapping_ZExpr_def :: [ZName] -> String
+prevar_mapping_ZExpr_def [x] = x
+prevar_mapping_ZExpr_def (x:xs) = x++","++(prevar_mapping_ZExpr_def xs)
 
-mapping_ZExpr_set [] = ""
-mapping_ZExpr_set [ZVar (a,b,x)] = a
-mapping_ZExpr_set ((ZVar (a,b,x)):xs) = a++","++(mapping_ZExpr_set xs)
-mapping_ZExpr_set (_:xs) = (mapping_ZExpr_set xs)
+prevar_mapping_ZExpr_set [] = ""
+prevar_mapping_ZExpr_set [ZVar (a,b,x)] = a
+prevar_mapping_ZExpr_set ((ZVar (a,b,x)):xs) = a++","++(prevar_mapping_ZExpr_set xs)
+prevar_mapping_ZExpr_set (_:xs) = (prevar_mapping_ZExpr_set xs)
 \end{code}
 \begin{code}
-mapping_ZExpr_def_f f [] = ""
-mapping_ZExpr_def_f f [x] = (f x)
-mapping_ZExpr_def_f f (x:xs) = (f x)++","++(mapping_ZExpr_def_f f xs)
+prevar_mapping_ZExpr_def_f f [] = ""
+prevar_mapping_ZExpr_def_f f [x] = (f x)
+prevar_mapping_ZExpr_def_f f (x:xs) = (f x)++","++(prevar_mapping_ZExpr_def_f f xs)
 
-mapping_ZExpr1 (ZInt m) = show(fromIntegral m)
-mapping_ZExpr1 (ZVar (a,_,t)) = a
-mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr1  a)++","++(mapping_ZExpr1  b)++")"
-mapping_ZExpr1 (ZCall (ZVar (x,_,_)) b) = "("++x++"."++(mapping_ZExpr1 b)++")"
-mapping_ZExpr1 x = mapping_ZExpr [] x
+prevar_mapping_ZExpr1 (ZInt m) = show(fromIntegral m)
+prevar_mapping_ZExpr1 (ZVar (a,_,t)) = a
+prevar_mapping_ZExpr1 (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(prevar_mapping_ZExpr1  a)++","++(prevar_mapping_ZExpr1  b)++")"
+prevar_mapping_ZExpr1 (ZCall (ZVar (x,_,_)) b) = "("++x++"."++(prevar_mapping_ZExpr1 b)++")"
+prevar_mapping_ZExpr1 x = prevar_mapping_ZExpr [] x
 \end{code}
 
 \subsection{Mapping Function for Expressions}
 \begin{code}
-mapping_ZExpr :: [ZName] ->  ZExpr -> String
+prevar_mapping_ZExpr :: [ZName] ->  ZExpr -> String
 
-mapping_ZExpr lst (ZVar ("\\emptyset",[],[])) = "{}"
-mapping_ZExpr lst (ZVar ("\\int",[],[])) = "Int"
-mapping_ZExpr lst (ZVar ("\\nat",_,_)) = "NatValue"
--- mapping_ZExpr lst (ZVar (a,_)) = a
-mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
-mapping_ZExpr lst (ZVar (a,_,t))
+prevar_mapping_ZExpr lst (ZVar ("\\emptyset",[],[])) = "{}"
+prevar_mapping_ZExpr lst (ZVar ("\\int",[],[])) = "Int"
+prevar_mapping_ZExpr lst (ZVar ("\\nat",_,_)) = "NatValue"
+-- prevar_mapping_ZExpr lst (ZVar (a,_)) = a
+prevar_mapping_ZExpr lst (ZInt m) = show(fromIntegral m)
+prevar_mapping_ZExpr lst (ZVar (a,_,t))
   -- | (inListVar a lst) = "value"++(def_U_prefix t)++"(v_"++a++")"
   -- | (inListVar a lst) = "v_"++a
   -- | (is_ZVar_v_st a) = a
   -- | (is_ZVar_v_st a) = "value"++(def_U_prefix t)++"("++a++")"
   -- | otherwise = a
   = a
-mapping_ZExpr lst (ZBinding _) = ""
-mapping_ZExpr lst (ZCall (ZVar ("*",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " * " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("+",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " + " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("-",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " - " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\035",[],[])) a) = "\035(" ++ mapping_ZExpr lst (a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\\035",[],[])) a) = "card("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\bigcap",[],[])) (ZTuple [a,b])) = "Inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\bigcup",[],[])) (ZTuple [a,b])) = "Union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\cap",[],[])) (ZTuple [a,b])) = "inter("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\cat",[],[])) (ZTuple [a,b])) = mapping_ZExpr lst (a)++"^"++mapping_ZExpr lst (b)
-mapping_ZExpr lst (ZCall (ZVar ("\\cup",[],[])) (ZTuple [a,b]))
-  = "union("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\dcat",[],[])) s)
-  = "concat("++mapping_ZExpr lst (s)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\div",[],[])) (ZTuple [n,m])) = "("++mapping_ZExpr lst (n) ++ " / " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\dom",[],[])) a)
-  = "dom("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\mod",[],[])) (ZTuple [n,m])) = mapping_ZExpr lst (n) ++ " % " ++ mapping_ZExpr lst (m)
-mapping_ZExpr lst (ZCall (ZVar ("\\dres",[],[])) (ZTuple [n,m])) = "dres("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\comp",[],[])) (ZTuple [n,m])) = "comp("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\rres",[],[])) (ZTuple [n,m])) = "rres("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\pfun",[],[])) (ZTuple [n,m])) = "pfun("++mapping_ZExpr lst (n) ++ ", " ++ mapping_ZExpr lst (m)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\negate",[],[])) n) = " -" ++ (mapping_ZExpr lst (n))
-mapping_ZExpr lst (ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar a,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar b,c])]]))
-  = "over("++(mapping_ZExpr lst (ZVar a))++","++(mapping_ZExpr lst (ZVar b))++","++(mapping_ZExpr lst c)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\sym",_,_)) (ZTuple [ZVar a,ZVar b])) = "("++(mapping_ZExpr lst (ZVar a))++"."++(mapping_ZExpr lst (ZVar b))++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\oplus",_,_)) (ZTuple [ZVar a,ZVar b])) = "oplus("++(mapping_ZExpr lst (ZVar a))++","++(mapping_ZExpr lst (ZVar b))++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\power",[],[])) a) ="Set("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\ran",[],[])) a) = "ran("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\seq",[],[])) a) = "Seq("++(mapping_ZExpr lst a)++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\setminus",[],[])) (ZTuple [a,b])) = "diff("++(mapping_ZExpr lst a)++","++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall (ZVar ("head",[],[])) s) = "head("++mapping_ZExpr lst (s)++")"
-mapping_ZExpr lst (ZCall (ZVar ("tail",[],[])) s) = "tail("++mapping_ZExpr lst (s)++")"
--- mapping_ZExpr lst (ZCall (ZVar a) (ZVar b)) = "apply("++(mapping_ZExpr lst (ZVar a))++","++(mapping_ZExpr lst (ZVar b))++")"
-mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
-  = "{"++(mapping_ZExpr lst a)++".."++(mapping_ZExpr lst b)++"}"
-mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(mapping_ZExpr1 a)++".."++(mapping_ZExpr1 b)++"}"
-mapping_ZExpr lst (ZSetDisplay []) = ""
-mapping_ZExpr lst (ZSetDisplay x) = "{"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++"}"
-mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
-mapping_ZExpr lst (ZSeqDisplay []) = "<>"
-mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
+prevar_mapping_ZExpr lst (ZBinding _) = ""
+prevar_mapping_ZExpr lst (ZCall (ZVar ("*",[],[])) (ZTuple [n,m])) = "("++prevar_mapping_ZExpr lst (n) ++ " * " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("+",[],[])) (ZTuple [n,m])) = "("++prevar_mapping_ZExpr lst (n) ++ " + " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("-",[],[])) (ZTuple [n,m])) = "("++prevar_mapping_ZExpr lst (n) ++ " - " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\035",[],[])) a) = "\035(" ++ prevar_mapping_ZExpr lst (a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\\035",[],[])) a) = "card("++(prevar_mapping_ZExpr lst a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\mapsto",[],"")) (ZTuple [a,b])) = "("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\bigcap",[],[])) (ZTuple [a,b])) = "Inter("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\bigcup",[],[])) (ZTuple [a,b])) = "Union("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\cap",[],[])) (ZTuple [a,b])) = "inter("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\cat",[],[])) (ZTuple [a,b])) = prevar_mapping_ZExpr lst (a)++"^"++prevar_mapping_ZExpr lst (b)
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\cup",[],[])) (ZTuple [a,b]))
+  = "union("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\dcat",[],[])) s)
+  = "concat("++prevar_mapping_ZExpr lst (s)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\div",[],[])) (ZTuple [n,m])) = "("++prevar_mapping_ZExpr lst (n) ++ " / " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\dom",[],[])) a)
+  = "dom("++(prevar_mapping_ZExpr lst a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\mod",[],[])) (ZTuple [n,m])) = prevar_mapping_ZExpr lst (n) ++ " % " ++ prevar_mapping_ZExpr lst (m)
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\dres",[],[])) (ZTuple [n,m])) = "dres("++prevar_mapping_ZExpr lst (n) ++ ", " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\comp",[],[])) (ZTuple [n,m])) = "comp("++prevar_mapping_ZExpr lst (n) ++ ", " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\rres",[],[])) (ZTuple [n,m])) = "rres("++prevar_mapping_ZExpr lst (n) ++ ", " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\pfun",[],[])) (ZTuple [n,m])) = "pfun("++prevar_mapping_ZExpr lst (n) ++ ", " ++ prevar_mapping_ZExpr lst (m)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\negate",[],[])) n) = " -" ++ (prevar_mapping_ZExpr lst (n))
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\oplus",[],[])) (ZTuple [ZVar a,ZSetDisplay [ZCall (ZVar ("\\mapsto",[],[])) (ZTuple [ZVar b,c])]]))
+  = "over("++(prevar_mapping_ZExpr lst (ZVar a))++","++(prevar_mapping_ZExpr lst (ZVar b))++","++(prevar_mapping_ZExpr lst c)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\sym",_,_)) (ZTuple [ZVar a,ZVar b])) = "("++(prevar_mapping_ZExpr lst (ZVar a))++"."++(prevar_mapping_ZExpr lst (ZVar b))++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\oplus",_,_)) (ZTuple [ZVar a,ZVar b])) = "oplus("++(prevar_mapping_ZExpr lst (ZVar a))++","++(prevar_mapping_ZExpr lst (ZVar b))++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\power",[],[])) a) ="Set("++(prevar_mapping_ZExpr lst a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\ran",[],[])) a) = "ran("++(prevar_mapping_ZExpr lst a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\seq",[],[])) a) = "Seq("++(prevar_mapping_ZExpr lst a)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\setminus",[],[])) (ZTuple [a,b])) = "diff("++(prevar_mapping_ZExpr lst a)++","++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("head",[],[])) s) = "head("++prevar_mapping_ZExpr lst (s)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("tail",[],[])) s) = "tail("++prevar_mapping_ZExpr lst (s)++")"
+-- prevar_mapping_ZExpr lst (ZCall (ZVar a) (ZVar b)) = "apply("++(prevar_mapping_ZExpr lst (ZVar a))++","++(prevar_mapping_ZExpr lst (ZVar b))++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b]))
+  = "{"++(prevar_mapping_ZExpr lst a)++".."++(prevar_mapping_ZExpr lst b)++"}"
+prevar_mapping_ZExpr lst (ZSetDisplay [ZCall (ZVar ("\\upto",[],[])) (ZTuple [a,b])]) = "{"++(prevar_mapping_ZExpr1 a)++".."++(prevar_mapping_ZExpr1 b)++"}"
+prevar_mapping_ZExpr lst (ZSetDisplay []) = ""
+prevar_mapping_ZExpr lst (ZSetDisplay x) = "{"++(prevar_mapping_ZExpr_def_f prevar_mapping_ZExpr1 x)++"}"
+prevar_mapping_ZExpr lst (ZTuple ls) = "("++mapping_ZTuple ls ++ ")"
+prevar_mapping_ZExpr lst (ZSeqDisplay []) = "<>"
+prevar_mapping_ZExpr lst (ZSeqDisplay [ZVar (a,b,c)])
   | Subs.isPrefixOf "b_" a ="<"++a++">"
   | Subs.isPrefixOf "sv_" a ="<"++a++">"
   | "ns" == a ="<y | y <- ns,member(y,dom(bd))>"
   | otherwise = "<y | y <- "++a++">"
-mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple xs)) ]) = joinBy "^" $ map (\x -> "< "++(mapping_ZExpr lst x)++">") xs
-mapping_ZExpr lst (ZSeqDisplay x) = "<"++(mapping_ZExpr_def_f mapping_ZExpr1 x)++">"
--- mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (mapping_ZExpr lst) x)++">"
-mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
-mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ filter_ZGenFilt_Choose a)++")"
--- mapping_ZExpr lst (ZCall c d) = "apply("++(mapping_ZExpr lst c)++","++(mapping_ZExpr lst d)++")"
-mapping_ZExpr lst (ZCall (ZVar (a,[],x)) b)
-  | isPrefixOf "b_" a = "apply("++a++","++(mapping_ZExpr lst b)++")"
-  | otherwise = (mapping_ZExpr lst (ZVar (a,[],x)))++"("++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst (ZCall a b) = (mapping_ZExpr lst a)++"("++(mapping_ZExpr lst b)++")"
-mapping_ZExpr lst x = ""
--- mapping_ZExpr lst x = fail ("not implemented by mapping_ZExpr: " ++ show x)
+prevar_mapping_ZExpr lst (ZSeqDisplay [(ZCall (ZVar ("\\cup",[],[])) (ZTuple xs)) ]) = joinBy "^" $ map (\x -> "< "++(prevar_mapping_ZExpr lst x)++">") xs
+prevar_mapping_ZExpr lst (ZSeqDisplay x) = "<"++(prevar_mapping_ZExpr_def_f prevar_mapping_ZExpr1 x)++">"
+-- prevar_mapping_ZExpr lst (ZSeqDisplay x) = "<y | y <- "++(concat $map (prevar_mapping_ZExpr lst) x)++">"
+prevar_mapping_ZExpr lst (ZCross ls) = mapping_ZCross ls
+prevar_mapping_ZExpr lst (ZSetComp a (Just (ZTuple ls))) = "("++(joinBy "," $ map (prevar_mapping_ZExpr lst) $ map (\(Choose v t) -> t) $ prevar_filter_ZGenFilt_Choose a)++")"
+-- prevar_mapping_ZExpr lst (ZCall c d) = "apply("++(prevar_mapping_ZExpr lst c)++","++(prevar_mapping_ZExpr lst d)++")"
+prevar_mapping_ZExpr lst (ZCall (ZVar (a,[],x)) b)
+  | isPrefixOf "b_" a = "apply("++a++","++(prevar_mapping_ZExpr lst b)++")"
+  | otherwise = (prevar_mapping_ZExpr lst (ZVar (a,[],x)))++"("++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst (ZCall a b) = (prevar_mapping_ZExpr lst a)++"("++(prevar_mapping_ZExpr lst b)++")"
+prevar_mapping_ZExpr lst x = ""
+-- prevar_mapping_ZExpr lst x = fail ("not implemented by prevar_mapping_ZExpr: " ++ show x)
 
 \end{code}
 \begin{code}
