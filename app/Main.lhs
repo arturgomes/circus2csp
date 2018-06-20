@@ -21,6 +21,7 @@ import Control.Exception
 import Control.Monad
 import System.Directory
 import PreVarMappingFunStatelessCircus
+import DistMemMappingFunStatelessCircus
 import System.Environment
 --import System.Console.Readline  -- was Readline
 
@@ -225,19 +226,31 @@ do_cmd cmd args anim fn
             done_cmd (anim2, upslonCircus anim2 fn2, fn2))
         (\err ->
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
-
+  | cmd == "prevar"
+   = catch
+      (do let fname = getSrcDir anim++args
+          putStrLn ("Loading '"++fname++"' ...")
+          spec <- readFile (fname++".tex")
+          let (anim',_,_) = resetanimator anim
+          let (anim1,answ1,fn1) = pushfile args spec $ setFName args anim'
+          let (anim2,answ2,fn2) = preVarOmegaCircus anim1 fn1
+          done_cmd (anim2, prevarupslonCircus anim2 fn2, fn2))
+      (\err ->
+          do {putStrLn (show (err :: IOException)); get_cmd anim fn})
   | cmd == "refines"
-     = do  putStrLn "--------------------------------------------------------------------------------------------------"
-           putStrLn ("---------- Running FDR4 using the file '"++"\x1b[32m" ++ (getDstDir anim++args)++(getFName anim)++".csp"++ "\x1b[0m"++"' ...")
-           putStrLn "--------------------------------------------------------------------------------------------------"
+       = do  putStrLn     "--------------------------------------------------------------------------------------------------"
+             putStrLn ("---------- Running FDR4 using the file '"++"\x1b[32m" ++ (getDstDir anim++args)++(getFName anim)++".csp"++ "\x1b[0m"++"' ...")
+             putStrLn "--------------------------------------------------------------------------------------------------"
 
 -- "Welcome to FDR Version 4.2.3 copyright 2016 Oxford University Innovation Ltd. All Rights Reserved."
 -- "--------------------------------------------------------------------------------------------------"
-           fdr4 ((getDstDir anim++args)++(getFName anim)++".csp")
-           putStrLn ("\x1b[32m" ++ "End of the execution of FDR4 ..."++ "\x1b[0m")
-           get_cmd anim fn
+             fdr4 ((getDstDir anim++args)++(getFName anim)++".csp")
+             putStrLn ("\x1b[32m" ++ "End of the execution of FDR4 ..."++ "\x1b[0m")
+             get_cmd anim fn
   | cmd == "reconv"
      = do_cmd "conv" (getFName anim) anim fn
+  | cmd == "prevarreconv"
+     = do_cmd "prevar" (getFName anim) anim fn
   | cmd == "reset" && args == "" =
       done_cmd (resetanimator anim)
   | cmd == "show" =

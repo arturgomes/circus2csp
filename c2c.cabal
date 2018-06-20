@@ -21,16 +21,20 @@ library
                      -- , PrintTex
                      , RepParamAction
                      , PreVarCRL
+                     , DistMemCRL
                      , EParseLib
                      , FiniteSets
                      , Lexer
                      , PreVarOmegaDefs
+                     , DistMemOmegaDefs
                      , Parse
                      , Subs
                      , Formatter
                      , PreVarMappingFunStatelessCircus
+                     , DistMemMappingFunStatelessCircus
                      , Eval
                      , PreVarMappingFunCircusCSP
+                     , DistMemMappingFunCircusCSP
                      , Optimize
                      , Reorder
                      , SetSize
