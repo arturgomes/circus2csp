@@ -228,7 +228,11 @@ do_cmd cmd args anim fn
             done_cmd (anim2, upslonCircus anim2 fn2, fn2))
         (\err ->
             do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+<<<<<<< HEAD
   | cmd == "convp"
+=======
+  | cmd == "prevar"
+>>>>>>> ecc387af1f5bbb9ae863de42abff79ca0ea34307
    = catch
       (do let fname = getSrcDir anim++args
           putStrLn ("Loading '"++fname++"' ...")
@@ -251,8 +255,13 @@ do_cmd cmd args anim fn
              get_cmd anim fn
   | cmd == "reconv"
      = do_cmd "conv" (getFName anim) anim fn
+<<<<<<< HEAD
   | cmd == "reconvp"
      = do_cmd "convp" (getFName anim) anim fn
+=======
+  | cmd == "prevarreconv"
+     = do_cmd "prevar" (getFName anim) anim fn
+>>>>>>> ecc387af1f5bbb9ae863de42abff79ca0ea34307
   | cmd == "reset" && args == "" =
       done_cmd (resetanimator anim)
   | cmd == "show" =
