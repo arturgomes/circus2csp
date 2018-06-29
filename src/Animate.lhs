@@ -22,7 +22,9 @@ module Animate
   showOrigSpec,       -- similar to showspec but with DoneCirc -- Artur Gomes
   SyntaxError,       -- from Errors module
   omegaCircus,       -- Omega function for the Circus translator
+  preVarOmegaCircus,       -- Omega function for the Circus translator
   upslonCircus,       -- Upslon function for the Circus translator
+  prevarupslonCircus,       -- Upslon function for the Circus translator
   latexCircus        -- pretty print in Latex
 )
 where
@@ -35,8 +37,10 @@ import Eval
 import Errors
 import Data.Char
 import Data.List
-import MappingFunStatelessCircus
-import MappingFunCircusCSP
+import PreVarMappingFunStatelessCircus
+import DistMemMappingFunStatelessCircus
+import PreVarMappingFunCircusCSP
+import DistMemMappingFunCircusCSP
 --import PrintTex
 
 
@@ -207,21 +211,37 @@ omegaCircus anim args
   | otherwise        = (newanim, getspecHC args newanim, args)
   where
   msg = "Omega function applied to the current spec"
-  newanim = anim{spec=(applyOmega anim)}
+  newanim = anim{spec=(applyOmega anim "")}
 
-applyOmega :: Animator -> [ZParaInfo]
-applyOmega anim
-  = fromOk (process_paras_omega (spec anim) (omega_Circus (map origpara (spec anim))))
+preVarOmegaCircus :: Animator -> String -> (Animator,Answer,String)
+preVarOmegaCircus anim args
+  | null (spec anim) = (anim, errstr "Omega command: Specification is empty", args)
+  | otherwise        = (newanim, getspecHC args newanim, args)
+  where
+  msg = "Omega function applied to the current spec"
+  newanim = anim{spec=(applyOmega anim "prevar")}
+
+applyOmega :: Animator -> String -> [ZParaInfo]
+applyOmega anim typ
+  | typ == "prevar" = fromOk (process_paras_omega (spec anim) (prevar_omega_Circus (map origpara (spec anim))))
+  | otherwise = fromOk (process_paras_omega (spec anim) (omega_Circus (map origpara (spec anim))))
 
 -- This is my first attempt in trying to apply
 -- the Upsilon function into the spec
 -- upslonCircus :: Animator -> Answer
 upslonCircus anim args = getspecCSP args (applyUpslon anim)
+prevarupslonCircus anim args = getspecCSP args (prevarapplyUpslon anim)
 
 applyUpslon anim
   = upslonHeader
     ++ (mapping_Circus (reverse (map origpara (spec anim)))
                        (reverse (map origpara (spec anim))) )
+
+prevarapplyUpslon anim
+ = upslonHeader
+   ++ (prevar_mapping_Circus (reverse (map origpara (spec anim)))
+                      (reverse (map origpara (spec anim))) )
+
 
 upslonHeader = "include \"sequence_aux.csp\"\ninclude \"function_aux.csp\"\n\n"
 

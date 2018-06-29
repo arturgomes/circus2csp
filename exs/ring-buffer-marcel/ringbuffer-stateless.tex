@@ -29,7 +29,7 @@
     \circprocess\ RingCell \circdef \\
     \circbegin\\
     \t1
-        Memory \circdef 
+        Memory \circdef
             \circvres b:BINDING \circspot \\
             \t1
                 (\Extchoice n:\dom b \circspot mget.n!b(n) \then Memory(b)) \\
@@ -39,12 +39,12 @@
         \circspot
             \circvar\ b:\{x:BINDING | v \in Value\} \circspot \\
             \t1
-            ((( 
+            (((
                         (\Intchoice v:Value \circspot mget.v?vv:(vv \in \delta(v)) \then mset.v!vv \then \Skip) \circseq \\
                             ( \circmu X \circspot
                                 ( mget.v?vv:(vv \in \delta(v)) \then \\
                                     ( rd.req?dumb \then rd.ack!v \then \Skip \\
-                                      \extchoice wrt.req?x \then mset.v!x 
+                                      \extchoice wrt.req?x \then mset.v!x
                                                 \then wrt.ack?dumb \then \Skip
                                     )
                                 ) \circseq\ X
@@ -98,7 +98,7 @@
                                  mset.cache.x \then \\
                                  mset.size.1 \then \Skip)
                              \\
-                             \extchoice 
+                             \extchoice
                              (\lcircguard vsize > 0 \rcircguard \circguard \\
                              \t1
                                  write.vtop.req!x \then \\
@@ -124,7 +124,7 @@
                                     mset.bot.((vbot~\mod~maxring)+1) \then \\
                                     \Skip))
                         \\
-                        \extchoice (\lcircguard vsize = 1 \rcircguard 
+                        \extchoice (\lcircguard vsize = 1 \rcircguard
                                     \circguard mset.size.0 \then \Skip))))
                 \circseq X
             ) \\

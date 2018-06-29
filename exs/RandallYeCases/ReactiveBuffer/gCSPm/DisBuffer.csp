@@ -7,355 +7,260 @@ maxring = (maxbuff - 1)
 NatValue = {0..maxbuff}
 RingIndex = {1..maxring}
 sNatValue = Seq(NatValue)
+datatype Direction = req | ack
+
 channel input, output : NatValue
 channel read, write : RingIndex.Direction.NatValue
-channel rd, wrt : Direction.NatValue
-IRCell(i) = RingCell(b_NAT1)[[rd <- rdi.i, wrt <- wrti.i]]
+channel rdi, wrti : RingIndex.Direction.NatValue
+channel rrd, wrt : Direction.NatValue
+IRCell(i) = RingCell(b_NAT1)[[rrd <- rdi.i, wrt <- wrti.i]]
+CtrI = {| rdi,wrti |}
 Ring = |||i : RingIndex @ IRCell(i)
-ABuffer = ( ( Controller(b_NAT1,b_RIN1) [| {| read,write |} |] Ring ) \ {| read,write |} )
-assert ABuffer [FD= Buffer(b_SNA1,b_NAT1)
-assert Buffer(b_SNA1,b_NAT1) [FD= ABuffer
+ControllerR = Controller(b_NAT1,b_RIN1)[[read <- rdi, write <- wrti]]
+DBuffer = ( ( ControllerR [| CtrI |] Ring ) \ CtrI )
+assert DBuffer [FD= Buffer(b_SNA1,b_NAT1)
+assert Buffer(b_SNA1,b_NAT1) [FD= DBuffer
+subtype U_RIN = RingIndex
 
-datatype Direction = req | ack
---------------------------------
--- The universe of values
- datatype UNIVERSE = RIN.RingIndex | SNA.sNatValue | NAT.NatValue
---Conversions
-valueRIN(RIN.v) = v
-valueSNA(SNA.v) = v
-valueNAT(NAT.v) = v
+subtype U_SNA = sNatValue
 
-typeRIN(x) = U_RIN
-typeSNA(x) = U_SNA
-typeNAT(x) = U_NAT
-
-tagRIN(x) = RIN
-tagSNA(x) = SNA
-tagNAT(x) = NAT
-
--- subtypes of UNIVERSE for RIN
-subtype U_RIN = RIN.RingIndex
-
--- subtypes of UNIVERSE for SNA
-subtype U_SNA = SNA.sNatValue
-
--- subtypes of UNIVERSE for NAT
-subtype U_NAT = NAT.NatValue
+subtype U_NAT = NatValue
 
 -- definition of NAME for the entire spec
 datatype NAME = sv_v | sv_ringsize | sv_cache | sv_top | sv_bot | sv_buff | sv_size
 
--- Subtype definition for NAT
-b_NAT1 = {(sv_v, NAT.0),(sv_cache, NAT.0),(sv_size, NAT.0)}
 subtype NAME_NAT = sv_v | sv_cache | sv_size
-NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
 
--- Subtype definition for RIN
-b_RIN1 = {(sv_ringsize, RIN.1),(sv_top, RIN.1),(sv_bot, RIN.1)}
 subtype NAME_RIN = sv_ringsize | sv_top | sv_bot
-NAMES_VALUES_RIN = seq({seq({(n,v) | v <- typeRIN(n)}) | n <- NAME_RIN})
 
--- Subtype definition for SNA
-b_SNA1 = {(sv_buff, SNA.<>)}
 subtype NAME_SNA = sv_buff
-NAMES_VALUES_SNA = seq({seq({(n,v) | v <- typeSNA(n)}) | n <- NAME_SNA})
 
--- Bindings definitions for NAT
-BINDINGS_NAT = {set(b) | b <- set(distCartProd(NAMES_VALUES_NAT))}
+-- Binding set for NatValue
+b_NAT1 = {(sv_v, 0),(sv_size, 0),(sv_cache, 0),(sv_size, 0)}
 
--- Bindings definitions for RIN
-BINDINGS_RIN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RIN))}
+-- Binding set for RingIndex
+b_RIN1 = {(sv_ringsize, 1),(sv_top, 1),(sv_bot, 1)}
 
--- Bindings definitions for SNA
-BINDINGS_SNA = {set(b) | b <- set(distCartProd(NAMES_VALUES_SNA))}
+-- Binding set for sNatValue
+b_SNA1 = {(sv_buff, <>)}
 
-
---------------------------------
- -- mget, mset and terminate --
---------------------------------
-channel mget, mset : NAME.UNIVERSE
+channel mget_sv_v, mset_sv_v : NatValue
+channel mget_sv_ringsize, mset_sv_ringsize : RingIndex
+channel mget_sv_cache, mset_sv_cache : NatValue
+channel mget_sv_top, mset_sv_top : RingIndex
+channel mget_sv_bot, mset_sv_bot : RingIndex
+channel mget_sv_buff, mset_sv_buff : sNatValue
+channel mget_sv_size, mset_sv_size : NatValue
 channel terminate
-
---------------------------------
- -- MEMI --
---------------------------------
-MEMI = {| mset,mget,terminate |}
-channel lget, lset : NAME.UNIVERSE
+MEMI = {| mget_sv_v,mset_sv_v,mget_sv_size,mset_sv_size,mget_sv_ringsize,mset_sv_ringsize,mget_sv_cache,mset_sv_cache,mget_sv_top,mset_sv_top,mget_sv_bot,mset_sv_bot,mget_sv_buff,mset_sv_buff,mget_sv_size,mset_sv_size,terminate |}
+channel lget_sv_v, lset_sv_v : NatValue
+channel lget_sv_ringsize, lset_sv_ringsize : RingIndex
+channel lget_sv_cache, lset_sv_cache : NatValue
+channel lget_sv_top, lset_sv_top : RingIndex
+channel lget_sv_bot, lset_sv_bot : RingIndex
+channel lget_sv_buff, lset_sv_buff : sNatValue
+channel lget_sv_size, lset_sv_size : NatValue
 channel lterminate
-MEML = {| lset,lget,lterminate |}
+MEML = {| lget_sv_v,lset_sv_v,lget_sv_size,lset_sv_size,lget_sv_ringsize,lset_sv_ringsize,lget_sv_cache,lset_sv_cache,lget_sv_top,lset_sv_top,lget_sv_bot,lset_sv_bot,lget_sv_buff,lset_sv_buff,lget_sv_size,lset_sv_size,lterminate |}
 
 RingCell(b_NAT) =
   let
-     MemoryNATVar(n,b_NAT) =
-        ( ( mget.n.apply(b_NAT,n) -> MemoryNATVar(n,b_NAT)
-      [] mset.n?nv:typeNAT(n) -> MemoryNATVar(n,over(b_NAT,n,nv)))
+     Memory_sv_v(b_NAT) =
+        ( ( mget_sv_v.apply(b_NAT,sv_v) ->
+      Memory_sv_v(b_NAT)
+      [] mset_sv_v?nv ->
+      Memory_sv_v(over(b_NAT,sv_v,nv)))
       [] terminate -> SKIP)
-     MemoryNAT(b_NAT) = ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
-     Memory(b_NAT) = MemoryNAT(b_NAT)
-  within ( ( ( ( let X = mget.sv_v?v_sv_v:(typeNAT(sv_v)) ->
-    ( ( rd.ack!valueNAT(v_sv_v) -> SKIP
+     Memory(b_NAT) =
+        Memory_sv_v(b_NAT)
+     MemoryMerge_sv_v(b_NAT) =
+        ( ( lget_sv_v.apply(b_NAT,sv_v) ->
+      MemoryMerge_sv_v(b_NAT)
+      [] lset_sv_v?nv ->
+      MemoryMerge_sv_v(over(b_NAT,sv_v,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge(b_NAT) =
+        MemoryMerge_sv_v(b_NAT)
+
+  within ( ( ( ( let X = mget_sv_v?v_sv_v ->
+      ( ( rrd.req?dumb ->
+      rrd.ack.v_sv_v -> SKIP
       [] wrt.req?x ->
-    mset.sv_v.(NAT.x) -> SKIP);
-      X ) within X );
+      wrt.ack?dumb ->
+      mset_sv_v.x -> SKIP);
+      X
+ ) within X );
       terminate -> SKIP )
       [| MEMI |] Memory(b_NAT))\MEMI )
 
 Controller(b_NAT,b_RIN) =
   let
-     MemoryNATVar(n,b_NAT) =
-        ( ( mget.n.apply(b_NAT,n) -> MemoryNATVar(n,b_NAT)
-      [] mset.n?nv:typeNAT(n) -> MemoryNATVar(n,over(b_NAT,n,nv)))
+     Memory_sv_size(b_NAT) =
+        ( ( mget_sv_size.apply(b_NAT,sv_size) ->
+      Memory_sv_size(b_NAT)
+      [] mset_sv_size?nv ->
+      Memory_sv_size(over(b_NAT,sv_size,nv)))
       [] terminate -> SKIP)
-     MemoryRINVar(n,b_RIN) =
-        ( ( mget.n.apply(b_RIN,n) -> MemoryRINVar(n,b_RIN)
-      [] mset.n?nv:typeRIN(n) -> MemoryRINVar(n,over(b_RIN,n,nv)))
+     Memory_sv_ringsize(b_RIN) =
+        ( ( mget_sv_ringsize.apply(b_RIN,sv_ringsize) ->
+      Memory_sv_ringsize(b_RIN)
+      [] mset_sv_ringsize?nv ->
+      Memory_sv_ringsize(over(b_RIN,sv_ringsize,nv)))
       [] terminate -> SKIP)
-     MemoryNAT(b_NAT) =
-        ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
-     MemoryRIN(b_RIN) =
-        ( [| {| terminate |} |] n : dom(b_RIN) @ MemoryRINVar(n,b_RIN) )
-     Memory(b_NAT,b_RIN) = ( MemoryRIN(b_RIN) [| {| terminate |} |] MemoryNAT(b_NAT) )
-  within ( ( ( mset.sv_top.(RIN.1) ->
-    mset.sv_bot.(RIN.1) ->
-    mset.sv_size.(NAT.0) ->
-    ( let X = mget.sv_bot?v_sv_bot:(typeRIN(sv_bot)) ->
-    mget.sv_cache?v_sv_cache:(typeNAT(sv_cache)) ->
-    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
-    mget.sv_top?v_sv_top:(typeRIN(sv_top)) ->
-    ( ( (valueNAT(v_sv_size) < maxbuff) & input?x ->
-    ( ( ((valueNAT(v_sv_size) == 0) and (valueNAT(v_sv_size) == 0)) & mset.sv_cache.(NAT.x) ->
-    mset.sv_size.(NAT.1) ->
-    X )
-      [] ( (valueNAT(v_sv_size) > 0) & write.valueRIN(v_sv_top).req!x ->
-    ( ((valueNAT(v_sv_size) < maxbuff) and (0 < valueNAT(v_sv_size))) & mset.sv_top.(RIN.(valueRIN(v_sv_top) % maxring + 1)) ->
-    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
-    mset.sv_size.(NAT.(valueNAT(v_sv_size) + 1)) ->
-    X ) )) )
-      [] ( (valueNAT(v_sv_size) > 0) & output.valueNAT(v_sv_cache) ->
-    ( ( (valueNAT(v_sv_size) > 1) & read.valueRIN(v_sv_bot).ack?x ->
-    ( (valueNAT(v_sv_size) > 1) & mset.sv_bot.(RIN.((valueRIN(v_sv_bot) % maxring) + 1)) ->
-    mset.sv_cache.(NAT.x) ->
-    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
-    mset.sv_size.(NAT.(valueNAT(v_sv_size) - 1)) ->
-    X ) )
-      [] ( ((valueNAT(v_sv_size) == 1) and (valueNAT(v_sv_size) == 1)) & mset.sv_size.(NAT.0) ->
-    X )) )) within X );
+     Memory_sv_cache(b_NAT) =
+        ( ( mget_sv_cache.apply(b_NAT,sv_cache) ->
+      Memory_sv_cache(b_NAT)
+      [] mset_sv_cache?nv ->
+      Memory_sv_cache(over(b_NAT,sv_cache,nv)))
+      [] terminate -> SKIP)
+     Memory_sv_top(b_RIN) =
+        ( ( mget_sv_top.apply(b_RIN,sv_top) ->
+      Memory_sv_top(b_RIN)
+      [] mset_sv_top?nv ->
+      Memory_sv_top(over(b_RIN,sv_top,nv)))
+      [] terminate -> SKIP)
+     Memory_sv_bot(b_RIN) =
+        ( ( mget_sv_bot.apply(b_RIN,sv_bot) ->
+      Memory_sv_bot(b_RIN)
+      [] mset_sv_bot?nv ->
+      Memory_sv_bot(over(b_RIN,sv_bot,nv)))
+      [] terminate -> SKIP)
+     Memory(b_NAT,b_RIN) =
+        ( Memory_sv_size(b_NAT)
+      [| {| terminate |} |]
+      ( Memory_sv_ringsize(b_RIN)
+      [| {| terminate |} |]
+      ( Memory_sv_cache(b_NAT)
+      [| {| terminate |} |]
+      ( Memory_sv_top(b_RIN)
+      [| {| terminate |} |]
+      Memory_sv_bot(b_RIN) ) ) ) )
+     MemoryMerge_sv_size(b_NAT) =
+        ( ( lget_sv_size.apply(b_NAT,sv_size) ->
+      MemoryMerge_sv_size(b_NAT)
+      [] lset_sv_size?nv ->
+      MemoryMerge_sv_size(over(b_NAT,sv_size,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge_sv_ringsize(b_RIN) =
+        ( ( lget_sv_ringsize.apply(b_RIN,sv_ringsize) ->
+      MemoryMerge_sv_ringsize(b_RIN)
+      [] lset_sv_ringsize?nv ->
+      MemoryMerge_sv_ringsize(over(b_RIN,sv_ringsize,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge_sv_cache(b_NAT) =
+        ( ( lget_sv_cache.apply(b_NAT,sv_cache) ->
+      MemoryMerge_sv_cache(b_NAT)
+      [] lset_sv_cache?nv ->
+      MemoryMerge_sv_cache(over(b_NAT,sv_cache,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge_sv_top(b_RIN) =
+        ( ( lget_sv_top.apply(b_RIN,sv_top) ->
+      MemoryMerge_sv_top(b_RIN)
+      [] lset_sv_top?nv ->
+      MemoryMerge_sv_top(over(b_RIN,sv_top,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge_sv_bot(b_RIN) =
+        ( ( lget_sv_bot.apply(b_RIN,sv_bot) ->
+      MemoryMerge_sv_bot(b_RIN)
+      [] lset_sv_bot?nv ->
+      MemoryMerge_sv_bot(over(b_RIN,sv_bot,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge(b_NAT,b_RIN) =
+        ( MemoryMerge_sv_size(b_NAT)
+      [| {| terminate |} |]
+      ( MemoryMerge_sv_ringsize(b_RIN)
+      [| {| terminate |} |]
+      ( MemoryMerge_sv_cache(b_NAT)
+      [| {| terminate |} |]
+      ( MemoryMerge_sv_top(b_RIN)
+      [| {| terminate |} |]
+      MemoryMerge_sv_bot(b_RIN) ) ) ) )
+
+  within ( ( ( mset_sv_top.1 ->
+      mset_sv_bot.1 ->
+      mset_sv_size.0 ->
+      ( let X = mget_sv_bot?v_sv_bot ->
+      mget_sv_cache?v_sv_cache ->
+      mget_sv_size?v_sv_size ->
+      mget_sv_top?v_sv_top ->
+      ( ( (v_sv_size < maxbuff)   & input?x ->
+      ( ( ((v_sv_size == 0) and (v_sv_size == 0))   & mset_sv_cache.x ->
+      mset_sv_size.1 ->
+      X
+ )
+      [] ( (v_sv_size > 0)   & write.v_sv_top.req.x ->
+      write.v_sv_top.ack?dumb ->
+      ( ((v_sv_size < maxbuff) and (0 < v_sv_size))   & mset_sv_top.(v_sv_top % maxring + 1) ->
+      mget_sv_size?v_sv_size ->
+      mset_sv_size.(v_sv_size + 1) ->
+      X
+ ) )) )
+      [] ( (v_sv_size > 0)   & output.v_sv_cache ->
+      ( ( (v_sv_size > 1)   & ( ( |~| dumb : NatValue @
+         read.v_sv_bot.req.dumb ->
+      read.v_sv_bot.ack?x ->
+      ( (v_sv_size > 1)   & mset_sv_bot.(v_sv_bot % maxring + 1) ->
+      mset_sv_cache.x ->
+      mget_sv_size?v_sv_size ->
+      mset_sv_size.(v_sv_size - 1) -> SKIP ) );
+      X
+ ) )
+      [] ( ((v_sv_size == 1) and (v_sv_size == 1))   & mset_sv_size.0 ->
+      X
+ )) )) within X );
       terminate -> SKIP )
       [| MEMI |] Memory(b_NAT,b_RIN))\MEMI )
 
 Buffer(b_SNA,b_NAT) =
   let
-     MemorySNAVar(n,b_SNA) =
-        ( ( mget.n.apply(b_SNA,n) ->
-    MemorySNAVar(n,b_SNA)
-      [] mset.n?nv:typeSNA(n) ->
-    MemorySNAVar(n,over(b_SNA,n,nv)))
+     Memory_sv_buff(b_SNA) =
+        ( ( mget_sv_buff.apply(b_SNA,sv_buff) ->
+      Memory_sv_buff(b_SNA)
+      [] mset_sv_buff?nv ->
+      Memory_sv_buff(over(b_SNA,sv_buff,nv)))
       [] terminate -> SKIP)
-     MemoryNATVar(n,b_NAT) =
-        ( ( mget.n.apply(b_NAT,n) ->
-    MemoryNATVar(n,b_NAT)
-      [] mset.n?nv:typeNAT(n) ->
-    MemoryNATVar(n,over(b_NAT,n,nv)))
+     Memory_sv_size(b_NAT) =
+        ( ( mget_sv_size.apply(b_NAT,sv_size) ->
+      Memory_sv_size(b_NAT)
+      [] mset_sv_size?nv ->
+      Memory_sv_size(over(b_NAT,sv_size,nv)))
       [] terminate -> SKIP)
-     MemorySNA(b_SNA) =
-        ( [| {| terminate |} |] n : dom(b_SNA) @ MemorySNAVar(n,b_SNA) )
-     MemoryNAT(b_NAT) =
-        ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
      Memory(b_SNA,b_NAT) =
-        ( MemoryNAT(b_NAT)
+        ( Memory_sv_buff(b_SNA)
       [| {| terminate |} |]
-      MemorySNA(b_SNA) )
+      Memory_sv_size(b_NAT) )
+     MemoryMerge_sv_buff(b_SNA) =
+        ( ( lget_sv_buff.apply(b_SNA,sv_buff) ->
+      MemoryMerge_sv_buff(b_SNA)
+      [] lset_sv_buff?nv ->
+      MemoryMerge_sv_buff(over(b_SNA,sv_buff,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge_sv_size(b_NAT) =
+        ( ( lget_sv_size.apply(b_NAT,sv_size) ->
+      MemoryMerge_sv_size(b_NAT)
+      [] lset_sv_size?nv ->
+      MemoryMerge_sv_size(over(b_NAT,sv_size,nv)))
+      [] terminate -> SKIP)
+     MemoryMerge(b_SNA,b_NAT) =
+        ( MemoryMerge_sv_buff(b_SNA)
+      [| {| terminate |} |]
+      MemoryMerge_sv_size(b_NAT) )
 
-
-  within ( ( ( mset.sv_buff.(SNA.<>) ->
-    mset.sv_size.(NAT.0) ->
-    ( let X = mget.sv_buff?v_sv_buff:(typeSNA(sv_buff)) ->
-    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
-    ( ( (valueNAT(v_sv_size) < maxbuff) & input?x ->
-    ( (valueNAT(v_sv_size) < maxbuff) & mset.sv_buff.(SNA.valueSNA(v_sv_buff)^<x>) ->
-    mget.sv_size?v_sv_size:(typeNAT(sv_size)) ->
-    mset.sv_size.(NAT.(valueNAT(v_sv_size) + 1)) ->
-    X ) )
-      [] ( (valueNAT(v_sv_size) > 0) & output.head(valueSNA(v_sv_buff)) ->
-    ( (valueNAT(v_sv_size) > 0) & mset.sv_size.(NAT.(valueNAT(v_sv_size) - 1)) ->
-    mget.sv_buff?v_sv_buff:(typeSNA(sv_buff)) ->
-    mset.sv_buff.(SNA.tail(valueSNA(v_sv_buff))) ->
-    X ) )) within X );
+  within ( ( ( mset_sv_buff.<> ->
+      mset_sv_size.0 ->
+      ( let X = mget_sv_buff?v_sv_buff ->
+      mget_sv_size?v_sv_size ->
+      ( ( (v_sv_size < maxbuff)   & input?x ->
+      ( (v_sv_size < maxbuff)   & mset_sv_size.(v_sv_size + 1) ->
+      mget_sv_buff?v_sv_buff ->
+      mset_sv_buff.(v_sv_buff^<x>) ->
+      X
+ ) )
+      [] ( (v_sv_size > 0)   & output.head(v_sv_buff) ->
+      ( (v_sv_size > 0)   & mset_sv_size.(v_sv_size - 1) ->
+      mget_sv_buff?v_sv_buff ->
+      mset_sv_buff.tail(v_sv_buff) ->
+      X
+ ) )) within X );
       terminate -> SKIP )
       [| MEMI |] Memory(b_SNA,b_NAT))\MEMI )
-
-
-
-
---
---
---
--- ---------- Marcel
--- channel rdi, wrti: RingIndex.Direction.NatValue
---
---
--- MEM_I = {| mset, mget, terminate |}
---
---
--- Memory(b) =
---     ([] n:dom(b) @ mget.n!(apply(b,n)) -> Memory(b))
---     [] ([] n:dom(b) @ mset.n?x:typeNAT(n) -> Memory(over(b,n,x)))
---     [] ([] n:dom(b) @ mset.n?x:typeRIN(n) -> Memory(over(b,n,x)))
---     [] terminate -> SKIP
---
--- Memorise(P, b) =
---     ((P; terminate -> SKIP) [| MEM_I |] Memory(b)) \ MEM_I
---
--- --------------------------------
--- -- STATELESS RING
--- --------------------------------
---
--- RingCellMain =
---     (|~| v:NatValue @
---         mget.sv_v?v_sv_v:(typeRIN(sv_v)) ->
---         mset.sv_v!((tagRIN(sv_v)).v) ->
---         SKIP);
---     (let
---         MuCellX =
---             (mget.sv_v?v_sv_v:(typeRIN(sv_v)) ->
---                 (
---                 rd.req?dumb ->
---                     rd.ack!(valueRIN(v_sv_v)) ->
---                     SKIP
---                 []
---                 wrt.req?x ->
---                     mset.sv_v!((tagRIN(sv_v)).x) ->
---                     wrt.ack?dumb ->
---                     SKIP
---             ));
---             MuCellX
---     within
---         MuCellX)
---
--- MemoryRingCell =
---     let restrict(bs) = dres(bs,{sv_v})
---     MemoryNATVar(n,b_NAT) =
---        ( ( mget.n.apply(b_NAT,n) ->
---    MemoryNATVar(n,b_NAT)
---      [] mset.n?nv:typeNAT(n) ->
---    MemoryNATVar(n,over(b_NAT,n,nv)))
---      [] terminate -> SKIP)
---     MemoryRINVar(n,b_RIN) =
---        ( ( mget.n.apply(b_RIN,n) ->
---    MemoryRINVar(n,b_RIN)
---      [] mset.n?nv:typeRIN(n) ->
---    MemoryRINVar(n,over(b_RIN,n,nv)))
---      [] terminate -> SKIP)
---     MemoryNAT(b_NAT) =
---        ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
---     MemoryRIN(b_RIN) =
---        ( [| {| terminate |} |] n : dom(b_RIN) @ MemoryRINVar(n,b_RIN) )
---     Memory(b_NAT,b_RIN) =
---        ( MemoryRIN(b_RIN)
---      [| {| terminate |} |]
---      MemoryNAT(b_NAT) )
---     within
---         ((RingCellMain; terminate -> SKIP) [| MEM_I |] Memory(b_NAT1,b_RIN1)) \ MEM_I
---
---
---
---
--- MemoryIRCell(i) = MemoryRingCell [[rd <- rdi.i, wrt <- wrti.i]]
---
--- -- The distributed ring
--- MemoryDRing = ||| i: RingIndex @ MemoryIRCell(i)
---
--- --------------------------------
--- -- STATELESS CONTROLLER
--- --------------------------------
---
--- ControllerMain =
--- (mget.sv_cache?vsv_cache:(typeNAT(sv_cache)) ->
---  mget.sv_size?vsv_size:(typeNAT(sv_size)) ->
---  mget.sv_top?vsv_top:(typeRIN(sv_top)) ->
---  mget.sv_bot?vsv_bot:(typeRIN(sv_bot)) ->
---  mset.sv_cache.((tagNAT(sv_cache)).0) ->
---  mset.sv_size.((tagNAT(sv_size)).0) ->
---  mset.sv_top.((tagRIN(sv_top)).1) ->
---  mset.sv_bot.((tagRIN(sv_bot)).1) ->
---  SKIP);
--- let
---     MuControllerX =
---         (
---         mget.sv_cache?vsv_cache:(typeNAT(sv_cache)) ->
---         mget.sv_size?vsv_size:(typeNAT(sv_size)) ->
---         mget.sv_top?vsv_top:(typeRIN(sv_top)) ->
---         mget.sv_bot?vsv_bot:(typeRIN(sv_bot)) ->
---             (
---                (valueRIN(vsv_size) < maxbuff) &
---                     input?x ->
---         ---- THE READING BELOW BREAKS IT BECAUSE WE CAN NO LONGER GUARANTEEE THAT
---         ---- valueRIN(vsv_size) < maxbuff. Hence, incrementing it may take its valueRIN
---         ---- outside the range of the channel.
---         --            mget.sv_size?vsv_size:(typeRIN(sv_size)) ->
---             (
---                 (valueRIN(vsv_size) == 0) &
---                     mset.sv_cache.((tagNAT(sv_cache)).x) ->
---                     mset.sv_size.((tagNAT(sv_size)).1) ->
---                     SKIP
---                 []
---                 (valueRIN(vsv_size) > 0) &
---                     write.(valueRIN(vsv_top)).req!x ->
---                     write.(valueRIN(vsv_top)).ack?dumb ->
---                     mset.sv_size.((tagNAT(sv_size)).((valueNAT(vsv_size))+1)) ->
---                     mset.sv_top.((tagRIN(sv_top)).(((valueRIN(vsv_top)) % maxring)+1)) ->
---                     SKIP
---             )
---        []
---        (valueRIN(vsv_size) > 0) &
---             output!(valueRIN(vsv_cache)) ->
---             (
---                 (valueRIN(vsv_size) > 1) &
---                     (|~| dumb:NatValue @
---                         read.(valueRIN(vsv_bot)).req.dumb ->
---                         read.(valueRIN(vsv_bot)).ack?x ->
---                         mset.sv_cache.((tagNAT(sv_cache)).x) -> SKIP);
---                         (mset.sv_size.((tagNAT(sv_size)).((valueNAT(vsv_size)) - 1)) ->
---                          mset.sv_bot.((tagRIN(sv_bot)).(((valueRIN(vsv_bot)) % maxring)+1)) ->
---                                          SKIP)
---             []
---             (valueRIN(vsv_size) == 1) &
---                 mset.sv_size.((tagNAT(sv_size)).0) ->
---                                             SKIP
---             )
---             )
---         );
---         MuControllerX
--- within
---     MuControllerX
---
--- MemoryController =
---     let restrict(bs) = dres(bs,{sv_cache, sv_size, sv_top, sv_bot})
---     MemoryNATVar(n,b_NAT) =
---        ( ( mget.n.apply(b_NAT,n) ->
---    MemoryNATVar(n,b_NAT)
---      [] mset.n?nv:typeNAT(n) ->
---    MemoryNATVar(n,over(b_NAT,n,nv)))
---      [] terminate -> SKIP)
---     MemoryRINVar(n,b_RIN) =
---        ( ( mget.n.apply(b_RIN,n) ->
---    MemoryRINVar(n,b_RIN)
---      [] mset.n?nv:typeRIN(n) ->
---    MemoryRINVar(n,over(b_RIN,n,nv)))
---      [] terminate -> SKIP)
---     MemoryNAT(b_NAT) =
---        ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,b_NAT) )
---     MemoryRIN(b_RIN) =
---        ( [| {| terminate |} |] n : dom(b_RIN) @ MemoryRINVar(n,b_RIN) )
---     Memory(b_NAT,b_RIN) =
---        ( MemoryRIN(b_RIN)
---      [| {| terminate |} |]
---      MemoryNAT(b_NAT) )
---     within
---        ((ControllerMain; terminate -> SKIP) [| MEM_I |] Memory(b_NAT1,b_RIN1)) \ MEM_I
---
--- --------------------------------
--- -- THE RING BUFFER
--- --------------------------------
--- MemoryControllerR = MemoryController[[ read <- rdi, write <- wrti]]
--- MemoryDBuffer = (MemoryControllerR [| {| rdi, wrti |} |] MemoryDRing) \ {| rdi, wrti |}
