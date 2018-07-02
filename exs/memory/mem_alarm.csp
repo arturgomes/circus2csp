@@ -1,0 +1,1099 @@
+include "function_aux.csp"
+include "sequence_aux.csp"
+
+datatype ALARM = ON | OFF
+RANGE = {0..2}
+
+datatype UNIVERSE = ALA.ALARM | RAN.RANGE
+--Conversions
+valueALA(ALA.v) = v
+valueRAN(RAN.v) = v
+
+typeALA(x) = U_ALA
+typeRAN(x) = U_RAN
+
+tagALA(x) = ALA
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for ALA
+subtype U_ALA = ALA.ALARM
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec
+datatype NAME = sv_buzz | sv_sec | sv_min
+
+-- Subtype definition for RAN
+b_RAsv_buzz = {(sv_sec, RAN.0),(sv_min, RAN.0)}
+subtype NAME_RAN = sv_sec | sv_min
+NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
+
+-- Subtype definition for ALA
+b_ALA = {(sv_buzz, ALA.ON)}
+subtype NAME_ALA = sv_buzz
+NAMES_VALUES_ALA = seq({seq({(n,v) | v <- typeALA(n)}) | n <- NAME_ALA})
+
+-- Bindings definitions for RAN
+BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
+
+-- Bindings definitions for ALA
+BINDINGS_ALA = {set(b) | b <- set(distCartProd(NAMES_VALUES_ALA))}
+
+-- Channels
+
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+
+channel tick, time
+channel out : (RANGE,RANGE)
+channel inc, minsReq
+channel ans : RANGE
+Sync = {| inc,minsReq,ans |}
+channel snooze, radioOn
+
+--------------------------------------------------------------------------------
+-- Models
+-- I`m using internal choice of bindings so I can test for any binding set.
+--------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------
+-- 2 = Typed Memory
+----------------------------------------------------------------------------------
+Memory2(b_RAN, b_ALA) =
+    ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN, b_ALA))
+    []
+    ([] n:dom(b_ALA) @ mget.n!(apply(b_ALA,n)) -> Memory2(b_RAN, b_ALA))
+    []
+    ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x),b_ALA))
+    []
+    ([] n:dom(b_ALA) @ mset.n?x:typeALA(n) -> Memory2(b_RAN,over(b_ALA,n,x)))
+    []
+    terminate -> SKIP
+
+
+----------------------------------------------------------------------------------
+-- 3 - CTOC approach
+----------------------------------------------------------------------------------
+MemoryALAVar(n,b_ALA) =
+    mget.n.apply(b_ALA,n) -> MemoryALAVar(n,b_ALA)
+    []
+    mset.n?nv:typeALA(n) -> MemoryALAVar(n,over(b_ALA,n,nv))
+    []
+    terminate -> SKIP
+
+MemoryALA(b_ALA) =
+    ( [| {| terminate |} |] n : dom(b_ALA) @ MemoryALAVar(n,dres(b_ALA,{n})) )
+
+MemoryRANVar(n,b_RAN) =
+    mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+    []
+    mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+    []
+    terminate -> SKIP
+
+MemoryRAN(b_RAN) =
+    ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+
+Memory3(b_RAN, b_ALA) =
+    MemoryRAN(b_RAN) [|{|terminate|}|] MemoryALA(b_ALA)
+
+
+
+
+----------------------------------------------------------------------------------
+-- 4 - multiple mgets and msets for each state variable
+----------------------------------------------------------------------------------
+
+channel mget_sv_buzz, mset_sv_buzz : UNIVERSE
+channel mget_sv_min, mget_sv_sec, mset_sv_min, mset_sv_sec : UNIVERSE
+channel lget_sv_buzz, lset_sv_buzz : UNIVERSE
+channel lget_sv_min, lget_sv_sec, lset_sv_min, lset_sv_sec : UNIVERSE
+MEMIn = {| mget_sv_buzz, mset_sv_buzz, mget_sv_min, mget_sv_sec, mset_sv_min, mset_sv_sec |}
+Memory_sv_buzz(b_ALA) =
+    mget_sv_buzz.apply(b_ALA,sv_buzz) -> Memory_sv_buzz(b_ALA)
+    []
+    mset_sv_buzz?nv : typeALA(sv_buzz) -> Memory_sv_buzz(over(b_ALA,sv_buzz,nv))
+    []
+    terminate -> SKIP
+Memory_sv_min(b_RAN) =
+    mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+    []
+    mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+    []
+    terminate -> SKIP
+Memory_sv_sec(b_RAN) =
+    mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+    []
+    mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+    []
+    terminate -> SKIP
+Memory4(b_RAN, b_ALA) =
+    ((Memory_sv_buzz(b_ALA)
+    [| {| terminate |} |]
+    Memory_sv_min(b_RAN))
+    [| {| terminate |} |]
+    Memory_sv_sec(b_RAN))
+
+-- --------------------------------------------------------------------------------
+-- -- Models
+-- -- I`m using internal choice of bindings so I can test for any binding set.
+-- --------------------------------------------------------------------------------
+--
+-- --------------------------------------------------------------------------------
+-- -- Typed approach
+-- --------------------------------------------------------------------------------
+-- M2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory2(b_RAN, b_ALA)
+-- M2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
+--           @ Memory2(b_RAN, b_ALA)[[mget.sv_buzz <- mget_sv_buzz,
+--                                     mget.sv_min <- mget_sv_min,
+--                                     mget.sv_sec <- mget_sv_sec,
+--                                     mset.sv_buzz <- mset_sv_buzz,
+--                                     mset.sv_min <- mset_sv_min,
+--                                     mset.sv_sec <- mset_sv_sec]]
+--
+-- --------------------------------------------------------------------------------
+-- -- Distributed approach
+-- --------------------------------------------------------------------------------
+-- M3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory3(b_RAN, b_ALA)
+-- M3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
+--           @ Memory3(b_RAN, b_ALA)[[mget.sv_buzz <- mget_sv_buzz,
+--                                   mget.sv_min <- mget_sv_min,
+--                                   mget.sv_sec <- mget_sv_sec,
+--                                   mset.sv_buzz <- mset_sv_buzz,
+--                                   mset.sv_min <- mset_sv_min,
+--                                   mset.sv_sec <- mset_sv_sec]]
+--
+-- --------------------------------------------------------------------------------
+-- -- One mget and mset for each state variable
+-- --------------------------------------------------------------------------------
+-- M4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory4(b_RAN, b_ALA)
+-- M4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @
+--           Memory4(b_RAN, b_ALA)[[mget_sv_buzz <- mget.sv_buzz,
+--                                 mget_sv_min <- mget.sv_min,
+--                                 mget_sv_sec <- mget.sv_sec,
+--                                 mset_sv_buzz <- mset.sv_buzz,
+--                                 mset_sv_min <- mset.sv_min,
+--                                 mset_sv_sec <- mset.sv_sec]]
+--
+-- --------------------------------------------------------------------------------
+-- -- Verification
+-- --------------------------------------------------------------------------------
+-- -- is the distributed approach a refinement of the typed one?
+-- assert M2 [FD= M3 -- passed
+-- -- is the typed approach a refinement of the distributed one?
+-- assert M3 [FD= M2 -- passed
+-- -- so they are equivalent!
+--
+-- -- is the prefixed approach a refinement of the typed one?
+-- assert M2a [FD= M4 -- passed
+-- -- is the typed approach a refinement of the prefixed one?
+-- assert M4 [FD= M2a -- passed
+-- -- so they are equivalent!
+--
+-- -- is the prefixed approach a refinement of the CTOC one?
+-- assert M3a [FD= M4 -- passed
+-- -- is the CTOC approach a refinement of the prefixed one?
+-- assert M4 [FD= M3a -- passed
+-- -- so they are equivalent!
+--
+-- --------------------------------------------------------------------------------
+-- -- Now we test the inverse, with renaming from the
+-- -- prefixed mgets to the other approaches
+-- --------------------------------------------------------------------------------
+-- assert M4a [FD= M2 -- passed
+-- assert M4a [FD= M3 -- passed
+-- assert M3 [FD= M4a -- passed
+-- assert M2 [FD= M4a -- passed
+--
+--
+-- --------------------------------------------------------------------------------
+-- -- Finally, we test if all approaches renamed to
+-- -- prefixed mgets are refinement from each other
+-- --------------------------------------------------------------------------------
+-- assert M2a [FD= M3a -- passed
+-- assert M3a [FD= M4 -- passed
+-- assert M4  [FD= M3a -- passed
+-- assert M3a [FD= M2a -- passed
+
+
+
+-- Alarm Models
+
+-- Typed
+WakeUpOK2(b_RAN,b_ALA) =
+  let
+
+    Memory2(b_RAN, b_ALA) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN, b_ALA))
+        []
+        ([] n:dom(b_ALA) @ mget.n!(apply(b_ALA,n)) -> Memory2(b_RAN, b_ALA))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x),b_ALA))
+        []
+        ([] n:dom(b_ALA) @ mset.n?x:typeALA(n) -> Memory2(b_RAN,over(b_ALA,n,x)))
+        []
+        terminate -> SKIP
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    mset.sv_buzz.(ALA.OFF) ->
+    ( let X = mget.sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset.sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset.sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN,b_ALA))\MEMI )
+
+WakeUp2(b_RAN,b_ALA) =
+  let
+    Memory2(b_RAN, b_ALA) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN, b_ALA))
+        []
+        ([] n:dom(b_ALA) @ mget.n!(apply(b_ALA,n)) -> Memory2(b_RAN, b_ALA))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x),b_ALA))
+        []
+        ([] n:dom(b_ALA) @ mset.n?x:typeALA(n) -> Memory2(b_RAN,over(b_ALA,n,x)))
+        []
+        terminate -> SKIP
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    mset.sv_buzz.(ALA.OFF) ->
+    ( let X = tick ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget.sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset.sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset.sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN,b_ALA))\MEMI )
+
+Minutes2(b_RAN) =
+  let
+    Memory2(b_RAN) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x)))
+        []
+        terminate -> SKIP
+  within ( ( ( mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc ->
+    mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq ->
+    ans.valueRAN(v_sv_min) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN))\MEMI )
+
+Seconds2(b_RAN) =
+  let
+    Memory2(b_RAN) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x)))
+        []
+        terminate -> SKIP
+     MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) ->
+    MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) ->
+    MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset.sv_min.(RAN.t_sv_min) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN))\MEMI )
+
+Chrono2(b_RAN) =
+  let
+    Memory2(b_RAN) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x)))
+        []
+        terminate -> SKIP
+     MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) ->
+    MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) ->
+    MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+
+  within ( ( ( ( mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( lset.sv_sec.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    lset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset.sv_min.(RAN.t_sv_min) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
+      [| Sync |]
+      ( ( lset.sv_min.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc ->
+    lset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq ->
+    ans.valueRAN(v_sv_min) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN))\MEMI )
+
+AChrono2(b_RAN) =
+  let
+    Memory2(b_RAN) =
+        ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN))
+        []
+        ([] n:dom(b_RAN) @ mset.n?x:typeRAN(n) -> Memory2(over(b_RAN,n,x)))
+        []
+        terminate -> SKIP
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN))\MEMI )
+
+
+-- CTOC
+WakeUpOK3(b_RAN,b_ALA) =
+  let
+    MemoryALAVar(n,b_ALA) =
+        mget.n.apply(b_ALA,n) -> MemoryALAVar(n,b_ALA)
+        []
+        mset.n?nv:typeALA(n) -> MemoryALAVar(n,over(b_ALA,n,nv))
+        []
+        terminate -> SKIP
+    MemoryALA(b_ALA) =
+        ( [| {| terminate |} |] n : dom(b_ALA) @ MemoryALAVar(n,dres(b_ALA,{n})) )
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        []
+        mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        []
+        terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN, b_ALA) =
+        MemoryRAN(b_RAN) [|{|terminate|}|] MemoryALA(b_ALA)
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    mset.sv_buzz.(ALA.OFF) ->
+    ( let X = mget.sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset.sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset.sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN,b_ALA))\MEMI )
+
+WakeUp3(b_RAN,b_ALA) =
+  let
+    MemoryALAVar(n,b_ALA) =
+        mget.n.apply(b_ALA,n) -> MemoryALAVar(n,b_ALA)
+        []
+        mset.n?nv:typeALA(n) -> MemoryALAVar(n,over(b_ALA,n,nv))
+        []
+        terminate -> SKIP
+    MemoryALA(b_ALA) =
+        ( [| {| terminate |} |] n : dom(b_ALA) @ MemoryALAVar(n,dres(b_ALA,{n})) )
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        []
+        mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        []
+        terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN, b_ALA) =
+        MemoryRAN(b_RAN) [|{|terminate|}|] MemoryALA(b_ALA)
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    mset.sv_buzz.(ALA.OFF) ->
+    ( let X = tick ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget.sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset.sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset.sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN,b_ALA))\MEMI )
+
+Minutes3(b_RAN) =
+  let
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        [] terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN) = MemoryRAN(b_RAN)
+  within ( ( ( mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc -> mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq -> ans.valueRAN(v_sv_min) -> SKIP); X )
+      within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN))\MEMI )
+
+Seconds3(b_RAN) =
+  let
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        []
+        mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        []
+        terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN) =
+        MemoryRAN(b_RAN)
+
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset.sv_min.(RAN.t_sv_min) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN))\MEMI )
+
+
+Chrono3(b_RAN) =
+  let
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        [] terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN) =
+        MemoryRAN(b_RAN)
+     MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) ->
+    MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) ->
+    MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+
+  within ( ( ( ( mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( lset.sv_sec.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    lset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset.sv_min.(RAN.t_sv_min) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
+      [| Sync |]
+      ( ( lset.sv_min.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc ->
+    lset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq ->
+    ans.valueRAN(v_sv_min) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN))\MEMI )
+
+AChrono3(b_RAN) =
+  let
+    MemoryRANVar(n,b_RAN) =
+        mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv))
+        [] terminate -> SKIP
+    MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,dres(b_RAN,{n})) )
+    Memory3(b_RAN) = MemoryRAN(b_RAN)
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+              mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+              ( ( tick ->
+              mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+              mset.sv_min.(RAN.valueRAN(v_sv_min)) ->
+              mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+              ((valueRAN(v_sv_sec) == 0) &
+                   mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+                    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+                    mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+                    mset.sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP
+              [] (valueRAN(v_sv_sec) != 0) & SKIP)
+              [] time -> out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP); X )
+      within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory3(b_RAN))\MEMI )
+
+-- Multiple mgets and msets
+WakeUpOK4(b_RAN,b_ALA) =
+  let
+  Memory_sv_buzz(b_ALA) =
+      mget_sv_buzz.apply(b_ALA,sv_buzz) -> Memory_sv_buzz(b_ALA)
+      [] mset_sv_buzz?nv : typeALA(sv_buzz) -> Memory_sv_buzz(over(b_ALA,sv_buzz,nv))
+      [] terminate -> SKIP
+  Memory_sv_min(b_RAN) =
+      mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+      [] mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+      [] terminate -> SKIP
+  Memory_sv_sec(b_RAN) =
+      mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+      [] mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+      [] terminate -> SKIP
+  Memory4(b_RAN, b_ALA) =
+      ((Memory_sv_buzz(b_ALA)
+      [| {| terminate |} |]
+      Memory_sv_min(b_RAN))
+      [| {| terminate |} |]
+      Memory_sv_sec(b_RAN))
+
+  within ( ( ( mset_sv_sec.(RAN.0) ->
+    mset_sv_min.(RAN.0) ->
+    mset_sv_buzz.(ALA.OFF) ->
+    ( let X = mget_sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( tick ->
+    mset_sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset_sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset_sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset_sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset_sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset_sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN,b_ALA))\MEMIn )
+
+WakeUp4(b_RAN,b_ALA) =
+  let
+  Memory_sv_buzz(b_ALA) =
+      mget_sv_buzz.apply(b_ALA,sv_buzz) -> Memory_sv_buzz(b_ALA)
+      [] mset_sv_buzz?nv : typeALA(sv_buzz) -> Memory_sv_buzz(over(b_ALA,sv_buzz,nv))
+      [] terminate -> SKIP
+  Memory_sv_min(b_RAN) =
+      mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+      [] mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+      [] terminate -> SKIP
+  Memory_sv_sec(b_RAN) =
+      mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+      [] mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+      [] terminate -> SKIP
+  Memory4(b_RAN, b_ALA) =
+      ((Memory_sv_buzz(b_ALA)
+      [| {| terminate |} |]
+      Memory_sv_min(b_RAN))
+      [| {| terminate |} |]
+      Memory_sv_sec(b_RAN))
+  within ( ( ( mset_sv_sec.(RAN.0) ->
+    mset_sv_min.(RAN.0) ->
+    mset_sv_buzz.(ALA.OFF) ->
+    ( let X = tick ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    mset_sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset_sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget_sv_buzz?v_sv_buzz:(typeALA(sv_buzz)) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( ( ( ( (valueRAN(v_sv_sec) == 0) & mset_sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset_sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] ( (valueRAN(v_sv_min) == 1) & radioOn ->
+    mset_sv_buzz.(ALA.ON) -> SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP)
+      [] snooze ->
+    mset_sv_buzz.(ALA.OFF) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory2(b_RAN,b_ALA))\MEMIn )
+
+Minutes4(b_RAN) =
+  let
+  Memory_sv_min(b_RAN) =
+      mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+      [] mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+      [] terminate -> SKIP
+  Memory_sv_sec(b_RAN) =
+      mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+      [] mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+      [] terminate -> SKIP
+  Memory4(b_RAN) =
+      (Memory_sv_min(b_RAN)
+      [| {| terminate |} |]
+      Memory_sv_sec(b_RAN))
+  within ( ( ( mset_sv_min.(RAN.0) ->
+    ( let X = mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc ->
+    mset_sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq ->
+    ans.valueRAN(v_sv_min) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory4(b_RAN))\MEMIn )
+
+Seconds4(b_RAN) =
+  let
+  Memory_sv_min(b_RAN) =
+      mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+      [] mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+      [] terminate -> SKIP
+  Memory_sv_sec(b_RAN) =
+      mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+      [] mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+      [] terminate -> SKIP
+  Memory4(b_RAN) =
+      (Memory_sv_min(b_RAN)
+      [| {| terminate |} |]
+      Memory_sv_sec(b_RAN))
+  within ( ( ( mset_sv_sec.(RAN.0) ->
+    ( let X = mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset_sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset_sv_min.(RAN.t_sv_min) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory4(b_RAN))\MEMIn )
+
+Chrono4(b_RAN) =
+  let
+  Memory_sv_min(b_RAN) =
+      mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+      [] mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+      [] terminate -> SKIP
+  Memory_sv_sec(b_RAN) =
+      mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+      [] mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+      [] terminate -> SKIP
+  Memory4(b_RAN) =
+      (Memory_sv_min(b_RAN)
+      [| {| terminate |} |]
+      Memory_sv_sec(b_RAN))
+
+  MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) -> MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) -> MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+
+  within ( ( ( ( mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( ( lset.sv_sec.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    lset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    lget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         inc -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    minsReq ->
+    ans?t_sv_min ->
+    mset_sv_min.(RAN.t_sv_min) ->
+    mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_sec>) )\MEML )
+      [| Sync |]
+      ( ( lset.sv_min.(RAN.0) ->
+    ( ( let X = lget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    ( ( inc ->
+    lset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) -> SKIP
+      [] minsReq ->
+    ans.valueRAN(v_sv_min) -> SKIP);
+      X ) within X );
+      lterminate -> SKIP )
+      [| MEML |]
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
+      terminate -> SKIP )
+      [| MEMI |] Memory4(b_RAN))\MEMIn )
+
+AChrono4(b_RAN) =
+  let
+    Memory_sv_min(b_RAN) =
+        mget_sv_min.apply(b_RAN,sv_min) -> Memory_sv_min(b_RAN)
+        []
+        mset_sv_min?nv : typeRAN(sv_min) -> Memory_sv_min(over(b_RAN,sv_min,nv))
+        []
+        terminate -> SKIP
+    Memory_sv_sec(b_RAN) =
+        mget_sv_sec.apply(b_RAN,sv_sec) -> Memory_sv_sec(b_RAN)
+        []
+        mset_sv_sec?nv : typeRAN(sv_sec) -> Memory_sv_sec(over(b_RAN,sv_sec,nv))
+        []
+        terminate -> SKIP
+    Memory4(b_RAN) =
+        (Memory_sv_min(b_RAN)
+        [| {| terminate |} |]
+        Memory_sv_sec(b_RAN))
+  within ( ( ( mset_sv_sec.(RAN.0) ->
+    mset_sv_min.(RAN.0) ->
+    ( let X = mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset_sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % 2) ->
+    mset_sv_min.(RAN.valueRAN(v_sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ((valueRAN(v_sv_sec) == 0) &
+         mget_sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget_sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    mset_sv_min.(RAN.(valueRAN(v_sv_min) + 1) % 2) ->
+    mset_sv_sec.(RAN.valueRAN(v_sv_sec)) -> SKIP [] (valueRAN(v_sv_sec) != 0) &
+         SKIP)
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory4(b_RAN))\MEMIn )
+
+
+-- Assertions
+HAC2 = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)
+HAC2a = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+HC2 = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)
+HC2a = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+HWU2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)
+HWU2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+CF2 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )
+CF2a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+S2 = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)
+S2a = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+M2 = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)
+M2a = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+HWUok2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)
+HWUok2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+
+HAC3 = |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)
+HAC3a = |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+HC3 = |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)
+HC3a = |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+HWU3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)
+HWU3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+CF3 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )
+CF3a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+S3 = |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)
+S3a = |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+M3 = |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)
+M3a = |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+HWUok3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)
+HWUok3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+
+HAC4 = |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)
+HAC4a = |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec]]
+HC4 = |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)
+HC4a = |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec]]
+HWU4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)
+HWU4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec,
+                                                  mget_sv_buzz <- mget.sv_buzz,
+                                                  mset_sv_buzz <- mset.sv_buzz]]
+HWUok4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)
+HWUok4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec,
+                                                  mget_sv_buzz <- mget.sv_buzz,
+                                                  mset_sv_buzz <- mset.sv_buzz]]
+CF4 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )
+CF4a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec]]
+S4 = |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)
+S4a = |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec]]
+M4 = |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)
+M4a = |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)[[mget_sv_min <- mget.sv_min,
+                                                  mget_sv_sec <- mget.sv_sec,
+                                                  mset_sv_min <- mset.sv_min,
+                                                  mset_sv_sec <- mset.sv_sec]]
+
+
+-- assert CF2 [FD= CF3
+-- -- assert CF3 [FD= CF2
+-- assert CF3 [FD= CF4a -- failed
+-- -- assert CF4a [FD= CF3
+-- -- assert HAC2 [FD= HAC3
+-- -- assert HAC3 [FD= HAC2
+-- assert HAC3 [FD= HAC4a -- failed
+-- -- assert HAC4a [FD= HAC3
+-- -- assert HC2 [FD= HC3
+-- -- assert HC3 [FD= HC2
+-- assert HC3 [FD= HC4a -- failed
+-- -- assert HC4a [FD= HC3
+-- -- assert HWU2 [FD= HWU3
+-- -- assert HWU3 [FD= HWU2
+-- assert HWU3 [FD= HWU4a -- failed
+-- -- assert HWU4a [FD= HWU3
+-- -- assert HWUok2 [FD= HWUok3
+-- -- assert HWUok3 [FD= HWUok2
+-- assert HWUok3 [FD= HWUok4a -- failed
+-- -- assert HWUok4a [FD= HWUok3
+-- -- assert M2 [FD= M3
+-- -- assert M3 [FD= M2
+-- assert M3 [FD= M4a -- failed
+-- -- assert M4a [FD= M3
+-- -- assert S2 [FD= S3
+-- -- assert S3 [FD= S2
+-- assert S3 [FD= S4a -- failed
+-- -- assert S4a [FD= S3
+-- -- assert CF2a [FD= CF3a
+-- -- assert CF3a [FD= CF2a
+-- assert CF3a [FD= CF4 -- failed
+-- -- assert CF4 [FD= CF3a
+-- -- assert HAC2a [FD= HAC3a
+-- -- assert HAC3a [FD= HAC2a
+-- assert HAC3a [FD= HAC4 -- failed
+-- -- assert HAC4 [FD= HAC3a
+-- -- assert HC2a [FD= HC3a
+-- -- assert HC3a [FD= HC2a
+-- assert HC3a [FD= HC4 -- failed
+-- -- assert HC4 [FD= HC3a
+-- -- assert HWU2a [FD= HWU3a
+-- -- assert HWU3a [FD= HWU2a
+-- assert HWU3a [FD= HWU4 -- failed
+-- -- assert HWU4 [FD= HWU3a
+-- -- assert HWUok2a [FD= HWUok3a
+-- -- assert HWUok3a [FD= HWUok2a
+-- assert HWUok3a [FD= HWUok4 -- failed
+-- -- assert HWUok4 [FD= HWUok3a
+-- -- assert M2a [FD= M3a
+-- -- assert M3a [FD= M2a
+-- assert M3a [FD= M4 -- failed
+-- -- assert M4 [FD= M3a
+-- -- assert S2a [FD= S3a
+-- -- assert S3a [FD= S2a
+-- assert S3a [FD= S4 -- failed
+-- -- assert S4 [FD= S3a

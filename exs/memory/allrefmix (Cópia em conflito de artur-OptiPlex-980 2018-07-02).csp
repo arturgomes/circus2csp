@@ -2,7 +2,7 @@ include "function_aux.csp"
 include "sequence_aux.csp"
 
 datatype NAME = n1 | n2 | r1 | r2
-NatValue = {0..5}
+NatValue = {0..3}
 datatype RANGE = min | mid | max
 
 datatype UNIVERSE =  NAT.NatValue | RAN.RANGE
@@ -58,7 +58,9 @@ channel mget, mset : NAME.UNIVERSE
 channel terminate
 
 
+----------------------------------------------------------------------------------
 -- 1 - D241 approach of the memory model
+----------------------------------------------------------------------------------
 --
 -- Memory1(b) =
 --      ([] n :dom(b) @ mget.n.apply(b,n) -> Memory1(b))
@@ -68,7 +70,9 @@ channel terminate
 --      terminate -> SKIP
 
 
+----------------------------------------------------------------------------------
 -- 2 = Typed Memory
+----------------------------------------------------------------------------------
 Memory2(b_RAN, b_NAT) =
     ([] n:dom(b_RAN) @ mget.n!(apply(b_RAN,n)) -> Memory2(b_RAN, b_NAT))
     []
@@ -81,7 +85,9 @@ Memory2(b_RAN, b_NAT) =
     terminate -> SKIP
 
 
+----------------------------------------------------------------------------------
 -- 3 - CTOC approach
+----------------------------------------------------------------------------------
 MemoryNATVar(n,b_NAT) =
     mget.n.apply(b_NAT,n) -> MemoryNATVar(n,b_NAT)
     []
@@ -108,7 +114,9 @@ Memory3(b_RAN, b_NAT) =
 
 
 
+----------------------------------------------------------------------------------
 -- 4 - multiple mgets and msets for each state variable
+----------------------------------------------------------------------------------
 
 channel mget_n1, mget_n2, mset_n1, mset_n2 : UNIVERSE
 channel mget_r1, mget_r2, mset_r1, mset_r2 : UNIVERSE
@@ -145,20 +153,27 @@ Memory4(b_RAN, b_NAT) =
     Memory_r1(b_RAN))
     [| {| terminate |} |]
     Memory_r2(b_RAN))
-
+--------------------------------------------------------------------------------
 -- Models
 -- I`m using internal choice of bindings so I can test for any binding set.
+--------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
+-- D24.1 -- Does not work for mixed types
+--------------------------------------------------------------------------------
 -- M1 = |~| b: BINDINGS @ Memory1(b)
 -- M1a = |~| b: BINDINGS @ Memory1(b)[[mget.n1 <- mget_n1,
---                           mget.n2 <- mget_n2,
---                           mget.r1 <- mget_r1,
---                           mget.r2 <- mget_r2,
---                           mset.n1 <- mset_n1,
---                           mset.n2 <- mset_n2,
---                           mset.r1 <- mset_r1,
---                           mset.r2 <- mset_r2]]
+--                                     mget.n2 <- mget_n2,
+--                                     mget.r1 <- mget_r1,
+--                                     mget.r2 <- mget_r2,
+--                                     mset.n1 <- mset_n1,
+--                                     mset.n2 <- mset_n2,
+--                                     mset.r1 <- mset_r1,
+--                                     mset.r2 <- mset_r2]]
 
+--------------------------------------------------------------------------------
+-- Typed approach
+--------------------------------------------------------------------------------
 M2 = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT @ Memory2(b_RAN, b_NAT)
 M2a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT
           @ Memory2(b_RAN, b_NAT)[[mget.n1 <- mget_n1,
@@ -169,6 +184,10 @@ M2a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT
                                     mset.n2 <- mset_n2,
                                     mset.r1 <- mset_r1,
                                     mset.r2 <- mset_r2]]
+
+--------------------------------------------------------------------------------
+-- Distributed approach
+--------------------------------------------------------------------------------
 M3 = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT @ Memory3(b_RAN, b_NAT)
 M3a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT
           @ Memory3(b_RAN, b_NAT)[[mget.n1 <- mget_n1,
@@ -180,6 +199,9 @@ M3a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT
                                   mset.r1 <- mset_r1,
                                   mset.r2 <- mset_r2]]
 
+--------------------------------------------------------------------------------
+-- One mget and mset for each state variable
+--------------------------------------------------------------------------------
 M4 = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT @ Memory4(b_RAN, b_NAT)
 M4a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT @
           Memory4(b_RAN, b_NAT)[[mget_n1 <- mget.n1,
@@ -191,22 +213,42 @@ M4a = |~| b_RAN:BINDINGS_RAN, b_NAT:BINDINGS_NAT @
                                 mset_r1 <- mset.r1,
                                 mset_r2 <- mset.r2]]
 
-
+--------------------------------------------------------------------------------
 -- Verification
-
--- assert M1 [FD= M2 -- fail
--- assert M2 [FD= M1 -- fail
+--------------------------------------------------------------------------------
+-- is the distributed approach a refinement of the typed one?
 assert M2 [FD= M3 -- passed
+-- is the typed approach a refinement of the distributed one?
 assert M3 [FD= M2 -- passed
--- assert M1a [FD= M4 -- passed
--- assert M4 [FD= M1a -- passed
+-- so they are equivalent!
+
+-- is the prefixed approach a refinement of the typed one?
 assert M2a [FD= M4 -- passed
+-- is the typed approach a refinement of the prefixed one?
 assert M4 [FD= M2a -- passed
+-- so they are equivalent!
+
+-- is the prefixed approach a refinement of the CTOC one?
 assert M3a [FD= M4 -- passed
+-- is the CTOC approach a refinement of the prefixed one?
 assert M4 [FD= M3a -- passed
--- assert M4a [FD= M1 -- fail
+-- so they are equivalent!
+
+--------------------------------------------------------------------------------
+-- Now we test the inverse, with renaming from the
+-- prefixed mgets to the other approaches
+--------------------------------------------------------------------------------
 assert M4a [FD= M2 -- passed
 assert M4a [FD= M3 -- passed
--- assert M1 [FD= M4a -- fail
-assert M2 [FD= M4a -- passed
 assert M3 [FD= M4a -- passed
+assert M2 [FD= M4a -- passed
+
+
+--------------------------------------------------------------------------------
+-- Finally, we test if all approaches renamed to
+-- prefixed mgets are refinement from each other
+--------------------------------------------------------------------------------
+assert M2a [FD= M3a -- passed
+assert M3a [FD= M4 -- passed
+assert M4  [FD= M3a -- passed
+assert M3a [FD= M2a -- passed

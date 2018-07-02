@@ -1,0 +1,83 @@
+include "function_aux.csp"
+
+datatype NAME = v_1 | v_2
+NatValue = {0}
+
+datatype UNIVERSE =  NAT.NatValue
+valueNAT(NAT.v) = v
+typeNAT(x) = U_NAT
+tagNAT(x) = NAT
+subtype U_NAT = NAT.NatValue
+subtype NAME_NAT = v_1 | v_2
+NAMES_VALUES_NAT = seq({seq({(n,v) | v <- typeNAT(n)}) | n <- NAME_NAT})
+
+b_nat = {(v_1, NAT.0),(v_2, NAT.0)}
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+channel d : NatValue
+
+--
+MemoryNATVar(n,b_NAT) =
+    ( ( mget.n.apply(b_NAT,n) -> MemoryNATVar(n,b_NAT)
+      [] mset.n?nv:typeNAT(n) -> MemoryNATVar(n,over(b_NAT,n,nv)))
+      [] terminate -> SKIP)
+
+MemoryNAT(b_NAT) =
+   ( [| {| terminate |} |] n : dom(b_NAT) @ MemoryNATVar(n,dres(b_NAT,{n})) )
+
+Memory(b_NAT) =
+   ( ([] n :dom(b_NAT) @ mget.n.apply(b_NAT,n) -> Memory(b_NAT)
+     [] ([] n :dom(b_NAT) @ mset.n?nv:typeNAT(n) -> Memory(over(b_NAT,n,nv))))
+     [] terminate -> SKIP)
+
+-- assert (Memory(b_nat) [|{|mget,mset,terminate|}|] MemoryNAT(b_nat))[FD= MemoryNAT(b_nat)
+-- assert (Memory(b_nat) [|{|mget,mset,terminate|}|] MemoryNAT(b_nat))[FD= Memory(b_nat)
+-- assert Memory(b_nat) [FD= (Memory(b_nat) [|{|mget,mset,terminate|}|] MemoryNAT(b_nat))
+-- assert MemoryNAT(b_nat) [FD= (Memory(b_nat) [|{|mget,mset,terminate|}|] MemoryNAT(b_nat))
+-- assert MemoryNAT(b_nat) [T= Memory(b_nat)
+-- assert Memory(b_nat) [T= MemoryNAT(b_nat)
+
+
+
+S1 = MemoryNAT(b_nat)
+assert S1 [FD= S2
+assert S2 [FD= S1
+S2 = ( ( mget.v_1.apply(b_nat,v_1) -> MemoryNATVar(v_1,dres(b_nat,{v_1}))
+  [] mset.v_1?nv:typeNAT(v_1) -> MemoryNATVar(v_1,dres(over(b_nat,v_1,nv),{v_1}))
+  [] terminate -> SKIP)
+  [|{|terminate|}|]
+  ( ( mget.v_2.apply(b_nat,v_2) -> MemoryNATVar(v_2,dres(b_nat,{v_2}))
+    [] mset.v_2?nv:typeNAT(v_2) -> MemoryNATVar(v_2,dres(over(b_nat,v_2,nv),{v_2})))
+    [] terminate -> SKIP))
+assert S2 [FD= S3
+assert S3 [FD= S2
+S3 =
+  mget.v_1.apply(b_nat,v_1) -> (MemoryNATVar(v_1,dres(b_nat,{v_1})) [|{|terminate|}|] MemoryNATVar(v_2,dres(b_nat,{v_2})))
+  [] mget.v_2.apply(b_nat,v_2) -> (MemoryNATVar(v_2,dres(b_nat,{v_2})) [|{|terminate|}|] MemoryNATVar(v_1,dres(b_nat,{v_1})))
+  [] mset.v_1?nv:typeNAT(v_1) -> (MemoryNATVar(v_1,dres(over(b_nat,v_1,nv),{v_1})) [|{|terminate|}|] MemoryNATVar(v_2,dres(over(b_nat,v_1,nv),{v_2})))
+  [] mset.v_2?nv:typeNAT(v_2) -> (MemoryNATVar(v_2,dres(over(b_nat,v_2,nv),{v_2})) [|{|terminate|}|] MemoryNATVar(v_1,dres(over(b_nat,v_2,nv),{v_1})))
+  [] terminate -> (SKIP [|{|terminate|}|] SKIP)
+assert S3 [FD= S4
+assert S4 [FD= S3
+S4 =
+  mget.v_1.apply(b_nat,v_1) -> MemoryNAT(b_nat)
+  [] mget.v_2.apply(b_nat,v_2) -> MemoryNAT(b_nat)
+  [] mset.v_1?nv:typeNAT(v_1) -> MemoryNAT(over(b_nat,v_1,nv))
+  [] mset.v_2?nv:typeNAT(v_2) -> MemoryNAT(over(b_nat,v_2,nv))
+  [] terminate -> SKIP
+assert S4 [FD= S5
+assert S5 [FD= S4
+S5 =
+  ([] n:dom(b_nat) @ mget.n.apply(b_nat,n) -> MemoryNAT(b_nat))
+  [] ([] n:dom(b_nat) @ mset.n?nv:typeNAT(n) -> MemoryNAT(over(b_nat,n,nv)))
+  [] terminate -> SKIP
+assert S5 [FD= S6
+assert S6 [FD= S5
+S6 =
+  ([] n:dom(b_nat) @ mget.n.apply(b_nat,n) -> Memory(b_nat))
+  [] ([] n:dom(b_nat) @ mset.n?nv:typeNAT(n) -> Memory(over(b_nat,n,nv)))
+  [] terminate -> SKIP
+assert S1 [FD= S6
+assert S6 [FD= S1
+
+assert (MemoryNATVar(v_2,dres(over(b_nat,v_1,NAT.0),{v_2}))) [FD= (MemoryNATVar(v_2,b_nat))
