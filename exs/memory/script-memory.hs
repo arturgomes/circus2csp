@@ -13,12 +13,11 @@ import Data.Maybe (isJust, fromJust)
 import Data.Function (on)
 
 main = do writeFile "result.txt" ""
-          batchFDR4 "mem_alarm.csp" assertions
-
-
-
-
-
+          bf <- batchFDR4 "mem_alarm.csp" assertions
+          writeFile "ref_raw1.txt" (uwl $ makeRefMatrix1 bf)
+          -- writeFile "ref_matrix.txt" (makeRefMatrix bf)
+          -- writeFile "ref_latex.txt" (makeRefTabLatex bf)
+          print bf
 data RefModel = FailDiv
               | Fail
               | Traces
@@ -112,37 +111,36 @@ makeRefAssert' x = "assert "++(getAssertion x)
 Parsing results from assertions
 -}
 
--- parseAssert f = map words . drop 2 . lines  <$>  readFile f
+parseAssert2 a f = makeRAssert1 a $ map words $ drop 2 $ lines f
 parseAssert a t f =  makeRAssert a t <$> map words . drop 2 . lines  <$>  readFile f
-parseAssert1 a t f =  makeRAssert1 a t <$> map words . drop 2 . lines  <$>  readFile f
+parseAssert1 a f =  makeRAssert1 a <$> map words . drop 2 . lines  <$>  readFile f
 -- parseAssert file = map words . drop 2 . lines  <$> readFile file
 -- [a, b, c, d, e, f, g]
 -- [["CF2",":[divergence","free]:"],
 --   ["Log:"],
 --   ["Result:","Passed"],
---   ["Visited","States:","2,428"],
+--   ["Visited","States:","2,m4m28"],
 --   ["Visited","Transitions:","3,967"],
 --   ["Visited","Plys:","69"],
---   ["Estimated","Total","Storage:","268MB"]]
+--   ["Estimated","Total","Storage:","m268MB"]]
 makeRAssert a t [_, _, c, d, e, f, g]
-        = Just $ ResAssertion{assertion=a,
+        = return [ResAssertion{assertion=a,
                               result=(concat $ drop 1 c),
                               sv=(concat $ drop 2 d),
                               tv=(concat $ drop 2 e),
                               pv=(concat $ drop 2 f),
-                              timeEx=t}
+                              timeEx=t}]
 makeRAssert a t [_, _, c, d, e, f, g,_,_,_,_,_,_,_,_]
-        = Just $ ResAssertion{assertion=a,
+        = return [ResAssertion{assertion=a,
                               result=(concat $ drop 1 c),
                               sv=(concat $ drop 2 d),
                               tv=(concat $ drop 2 e),
                               pv=(concat $ drop 2 f),
-                              timeEx=t}
-makeRAssert _ _ _= Nothing
+                              timeEx=t}]
+makeRAssert _ _ _= return []
 
-makeRAssert1 (Refinement FailDiv a b) t (_:_:c:xs) = [a, b, (concat $ drop 1 c), t]
-makeRAssert1 (Refinement FailDiv a b) t (_:_:c:xs) = [a, b,(concat $ drop 1 c), t]
-makeRAssert1 _ _ _= []
+makeRAssert1 (Refinement FailDiv a b) (_:_:c:xs) = return [a, b,head(drop 1 c)]
+makeRAssert1 _ _= return []
 --
 
 data Res = Failed | Passed  deriving Show
@@ -158,51 +156,128 @@ data RAssert = ResAssertion{assertion::Assertion,
                           } deriving Show
 -- data BatchAssert a = BA a [Assertion] deriving Show
 
-updateFile fileName update = do
-    handle <- openFile fileName ReadMode;
-    contents <- hGetContents handle;
-    hClose handle;
-    writeFile fileName $ update contents;
-
 -- Print the current directory structure with files
 fdr4 spec ass =
-  do copyFile spec "temp.txt"
-     appendFile "temp.txt" (makeRefAssert' ass)
-     start1 <- getCPUTime
-     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines temp.txt -q -f plain"]){ std_out = CreatePipe }
-     end1 <- (waitForProcess ph >> getCPUTime)
+  do copyFile spec "temp.txt";
+     appendFile "temp.txt" (makeRefAssert' ass);
+     start1 <- getCPUTime;
+     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines temp.txt -q -f plain"]){ std_out = CreatePipe };
+     end1 <- (waitForProcess ph >> getCPUTime);
      grepBytes <- hGetContents hout;
-     writeFile "tmp.txt" grepBytes;
-     copyFile "tmp.txt" "tmp1.txt"
-     let diff = (fromIntegral (end1 - start1)) / (10^12)
+     -- writeFile "tmp.txt" grepBytes;
+     -- copyFile "tmp.txt" "tmp1.txt";
+     let diff = (fromIntegral (end1 - start1)) / (10^12);
      -- aa <- parseAssert ass (show diff) "tmp1.txt";
-     aa <- parseAssert1 ass (show diff) "tmp1.txt";
-     appendFile "result.txt" ((show aa)++"\n");
+     let aa = (unlines $ map unwords (parseAssert2 ass grepBytes));
+     -- let bb = words aa;
+     -- aa <- parseAssert "tmp1.txt";
+     -- appendFile "ref_raw.txt" aa
+     cc <- (parseAssert2 ass grepBytes)
+     return cc;
 
-factorParseAssert (Just x) = (show x)++"\n"
-factorParseAssert Nothing = ""
---
 batchFDR4 spec xs
-  = mapM (fdr4 spec) (batchAssertions xs)
+  = do
+     dd <- (mapM (fdr4 spec) (batchAssertions xs))
+     -- let cc = ((map putToTuple $ concat dd));
+     appendFile "ref_raw.txt" (uwl dd)
+     return (unlines $ map unwords dd)
 
+-- makeRefMatrix1 f :: IO String -> IO [[String]]
+makeRefMatrix1 f = (makeRefMatrix (map makeTuple (wl f)))
+makeRefMatrix12 f = map makeTuple $ wl f
+
+-- makeTuple :: [[String]] -> [([String],[String],[String])]
+makeTuple :: [String] -> [(String, String, String)]
+makeTuple (a:b:c:_) = [(a,b,c)]
+
+wl f = map words $ lines f
+uwl f = unlines $ map unwords f
+-- getA :: (String,String,String) -> String
+getA (a,b,c) = a
+-- getB :: (String,String,String) -> String
+getB (a,b,c) = b
+-- getC :: (String,String,String) -> String
+getC (a,b,c) = c
+--
+-- memRef :: [[(String, String, String, String)]]
+-- makeRefMatrix :: [[(String,String,String)]] -> String
+-- uwlmf f = uwl $ makeRefMatrix1 f
+makeRefMatrix (x:xs)
+  = return (concat ((headM++(concat(map makeRefMatrixB (x:xs))))))
+    where
+      headM = makeRefMatrixHead x
+
+-- makeRefMatrixHead :: [(String,String,String)] -> String
+makeRefMatrixHead' xs = concat (makeRefMatrixHead xs)
+makeRefMatrixHead [] =  []
+makeRefMatrixHead xs =  [" ,"]:(makeRefMatrixHead1 xs)
+makeRefMatrixHead1 [] =  []
+makeRefMatrixHead1 (x:xs) =  [(getB x)++","]:(makeRefMatrixHead1 xs)
+
+-- makeRefMatrixB :: [(String,String,String)] -> String
+-- makeRefMatrixB [] =  [""]
+makeRefMatrixB' xs =  concat(makeRefMatrixB xs)
+makeRefMatrixB (x:xs) =  [((getA x)++", ")]:(makeRefMatrixB1 (x:xs))
+makeRefMatrixB1 [] = []
+makeRefMatrixB1 (x:xs) = [((getC x)++", ")]:(makeRefMatrixB1 xs)
+
+-- makeRefTabLatex :: [[(String,String,String)]] -> String
+makeRefTabLatex (x:xs)
+  = return (("\\begin{tabular}{")
+              ++(makeRefTabLatexSetting (length x) "l" "r")
+              ++("}\\toprule\n")
+              ++( (makeRefTabLatexHead x))
+              ++("\\\\ \\midrule\n")
+              ++(concat (map makeRefTabLatexB (x:xs)))
+              ++("\\bottomrule\\end{tabular}\n"))
+
+-- makeRefTabLatexSetting :: Int -> String -> String -> String
+makeRefTabLatexSetting 0 _ _= ""
+makeRefTabLatexSetting x b c= b++"|"++c++(makeRefTabLatexSetting1 (x-1) c)
+makeRefTabLatexSetting1 0 _ = ""
+makeRefTabLatexSetting1 x c = "|"++c++(makeRefTabLatexSetting1 (x-1) c)
+
+-- makeRefTabLatexHead :: [(String,String,String)] -> String
+makeRefTabLatexHead [] =  ""
+makeRefTabLatexHead xs =  ("\n &"++(sepBy " & " (map getB xs)))
+
+-- makeRefTabLatexB :: [(String,String,String)] -> String
+makeRefTabLatexB [] =  ""
+makeRefTabLatexB xs =  ("\\\\\n"++(getA (head xs))++" & "++(sepBy " & " $ map getC xs))
+
+
+
+sepBy _ [] = []
+sepBy _ [x] = x
+sepBy s (x:xs) = x++s++(sepBy s xs)
 {-
 Here's the main content with the
 assertions from the Memory models
 of the Chronometer and Alarm models
 (from my thesis and Oliveira's thesis)
 -}
+assertions = ["m2CF","m3CF","m4CF",
+              "m2aHC","m3aHC","m4aHC" --,
+              -- "m2aHWU","m3aHWU","m4aHWU",
+              -- "m2aHWUok","m3aHWUok","m4aHWUok"
+              -- ,
+              -- "m2aM","m3aM","m4aM",
+              -- "m2aS","m3aS","m4aS"
+              ]
 
-assertions = ["CF2","CF3","CF4",
-              "HAC2","HAC3","HAC4",
-              "HC2","HC3","HC4",
-              "HWU2","HWU3","HWU4",
-              "HWUok2","HWUok3","HWUok4",
-              "M2","M3","M4",
-              "S2","S3","S4",
-              "CF2a","CF3a","CF4a",
-              "HAC2a","HAC3a","HAC4a",
-              "HC2a","HC3a","HC4a",
-              "HWU2a","HWU3a","HWU4a",
-              "HWUok2a","HWUok3a","HWUok4a",
-              "M2a","M3a","M4a",
-              "S2a","S3a","S4a"]
+-- assertions = ["m2CF","m3CF","m4CF",
+--               "m2HAC","m3HAC","m4HAC",
+--               "m2HC","m3HC","m4HC",
+--               -- "m2HWU","m3HWU","m4HWU",
+--               -- "m2HWUok","m3HWUok","m4HWUok",
+--               -- "m2M","m3M","m4M",
+--               -- "m2S","m3S","m4S",
+--               "m2aCF","m3aCF","m4aCF",
+--               "m2aHAC","m3aHAC","m4aHAC",
+--               "m2aHC","m3aHC","m4aHC" --,
+--               -- "m2aHWU","m3aHWU","m4aHWU",
+--               -- "m2aHWUok","m3aHWUok","m4aHWUok"
+--               -- ,
+--               -- "m2aM","m3aM","m4aM",
+--               -- "m2aS","m3aS","m4aS"
+--               ]

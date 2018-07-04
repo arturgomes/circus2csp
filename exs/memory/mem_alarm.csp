@@ -149,7 +149,7 @@ Memory4(b_RAN, b_ALA) =
 -- -- Typed approach
 -- --------------------------------------------------------------------------------
 -- M2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory2(b_RAN, b_ALA)
--- M2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
+-- Mm2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
 --           @ Memory2(b_RAN, b_ALA)[[mget.sv_buzz <- mget_sv_buzz,
 --                                     mget.sv_min <- mget_sv_min,
 --                                     mget.sv_sec <- mget_sv_sec,
@@ -161,7 +161,7 @@ Memory4(b_RAN, b_ALA) =
 -- -- Distributed approach
 -- --------------------------------------------------------------------------------
 -- M3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory3(b_RAN, b_ALA)
--- M3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
+-- Mm3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA
 --           @ Memory3(b_RAN, b_ALA)[[mget.sv_buzz <- mget_sv_buzz,
 --                                   mget.sv_min <- mget_sv_min,
 --                                   mget.sv_sec <- mget_sv_sec,
@@ -173,7 +173,7 @@ Memory4(b_RAN, b_ALA) =
 -- -- One mget and mset for each state variable
 -- --------------------------------------------------------------------------------
 -- M4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ Memory4(b_RAN, b_ALA)
--- M4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @
+-- Mm4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @
 --           Memory4(b_RAN, b_ALA)[[mget_sv_buzz <- mget.sv_buzz,
 --                                 mget_sv_min <- mget.sv_min,
 --                                 mget_sv_sec <- mget.sv_sec,
@@ -191,35 +191,35 @@ Memory4(b_RAN, b_ALA) =
 -- -- so they are equivalent!
 --
 -- -- is the prefixed approach a refinement of the typed one?
--- assert M2a [FD= M4 -- passed
+-- assert Mm2a [FD= M4 -- passed
 -- -- is the typed approach a refinement of the prefixed one?
--- assert M4 [FD= M2a -- passed
+-- assert M4 [FD= Mm2a -- passed
 -- -- so they are equivalent!
 --
 -- -- is the prefixed approach a refinement of the CTOC one?
--- assert M3a [FD= M4 -- passed
+-- assert Mm3a [FD= M4 -- passed
 -- -- is the CTOC approach a refinement of the prefixed one?
--- assert M4 [FD= M3a -- passed
+-- assert M4 [FD= Mm3a -- passed
 -- -- so they are equivalent!
 --
 -- --------------------------------------------------------------------------------
 -- -- Now we test the inverse, with renaming from the
 -- -- prefixed mgets to the other approaches
 -- --------------------------------------------------------------------------------
--- assert M4a [FD= M2 -- passed
--- assert M4a [FD= M3 -- passed
--- assert M3 [FD= M4a -- passed
--- assert M2 [FD= M4a -- passed
+-- assert Mm4a [FD= M2 -- passed
+-- assert Mm4a [FD= M3 -- passed
+-- assert M3 [FD= Mm4a -- passed
+-- assert M2 [FD= Mm4a -- passed
 --
 --
 -- --------------------------------------------------------------------------------
 -- -- Finally, we test if all approaches renamed to
 -- -- prefixed mgets are refinement from each other
 -- --------------------------------------------------------------------------------
--- assert M2a [FD= M3a -- passed
--- assert M3a [FD= M4 -- passed
--- assert M4  [FD= M3a -- passed
--- assert M3a [FD= M2a -- passed
+-- assert Mm2a [FD= Mm3a -- passed
+-- assert Mm3a [FD= M4 -- passed
+-- assert M4  [FD= Mm3a -- passed
+-- assert Mm3a [FD= Mm2a -- passed
 
 
 
@@ -920,180 +920,122 @@ AChrono4(b_RAN) =
 
 
 -- Assertions
-HAC2 = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)
-HAC2a = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
+m2HAC = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)
+m2aHAC = |~| b_RAN:BINDINGS_RAN @ AChrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
                                                   mget.sv_sec <- mget_sv_sec,
                                                   mset.sv_min <- mset_sv_min,
                                                   mset.sv_sec <- mset_sv_sec]]
-HC2 = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)
-HC2a = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
+m2HC = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)
+m2aHC = |~| b_RAN:BINDINGS_RAN @ Chrono2(b_RAN)[[mget.sv_min <- mget_sv_min,
                                                   mget.sv_sec <- mget_sv_sec,
                                                   mset.sv_min <- mset_sv_min,
                                                   mset.sv_sec <- mset_sv_sec]]
-HWU2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)
-HWU2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+m2HWU = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)
+m2aHWU = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
                                                   mget.sv_sec <- mget_sv_sec,
                                                   mset.sv_min <- mset_sv_min,
                                                   mset.sv_sec <- mset_sv_sec,
                                                   mget.sv_buzz <- mget_sv_buzz,
                                                   mset.sv_buzz <- mset_sv_buzz]]
-CF2 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )
-CF2a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
+m2CF = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )
+m2aCF = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds2(b_RAN) [| Sync |] Minutes2(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
                                                   mget.sv_sec <- mget_sv_sec,
                                                   mset.sv_min <- mset_sv_min,
                                                   mset.sv_sec <- mset_sv_sec]]
-S2 = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)
-S2a = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)[[mget.sv_min <- mget_sv_min,
+m2S = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)
+m2aS = |~| b_RAN:BINDINGS_RAN @ Seconds2(b_RAN)[[mget.sv_min <- mget_sv_min,
                                                  mget.sv_sec <- mget_sv_sec,
                                                  mset.sv_min <- mset_sv_min,
                                                  mset.sv_sec <- mset_sv_sec]]
-M2 = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)
-M2a = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)[[mget.sv_min <- mget_sv_min,
+m2M = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)
+m2aM = |~| b_RAN:BINDINGS_RAN @ Minutes2(b_RAN)[[mget.sv_min <- mget_sv_min,
                                                  mget.sv_sec <- mget_sv_sec,
                                                  mset.sv_min <- mset_sv_min,
                                                  mset.sv_sec <- mset_sv_sec]]
-HWUok2 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)
-HWUok2a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
-                                                  mget.sv_sec <- mget_sv_sec,
-                                                  mset.sv_min <- mset_sv_min,
-                                                  mset.sv_sec <- mset_sv_sec,
-                                                  mget.sv_buzz <- mget_sv_buzz,
-                                                  mset.sv_buzz <- mset_sv_buzz]]
-
-HAC3 = |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)
-HAC3a = |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
-                                                  mget.sv_sec <- mget_sv_sec,
-                                                  mset.sv_min <- mset_sv_min,
-                                                  mset.sv_sec <- mset_sv_sec]]
-HC3 = |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)
-HC3a = |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
-                                                  mget.sv_sec <- mget_sv_sec,
-                                                  mset.sv_min <- mset_sv_min,
-                                                  mset.sv_sec <- mset_sv_sec]]
-HWU3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)
-HWU3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
-                                                  mget.sv_sec <- mget_sv_sec,
-                                                  mset.sv_min <- mset_sv_min,
-                                                  mset.sv_sec <- mset_sv_sec,
-                                                  mget.sv_buzz <- mget_sv_buzz,
-                                                  mset.sv_buzz <- mset_sv_buzz]]
-CF3 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )
-CF3a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
-                                                  mget.sv_sec <- mget_sv_sec,
-                                                  mset.sv_min <- mset_sv_min,
-                                                  mset.sv_sec <- mset_sv_sec]]
-S3 = |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)
-S3a = |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)[[mget.sv_min <- mget_sv_min,
-                                                 mget.sv_sec <- mget_sv_sec,
-                                                 mset.sv_min <- mset_sv_min,
-                                                 mset.sv_sec <- mset_sv_sec]]
-M3 = |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)
-M3a = |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)[[mget.sv_min <- mget_sv_min,
-                                                 mget.sv_sec <- mget_sv_sec,
-                                                 mset.sv_min <- mset_sv_min,
-                                                 mset.sv_sec <- mset_sv_sec]]
-HWUok3 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)
-HWUok3a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+m2HWUok = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)
+m2aHWUok = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK2(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
                                                   mget.sv_sec <- mget_sv_sec,
                                                   mset.sv_min <- mset_sv_min,
                                                   mset.sv_sec <- mset_sv_sec,
                                                   mget.sv_buzz <- mget_sv_buzz,
                                                   mset.sv_buzz <- mset_sv_buzz]]
 
-HAC4 = |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)
-HAC4a = |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
+m3HAC =  |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)
+m3aHAC =  |~| b_RAN:BINDINGS_RAN @ AChrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+m3HC =  |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)
+m3aHC =  |~| b_RAN:BINDINGS_RAN @ Chrono3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+m3HWU =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)
+m3aHWU =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+m3CF =  |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )
+m3aCF =  |~| b_RAN:BINDINGS_RAN @ ( ( Seconds3(b_RAN) [| Sync |] Minutes3(b_RAN) ) \ Sync )[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec]]
+m3S =  |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)
+m3aS =  |~| b_RAN:BINDINGS_RAN @ Seconds3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+m3M =  |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)
+m3aM =  |~| b_RAN:BINDINGS_RAN @ Minutes3(b_RAN)[[mget.sv_min <- mget_sv_min,
+                                                 mget.sv_sec <- mget_sv_sec,
+                                                 mset.sv_min <- mset_sv_min,
+                                                 mset.sv_sec <- mset_sv_sec]]
+m3HWUok =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)
+m3aHWUok =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK3(b_RAN,b_ALA)[[mget.sv_min <- mget_sv_min,
+                                                  mget.sv_sec <- mget_sv_sec,
+                                                  mset.sv_min <- mset_sv_min,
+                                                  mset.sv_sec <- mset_sv_sec,
+                                                  mget.sv_buzz <- mget_sv_buzz,
+                                                  mset.sv_buzz <- mset_sv_buzz]]
+
+m4HAC =  |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)
+m4aHAC =  |~| b_RAN:BINDINGS_RAN @ AChrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec]]
-HC4 = |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)
-HC4a = |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
+m4HC =  |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)
+m4aHC =  |~| b_RAN:BINDINGS_RAN @ Chrono4(b_RAN)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec]]
-HWU4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)
-HWU4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
+m4HWU =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)
+m4aHWU =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUp4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec,
                                                   mget_sv_buzz <- mget.sv_buzz,
                                                   mset_sv_buzz <- mset.sv_buzz]]
-HWUok4 = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)
-HWUok4a = |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
+m4HWUok =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)
+m4aHWUok =  |~| b_RAN:BINDINGS_RAN, b_ALA:BINDINGS_ALA @ WakeUpOK4(b_RAN,b_ALA)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec,
                                                   mget_sv_buzz <- mget.sv_buzz,
                                                   mset_sv_buzz <- mset.sv_buzz]]
-CF4 = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )
-CF4a = |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )[[mget_sv_min <- mget.sv_min,
+m4CF =  |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )
+m4aCF =  |~| b_RAN:BINDINGS_RAN @ ( ( Seconds4(b_RAN) [| Sync |] Minutes4(b_RAN) ) \ Sync )[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec]]
-S4 = |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)
-S4a = |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)[[mget_sv_min <- mget.sv_min,
+m4S =  |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)
+m4aS =  |~| b_RAN:BINDINGS_RAN @ Seconds4(b_RAN)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec]]
-M4 = |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)
-M4a = |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)[[mget_sv_min <- mget.sv_min,
+m4M =  |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)
+m4aM =  |~| b_RAN:BINDINGS_RAN @ Minutes4(b_RAN)[[mget_sv_min <- mget.sv_min,
                                                   mget_sv_sec <- mget.sv_sec,
                                                   mset_sv_min <- mset.sv_min,
                                                   mset_sv_sec <- mset.sv_sec]]
-
-
--- assert CF2 [FD= CF3
--- -- assert CF3 [FD= CF2
--- assert CF3 [FD= CF4a -- failed
--- -- assert CF4a [FD= CF3
--- -- assert HAC2 [FD= HAC3
--- -- assert HAC3 [FD= HAC2
--- assert HAC3 [FD= HAC4a -- failed
--- -- assert HAC4a [FD= HAC3
--- -- assert HC2 [FD= HC3
--- -- assert HC3 [FD= HC2
--- assert HC3 [FD= HC4a -- failed
--- -- assert HC4a [FD= HC3
--- -- assert HWU2 [FD= HWU3
--- -- assert HWU3 [FD= HWU2
--- assert HWU3 [FD= HWU4a -- failed
--- -- assert HWU4a [FD= HWU3
--- -- assert HWUok2 [FD= HWUok3
--- -- assert HWUok3 [FD= HWUok2
--- assert HWUok3 [FD= HWUok4a -- failed
--- -- assert HWUok4a [FD= HWUok3
--- -- assert M2 [FD= M3
--- -- assert M3 [FD= M2
--- assert M3 [FD= M4a -- failed
--- -- assert M4a [FD= M3
--- -- assert S2 [FD= S3
--- -- assert S3 [FD= S2
--- assert S3 [FD= S4a -- failed
--- -- assert S4a [FD= S3
--- -- assert CF2a [FD= CF3a
--- -- assert CF3a [FD= CF2a
--- assert CF3a [FD= CF4 -- failed
--- -- assert CF4 [FD= CF3a
--- -- assert HAC2a [FD= HAC3a
--- -- assert HAC3a [FD= HAC2a
--- assert HAC3a [FD= HAC4 -- failed
--- -- assert HAC4 [FD= HAC3a
--- -- assert HC2a [FD= HC3a
--- -- assert HC3a [FD= HC2a
--- assert HC3a [FD= HC4 -- failed
--- -- assert HC4 [FD= HC3a
--- -- assert HWU2a [FD= HWU3a
--- -- assert HWU3a [FD= HWU2a
--- assert HWU3a [FD= HWU4 -- failed
--- -- assert HWU4 [FD= HWU3a
--- -- assert HWUok2a [FD= HWUok3a
--- -- assert HWUok3a [FD= HWUok2a
--- assert HWUok3a [FD= HWUok4 -- failed
--- -- assert HWUok4 [FD= HWUok3a
--- -- assert M2a [FD= M3a
--- -- assert M3a [FD= M2a
--- assert M3a [FD= M4 -- failed
--- -- assert M4 [FD= M3a
--- -- assert S2a [FD= S3a
--- -- assert S3a [FD= S2a
--- assert S3a [FD= S4 -- failed
--- -- assert S4 [FD= S3a
