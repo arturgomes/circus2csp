@@ -35,8 +35,8 @@ output_zexpr = zexpr_stdout pinfo
 output_zpred = zpred_stdout pinfo
 output_zpara = zpara_stdout pinfo
 
-version = "0.8.1.0"
-vdate = "May 2018"
+version = "0.8.2.0"
+vdate = "July 2018"
 
 main :: IO ()
 main
@@ -159,24 +159,43 @@ closebracket  _  = False
 
 
 help =
-  ["Available commands:",
-   fmtcmd "conv filename"          "'load filename; omega; tocsp'.",
-   fmtcmd "convp filename"          "perform conv but with mget_var instead of mget.var",
-   fmtcmd "reconv"                 "repeat 'conv' on previous file",
-   fmtcmd "reconvp"                 "repeat 'convp' on previous file",
+  ["Available commands for Circus2CSP:",
+   fmtcmd "conv filename"             "'load filename; omega; tocsp'.",
+   fmtcmd "convp filename"            "perform conv but with mget_var instead of mget.var",
+   fmtcmd "reconv"                    "repeat 'conv' on previous file",
+   fmtcmd "reconvp"                   "repeat 'convp' on previous file",
    -- fmtcmd "show"                   "Display a summary of whole spec.",
    -- fmtcmd "orig"                   "Display the whole spec originally loaded.",
-   fmtcmd "quit"                   "Exit the animator",
-   fmtcmd "load filename"          "Load a Z specification from a file",
-   fmtcmd "omega"                  "Apply the Omega function to Circus spec",
-   fmtcmd "tocsp"                  "Map the whole spec into CSP.",
-   fmtcmd "reload"                 "Re-load Z specification from current file",
+   fmtcmd "quit"                      "Exit the animator",
+   fmtcmd "load filename"             "Load a Z specification from a file",
+   fmtcmd "omega"                     "Apply the Omega function to Circus spec",
+   fmtcmd "tocsp"                     "Map the whole spec into CSP.",
+   fmtcmd "reload"                    "Re-load Z specification from current file",
    -- fmtcmd "latex"                  "Pretty print into LaTeX.",
-   fmtcmd "list"                   "List the files in the current directory.",
-   fmtcmd "reset"                  "Reset the whole specification",
-   fmtcmd "help"                   "Display this message",
-   fmtcmd "refines"                "Run FDR4 in command line mode",
-   fmtcmd "% comment"              "(Ignored)"
+   fmtcmd "list"                      "List the files in the current directory.",
+   fmtcmd "reset"                     "Reset the whole specification",
+   fmtcmd "help"                      "Display this message",
+   fmtcmd "refinesT"                  "Run FDR4 in command line mode",
+   fmtcmd "% comment"                 "(Ignored)",
+   "Available commands for FDR4:",
+   "The parameter 'model' where m can be [T,F,FD]",
+   fmtcmd "refines spec impl"         "assert spec [FD= impl",
+   fmtcmd "refines spec impl model"   "assert spec [m= impl",
+   fmtcmd "refineall"                 "perform batch refinement for all processes available",
+   fmtcmd "refineall model"           "perform refineall using a given model",
+   fmtcmd "deadlock spec"             "checks spec for deadlocks",
+   fmtcmd "deadlock spec model"       "checks spec for deadlocks using a given model",
+   fmtcmd "deadlockall"               "perform batch deadlock check for all processe available",
+   fmtcmd "deadlockall model"         "perform 'deadlockall' using a given mode",
+   fmtcmd "divergence spec"           "checks spec for divergence",
+   fmtcmd "divergence spec model"     "checks spec for divergence using a given mode",
+   fmtcmd "divergencesall"            "perform batch divergence check for all processe available",
+   fmtcmd "divergencesall model"      "perform 'divergencesall'  using a given model",
+   fmtcmd "deterministic spec"        "checks if spec is deterministic",
+   fmtcmd "deterministic spec model " "checks if spec is deterministic using a given model",
+   fmtcmd "deterministicall"          "perform batch deterministic check for all processe available",
+   fmtcmd "deterministicall model "   "perform 'deterministicall'  using a given model",
+   fmtcmd "jumbo"                    "perform all batches available (may take some time)"
   ]
 
 
@@ -239,7 +258,7 @@ do_cmd cmd args anim fn
           done_cmd (anim2, prevarupslonCircus anim2 fn2, fn2))
       (\err ->
           do {putStrLn (show (err :: IOException)); get_cmd anim fn})
-  | cmd == "refines"
+  | cmd == "refinesT"
        = do  putStrLn     "--------------------------------------------------------------------------------------------------"
              putStrLn ("---------- Running FDR4 using the file '"++"\x1b[32m" ++ (getDstDir anim++args)++(getFName anim)++".csp"++ "\x1b[0m"++"' ...")
              putStrLn "--------------------------------------------------------------------------------------------------"
@@ -370,11 +389,87 @@ getLineEdit prompt
 --	return s
 
 
--- Print the current directory structure with files
+\end{code}
+\subsection{FDR specific code}
+$fdr4$ - executes FDR with the assertions already predefined in the file.
+\begin{code}
 fdr4 spec =
   do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines "++spec]){ std_out = CreatePipe }
   -- do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines -qb "++spec]){ std_out = CreatePipe }
      grepBytes <- hGetContents hout
      putStrLn grepBytes
+\end{code}
+$fdr4check$ perform any specific check provided by the user within Circus2CSP.
+\begin{code}
+
+{-
+
+fmtcmd "refines spec impl"         "assert spec [FD= impl",
+fmtcmd "refines spec impl model"   "assert spec [m= impl",
+fmtcmd "refineall"                 "perform batch refinement for all processes available",
+fmtcmd "refineall model"           "perform refineall using a given model",
+fmtcmd "deadlock spec"             "checks spec for deadlocks",
+fmtcmd "deadlock spec model"       "checks spec for deadlocks using a given model",
+fmtcmd "deadlockall"               "perform batch deadlock check for all processe available",
+fmtcmd "deadlockall model"         "perform 'deadlockall' using a given mode",
+fmtcmd "divergence spec"           "checks spec for divergence",
+fmtcmd "divergence spec model"     "checks spec for divergence using a given mode",
+fmtcmd "divergencesall"            "perform batch divergence check for all processe available",
+fmtcmd "divergencesall model"      "perform 'divergencesall'  using a given model",
+fmtcmd "deterministic spec"        "checks if spec is deterministic",
+fmtcmd "deterministic spec model " "checks if spec is deterministic using a given model",
+fmtcmd "deterministicall"          "perform batch deterministic check for all processe available",
+fmtcmd "deterministicall model "   "perform 'deterministicall'  using a given model",
+fmtcmd "jumbo"                     "perform all batches available (may take some time)"
+
+-}
+
+do_refinesall xs [] = undefined -- refineall
+do_refinesall xs [model] = undefined -- refineall model
+
+do_refines [spec,impl] = undefined -- spec [FD= impl
+do_refines [spec,impl,model] = undefined -- spec [m= impl
+
+do_deadlockall xs [] = undefined -- deadlockall
+do_deadlockall xs [model] = undefined -- deadlockall model
+
+do_deadlock [spec] = undefined -- spec :[deadlock free]
+do_deadlock [spec,model] = undefined -- spec :[deadlock free [m]]
+
+do_divergenceall xs [] = undefined -- divergenceall
+do_divergenceall xs [model] = undefined -- divergenceall model
+
+do_divergence [spec] = undefined -- spec :[divergence free]
+do_divergence [spec,model] = undefined -- spec :[divergence free [m]]
+
+do_deterministicall xs [] = undefined -- divergenceall
+do_deterministicall xs [model] = undefined -- divergenceall model
+
+do_deterministic [spec] = undefined -- spec :[divergence free]
+do_deterministic [spec,model] = undefined -- spec :[divergence free [m]]
+
+do_jumbo xs = undefined
+
+
+-- Print the current directory structure with files
+fdr4check :: FilePath -> Assertion -> IO [String]
+fdr4check spec ass =
+  do copyFile spec "temp.txt";
+     appendFile "temp.txt" (makeRefAssert' ass);
+     -- start1 <- getCPUTime;
+     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines temp.txt -q -f plain"]){ std_out = CreatePipe };
+     -- end1 <- (waitForProcess ph >> getCPUTime);
+     grepBytes <- hGetContents hout;
+     -- let diff = (fromIntegral (end1 - start1)) / (10^12);
+     let aa = (unlines $ map unwords (parseAssert2 ass grepBytes));
+     cc <- (parseAssert2 ass grepBytes)
+     return cc;
+
+-- batchFDR4 spec xs
+--   = do
+--      dd <- (mapM (fdr4 spec) (batchRef xs))
+--      -- let cc = ((map putToTuple $ concat dd));
+--      appendFile "ref_raw.txt" (uwl dd)
+--      return (unlines $ map unwords dd)
 
 \end{code}
