@@ -179,23 +179,23 @@ help =
    fmtcmd "% comment"                 "(Ignored)",
    "Available commands for FDR4:",
    "The parameter 'model' where m can be [T,F,FD]",
-   fmtcmd "refines spec impl"         "assert spec [FD= impl",
-   fmtcmd "refines spec impl model"   "assert spec [m= impl",
-   fmtcmd "refineall"                 "perform batch refinement for all processes available",
-   fmtcmd "refineall model"           "perform refineall using a given model",
-   fmtcmd "deadlock spec"             "checks spec for deadlocks",
-   fmtcmd "deadlock spec model"       "checks spec for deadlocks using a given model",
-   fmtcmd "deadlockall"               "perform batch deadlock check for all processe available",
-   fmtcmd "deadlockall model"         "perform 'deadlockall' using a given mode",
-   fmtcmd "divergence spec"           "checks spec for divergence",
-   fmtcmd "divergence spec model"     "checks spec for divergence using a given mode",
-   fmtcmd "divergencesall"            "perform batch divergence check for all processe available",
-   fmtcmd "divergencesall model"      "perform 'divergencesall'  using a given model",
-   fmtcmd "deterministic spec"        "checks if spec is deterministic",
-   fmtcmd "deterministic spec model " "checks if spec is deterministic using a given model",
-   fmtcmd "deterministicall"          "perform batch deterministic check for all processe available",
-   fmtcmd "deterministicall model "   "perform 'deterministicall'  using a given model",
-   fmtcmd "jumbo"                    "perform all batches available (may take some time)"
+   fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
+   fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
+   fmtcmd "assert refall"                 "perform batch refinement for all processes available",
+   fmtcmd "assert refall model"           "perform refall using a given model",
+   fmtcmd "assert dl spec"             "checks spec for dls",
+   fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
+   fmtcmd "assert dlall"               "perform batch dl check for all processe available",
+   fmtcmd "assert dlall model"         "perform 'dlall' using a given mode",
+   fmtcmd "assert div spec"           "checks spec for div",
+   fmtcmd "assert div spec model"     "checks spec for div using a given mode",
+   fmtcmd "assert divsall"            "perform batch div check for all processe available",
+   fmtcmd "assert divsall model"      "perform 'divsall'  using a given model",
+   fmtcmd "assert det spec"        "checks if spec is det",
+   fmtcmd "assert det spec model " "checks if spec is det using a given model",
+   fmtcmd "assert detall"          "perform batch det check for all processe available",
+   fmtcmd "assert detall model "   "perform 'detall'  using a given model",
+   fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
   ]
 
 
@@ -390,6 +390,7 @@ getLineEdit prompt
 
 
 \end{code}
+%Artur 06 Jul 2018
 \subsection{FDR specific code}
 $fdr4$ - executes FDR with the assertions already predefined in the file.
 \begin{code}
@@ -404,25 +405,38 @@ $fdr4check$ perform any specific check provided by the user within Circus2CSP.
 
 {-
 
-fmtcmd "refines spec impl"         "assert spec [FD= impl",
-fmtcmd "refines spec impl model"   "assert spec [m= impl",
-fmtcmd "refineall"                 "perform batch refinement for all processes available",
-fmtcmd "refineall model"           "perform refineall using a given model",
-fmtcmd "deadlock spec"             "checks spec for deadlocks",
-fmtcmd "deadlock spec model"       "checks spec for deadlocks using a given model",
-fmtcmd "deadlockall"               "perform batch deadlock check for all processe available",
-fmtcmd "deadlockall model"         "perform 'deadlockall' using a given mode",
-fmtcmd "divergence spec"           "checks spec for divergence",
-fmtcmd "divergence spec model"     "checks spec for divergence using a given mode",
-fmtcmd "divergencesall"            "perform batch divergence check for all processe available",
-fmtcmd "divergencesall model"      "perform 'divergencesall'  using a given model",
-fmtcmd "deterministic spec"        "checks if spec is deterministic",
-fmtcmd "deterministic spec model " "checks if spec is deterministic using a given model",
-fmtcmd "deterministicall"          "perform batch deterministic check for all processe available",
-fmtcmd "deterministicall model "   "perform 'deterministicall'  using a given model",
-fmtcmd "jumbo"                     "perform all batches available (may take some time)"
+fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
+fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
+fmtcmd "assert refall"                 "perform batch refinement for all processes available",
+fmtcmd "assert refall model"           "perform refall using a given model",
+fmtcmd "assert dl spec"             "checks spec for dls",
+fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
+fmtcmd "assert dlall"               "perform batch dl check for all processe available",
+fmtcmd "assert dlall model"         "perform 'dlall' using a given mode",
+fmtcmd "assert div spec"           "checks spec for div",
+fmtcmd "assert div spec model"     "checks spec for div using a given mode",
+fmtcmd "assert divsall"            "perform batch div check for all processe available",
+fmtcmd "assert divsall model"      "perform 'divsall'  using a given model",
+fmtcmd "assert det spec"        "checks if spec is det",
+fmtcmd "assert det spec model " "checks if spec is det using a given model",
+fmtcmd "assert detall"          "perform batch det check for all processe available",
+fmtcmd "assert detall model "   "perform 'detall'  using a given model",
+fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
 
 -}
+assert param xs =
+  do_assert (unwords param) xs
+
+do_assert (p:ps) xs
+| (p == "ref") && (length ps >= 3) = do_refines ps
+| (p == "refall") = do_refinesall xs ps
+| (p == "dl") && (length ps > 1) = do_deadlock ps
+| (p == "dlall") = do_deadlockall xs ps
+| (p == "div") && (length ps >= 1) = do_divergence ps
+| (p == "divsall") = do_divergenceall xs ps
+| (p == "det") && (length ps >= 1) = do_refines ps
+| (p == "detall") = do_deterministicall xs ps
+| (p == "ref") && (length ps >= 1) = do_deterministic ps
 
 do_refinesall xs [] = undefined -- refineall
 do_refinesall xs [model] = undefined -- refineall model
