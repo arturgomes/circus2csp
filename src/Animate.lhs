@@ -109,6 +109,7 @@ data Answer
   | DoneLatex String String
   | DoneUpsilon String String
   | DoneOmega String String
+  | DoneReport String String
   | ErrorMsg ErrorMsg
   | ErrorLocns [SyntaxError]   -- (Line, Column, String) triples
   | Value ZValue

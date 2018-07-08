@@ -4,8 +4,8 @@ module FDRChecks where
 
 import System.IO
 import Control.Applicative
-import System.Process
-import System.Directory
+-- import System.Process
+-- import System.Directory
 import Data.List
 import Data.Word
 import System.CPUTime
@@ -36,91 +36,91 @@ mkSemanticModel "FD" = FailDiv
 mkSemanticModel "F" = Fail
 mkSemanticModel "T" = Traces
 
-data Assertion = Refinement RefModel String String
-               | Livelock String (Maybe RefModel)
-               | Deadlock String (Maybe RefModel)
-               | Divergence String (Maybe RefModel)
-               | Deterministic String (Maybe RefModel)
+data Assertion = CSPRefinement RefModel String String
+               | CSPLivelock String (Maybe RefModel)
+               | CSPDeadlock String (Maybe RefModel)
+               | CSPDivergence String (Maybe RefModel)
+               | CSPDeterministic String (Maybe RefModel)
                deriving Show
 
 -- We first generate all possible assertion checks
 
 -- for each possible assertion, we can have:
 getAssertion :: Assertion -> [Char]
-getAssertion (Refinement rm m1 m2)
+getAssertion (CSPRefinement rm m1 m2)
   = m1 ++ (getRefModel rm) ++ m2
-getAssertion (Livelock m1 (Just r))
+getAssertion (CSPLivelock m1 (Just r))
   = m1 ++ " :[livelock free "++(getSemanticModel r)++"]"
-getAssertion (Livelock m1 Nothing)
+getAssertion (CSPLivelock m1 Nothing)
   = m1 ++ " :[livelock free]"
-getAssertion (Deadlock m1 (Just r))
+getAssertion (CSPDeadlock m1 (Just r))
   = m1 ++ " :[deadlock free "++(getSemanticModel r)++"]"
-getAssertion (Deadlock m1 (Nothing))
+getAssertion (CSPDeadlock m1 (Nothing))
   = m1 ++ " :[deadlock free]"
-getAssertion (Divergence m1 (Just r))
+getAssertion (CSPDivergence m1 (Just r))
   = m1 ++ " :[divergence free "++(getSemanticModel r)++"]"
-getAssertion (Divergence m1 (Nothing))
+getAssertion (CSPDivergence m1 (Nothing))
   = m1 ++ " :[divergence free]"
-getAssertion (Deterministic m1 (Just r))
+getAssertion (CSPDeterministic m1 (Just r))
   = m1 ++ " :[deterministic "++(getSemanticModel r)++"]"
-getAssertion (Deterministic m1 (Nothing))
+getAssertion (CSPDeterministic m1 (Nothing))
   = m1 ++ " :[deterministic]"
 
 -- then we can make a batch for all assertions combining models
 
--- refinement check
-batchRef :: [String] -> [Char] -> [Assertion]
-batchRef xs ms = (makeRefinements xs xs (mkSemanticModel ms))
+-- CSPRefinement check
+batchRef :: [String] -> RefModel -> [Assertion]
+batchRef xs ms = (makeCSPRefinements xs xs ms)
 
-makeRefinements :: [String] -> [String] -> RefModel -> [Assertion]
-makeRefinements [] _ _ = []
-makeRefinements (x:xs) ys a = (makeRefs x ys a)++(makeRefinements xs ys a)
+makeCSPRefinements :: [String] -> [String] -> RefModel -> [Assertion]
+makeCSPRefinements [] _ _ = []
+makeCSPRefinements (x:xs) ys a = (makeRefs x ys a)++(makeCSPRefinements xs ys a)
 
 makeRefs :: String -> [String] -> RefModel -> [Assertion]
 makeRefs x [] _ = []
-makeRefs x (y:ys) ms = [Refinement ms x y]++(makeRefs x ys ms)
+makeRefs x (y:ys) ms = [CSPRefinement ms x y]++(makeRefs x ys ms)
 
--- deadlock freedom check
-batchDL :: [String] -> [Char] -> [Assertion]
-batchDL xs ms = (makeDeadlocks xs [(mkSemanticModel ms)])
+-- CSPDeadlock freedom check
+batchDL :: [String] -> RefModel -> [Assertion]
+batchDL xs ms = (makeCSPDeadlocks xs [ms])
 
-makeDeadlocks :: [String] -> [RefModel] -> [Assertion]
-makeDeadlocks [] _= []
-makeDeadlocks (x:xs) y = (makeDead x y)++(makeDeadlocks xs y)
+makeCSPDeadlocks :: [String] -> [RefModel] -> [Assertion]
+makeCSPDeadlocks [] _= []
+makeCSPDeadlocks (x:xs) y = (makeDead x y)++(makeCSPDeadlocks xs y)
 
 makeDead :: String -> [RefModel] -> [Assertion]
-makeDead x [] = [Deadlock x Nothing]
-  -- = [Deadlock x Nothing, Deadlock x (Just FailDiv), Deadlock x (Just Fail), Deadlock x (Just Traces)]
-makeDead x [y] = [Deadlock x (Just y)]
-  -- = [Deadlock x Nothing, Deadlock x (Just FailDiv), Deadlock x (Just Fail), Deadlock x (Just Traces)]
+makeDead x [] = [CSPDeadlock x Nothing]
+  -- = [CSPDeadlock x Nothing, CSPDeadlock x (Just FailDiv), CSPDeadlock x (Just Fail), CSPDeadlock x (Just Traces)]
+makeDead x [y] = [CSPDeadlock x (Just y)]
+  -- = [CSPDeadlock x Nothing, CSPDeadlock x (Just FailDiv), CSPDeadlock x (Just Fail), CSPDeadlock x (Just Traces)]
 
--- divergences check
-batchDiv :: [String] -> [Char] -> [Assertion]
-batchDiv xs ms = (makeDivergences xs [(mkSemanticModel ms)])
+-- CSPDivergences check
+batchDiv :: [String] -> RefModel -> [Assertion]
+batchDiv xs ms = (makeCSPDivergences xs [ms])
 
-makeDivergences :: [String] -> [RefModel] -> [Assertion]
-makeDivergences [] y = []
-makeDivergences (x:xs) y
-  = (makeDiv x y)++(makeDivergences xs y)
+makeCSPDivergences :: [String] -> [RefModel] -> [Assertion]
+makeCSPDivergences [] y = []
+makeCSPDivergences (x:xs) y
+  = (makeDiv x y)++(makeCSPDivergences xs y)
 
 makeDiv :: String -> [RefModel] -> [Assertion]
-makeDiv x [] = [Divergence x Nothing]
-makeDiv x [y] = [Divergence x (Just y)]
-  -- = [Divergence x Nothing, Divergence x (Just FailDiv), Divergence x (Just Fail), Divergence x (Just Traces)]
+makeDiv x [] = [CSPDivergence x Nothing]
+makeDiv x [y] = [CSPDivergence x (Just y)]
+  -- = [CSPDivergence x Nothing, CSPDivergence x (Just FailDiv), CSPDivergence x (Just Fail), CSPDivergence x (Just Traces)]
 
--- deterministic check
-batchDet :: [String] -> [Char] -> [Assertion]
-batchDet xs ms = (makeDeterministic xs [(mkSemanticModel ms)])
+-- CSPDeterministic check
+batchDet :: [String] -> RefModel -> [Assertion]
+batchDet xs ms = (makeCSPDeterministic xs [ms])
 
-makeDeterministic :: [String] -> [RefModel] -> [Assertion]
-makeDeterministic [] _ = []
-makeDeterministic (x:xs) y
-  = (makeDeterm x y)++(makeDeterministic xs y)
+makeCSPDeterministic :: [String] -> [RefModel] -> [Assertion]
+makeCSPDeterministic [] _ = []
+makeCSPDeterministic (x:xs) y
+  = (makeDeterm x y)++(makeCSPDeterministic xs y)
 
 makeDeterm :: String -> [RefModel] -> [Assertion]
-makeDeterm x [] = [Deterministic x Nothing]
-makeDeterm x [y] = [Deterministic x (Just y)]
-  -- = [Deterministic x Nothing, Deterministic x (Just FailDiv), Deterministic x (Just Fail), Deterministic x (Just Traces)]
+makeDeterm x [] = [CSPDeterministic x Nothing]
+makeDeterm x [y] = [CSPDeterministic x (Just y)]
+  -- = [CSPDeterministic x Nothing, CSPDeterministic x (Just FailDiv), CSPDeterministic x (Just Fail), CSPDeterministic x (Just Traces)]
 
 -- batch create the assertions
 makeRefAssert :: [Assertion] -> [[Char]]
@@ -160,7 +160,7 @@ makeRAssert a t [_, _, c, d, e, f, g,_,_,_,_,_,_,_,_]
 makeRAssert _ _ _= return []
 
 makeRAssert1 :: Monad m => Assertion -> [[String]] -> m [String]
-makeRAssert1 (Refinement FailDiv a b) (_:_:c:xs) = return [a, b,head(drop 1 c)]
+makeRAssert1 (CSPRefinement FailDiv a b) (_:_:c:xs) = return [a, b,head(drop 1 c)]
 makeRAssert1 _ _= return []
 
 data Res = Failed | Passed  deriving Show

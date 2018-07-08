@@ -23,6 +23,7 @@ import System.Directory
 import PreVarMappingFunStatelessCircus
 import DistMemMappingFunStatelessCircus
 import System.Environment
+import FDRChecks
 --import System.Console.Readline  -- was Readline
 
 prompt1 = "Circus2CSP> " -- prompt for each command
@@ -233,7 +234,7 @@ do_cmd cmd args anim fn
   | cmd == "omega" =
       done_cmd (omegaCircus anim fn)
   | cmd == "tocsp" =
-      done_cmd (anim, upslonCircus anim fn, fn)
+      done_cmd (anim, upslonCircus anim fn, args)
   | cmd == "list" =
       do{printM; get_cmd anim fn}
   | cmd == "conv"
@@ -268,6 +269,14 @@ do_cmd cmd args anim fn
              fdr4 ((getDstDir anim++args)++(getFName anim)++".csp")
              putStrLn ("\x1b[32m" ++ "End of the execution of FDR4 ..."++ "\x1b[0m")
              get_cmd anim fn
+  | cmd == "assert"
+    = catch
+       (do let ar = args
+           res <- (do_assert (getDstDir anim++fn) (words ar) []);
+           done_cmd (anim, DoneReport (unlines res) fn,fn))
+       (\err ->
+           do {putStrLn (show (err :: IOException)); get_cmd anim fn})
+
   | cmd == "reconv"
      = do_cmd "conv" (getFName anim) anim fn
   | cmd == "reconvp"
@@ -290,6 +299,7 @@ do_cmd cmd args anim fn
   showO = showOrigSpec anim
 
 
+
 done_cmd :: (Animator, Answer,String) -> IO ()
 done_cmd (anim, DoneUpsilon s f,args)
   = cmd_output (anim,s,args,".csp",".csp")
@@ -297,6 +307,8 @@ done_cmd (anim, DoneLatex s f,args)
   = cmd_output (anim,s,args,".pretty.tex",".pretty.tex")
 done_cmd (anim, DoneOmega s f,args)
   = cmd_output (anim,s,args,".csp",".hc")
+done_cmd (anim, DoneReport s f,args)
+  = cmd_output (anim,s,args,".report.txt",".report.txt")
 done_cmd (anim, Done s,args)
   = cmd_output (anim,s,args,".spec.txt",".spec.txt")
 done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
@@ -424,54 +436,84 @@ fmtcmd "assert detall model "   "perform 'detall'  using a given model",
 fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
 
 -}
-assert param xs =
-  do_assert (unwords param) xs
+--
+-- assert param xs =
+--   do_assert (unwords param) xs
 
-do_assert (p:ps) xs
-| (p == "ref") && (length ps >= 3) = do_refines ps
-| (p == "refall") = do_refinesall xs ps
-| (p == "dl") && (length ps > 1) = do_deadlock ps
-| (p == "dlall") = do_deadlockall xs ps
-| (p == "div") && (length ps >= 1) = do_divergence ps
-| (p == "divsall") = do_divergenceall xs ps
-| (p == "det") && (length ps >= 1) = do_refines ps
-| (p == "detall") = do_deterministicall xs ps
-| (p == "ref") && (length ps >= 1) = do_deterministic ps
+do_assert spec (p:ps) xs
+  | (p == "ref") && (length ps >= 3) = fdr4check spec (do_refines ps)
+  -- | (p == "refall") = batchFDR4 spec (do_refinesall xs ps)
+  | (p == "dl") && (length ps > 1) = fdr4check spec (do_CSPDeadlock ps)
+  -- | (p == "dlall") = batchFDR4 spec (do_CSPDeadlockall xs ps)
+  | (p == "div") && (length ps >= 1) = fdr4check spec (do_CSPDivergence ps)
+  -- | (p == "divsall") = batchFDR4 spec (do_CSPDivergenceall xs ps)
+  | (p == "det") && (length ps >= 1) = fdr4check spec (do_CSPDeterministic ps)
+  -- | (p == "detall") = batchFDR4 spec (do_CSPDeterministicall xs ps)
+  | (p == "ref") && (length ps >= 1) = fdr4check spec (do_CSPDeterministic ps)
+  | otherwise = error "Could not find any spec"
+do_refinesall xs []
+  = batchRef xs FailDiv -- refineall
+do_refinesall xs [model]
+  = batchRef xs (mkSemanticModel model) -- refineall model
 
-do_refinesall xs [] = undefined -- refineall
-do_refinesall xs [model] = undefined -- refineall model
+-- spec [FD= impl
+do_refines [] = []
+do_refines [spec,impl]
+  = [CSPRefinement FailDiv spec impl]
+-- spec [m= impl
+do_refines [spec,impl,model]
+  = [CSPRefinement (mkSemanticModel model) spec impl]
 
-do_refines [spec,impl] = undefined -- spec [FD= impl
-do_refines [spec,impl,model] = undefined -- spec [m= impl
+do_CSPDeadlockall xs []
+  = batchDL xs FailDiv -- CSPDeadlockall
+do_CSPDeadlockall xs [model]
+  = batchDL xs (mkSemanticModel model) -- CSPDeadlockall model
 
-do_deadlockall xs [] = undefined -- deadlockall
-do_deadlockall xs [model] = undefined -- deadlockall model
+-- spec :[CSPDeadlock free]
+do_CSPDeadlock [] = []
+do_CSPDeadlock [spec]
+  = [CSPDeadlock spec (Just FailDiv)]
+-- spec :[CSPDeadlock free [m]]
+do_CSPDeadlock [spec,model]
+  = [CSPDeadlock spec (Just (mkSemanticModel model))]
 
-do_deadlock [spec] = undefined -- spec :[deadlock free]
-do_deadlock [spec,model] = undefined -- spec :[deadlock free [m]]
+do_CSPDivergenceall xs []
+  = batchDiv xs FailDiv -- CSPDivergenceall
+do_CSPDivergenceall xs [model]
+  = batchDiv xs (mkSemanticModel model) -- CSPDivergenceall model
 
-do_divergenceall xs [] = undefined -- divergenceall
-do_divergenceall xs [model] = undefined -- divergenceall model
+-- spec :[CSPDivergence free]
+do_CSPDivergence [] = []
+do_CSPDivergence [spec]
+  = [CSPDivergence spec (Just FailDiv)]
+-- spec :[CSPDivergence free [m]]
+do_CSPDivergence [spec,model]
+  = [CSPDivergence spec (Just (mkSemanticModel model))]
 
-do_divergence [spec] = undefined -- spec :[divergence free]
-do_divergence [spec,model] = undefined -- spec :[divergence free [m]]
+do_CSPDeterministicall xs []
+  = batchDet xs FailDiv -- CSPDivergenceall
+do_CSPDeterministicall xs [model]
+  = batchDet xs (mkSemanticModel model) -- CSPDivergenceall model
 
-do_deterministicall xs [] = undefined -- divergenceall
-do_deterministicall xs [model] = undefined -- divergenceall model
-
-do_deterministic [spec] = undefined -- spec :[divergence free]
-do_deterministic [spec,model] = undefined -- spec :[divergence free [m]]
+-- spec :[CSPDivergence free]
+do_CSPDeterministic [] = []
+do_CSPDeterministic [spec]
+  = [CSPDeterministic spec (Just FailDiv)]
+-- spec :[CSPDivergence free [m]]
+do_CSPDeterministic [spec,model]
+  = [CSPDeterministic spec (Just (mkSemanticModel model))]
 
 do_jumbo xs = undefined
 
 
 -- Print the current directory structure with files
-fdr4check :: FilePath -> Assertion -> IO [String]
-fdr4check spec ass =
-  do copyFile spec "temp.txt";
-     appendFile "temp.txt" (makeRefAssert' ass);
+fdr4check :: FilePath -> [Assertion] -> IO [String]
+fdr4check spec [ass] =
+  do copyFile (spec++".csp") (spec++".checks.csp");
+     appendFile (spec++".checks.csp") "\n";
+     appendFile (spec++".checks.csp") (makeRefAssert' ass);
      -- start1 <- getCPUTime;
-     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines temp.txt -q -f plain"]){ std_out = CreatePipe };
+     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -q -f plain"]){ std_out = CreatePipe };
      -- end1 <- (waitForProcess ph >> getCPUTime);
      grepBytes <- hGetContents hout;
      -- let diff = (fromIntegral (end1 - start1)) / (10^12);
@@ -479,11 +521,10 @@ fdr4check spec ass =
      cc <- (parseAssert2 ass grepBytes)
      return cc;
 
--- batchFDR4 spec xs
---   = do
---      dd <- (mapM (fdr4 spec) (batchRef xs))
---      -- let cc = ((map putToTuple $ concat dd));
---      appendFile "ref_raw.txt" (uwl dd)
---      return (unlines $ map unwords dd)
+batchFDR4 spec xs
+  = do
+     dd <-  (mapM (fdr4check spec) xs)
+     -- let cc = ((map putToTuple $ concat dd));
+     return dd
 
 \end{code}
