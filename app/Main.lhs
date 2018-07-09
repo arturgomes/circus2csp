@@ -419,7 +419,11 @@ $fdr4check$ perform any specific check provided by the user within Circus2CSP.
 
 fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
 fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
+<<<<<<< HEAD
 fmtcmd "assert refall"                 "perform batch refinement for all processes available",
+=======
+fmtcmd "assert refall"                 "perform batch CSPRefinement for all processes available",
+>>>>>>> a5f5fe47d117d580622b41943461702ca16e17fb
 fmtcmd "assert refall model"           "perform refall using a given model",
 fmtcmd "assert dl spec"             "checks spec for dls",
 fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
@@ -436,6 +440,45 @@ fmtcmd "assert detall model "   "perform 'detall'  using a given model",
 fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
 
 -}
+<<<<<<< HEAD
+assert param xs =
+  do_assert (unwords param) xs
+
+do_assert (p:ps) xs
+| (p == "ref") && (length ps >= 3) = do_refines ps
+| (p == "refall") = do_refinesall xs ps
+| (p == "dl") && (length ps > 1) = do_deadlock ps
+| (p == "dlall") = do_deadlockall xs ps
+| (p == "div") && (length ps >= 1) = do_divergence ps
+| (p == "divsall") = do_divergenceall xs ps
+| (p == "det") && (length ps >= 1) = do_refines ps
+| (p == "detall") = do_deterministicall xs ps
+| (p == "ref") && (length ps >= 1) = do_deterministic ps
+
+do_refinesall xs [] = undefined -- refineall
+do_refinesall xs [model] = undefined -- refineall model
+
+do_refines [spec,impl] = undefined -- spec [FD= impl
+do_refines [spec,impl,model] = undefined -- spec [m= impl
+
+do_deadlockall xs [] = undefined -- deadlockall
+do_deadlockall xs [model] = undefined -- deadlockall model
+
+do_deadlock [spec] = undefined -- spec :[deadlock free]
+do_deadlock [spec,model] = undefined -- spec :[deadlock free [m]]
+
+do_divergenceall xs [] = undefined -- divergenceall
+do_divergenceall xs [model] = undefined -- divergenceall model
+
+do_divergence [spec] = undefined -- spec :[divergence free]
+do_divergence [spec,model] = undefined -- spec :[divergence free [m]]
+
+do_deterministicall xs [] = undefined -- divergenceall
+do_deterministicall xs [model] = undefined -- divergenceall model
+
+do_deterministic [spec] = undefined -- spec :[divergence free]
+do_deterministic [spec,model] = undefined -- spec :[divergence free [m]]
+=======
 --
 -- assert param xs =
 --   do_assert (unwords param) xs
@@ -502,6 +545,7 @@ do_CSPDeterministic [spec]
 -- spec :[CSPDivergence free [m]]
 do_CSPDeterministic [spec,model]
   = [CSPDeterministic spec (Just (mkSemanticModel model))]
+>>>>>>> a5f5fe47d117d580622b41943461702ca16e17fb
 
 do_jumbo xs = undefined
 

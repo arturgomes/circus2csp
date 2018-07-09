@@ -161,6 +161,11 @@ makeRAssert _ _ _= return []
 
 makeRAssert1 :: Monad m => Assertion -> [[String]] -> m [String]
 makeRAssert1 (CSPRefinement FailDiv a b) (_:_:c:xs) = return [a, b,head(drop 1 c)]
+-- makeRAssert1 (CSPRefinement RefModel String String) (_:_:c:xs) = return [a, b,head(drop 1 c)]
+makeRAssert1 (CSPLivelock s (Just f)) (_:_:c:xs) = return [s," :[livelock free "++(getSemanticModel f)++"]",head(drop 1 c)]
+makeRAssert1 (CSPDeadlock s (Just f)) (_:_:c:xs) = return [s," :[deadlock free "++(getSemanticModel f)++"]",head(drop 1 c)]
+makeRAssert1 (CSPDivergence s (Just f)) (_:_:c:xs) = return [s," :[divergence free "++(getSemanticModel f)++"]",head(drop 1 c)]
+makeRAssert1 (CSPDeterministic s (Just f)) (_:_:c:xs) = return [s," :[deterministic "++(getSemanticModel f)++"]",head(drop 1 c)]
 makeRAssert1 _ _= return []
 
 data Res = Failed | Passed  deriving Show

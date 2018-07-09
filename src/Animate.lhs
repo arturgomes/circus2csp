@@ -130,6 +130,7 @@ isDone (Done _) = True
 isDone (DoneUpsilon _ _) = True
 isDone (DoneLatex _ _) = True
 isDone (DoneOmega _ _) = True
+isDone (DoneReport _ _) = True
 isDone _        = False
 
 
