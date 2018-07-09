@@ -1,0 +1,150 @@
+\section{Chronometer models - Marcel Oliveira~\cite{MV05}}
+
+We list a number of models derived from a simple example from
+Oliveira's PhD thesis~\cite{MV05}: a chronometer.
+
+\subsection{$AChrono$}
+
+
+A specification:
+\begin{circus}
+RANGE == 0 \upto 2
+\also \circchannel tick,time
+\also \circchannel out : \{min,sec : RANGE @ (min,sec)\}
+\also
+\circprocess\ AChrono \circdef\\
+\circbegin\\
+\t1 \circstate AState \defs [ sec, min : RANGE ]\\
+\t1 AInit \circdef (sec,min:=0,0)\\
+\t1 IncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+\t1 IncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+\t1 Run \circdef \\
+\t2 (
+(
+  tick \then IncSec \circseq \\
+      (
+        \circif sec = 0 \circthen IncMin\\
+        \circelse sec \neq 0 \circthen \Skip \circfi
+      )
+)\\
+    \extchoice~ time \then out!(min, sec) \then \Skip \\
+)\\
+\t1 \circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))\\
+\circend
+\end{circus}
+
+\subsection{$Chrono$}
+\begin{circus}
+\circchannel inc, minsReq
+\also \circchannel ans : RANGE
+\also \circchannelset Sync == \lchanset inc, minsReq, ans \rchanset
+\also \circprocess Chrono \circdef\ \circbegin\\
+\circstate State \defs [ sec : RANGE; min : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+ SecInit \circdef (sec:=0)\\
+ IncSec \circdef (sec:=(sec+1)\mod 3)\\
+ RunSec \circdef\\
+((tick \then IncSec \circseq\\
+    (\circif  sec = 0 \circthen inc \then \Skip\\
+    \circelse sec \neq 0 \circthen \Skip \circfi))\\
+  \extchoice time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip )  \\
+ Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+ MinInit \circdef (min:=0)\\
+ IncMin \circdef (min:=(min+1)\mod 3)\\
+ RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
+ Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
+\circend
+\end{circus}
+\subsection{Distributed processes - $ChronometerFull$}
+\subsubsection{$Seconds$}
+\begin{circus}
+\circprocess Seconds \circdef\ \\
+\circbegin\\
+\t1\circstate StateSeconds \defs [ sec : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+\t1 SecInit \circdef (sec:=0)\\
+\t1 IncSec \circdef (sec:=(sec+1)\mod 3)\\
+\t1 RunSec \circdef
+\\\t2
+(
+(
+tick \then IncSec \circseq\\
+    (
+      \circif  sec = 0 \circthen inc \then \Skip\\
+      \circelse sec \neq 0 \circthen \Skip \circfi
+    )\\
+    )\\
+  \extchoice~time \then minsReq \then ans?min \then out!(min,sec)
+      \then \Skip
+)\\
+ \t1\circspot SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+\circend
+\end{circus}
+\subsubsection{$Minutes$}
+
+\begin{circus}
+\circprocess Minutes \circdef\\\ \circbegin\\
+\t1\circstate StateMinutes \defs [ min : RANGE ]\\
+% \circstate State \defs [ sec : RANGE] \land [min : RANGE ]\\ %not supported by the tool
+\t1 MinInit \circdef (min:=0)\\
+\t1 IncMin \circdef (min:=(min+1)\mod 3)\\
+\t1 RunMin \circdef\\\t2
+(
+  (inc \then IncMin)\\
+  \extchoice (minsReq \then ans!min \then \Skip)\\
+)\\
+ \t1\circspot MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
+\circend
+\end{circus}
+\subsubsection{$ChronometerFull$}
+
+\begin{circus}
+  \circprocess ChronometerFull \circdef b\_RAN:BINDINGS \circspot ((Seconds(b\_RAN1) \lpar Sync \rpar Minutes(b\_RAN1)) \circhide Sync)
+\end{circus}
+%
+\section{Models by Artur Gomes}
+
+\subsection{$WakeUp$}
+
+\begin{circus}
+ALARM ::= ON | OFF\\
+\circchannel snooze,radioOn\\
+
+\circprocess\ WakeUp \circdef\\
+\circbegin\\
+\circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
+WInit \circdef (sec,min,buzz:=0,0,OFF)\\
+WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+WRun \circdef \\
+((tick \then WIncSec \circseq \\
+    ( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
+    \extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip\\
+    \extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
+    \extchoice (time \then out!(min, sec) \then \Skip)\\
+    \extchoice (snooze \then (buzz:=OFF)))) \circhide \lchanset tick \rchanset)
+\\
+\circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
+\circend
+\end{circus}
+\begin{circus}
+
+  \circprocess\ WakeUpOK \circdef\\
+  \circbegin\\
+  \circstate WState \defs [ sec, min : RANGE; buzz:ALARM ]\\
+  WInit \circdef (sec,min,buzz:=0,0,OFF)\\
+  WIncSec \circdef (sec,min:=(sec+1)\mod 3,min)\\
+  WIncMin \circdef (min,sec:=(min+1)\mod 3,sec)\\
+  WRun \circdef \\
+  ((tick \then WIncSec \circseq \\
+  		( \lcircguard sec = 0 \rcircguard \circguard WIncMin\\
+  		\extchoice \lcircguard sec \neq 0 \rcircguard \circguard \Skip))\\
+  		\extchoice \lcircguard min = 1 \rcircguard \circguard radioOn \then (buzz:=ON)
+  		\extchoice (time \then out!(min, sec) \then \Skip)\\
+  		\extchoice (snooze \then (buzz:=OFF)) \circhide \lchanset tick \rchanset)
+  \\
+  \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
+  \circend
+\end{circus}

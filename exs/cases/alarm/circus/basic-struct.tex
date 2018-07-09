@@ -1,0 +1,396 @@
+\section{Basic Structure of a stateless \Circus\ process in \Circus'}
+As they do not have state components and local variables, they are also
+members of $Circus_{CSP}$: their translation into corresponding CSP processes is
+defined by the fairly direct mapping function $\Upsilon$.
+\begin{argue}
+\circprocess P \circdef\\
+\qquad \circbegin\\
+\qquad\qquad\circspot A_{CSP}\\ \qquad\circend\\
+\end{argue}
+
+\subsection{Staterich \Circus\ process}
+
+\begin{argue}
+\circprocess P\circdef\\
+\qquad\circbegin\\
+\qquad\qquad\circstate S \defs [ v_0 : T_x; \ldots ; v_n : T_z | inv(v_0,\ldots,v_n) ]\\
+\qquad\qquad\circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)\\
+\qquad\circend\\
+
+\end{argue}
+
+\subsection{State-poor \Circus\ process after $\Omega$ - Original Translation}
+
+\begin{argue}
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_x; \ldots ; v_n : T_z | inv(v_0,\ldots,v_n) ]\\
+      \circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & $\Omega$ definition\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      Memory \circdef\\
+      \qquad\begin{array}{l}
+        \circvres b : BINDING \circspot \\
+        \qquad \begin{array}{l}
+        (\Extchoice n: \dom\ b \circspot get.n!b(n) \then Memory(b))\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b \circspot \\
+        \qquad \begin{array}{l}
+        set.n?nv : (nv \in \delta(n)) \then\\
+        Memory(b \oplus {n \mapsto nv})
+        \end{array}\end{array}\right)\\
+        \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot \circvar b :
+        \left\{\begin{array}{l}
+        x : BINDING | \begin{array}{l}
+          x(v_0) \in T_0 \land \ldots \\ \land inv(x(v_0),\ldots,x(v_n))
+        \end{array}\end{array}\right\} \circspot\\
+        \qquad \left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq\\terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b\} \rpar\\
+          Memory(b)
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\end{argue}
+
+\subsection{State-poor \Circus\ process after $\Omega$ - Artur Gomes's PhD research}
+
+\begin{argue}
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_x; \ldots ; v_n : T_z | inv(v_0,\ldots,v_n) ]\\
+      \circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & $\Omega$ definition\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef~
+\\\qquad\circvar b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n} \circspot
+\\\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+        Memory \circdef\\
+        \qquad\begin{array}{l}
+          \circvres b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n}  \circspot \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b_{T_1} \circspot
+                mget.n!b_{T_1}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+          \extchoice \ldots \\
+          \extchoice (\Extchoice n: \dom\ b_{T_n}
+                \circspot mget.n!b_{T_n}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b_{T_1} \circspot\\
+          \qquad mset.n?nv : (nv \in \delta(n))
+                \then Memory((b_{T_1} \oplus \{n \mapsto nv\}), \ldots, b_{T_n})
+          \end{array}\right)\\
+          \extchoice \ldots\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b_{T_n} \circspot\\
+          \qquad mset.n?nv : (nv \in \delta(n))
+                \then Memory(b_{T_1}, \ldots, (b_{T_n} \oplus \{n \mapsto nv\}))
+          \end{array}\right)\\
+          \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot\left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b_{T_1}, \ldots, b_{T_n}\} \rpar\\
+          Memory(b_{T_1}, \ldots, b_{T_n})
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\end{argue}
+
+\subsection{Refinement steps towards a State-poor \Circus\ process - Including Gomes's model translation}
+The steps here are present in the Deliverable 24.1, except the two final steps, which were developed by Artur Gomes in his research. The testing comparing both strategies are present in the next chapter.
+\begin{argue}
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
+      \ldots\\
+      \circspot A(v_0,\ldots,v_n)
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Action Refinement\\
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n | inv(v_0,\ldots,v_n) ]\\
+      \ldots\\
+      \circspot \circvar l_0: U_0; \ldots ; l_m;U_m \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Process Refinement, $crl\_prom\_var\_state$, $crl\_prom\_var\_state2$\\
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ v_0 : T_0; \ldots ; v_n : T_n; l_0: U_0; \ldots ; l_m;U_m | inv(v_0,\ldots,v_n) ]\\
+      \ldots\\
+      \circspot A(v_0,\ldots,v_n,l_0,\ldots,l_m)
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Data Refinement\\
+\qquad\begin{array}{l}
+\circprocess P\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
+      \ldots\\
+      \circspot A(b(v_0),\ldots,b(v_n),b(l_0),\ldots,b(l_m))
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Action Refinement\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      \circstate S \defs [ b : BINDING | b(v_0) \in T_0 \land \ldots \land inv(b(v_0),\ldots,b(v_n)) ]\\
+      Memory \circdef\\
+      \qquad\begin{array}{l}
+        \circvres b : BINDING \circspot \\
+        \qquad \begin{array}{l}
+        (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b \circspot\\
+        \qquad
+        mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+        \end{array}\right)\\
+        \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot \circvar b :
+        \left\{\begin{array}{l}
+        x : BINDING | \begin{array}{l}
+          x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
+        \end{array}\end{array}\right\} \circspot\\
+        \qquad \left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq\\terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b\} \rpar\\
+          Memory(b)
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Process Refinement\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      Memory \circdef\\
+      \qquad\begin{array}{l}
+        \circvres b : BINDING \circspot \\
+        \qquad \begin{array}{l}
+        (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b \circspot\\
+        \qquad
+        mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+        \end{array}\right)\\
+        \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot \circvar b :
+        \left\{\begin{array}{l}
+        x : BINDING | \begin{array}{l}
+          x(v_0) \in T_0 \land \ldots \land inv(x(v_0),\ldots,x(v_n))
+        \end{array}\end{array}\right\} \circspot\\
+        \qquad \left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq\\terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b\} \rpar\\
+          Memory(b)
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Action Refinement\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      Memory \circdef\\
+      \qquad\begin{array}{l}
+        \circvres b : BINDING \circspot \\
+        \qquad \begin{array}{l}
+        (\Extchoice n: \dom\ b \circspot mget.n!b(n) \then Memory(b))\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b \circspot\\
+        \qquad
+        mset.n?nv : (nv \in \delta(n)) \then Memory(b \oplus {n \mapsto nv})
+        \end{array}\right)\\
+        \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot \Intchoice b : BINDING \circspot\\
+        \qquad \left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq\\terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b\} \rpar\\
+          Memory(b)
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Splitting the $BINDING$ type in subsets for each type.\\
+\\ & Part of Artur Gomes's PhD research.\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef\\
+\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+      Memory \circdef\\
+      \qquad\begin{array}{l}
+        \circvres b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n}  \circspot \\
+        \qquad \begin{array}{l}
+        (\Extchoice n: \dom\ b_{T_1} \circspot mget.n!b_{T_1}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+        \extchoice \ldots \\
+        \extchoice (\Extchoice n: \dom\ b_{T_n}
+              \circspot mget.n!b_{T_n}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b_{T_1} \circspot\\
+        \qquad mset.n?nv : (nv \in \delta(n))
+              \then Memory((b_{T_1} \oplus \{n \mapsto nv\}), \ldots, b_{T_n})
+        \end{array}\right)\\
+        \extchoice \ldots\\
+        \extchoice \left(\begin{array}{l}
+        \Extchoice n: \dom\ b_{T_n} \circspot\\
+        \qquad mset.n?nv : (nv \in \delta(n))
+              \then Memory(b_{T_1}, \ldots, (b_{T_n} \oplus \{n \mapsto nv\}))
+        \end{array}\right)\\
+        \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot \Intchoice b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n}   \circspot\\
+        \qquad \left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b_{T_1}, \ldots, b_{T_n}\} \rpar\\
+          Memory(b_{T_1}, \ldots, b_{T_n})
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\\= & Removing the internal choice of the main action and defining $b_{T_1}, \ldots, b_{T_n}$ as a parameter of the process.\\
+\\ & Part of Artur Gomes's PhD research.\\
+\qquad\begin{array}{l}
+\circprocess P'\circdef~
+\\\qquad\circvar b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n} \circspot
+\\\qquad
+  \begin{array}{l}
+    \circbegin\\
+      \qquad
+      \begin{array}{l}
+        Memory \circdef\\
+        \qquad\begin{array}{l}
+          \circvres b_{T_1} : BINDING_{T_1}, \ldots, b_{T_n} : BINDING_{T_n}  \circspot \\
+          \qquad \begin{array}{l}
+          (\Extchoice n: \dom\ b_{T_1} \circspot
+                mget.n!b_{T_1}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+          \extchoice \ldots \\
+          \extchoice (\Extchoice n: \dom\ b_{T_n}
+                \circspot mget.n!b_{T_n}(n) \then Memory(b_{T_1}, \ldots, b_{T_n}))\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b_{T_1} \circspot\\
+          \qquad mset.n?nv : (nv \in \delta(n))
+                \then Memory((b_{T_1} \oplus \{n \mapsto nv\}), \ldots, b_{T_n})
+          \end{array}\right)\\
+          \extchoice \ldots\\
+          \extchoice \left(\begin{array}{l}
+          \Extchoice n: \dom\ b_{T_n} \circspot\\
+          \qquad mset.n?nv : (nv \in \delta(n))
+                \then Memory(b_{T_1}, \ldots, (b_{T_n} \oplus \{n \mapsto nv\}))
+          \end{array}\right)\\
+          \extchoice~terminate \then \Skip
+        \end{array}
+        \end{array} \\
+      \circspot\left(\begin{array}{l}
+          \left(\begin{array}{l}
+            \Omega_A(A)\circseq terminate \then \Skip
+          \end{array}\right)\\
+          \lpar \emptyset | MEM_I | \{b_{T_1}, \ldots, b_{T_n}\} \rpar\\
+          Memory(b_{T_1}, \ldots, b_{T_n})
+        \end{array}\right) \circhide MEM_I
+    \end{array}\\
+  \circend\\
+  \end{array}
+\end{array}
+\end{argue}
