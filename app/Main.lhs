@@ -511,29 +511,20 @@ do_jumbo xs s
 -- Print the current directory structure with files
 fdr4check :: FilePath -> Assertion -> IO [String]
 fdr4check spec ass =
-  -- catch
      (do copyFile (spec++".csp") (spec++".checks.csp");
          appendFile (spec++".checks.csp") "\n";
          appendFile (spec++".checks.csp") (makeRefAssert' ass);
-         -- start1 <- getCPUTime;
          (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -qb -f plain"]){ std_out = CreatePipe };
          -- (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -q -f plain"]){ std_out = CreatePipe };
-         -- end1 <- (waitForProcess ph >> getCPUTime);
          grepBytes <- hGetContents hout;
          -- let diff = (fromIntegral (end1 - start1)) / (10^12);
-         -- let aa = (unlines $ map unwords (parseAssert2 grepBytes));
-         -- cc <- (return (map unwords (parseAssert2 grepBytes)))
          putStr ("Asserting: "++(unlines $ drop 2 $ lines grepBytes))
          return (drop 2 $ lines grepBytes))
-    -- (\err -> do {putStrLn (show ("Couldn't open "++spec++": " ++ show err))})
 
 batchFDR4 spec xs
   = do
      dd <- (mapM (fdr4check spec) xs)
      let cc = map unwords dd;
      return cc
-
-
-
 
 \end{code}
