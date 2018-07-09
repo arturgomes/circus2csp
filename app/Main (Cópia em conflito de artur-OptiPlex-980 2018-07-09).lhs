@@ -182,7 +182,7 @@ help =
    "The parameter 'model' where m can be [T,F,FD]",
    fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
    fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
-   fmtcmd "assert refall"                 "perform batch refinement for all processes available",
+   fmtcmd "assert refall"                 "perform batch CSPRefinement for all processes available",
    fmtcmd "assert refall model"           "perform refall using a given model",
    fmtcmd "assert dl spec"             "checks spec for dls",
    fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
@@ -242,8 +242,6 @@ do_cmd cmd args anim fn
         (do let fname = getSrcDir anim++args
             putStrLn ("Loading '"++fname++"' ...")
             spec <- readFile (fname++".tex")
-            touch (fname++".report.txt");
-            writeFile (fname++".report.txt") "";
             let (anim',_,_) = resetanimator anim
             let (anim1,answ1,fn1) = pushfile args spec $ setFName args anim'
             let (anim2,answ2,fn2) = omegaCircus anim1 fn1
@@ -255,8 +253,6 @@ do_cmd cmd args anim fn
       (do let fname = getSrcDir anim++args
           putStrLn ("Loading '"++fname++"' ...")
           spec <- readFile (fname++".tex")
-          touch (fname++".report.txt");
-          writeFile (fname++".report.txt") "";
           let (anim',_,_) = resetanimator anim
           let (anim1,answ1,fn1) = pushfile args spec $ setFName args anim'
           let (anim2,answ2,fn2) = preVarOmegaCircus anim1 fn1
@@ -264,15 +260,9 @@ do_cmd cmd args anim fn
       (\err ->
           do {putStrLn (show (err :: IOException)); get_cmd anim fn})
   | cmd == "refinesT"
-       = do  putStrLn "---------------------"
-             putStrLn ("-- Running FDR4 ")
-             putStrLn ("-- file: '"
-                        ++ "\x1b[32m"
-                        ++ (getDstDir anim++args)
-                        ++ (getFName anim)
-                        ++ ".csp"
-                        ++ "\x1b[0m"++"' ...")
-             putStrLn "---------------------"
+       = do  putStrLn     "--------------------------------------------------------------------------------------------------"
+             putStrLn ("---------- Running FDR4 using the file '"++"\x1b[32m" ++ (getDstDir anim++args)++(getFName anim)++".csp"++ "\x1b[0m"++"' ...")
+             putStrLn "--------------------------------------------------------------------------------------------------"
 
 -- "Welcome to FDR Version 4.2.3 copyright 2016 Oxford University Innovation Ltd. All Rights Reserved."
 -- "--------------------------------------------------------------------------------------------------"
@@ -282,8 +272,8 @@ do_cmd cmd args anim fn
   | cmd == "assert"
     = catch
        (do let ar = args
-           res <- (do_assert (getDstDir anim++fn) (words ar) (batchGetProcList anim));
-           done_cmd (anim, DoneReport ("\n\nresult for "++ar++":\n"++(unlines res)) fn,fn))
+           res <- (do_assert (getDstDir anim++fn) (words ar) []);
+           done_cmd (anim, DoneReport (unlines res) fn,fn))
        (\err ->
            do {putStrLn (show (err :: IOException)); get_cmd anim fn})
 
@@ -318,10 +308,7 @@ done_cmd (anim, DoneLatex s f,args)
 done_cmd (anim, DoneOmega s f,args)
   = cmd_output (anim,s,args,".csp",".hc")
 done_cmd (anim, DoneReport s f,args)
-  = do
-       cmd_output' (anim,s,args,".report.txt",".report.txt")
-    where
-       root = getDstDir anim++args
+  = cmd_output (anim,s,args,".report.txt",".report.txt")
 done_cmd (anim, Done s,args)
   = cmd_output (anim,s,args,".spec.txt",".spec.txt")
 done_cmd (anim, ErrorMsg m,args)   = do {putErrorMsg m; get_cmd anim args}
@@ -337,13 +324,6 @@ cmd_output (anim,s,args,extt,extw)
   where
     root = getDstDir anim++args
 
-cmd_output' :: (Animator, String, String, String, String) -> IO ()
-cmd_output' (anim,s,args,extt,extw)
-  = do --putStrLn s
-       appendFile (root++extw) s
-       get_cmd anim args
-  where
-    root = getDstDir anim++args
 -- done_cmd :: (Animator, Answer) -> IO ()
 -- done_cmd (anim, DoneUpsilon s f)
 --   = do {putStrLn s; touch (f++".csp"); writeStr (f++".csp") s; get_cmd anim}
@@ -431,22 +411,45 @@ fdr4 spec =
   -- do (_, Just hout, _, _) <- createProcess (proc "bash" ["-c", "refines -qb "++spec]){ std_out = CreatePipe }
      grepBytes <- hGetContents hout
      putStrLn grepBytes
-     -- putStrLn (unlines $ drop 2 $ lines grepBytes) -- removes fdr4 header
 \end{code}
 $fdr4check$ perform any specific check provided by the user within Circus2CSP.
 \begin{code}
 
+{-
+
+fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
+fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
+fmtcmd "assert refall"                 "perform batch CSPRefinement for all processes available",
+fmtcmd "assert refall model"           "perform refall using a given model",
+fmtcmd "assert dl spec"             "checks spec for dls",
+fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
+fmtcmd "assert dlall"               "perform batch dl check for all processe available",
+fmtcmd "assert dlall model"         "perform 'dlall' using a given mode",
+fmtcmd "assert div spec"           "checks spec for div",
+fmtcmd "assert div spec model"     "checks spec for div using a given mode",
+fmtcmd "assert divsall"            "perform batch div check for all processe available",
+fmtcmd "assert divsall model"      "perform 'divsall'  using a given model",
+fmtcmd "assert det spec"        "checks if spec is det",
+fmtcmd "assert det spec model " "checks if spec is det using a given model",
+fmtcmd "assert detall"          "perform batch det check for all processe available",
+fmtcmd "assert detall model "   "perform 'detall'  using a given model",
+fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
+
+-}
+--
+-- assert param xs =
+--   do_assert (unwords param) xs
+
 do_assert spec (p:ps) xs
-  | (p == "ref") && (length ps >= 3) = batchFDR4 spec (do_refines ps)
-  | (p == "refall") = batchFDR4 spec (do_refinesall xs ps)
-  | (p == "dl") && (length ps >= 1) = batchFDR4 spec (do_CSPDeadlock ps)
-  | (p == "dlall") = batchFDR4 spec (do_CSPDeadlockall xs ps)
-  | (p == "div") && (length ps >= 1) = batchFDR4 spec (do_CSPDivergence ps)
-  | (p == "divsall") = batchFDR4 spec (do_CSPDivergenceall xs ps)
-  | (p == "divall") = batchFDR4 spec (do_CSPDivergenceall xs ps)
-  | (p == "det") && (length ps >= 1) = batchFDR4 spec (do_CSPDeterministic ps)
-  | (p == "detall") = batchFDR4 spec (do_CSPDeterministicall xs ps)
-  | (p == "jumbo") = batchFDR4 spec ( (do_jumbo xs ps))
+  | (p == "ref") && (length ps >= 3) = fdr4check spec (do_refines ps)
+  -- | (p == "refall") = batchFDR4 spec (do_refinesall xs ps)
+  | (p == "dl") && (length ps > 1) = fdr4check spec (do_CSPDeadlock ps)
+  -- | (p == "dlall") = batchFDR4 spec (do_CSPDeadlockall xs ps)
+  | (p == "div") && (length ps >= 1) = fdr4check spec (do_CSPDivergence ps)
+  -- | (p == "divsall") = batchFDR4 spec (do_CSPDivergenceall xs ps)
+  | (p == "det") && (length ps >= 1) = fdr4check spec (do_CSPDeterministic ps)
+  -- | (p == "detall") = batchFDR4 spec (do_CSPDeterministicall xs ps)
+  | (p == "ref") && (length ps >= 1) = fdr4check spec (do_CSPDeterministic ps)
   | otherwise = error "Could not find any spec"
 do_refinesall xs []
   = batchRef xs FailDiv -- refineall
@@ -500,40 +503,28 @@ do_CSPDeterministic [spec]
 do_CSPDeterministic [spec,model]
   = [CSPDeterministic spec (Just (mkSemanticModel model))]
 
-do_jumbo xs s
-  = (do_refinesall xs s)++
-    (do_CSPDeterministicall xs s)++
-    (do_CSPDivergenceall xs s)++
-    (do_CSPDeadlockall xs s)
-
+do_jumbo xs = undefined
 
 
 -- Print the current directory structure with files
-fdr4check :: FilePath -> Assertion -> IO [String]
-fdr4check spec ass =
-  -- catch
-     (do copyFile (spec++".csp") (spec++".checks.csp");
-         appendFile (spec++".checks.csp") "\n";
-         appendFile (spec++".checks.csp") (makeRefAssert' ass);
-         -- start1 <- getCPUTime;
-         (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -qb -f plain"]){ std_out = CreatePipe };
-         -- (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -q -f plain"]){ std_out = CreatePipe };
-         -- end1 <- (waitForProcess ph >> getCPUTime);
-         grepBytes <- hGetContents hout;
-         -- let diff = (fromIntegral (end1 - start1)) / (10^12);
-         -- let aa = (unlines $ map unwords (parseAssert2 grepBytes));
-         -- cc <- (return (map unwords (parseAssert2 grepBytes)))
-         putStr ("Asserting: "++(unlines $ drop 2 $ lines grepBytes))
-         return (drop 2 $ lines grepBytes))
-    -- (\err -> do {putStrLn (show ("Couldn't open "++spec++": " ++ show err))})
+fdr4check :: FilePath -> [Assertion] -> IO [String]
+fdr4check spec [ass] =
+  do copyFile (spec++".csp") (spec++".checks.csp");
+     appendFile (spec++".checks.csp") "\n";
+     appendFile (spec++".checks.csp") (makeRefAssert' ass);
+     -- start1 <- getCPUTime;
+     (_, Just hout, _, ph) <- createProcess (proc "bash" ["-c", "refines "++(spec++".checks.csp")++" -q -f plain"]){ std_out = CreatePipe };
+     -- end1 <- (waitForProcess ph >> getCPUTime);
+     grepBytes <- hGetContents hout;
+     -- let diff = (fromIntegral (end1 - start1)) / (10^12);
+     let aa = (unlines $ map unwords (parseAssert2 ass grepBytes));
+     cc <- (parseAssert2 ass grepBytes)
+     return cc;
 
 batchFDR4 spec xs
   = do
-     dd <- (mapM (fdr4check spec) xs)
-     let cc = map unwords dd;
-     return cc
-
-
-
+     dd <-  (mapM (fdr4check spec) xs)
+     -- let cc = ((map putToTuple $ concat dd));
+     return dd
 
 \end{code}

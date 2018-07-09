@@ -1,0 +1,633 @@
+
+
+result for jumbo:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+AChrono(b_RAN1) :[divergence free [FD]]: Passed
+Chrono(b_RAN1) :[divergence free [FD]]: Passed
+Seconds(b_RAN1) :[divergence free [FD]]: Passed
+Minutes(b_RAN1) :[divergence free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+ChronometerFull(b_RAN1) :[divergence free [FD]]: Passed
+AChrono(b_RAN1) :[deadlock free [FD]]: Passed
+Chrono(b_RAN1) :[deadlock free [FD]]: Passed
+Seconds(b_RAN1) :[deadlock free [FD]]: Passed
+Minutes(b_RAN1) :[deadlock free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+ChronometerFull(b_RAN1) :[deadlock free [FD]]: Passed
+
+
+result for detall:
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+
+
+result for refall:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+
+
+result for jumbo:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+AChrono(b_RAN1) :[divergence free [FD]]: Passed
+Chrono(b_RAN1) :[divergence free [FD]]: Passed
+Seconds(b_RAN1) :[divergence free [FD]]: Passed
+Minutes(b_RAN1) :[divergence free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+ChronometerFull(b_RAN1) :[divergence free [FD]]: Passed
+AChrono(b_RAN1) :[deadlock free [FD]]: Passed
+Chrono(b_RAN1) :[deadlock free [FD]]: Passed
+Seconds(b_RAN1) :[deadlock free [FD]]: Passed
+Minutes(b_RAN1) :[deadlock free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+ChronometerFull(b_RAN1) :[deadlock free [FD]]: Passed
+
+
+result for refall:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+
+
+result for detall:
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+
+
+
+result for detall:
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+
+
+result for detall:
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+
+
+result for refall:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+
+
+result for refall:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+
+
+result for detall:
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+
+
+result for jumbo:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+AChrono(b_RAN1) :[divergence free [FD]]: Passed
+Chrono(b_RAN1) :[divergence free [FD]]: Passed
+Seconds(b_RAN1) :[divergence free [FD]]: Passed
+Minutes(b_RAN1) :[divergence free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+ChronometerFull(b_RAN1) :[divergence free [FD]]: Passed
+AChrono(b_RAN1) :[deadlock free [FD]]: Passed
+Chrono(b_RAN1) :[deadlock free [FD]]: Passed
+Seconds(b_RAN1) :[deadlock free [FD]]: Passed
+Minutes(b_RAN1) :[deadlock free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+ChronometerFull(b_RAN1) :[deadlock free [FD]]: Passed
+
+
+result for jumbo FD:
+AChrono(b_RAN1) [FD= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [FD= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [FD= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [FD= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [FD= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) :[deterministic [FD]]: Passed
+Chrono(b_RAN1) :[deterministic [FD]]: Passed
+Seconds(b_RAN1) :[deterministic [FD]]: Passed
+Minutes(b_RAN1) :[deterministic [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [FD]]: Passed
+AChrono(b_RAN1) :[divergence free [FD]]: Passed
+Chrono(b_RAN1) :[divergence free [FD]]: Passed
+Seconds(b_RAN1) :[divergence free [FD]]: Passed
+Minutes(b_RAN1) :[divergence free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[divergence free [FD]]: Passed
+ChronometerFull(b_RAN1) :[divergence free [FD]]: Passed
+AChrono(b_RAN1) :[deadlock free [FD]]: Passed
+Chrono(b_RAN1) :[deadlock free [FD]]: Passed
+Seconds(b_RAN1) :[deadlock free [FD]]: Passed
+Minutes(b_RAN1) :[deadlock free [FD]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[deadlock free [FD]]: Passed
+ChronometerFull(b_RAN1) :[deadlock free [FD]]: Passed
+
+
+result for jumbo F:
+AChrono(b_RAN1) [F= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [F= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [F= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [F= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [F= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [F= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [F= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [F= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [F= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [F= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [F= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [F= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [F= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [F= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [F= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [F= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [F= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= AChrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [F= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [F= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [F= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [F= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [F= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [F= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [F= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) :[deterministic [F]]: Passed
+Chrono(b_RAN1) :[deterministic [F]]: Passed
+Seconds(b_RAN1) :[deterministic [F]]: Passed
+Minutes(b_RAN1) :[deterministic [F]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deterministic [F]]: Failed
+WakeUpOK(b_RAN1, b_ALA1) :[deterministic [F]]: Passed
+ChronometerFull(b_RAN1) :[deterministic [F]]: Passed
+
+
+
+
+
+
+
+AChrono(b_RAN1) :[deadlock free [F]]: Passed
+Chrono(b_RAN1) :[deadlock free [F]]: Passed
+Seconds(b_RAN1) :[deadlock free [F]]: Passed
+Minutes(b_RAN1) :[deadlock free [F]]: Passed
+WakeUp(b_RAN1, b_ALA1) :[deadlock free [F]]: Passed
+WakeUpOK(b_RAN1, b_ALA1) :[deadlock free [F]]: Passed
+ChronometerFull(b_RAN1) :[deadlock free [F]]: Passed
+
+
+result for jumbo T:
+AChrono(b_RAN1) [T= Chrono(b_RAN1): Failed
+AChrono(b_RAN1) [T= Seconds(b_RAN1): Failed
+AChrono(b_RAN1) [T= Minutes(b_RAN1): Failed
+AChrono(b_RAN1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+AChrono(b_RAN1) [T= ChronometerFull(b_RAN1): Failed
+Chrono(b_RAN1) [T= AChrono(b_RAN1): Failed
+Chrono(b_RAN1) [T= Seconds(b_RAN1): Failed
+Chrono(b_RAN1) [T= Minutes(b_RAN1): Failed
+Chrono(b_RAN1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+Chrono(b_RAN1) [T= ChronometerFull(b_RAN1): Failed
+Seconds(b_RAN1) [T= AChrono(b_RAN1): Failed
+Seconds(b_RAN1) [T= Chrono(b_RAN1): Failed
+Seconds(b_RAN1) [T= Minutes(b_RAN1): Failed
+Seconds(b_RAN1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+Seconds(b_RAN1) [T= ChronometerFull(b_RAN1): Failed
+Minutes(b_RAN1) [T= AChrono(b_RAN1): Failed
+Minutes(b_RAN1) [T= Chrono(b_RAN1): Failed
+Minutes(b_RAN1) [T= Seconds(b_RAN1): Failed
+Minutes(b_RAN1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+Minutes(b_RAN1) [T= ChronometerFull(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= AChrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= Chrono(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= Seconds(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= Minutes(b_RAN1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+WakeUp(b_RAN1, b_ALA1) [T= ChronometerFull(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [T= AChrono(b_RAN1): Passed
+WakeUpOK(b_RAN1, b_ALA1) [T= Chrono(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [T= Seconds(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [T= Minutes(b_RAN1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+WakeUpOK(b_RAN1, b_ALA1) [T= ChronometerFull(b_RAN1): Failed
+ChronometerFull(b_RAN1) [T= AChrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [T= Chrono(b_RAN1): Failed
+ChronometerFull(b_RAN1) [T= Seconds(b_RAN1): Failed
+ChronometerFull(b_RAN1) [T= Minutes(b_RAN1): Failed
+ChronometerFull(b_RAN1) [T= WakeUp(b_RAN1, b_ALA1): Failed
+ChronometerFull(b_RAN1) [T= WakeUpOK(b_RAN1, b_ALA1): Failed
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
