@@ -840,10 +840,14 @@ zstroke
 zword :: EParser ZToken String
 zword =
   do L_WORD w <- sat isWord
-     return w
+     return (replace w)
   where
   isWord (L_WORD _) = True
   isWord _          = False
+
+replace ('\\':c:rest) = c : replace rest
+replace (c:rest) = c : replace rest
+replace [] = []
 
 zpre_rel_decor :: EParser ZToken ZVar
 zpre_rel_decor

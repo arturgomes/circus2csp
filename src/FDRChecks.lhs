@@ -78,7 +78,9 @@ makeCSPRefinements (x:xs) ys a = (makeRefs x ys a)++(makeCSPRefinements xs ys a)
 
 makeRefs :: String -> [String] -> RefModel -> [Assertion]
 makeRefs x [] _ = []
-makeRefs x (y:ys) ms = [CSPRefinement ms x y]++(makeRefs x ys ms)
+makeRefs x (y:ys) ms
+  | x == y = (makeRefs x ys ms)
+  | otherwise = [CSPRefinement ms x y]++(makeRefs x ys ms)
 
 -- CSPDeadlock freedom check
 batchDL :: [String] -> RefModel -> [Assertion]
@@ -133,14 +135,14 @@ makeRefAssert' x = "assert "++(getAssertion x)
 Parsing results from assertions
 -}
 
-parseAssert2 :: Monad m => Assertion -> String -> m [String]
-parseAssert2 a f = makeRAssert1 a $ map words $ drop 2 $ lines f
+-- parseAssert2 :: Monad m => Assertion -> String -> m [String]
+parseAssert2 f = makeRAssert1 $ map words $ drop 2 $ lines f
 
 parseAssert :: Monad m => Assertion -> String -> FilePath -> IO (m [RAssert])
 parseAssert a t f =  makeRAssert a t <$> map words . drop 2 . lines  <$>  readFile f
-
-parseAssert1 :: Monad m => Assertion -> FilePath -> IO (m [String])
-parseAssert1 a f =  makeRAssert1 a <$> map words . drop 2 . lines  <$>  readFile f
+--
+-- parseAssert1 :: Monad m => Assertion -> FilePath -> IO (m [String])
+-- parseAssert1 a f =  makeRAssert1 a <$> map words . drop 2 . lines  <$>  readFile f
 
 makeRAssert :: Monad m => Assertion -> String -> [[[Char]]] -> m [RAssert]
 makeRAssert a t [_, _, c, d, e, f, g]
@@ -159,9 +161,13 @@ makeRAssert a t [_, _, c, d, e, f, g,_,_,_,_,_,_,_,_]
                               timeEx=t}]
 makeRAssert _ _ _= return []
 
-makeRAssert1 :: Monad m => Assertion -> [[String]] -> m [String]
-makeRAssert1 (CSPRefinement FailDiv a b) (_:_:c:xs) = return [a, b,head(drop 1 c)]
-makeRAssert1 _ _= return []
+-- makeRAssert1 :: Monad m => [[String]] -> m [String]
+makeRAssert1  (a:_:c:xs) = return (a++c)
+-- makeRAssert1 (a:_:c:xs) = return [s," :[livelock free "++(getSemanticModel f)++"]",head(drop 1 c)]
+-- makeRAssert1 (a:_:c:xs) = return [s," :[deadlock free "++(getSemanticModel f)++"]",head(drop 1 c)]
+-- makeRAssert1  (a:_:c:xs) = return [s," :[divergence free "++(getSemanticModel f)++"]",head(drop 1 c)]
+-- makeRAssert1  (a:_:c:xs) = return [s," :[deterministic "++(getSemanticModel f)++"]",head(drop 1 c)]
+makeRAssert1 x = return (["\nerror: "]++(map unwords x))
 
 data Res = Failed | Passed  deriving Show
 
