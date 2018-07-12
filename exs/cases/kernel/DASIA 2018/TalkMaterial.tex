@@ -34,6 +34,8 @@ We shall illustrate these two paradigm classes by modelling a simple counter
 system that supports two operations: counter initialisation, and count-up,
 The count is observable, somehow.
 
+\subsection{State-based Modelling}
+
 A classic example of the state-based paradigm is
 the Z specification language \cite{UsingZ}.
 Here we consider the counter state as being stored
@@ -61,7 +63,9 @@ follwed by predicates that describe the desired relationships that should hold.
   count' = count+1
 \end{schema}
 Z is very much aimed at specifying in a way
-that suits ``standard'' impewative programming styles.
+that suits ``standard'' imperative programming styles.
+
+\subsection{Process/Event-based Modelling}
 
 In the CSP formalism, we have (parameterised) processes
 that participate in ``events'', and who subsequent behaviour
@@ -89,6 +93,8 @@ However, one problem with this approach is that the number of parameters
 per process can get very large,
 and state-changes that modify these are hard to scan and digest.
 
+\section{Unification}
+
 The work reported here explores a technique that aims to have the best of both
 worlds, based on a formal paradigm known
 as ``Unifying Theories of Programming'' (UTP) \cite{UTP-book}.
@@ -113,8 +119,22 @@ to give a flavour for how it works:
    & $P\lor Q$
 \\   $P \lhd b \rhd Q$
    & $b \land P \lor \lnot b \land Q$
+\\   $P \sqsubseteq Q$
+   & $[Q \implies P]$
 \\\hline
 \end{tabular}
+
+Simple examples of unification include our ability to immediately define
+standard verification methodologies such as
+Hoare Triples (HT)
+and Weakest Precondition (WP), in terms of standard definitions:
+\begin{eqnarray*}
+   \{p\} Q \{r\} &\defs& (p \implies r') \sqsubseteq Q \qquad (HT)
+\\ Q ~\textbf{\textsf{wp}}~ r       &\defs& \lnot (Q ~;\lnot r) \qquad (WP)
+\end{eqnarray*}
+
+
+\subsection{State-rich Processes}
 
 An alternative approach to just using Z, or CSP,
 is taken by the language \Circus\cite{WC01,OCW2007},
@@ -122,15 +142,97 @@ which is a fusion of CSP with Z.
 This allows individual named state components to be modified using simple
 assignment statements, making descriptions easier to read.
 It's formal semantics has been defined using UTP\cite{OCW2007}.
+For example, our counter might be generated as follows:
+
+\begin{circus}
+\circchannel init,up \\
+\circprocess Counter \defs \circbegin \\
+\circstate State \defs [count:\num] \\
+\t1 Count \defs \\
+\t2 init \then count := 0 \\
+\t2 \extchoice \\
+\t2 up \then count := count+1 \\
+\t1 Run \defs Count~; Run \\
+{} \bullet count := 0 ~; Run \\
+\circend
+\end{circus}
+
+We have operations being invoked using the $init$ and $up$ events
+as for the CSP example, but we also have a state containing a variable $count$,
+which is modified by using assignment.
 
 
 The \Circus\ language has been used to model requirements
 for a haemodialysis machine\cite{DBLP:conf/asm/GomesB16},
 in a similar way to how CSP was used to model kernel requirements.
 This exploits the ability of \Circus\ to focus only on the relevant state changes.
+
+\subsection{Translation}
+
 However, as there is no model-checker for \Circus,
 we have implemented an automated semantics-preserving translator to CSP
 that allows FDR to be used for analysis.
+This translation is based on one developed in the EU-funded FP7 COMPASS project,
+and is described in Deliverable D24.1 of that project\cite{compassd241}.
+It gives a formal specification of rules to follow when
+translating  Circus to CSP by hand.
+Some of these rules have been verified using manual proof,
+and some with the Proofpower Z theorem-prover\cite{PPZRM}.
+The main idea behind this translation is that
+all the explicit (mutable) \Circus\ variables are collected as parameters
+of a CSP memory process, that accepts $get$ and $set$ events
+for each variable. The assignments in the \Circus\ part
+are then replaced by appropriate invocations of these events,
+resulting in what is in effect a pure CSP process.
+The system becomes the memory process running in parallel with the
+assignment-free CSP process.
+The mutable variable state has become a large parameter of the memory process.
+
+We have implemented an automatic translator, written in Haskell,
+which implements the translation scheme as defined in \cite{compassd241},
+with some additional optimisations.
+The optimisations addressed some issues with the CSP type-system,
+and resulted in the big monolithic memory process being broken
+into a collection of smaller independent memory processes.
+Initialy forced on us as a result of typing issues,
+we noticed considerable improvement of the model-checking
+each time we split the memory process.
+We have ended up with a translation were each original \Circus\ variable.
+To illustrate this improvement,
+consider the following results,
+obtained by doing a deadlock-freedom check on a model of a haemodialysis
+machine, in which certain variables were notional of type $\num$.
+Because model-checkers need finite models to work at all,
+we needed to decide what range of values $\num$ would actually have.
+Here ``byHand'' denotes the original D24.1 translation scheme,
+while ``CTOC'' is the fully optimised version
+
+\begin{tabular}{|c|c|c|c|}
+\hline
+   Approach & $\num$ & Outcome & Time (sec.)
+\\\hline\hline
+          & 0\dots1 & Passed & 40.8
+\\\hline
+  byHand  & 0\dots2 & incomplete & $>$ 2 hours
+\\\hline\hline
+          & 0\dots1 & Passed & 0.375
+\\\hline
+          & 0\dots2 & Passed & 0.407
+\\\hline
+  CTOC    & 0\dots10 & Passed & 0.937
+\\\hline
+          & 0\dots90 & Passed & 35.1
+\\\hline
+\end{tabular}
+
+We see that with the byHand version we can only check a version
+with $\num = \{0,1\}$,\
+but the CTOC translation can handle $\num=\{0,\dots,90\}$
+in less time!
+
+
+\subsection{Verification}
+
 In addition, there has been considerable work done by colleagues at
 the University of York using the Isabelle/HOL theorem prover\cite{NPW02}
 to encode the Unifying Theories of Programming (UTP) framework (\textsf{isabelle-utp}),
@@ -143,8 +245,7 @@ using \Circus\ as the modelling notation.
 This provides the opportunity, in principle at least,
 to use either model-checking or theorem-proving to perform analysis.
 
-NEED MORE?
-\section{Approaches}
+\section{Requirements Modelling}
 
 An event is an abstraction of an observation of some change
 or communication in a system. Events are considered atomic
