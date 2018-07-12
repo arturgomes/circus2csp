@@ -1,5 +1,5 @@
 name:                c2c
-version:             0.8.1.0
+version:             0.8.2.0
 -- synopsis:
 -- description:
 homepage:            https://bitbucket.org/circusmodelcheck/jazaextended
@@ -23,6 +23,7 @@ library
                      , PreVarCRL
                      , DistMemCRL
                      , EParseLib
+                     , FDRChecks
                      , FiniteSets
                      , Lexer
                      , PreVarOmegaDefs

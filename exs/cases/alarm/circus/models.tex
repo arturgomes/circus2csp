@@ -101,7 +101,7 @@ tick \then IncSec \circseq\\
 \subsubsection{$ChronometerFull$}
 
 \begin{circus}
-  \circprocess ChronometerFull \circdef ((Seconds \lpar Sync \rpar Minutes) \circhide Sync)
+  \circprocess ChronometerFull \circdef b\_RAN:BINDINGS \circspot ((Seconds(b\_RAN1) \lpar Sync \rpar Minutes(b\_RAN1)) \circhide Sync)
 \end{circus}
 %
 \section{Models by Artur Gomes}
@@ -148,36 +148,3 @@ WRun \circdef \\
   \circspot (WInit \circseq (\circmu X \circspot (WRun \circseq X)))\\
   \circend
 \end{circus}
-\begin{assert}
-% "b_RAN1 = {(sv_sec, RAN.0), (sv_min, RAN.0)}"\\
-"HAChrono = AChrono(b_RAN1) \{|time, tick|}"\\
-\also "HChrono = Chrono(b_RAN1) \{|time, tick|}"\\
-\also "assert AChrono(b_RAN1):[deterministic [FD]]"\\
-\also "assert Chrono(b_RAN1) :[deterministic [FD]]"\\
-\also "assert HAChrono [FD= HChrono"\\
-\also "assert HChrono [FD= HAChrono"\\
-\also "assert WakeUp(b_RAN1,b_ALA1) :[deterministic [FD]]"\\
-\also "HWakeUp = WakeUp(b_RAN1,b_ALA1) \ {|time, tick, snooze, radioOn |}"\\
-\also "assert HWakeUp :[deterministic [FD]]"\\
-\also "assert AChrono(b_RAN1)[FD= HWakeUp"\\
-\also "assert HWakeUp [FD= AChrono(b_RAN1)"\\
-\also "assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]"\\
-\also "assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)"\\
-\also "assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)"\\
-% \also "b_ALA1 = {(sv_buzz, ALA.OFF)}"\\
-% \also "HAChrono = AChrono(b_RAN1) \{|time, tick|}"\\
-% \also "HChrono = Chrono(b_RAN1) \{|time, tick|}"\\
-% \also "HWakeUpOK(b_RAN1,b_ALA1)= WakeUpOK(b_RAN1,b_ALA1)\{|time, tick|}"\\
-% \also "assert AChrono(b_RAN1):[deterministic [FD]]"\\
-% \also "assert Chrono(b_RAN1) :[deterministic [FD]]"\\
-% \also "assert HAChrono [FD= HChrono"\\
-% \also "assert HChrono [FD= HAChrono"\\
-% \also "assert WakeUp(b_RAN1,b_ALA1) :[deterministic [FD]]"\\
-% \also "HWakeUp = WakeUp(b_RAN1,b_ALA1) \ {|time, tick, snooze, radioOn |}"\\
-% \also "assert HWakeUp :[deterministic [FD]]"\\
-% \also "assert AChrono(b_RAN1)[FD= HWakeUp"\\
-% \also "assert HWakeUp [FD= AChrono(b_RAN1)"\\
-% \also "assert WakeUpOK(b_RAN1,b_ALA1):[deterministic [FD]]"\\
-% \also "assert AChrono(b_RAN1)[FD= WakeUpOK(b_RAN1,b_ALA1)"\\
-% \also "assert WakeUpOK(b_RAN1,b_ALA1)[FD= AChrono(b_RAN1)"\\
-\end{assert}

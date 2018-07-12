@@ -25,7 +25,8 @@ module Animate
   preVarOmegaCircus,       -- Omega function for the Circus translator
   upslonCircus,       -- Upslon function for the Circus translator
   prevarupslonCircus,       -- Upslon function for the Circus translator
-  latexCircus        -- pretty print in Latex
+  latexCircus,        -- pretty print in Latex
+  batchGetProcList -- get processes name from the Animator
 )
 where
 
@@ -77,6 +78,21 @@ data ZParaInfo
      }
 
 
+batchGetProcList :: Animator -> [String]
+batchGetProcList (Anim{spec=x}) = batchGetProcList' x
+batchGetProcList' :: [ZParaInfo] -> [String]
+batchGetProcList' [] = []
+batchGetProcList' [(CircusProcess{procunfolded=x})]
+  = [(getProcName x)]
+batchGetProcList' ((CircusProcess{procunfolded=x}):xs)
+  = [(getProcName x)]++(batchGetProcList' xs)
+batchGetProcList' (_:xs) = (batchGetProcList' xs)
+getProcName (CProcess p (ProcDefSpot zgf pd))
+  = p ++ "("++(mapping_ZGenFilt_list [] (map mkNewBindings zgf) ) ++ ")"
+getProcName (CProcess p _)
+  = p
+
+
 uenv :: [ZParaInfo] -> Env
 uenv ps =
     empty_env (defs ++ branches)
@@ -109,6 +125,7 @@ data Answer
   | DoneLatex String String
   | DoneUpsilon String String
   | DoneOmega String String
+  | DoneReport String String
   | ErrorMsg ErrorMsg
   | ErrorLocns [SyntaxError]   -- (Line, Column, String) triples
   | Value ZValue
@@ -129,6 +146,7 @@ isDone (Done _) = True
 isDone (DoneUpsilon _ _) = True
 isDone (DoneLatex _ _) = True
 isDone (DoneOmega _ _) = True
+isDone (DoneReport _ _) = True
 isDone _        = False
 
 
