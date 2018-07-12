@@ -13,15 +13,116 @@ This was based on work done using the CSP formalism\cite{hoare-1985:commuseque:}
 done by two students for their dissertations \cite{KH-MCS2016,Costelloe17}.
 Properties of interest could be explored and verified using
 model-checking software such as FDR\cite{FDR3}.
+That work followed on from recommendations we made for future work
+in this area, including:
+formalising the requirements baseline;
+formalising kernel data-structure invariants;
+and completing rough/draft CSP models explored during IMAKQP.
 
-One problem when using CSP is that persistent (named) state values
-are modelled as parameters to what looks very like a function call.
-These parameter lists can get quite large, and state-changes that
-modify these are hard to scan and digest.
-An alternative approach is taken by the language \Circus\cite{WC01,OCW2007},
-which is a fusion of CSP with the formal state-based specification language Z\cite{UsingZ}.
+We consider that many useful formal modelling paradigms in this space
+fall into two broad classes:
+\begin{description}
+  \item [State-Based]
+    These are based on the notion of mutable state,
+    usually organised as named variables, updated by assignment.
+  \item [Process-Based]
+    These communicate by message-passing, and persistent state
+    is modelled as parameters to a process description.
+    State change is captured by invoking the process with revised parameter values.
+\end{description}
+We shall illustrate these two paradigm classes by modelling a simple counter
+system that supports two operations: counter initialisation, and count-up,
+The count is observable, somehow.
+
+A classic example of the state-based paradigm is
+the Z specification language \cite{UsingZ}.
+Here we consider the counter state as being stored
+in a variable called $count$. Initialisation sets this variable to zero,
+while counting up or down result respectively
+in the variable being incremented or decremented.
+
+In Z, which is a \emph{specification} language,
+we model operations as relating their starting state (variable values)
+to acceptable final states. Given variable \texttt{v},
+we use the mathematical/logical variable $v$ to denote its starting value
+before the operation commences,
+and $v'$ to denote its value once the operation has completed.
+In Z, a box-like graphical notation is used that has an operation name,
+along with a declaration of its state observation variables,
+follwed by predicates that describe the desired relationships that should hold.
+\begin{schema}{CountInit}
+  count,count' : \num
+\where
+  count' = 0
+\end{schema}
+\begin{schema}{CountUp}
+  count,count' : \num
+\where
+  count' = count+1
+\end{schema}
+Z is very much aimed at specifying in a way
+that suits ``standard'' impewative programming styles.
+
+In the CSP formalism, we have (parameterised) processes
+that participate in ``events'', and who subsequent behaviour
+can depend on which event has just occurred.
+We will imagine two events "init" and "up" that model respectively
+the invocation of initialisation or counting-up.
+We have a process called $Count$ that
+is paramterised with a value we call $count$.
+It's behaviour is that it performs
+an ``external choice'' operation ($\extchoice$)
+in which it offers to participate in either of the $init$ or $up$ events,
+and then invokes itself recursively with a suitable revised parameter.
+\begin{circus}
+\circchannel init, up \\
+Count(count) \circdef \\
+\t1 init \then Circus(0) \\
+\t1 \extchoice \\
+\t1 up \then Count(count+1)
+\end{circus}
+The focus in CSP is on inter-process communication and concurrency.
+This makes it very suitable for modelling requirements in a compositional
+way, and is why it was initally chosen
+as  a basis for modelling the IMAKQP baseline.
+However, one problem with this approach is that the number of parameters
+per process can get very large,
+and state-changes that modify these are hard to scan and digest.
+
+The work reported here explores a technique that aims to have the best of both
+worlds, based on a formal paradigm known
+as ``Unifying Theories of Programming'' (UTP) \cite{UTP-book}.
+This uses 2nd-order classical predicate calculus,
+where every predicate has an ``alphabet'' of variables that
+model observations of a system that it is capable of describing.
+The predicates relate before- and after-observations of a system,
+using a similar convention that found in Z.
+
+We do not go into details here, but show some standard UTP definitions
+to give a flavour for how it works:
+
+\begin{tabular}{ll}
+\hline
+   \textbf{Command} & \textbf{Semantics}
+\\\hline
+     $x:=e$
+   & $x'=e \land v'=v$
+\\   $P~;Q$
+   & $\exists v_0 \bullet P[v_0/v'] \land Q [v_0/v]$
+\\   $P\sqcap Q$
+   & $P\lor Q$
+\\   $P \lhd b \rhd Q$
+   & $b \land P \lor \lnot b \land Q$
+\\\hline
+\end{tabular}
+
+An alternative approach to just using Z, or CSP,
+is taken by the language \Circus\cite{WC01,OCW2007},
+which is a fusion of CSP with Z.
 This allows individual named state components to be modified using simple
 assignment statements, making descriptions easier to read.
+It's formal semantics has been defined using UTP\cite{OCW2007}.
+
 
 The \Circus\ language has been used to model requirements
 for a haemodialysis machine\cite{DBLP:conf/asm/GomesB16},
@@ -42,6 +143,7 @@ using \Circus\ as the modelling notation.
 This provides the opportunity, in principle at least,
 to use either model-checking or theorem-proving to perform analysis.
 
+NEED MORE?
 \section{Approaches}
 
 An event is an abstraction of an observation of some change
