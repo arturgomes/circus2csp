@@ -169,9 +169,17 @@ This exploits the ability of \Circus\ to focus only on the relevant state change
 
 \subsection{Translation}
 
-However, as there is no model-checker for \Circus,
-we have implemented an automated semantics-preserving translator to CSP
+There is a state-of-the-art model checker for CSP, called FDR
+(``Failures-Divergences Refinement'') \cite{FDR3}.
+However, as there is, as yet,no model-checker for \Circus,
+the standard approach in the literature is to carefully translate
+a \Circus\ model into a CSP one, to make use of FDR.
+We did this with our haemodialysis model\cite{DBLP:conf/asm/GomesB16},
+but orberved that it was a very error-prone process.
+This lead us to develop an automated semantics-preserving
+translator from \Circus\ to CSP
 that allows FDR to be used for analysis.
+
 This translation is based on one developed in the EU-funded FP7 COMPASS project,
 and is described in Deliverable D24.1 of that project\cite{compassd241}.
 It gives a formal specification of rules to follow when
@@ -188,8 +196,8 @@ The system becomes the memory process running in parallel with the
 assignment-free CSP process.
 The mutable variable state has become a large parameter of the memory process.
 
-We have implemented an automatic translator, written in Haskell,
-which implements the translation scheme as defined in \cite{compassd241},
+We  implemented this in Haskell,
+following the translation scheme as defined in \cite{compassd241},
 with some additional optimisations.
 The optimisations addressed some issues with the CSP type-system,
 and resulted in the big monolithic memory process being broken
@@ -231,20 +239,6 @@ but the CTOC translation can handle $\num=\{0,\dots,90\}$
 in less time!
 
 
-\subsection{Verification}
-
-In addition, there has been considerable work done by colleagues at
-the University of York using the Isabelle/HOL theorem prover\cite{NPW02}
-to encode the Unifying Theories of Programming (UTP) framework (\textsf{isabelle-utp}),
-which is used as the basis for a formal semantics of \Circus,
-and to build a series of useful proof automation techniques\cite{FosterZW14}.
-
-This paper presents and discusses some investigations
-into re-visiting the kernel requirements in \cite{IMAKQP-D02},
-using \Circus\ as the modelling notation.
-This provides the opportunity, in principle at least,
-to use either model-checking or theorem-proving to perform analysis.
-
 \section{Requirements Modelling}
 
 An event is an abstraction of an observation of some change
@@ -253,7 +247,7 @@ or communication in a system. Events are considered atomic
 An event can also have internal structure,
 so it can be used to carry information over and beyond
 just signalling that it has occurred.
-The behaviour of system is defined in terms of:
+The behaviour of a system is defined in terms of:
 (i) all the possible sequences of events that can be observed;
 (ii) at each stage, what events are being blocked.
 The state of a system captures which events it is willing to perform,
@@ -281,49 +275,109 @@ synchronising on relevant events.
 \end{description}
 A key principle here is to analyse each requirement independently,
 to reduce the reasoning burden.
-This is safe so long as each requirememt model is careful not
+This is safe so long as each requirement model is careful not
 to constrain platform/software interactions.
 
-The overall plan is to use the platform/requirement combination
-to assess various models of the software behaviour,
-both (hopefully) correct and faulty.
-We want to run faulty software models through this approach verify that
-the requirements cztch the relevant faults.
-We want to run models of correct software, of increasing complexity,
-in order to come up with (relatively) complete descriptions
-of software behaviour, that can be used as formal specification
-for high-level and low-level design stages, as well as code.
+\subsection{Example Requirement: PK-230}
 
+We shall now illustrate some aspects of a \Circus\ model
+for requirement PK-230 from the requirements baseline\cite{IMAKQP-D02}:
+\begin{quote}
+  \textbf{\textsf{PK-230: Partitions shall be executed in user mode}}
+  \\
+  \textsf{Rationale: The separation between the partitioning kernel and the
+  application programs is provided
+  by the Supervisor/User mode of the computer.}
+\end{quote}
 
-There are three basic approaches we can take
-to modelling requirements using process-algebra notations:
-event-based, parameter-based, and variable-based.
+We first start by building a simple platform model.
+This requires us to define a type $PROCMODES$ representing the processor modes,
+a variable $pm$ to record its current setting,
+and a type $OPS$ that defines the relevant processor operations:
+\begin{circus}
+PROCMODES ::= SUP | USR \\
+PROCMODE \defs [pm:PROCMODES] \\
+OPS ::= UP | DOWN | SW |GOP
+\end{circus}
+We model raising ($UP$) and lowering ($DOWN$) processor privilege,
+switching ($SW$) between kernel and partition code,
+and treat anything else the processor might be asked to do as some
+general operation ($GOP$).
 
-\paragraph{Event-based modelling} uses implicit state only,
-with events modelling state-changes.
-These events switch the behaviour of all three components above
-to one that describes the behaviour associated with the new implicit state.
-This was the approach used in the work reported at DASIA 2017 \cite{Lero-DASIA17}.
+We also need to model our ability to observe running code
+and determine if it kernel or partition.
+We do this by have code-ids and having an observable event $do$
+that record who ($CODEID$)is doing what ($OPS$).
+We also have a variable $who$ that records which code entity is running.
+\begin{circus}
+KNL == 0 \\
+PRT == 1 \\
+CODEID == KNL..PRT \\
+\circchannel do : CODEID \times OPS \\
+WHO \defs [who:CODEID]
+\end{circus}
 
-\paragraph{Parameter-based modelling}
-uses read-only parameters in the definition of processes,
-much like calling a function.
-These encode various state parameters,
-and there are conditional constructs that can be used to ensure
-that subsequent behaviour is state-dependant.
-This approach was used in a study in 2009
-regarding Flash Memory devices\cite{DBLP:conf/sbmf/ButterfieldC09}.
+We can now model this platform ($PMM$),
+specialised for the  Partition Management requirements,
+as a single-step process that simply does what it is told:
+\begin{circus}
+PMMStep \defs \\
+\t1 do?i.UP \then pm := SUP \\
+\t1 \extchoice do?i.DOWN \then pm := USR \\
+\t1 \extchoice do?i.SW \then who := other(who) \\
+\t1 do?i.GOP \then \Skip
+\end{circus}
+Process $\Skip$ immediately terminates without any events or state-changes.
 
-\paragraph{Variable-based modelling} uses named global variables
-to represent state components,
-and assignment statements to update individual parts of that state.
-In CSP, the only way to model these variables is as small processes
-that support ``set'' and ``get'' events.
-In \Circus, there is direct support for variables and assignment.
-This approach was used in the haemodialysis study\cite{DBLP:conf/asm/GomesB16}.
+We model the PK-230 requirement by adding a special event that PK-230
+will use to signal it has detected a violation:
+\begin{circus}
+\circchannel scream
+\end{circus}
+The single step PK-230 check process watches operations,
+checking them against who is running, and objects if it sees
+partition code executing in supervisor mode:
+\begin{circus}
+PK230Step \defs \\
+\t1 who=KNL \circguard do?i?op \then \Skip \\
+\t1 pm=USR \circguard do?i?op \then \Skip \\
+\t1 who=PRT \land pm=SUP \circguard scream \then STOP
+\end{circus}
+It objects by $scream$ing, and then behaving like $\Stop$,
+the canonical \Circus/CSP process that always deadlocks.
+
+Normally, we would now model the relevant parts of both kernel and
+partition code, but for now lets assume anything can happen,
+which is easy - we don't model any code, and just put the platform
+in parallel with the requirement.
+\begin{circus}
+RUN \defs (PMMStep \interleave PK230Step)~; RUN\\
+PMMInit \defs pm,who := SUP,KNL \\
+PMMInit~; RUN
+\end{circus}
+This has the effect of modelling
+all the possible platform behaviours that might result from any
+possible code, correct or otherwise.
+This way we get to see the requirement catching the system out:
 
 
 \section{Tools}
+
+\subsection{Tool Validation}
+
+In addition, there has been considerable work done by colleagues at
+the University of York using the Isabelle/HOL theorem prover\cite{NPW02}
+to encode the Unifying Theories of Programming (UTP) framework (\textsf{isabelle-utp}),
+which is used as the basis for a formal semantics of \Circus,
+and to build a series of useful proof automation techniques\cite{FosterZW14}.
+
+This paper presents and discusses some investigations
+into re-visiting the kernel requirements in \cite{IMAKQP-D02},
+using \Circus\ as the modelling notation.
+This provides the opportunity, in principle at least,
+to use either model-checking or theorem-proving to perform analysis.
+
+
 
 The \Circus\ language has a concrete syntax based on \LaTeX,
 and we have developed a parser for this, written in Haskell.
