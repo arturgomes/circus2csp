@@ -139,18 +139,33 @@ and 1 standing for an ordinary partition.
 \\ AUP    == 0
 \end{circus}
 
+% Edited by Artur Gomes, 18/07/2018
+% We would like to define a function that selects the ``next'' partition,
+% here defined properly using a Z/\Circus\ schema.
+% \begin{schema}{INC}
+%   nxt : \nat \fun \nat
+% \where
+%   \forall n : \nat @ nxt n = (n + 1) \mod MAXP
+% \end{schema}
+% However this is not translated through at present,
+% so for now we have to fake it using the \texttt{assert} environment.
+% \begin{assert}
+% "next(codeid) = (codeid+1) % MAXP"
+% \end{assert}
+
 We would like to define a function that selects the ``next'' partition,
-here defined properly using a Z/\Circus\ schema.
-\begin{schema}{INC}
-  nxt : \nat \fun \nat
+here defined properly using a Z/\Circus\ axiomatic definition.
+\begin{axdef}
+  next : NatValue \fun NatValue
 \where
-  \forall n : \nat @ nxt n = (n + 1) \mod MAXP
-\end{schema}
-However this is not translated through at present,
-so for now we have to fake it using the \texttt{assert} environment.
-\begin{assert}
-"next(codeid) = (codeid+1) % MAXP"
-\end{assert}
+  next = (\lambda codeid : CODEID @ (codeid+1) \mod MAXP
+  )
+\end{axdef}
+% However this is not translated through at present,
+% so for now we have to fake it using the \texttt{assert} environment.
+% \begin{assert}
+% "next(codeid) = (codeid+1) % MAXP"
+% \end{assert}
 
 An implicit part of the state is all the program
 contexts for the kernel and partitions.

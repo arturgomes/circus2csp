@@ -1164,12 +1164,12 @@ data CAction
  | CSPRenAction ZName CReplace            -- Action[x/y,z/n]
  | CSPRecursion ZName CAction             -- \circmu N \circspot Action
  | CSPUnfAction ZName CAction             -- N (Action)
- | CSPUnParAction [ZGenFilt] CAction ZName     -- (Decl \circspot Action) (ZName)
+ | CSPUnParAction [ZGenFilt] CAction [ZExpr]     -- (Decl \circspot Action) (ZName)
  | CSPRepSeq [ZGenFilt] CAction           -- \Semi Decl \circspot Action
  | CSPRepExtChoice [ZGenFilt] CAction     -- \Extchoice Decl \circspot Action
  | CSPRepIntChoice [ZGenFilt] CAction     -- \IntChoice Decl \circspot Action
  | CSPRepParalNS CSExp [ZGenFilt] [ZExpr] CAction -- \lpar CSExp \rpar Decl \circspot \lpar NSExp \rpar Action
- | CSPRepParal CSExp [ZGenFilt] CAction   -- \lpar CSExp \rpar Decl \circspot ction
+ | CSPRepParal CSExp [ZGenFilt] CAction   -- \lpar CSExp \rpar Decl \circspot Action
  | CSPRepInterlNS [ZGenFilt] [ZExpr] CAction  -- \Interleave Decl \circspot \linter NSExp \rinter Action
  | CSPRepInterl [ZGenFilt] CAction        -- \Interleave Decl \circspot  Action
   deriving (Eq,Ord,Show)

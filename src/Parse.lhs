@@ -1848,7 +1848,7 @@ circus_action_u
       optnls;
       tok L_CLOSEPAREN;
       tok L_OPENPAREN;
-      zw <- zword;
+      zw <- zexpressions;
       tok L_CLOSEPAREN;
       return (CSPUnParAction decls ze zw)}
   -- \circmu X \circspot F(x) = F(\circmu X \circspot F(x))

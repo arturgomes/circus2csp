@@ -454,6 +454,8 @@ zlexz c ls ('\\':s)
   | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="comp"   = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="circ"   = tok (L_IN_FUN 4 ('\\':cmd))
+  | cmd=="dom"   = tok (L_PRE_GEN ('\\':cmd))
+  | cmd=="ran"   = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="dres"   = tok (L_IN_FUN 6 ('\\':cmd))
   | cmd=="rres"   = tok (L_IN_FUN 6 ('\\':cmd))
   | cmd=="ndres"  = tok (L_IN_FUN 6 ('\\':cmd))
@@ -656,7 +658,7 @@ zlexinfix c ls s
   | op=="=="   = tok L_EQUALS_EQUALS
   | op=="."    = tok L_POINT
   | op==","    = tok L_COMMA
-  | op=="-"    = tok L_HYPHEN
+  | op=="-"    = tok (L_IN_FUN 2 op)
   | op=="+"    = tok (L_IN_FUN 3 op)
   | op=="*"    = tok (L_IN_FUN 4 op)
   | op=="<"    = tok (L_IN_REL op)

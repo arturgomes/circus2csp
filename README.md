@@ -7,14 +7,24 @@ The tool is implemented in Haskell, on top of Mark Utting's JAZA (Just Another Z
 
 # How to install
 
-The recommended approach is to use stack 
+The recommended approach is to use stack
 (see [The Haskell Tool Stack](https://docs.haskellstack.org/en/stable/README/))
 configured as recommended on your platform to ensure that stack-built exectuables
-are on your [PATH](https://docs.haskellstack.org/en/stable/install_and_upgrade/#path). 
+are on your [PATH](https://docs.haskellstack.org/en/stable/install_and_upgrade/#path).
 
 Simply do 'stack install' at the top-level.
 
 It will create and setup an executable called `c2c`.
+
+# Setting **source** and **destination** folders
+
+In Circus2CSP, the user can define a source folder where the Circus files can be found, as well as a destination folder, where the '*.csp' files will be saved. There should be a hidden file called ".c2c" in the folder you want to work with, and then, write the following lines:
+
+```
+src:source/directory/of/circus/specs/
+dst:destination/directory/to/save/cspm/files
+
+```
 
 # How to run
 
@@ -24,9 +34,9 @@ You will see a command-line interface very similar to that used by Jaza.
 
 Just type ``help`` and you'll see the list of options.
 
-Translating a Circus .tex file into a CSPm .cps file requires three steps: `load`, `omega` and `tocsp`.
+<!-- Translating a Circus .tex file into a CSPm .csp file requires three steps: `load`, `omega` and `tocsp`. -->
 
-Other commands are mainly for debugging purposes and are generally not very helpful.
+<!-- Other commands are mainly for debugging purposes and are generally not very helpful. -->
 
 ### Loading a file
 In order to load a file, enter the following code, with **filename** being the name of your file
@@ -58,6 +68,11 @@ Within that the `cases` sub-directory contains the main case-studies driving the
 * Oliveira M.V.M., Sampaio A.C.A., Conserva Filho M.S. (2014) Model-Checking Circus State-Rich Specifications. In: Albert E., Sekerinski E. (eds) Integrated Formal Methods. IFM 2014. Lecture Notes in Computer Science, vol 8739. Springer, Cham
 
 # CHANGELOG
+
+## 0.8.1.0 - July 2018
+
+Now we have the .c2c file where the user can direct the source folder (where the Circus specs are) and the destination (where the CSPm files should be created).
+
 
 ## 0.8.0.0 - April 2018
 

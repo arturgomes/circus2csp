@@ -161,42 +161,43 @@ closebracket  _  = False
 
 help =
   ["Available commands for Circus2CSP:",
-   fmtcmd "conv filename"             "'load filename; omega; tocsp'.",
-   fmtcmd "convp filename"            "perform conv but with mget_var instead of mget.var",
-   fmtcmd "reconv"                    "repeat 'conv' on previous file",
-   fmtcmd "reconvp"                   "repeat 'convp' on previous file",
-   -- fmtcmd "show"                   "Display a summary of whole spec.",
-   -- fmtcmd "orig"                   "Display the whole spec originally loaded.",
-   fmtcmd "quit"                      "Exit the animator",
-   fmtcmd "load filename"             "Load a Z specification from a file",
-   fmtcmd "omega"                     "Apply the Omega function to Circus spec",
-   fmtcmd "tocsp"                     "Map the whole spec into CSP.",
-   fmtcmd "reload"                    "Re-load Z specification from current file",
-   -- fmtcmd "latex"                  "Pretty print into LaTeX.",
-   fmtcmd "list"                      "List the files in the current directory.",
-   fmtcmd "reset"                     "Reset the whole specification",
-   fmtcmd "help"                      "Display this message",
-   fmtcmd "refinesT"                  "Run FDR4 in command line mode",
-   fmtcmd "% comment"                 "(Ignored)",
-   "Available commands for FDR4:",
-   "The parameter 'model' where m can be [T,F,FD]",
-   fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
-   fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
-   fmtcmd "assert refall"                 "perform batch refinement for all processes available",
-   fmtcmd "assert refall model"           "perform refall using a given model",
-   fmtcmd "assert dl spec"             "checks spec for dls",
-   fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
-   fmtcmd "assert dlall"               "perform batch dl check for all processe available",
-   fmtcmd "assert dlall model"         "perform 'dlall' using a given mode",
-   fmtcmd "assert div spec"           "checks spec for div",
-   fmtcmd "assert div spec model"     "checks spec for div using a given mode",
-   fmtcmd "assert divsall"            "perform batch div check for all processe available",
-   fmtcmd "assert divsall model"      "perform 'divsall'  using a given model",
-   fmtcmd "assert det spec"        "checks if spec is det",
-   fmtcmd "assert det spec model " "checks if spec is det using a given model",
-   fmtcmd "assert detall"          "perform batch det check for all processe available",
-   fmtcmd "assert detall model "   "perform 'detall'  using a given model",
-   fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
+    fmtcmd "help"                      "Display this message",
+    fmtcmd "list"                      "List the files in the current directory.",
+    fmtcmd "quit"                      "Exit the animator",
+    fmtcmd "reset"                     "Reset the whole specification",
+    fmtcmd "load filename"             "Load a Circus spec from a file (do not include ''.tex'')",
+    fmtcmd "reload"                    "Re-load Circus spec from current file",
+    fmtcmd "conv filename"             "'load filename; omega; tocsp'.",
+    fmtcmd "convp filename"            "perform conv but with mget_var instead of mget.var",
+    fmtcmd "reconv"                    "repeat 'conv' on previous file",
+    fmtcmd "reconvp"                   "repeat 'convp' on previous file",
+    -- fmtcmd "show"                   "Display a summary of whole spec.",
+    -- fmtcmd "orig"                   "Display the whole spec originally loaded.",
+    fmtcmd "omega"                     "Apply the Omega function to Circus spec",
+    fmtcmd "tocsp"                     "Map the whole spec into CSP.",
+    -- fmtcmd "latex"                  "Pretty print into LaTeX.",
+    fmtcmd "runfdr"                  "Run FDR4 in command line mode",
+    fmtcmd "% comment"                 "(Ignored)",
+    "Available commands for FDR4:",
+    "The parameter 'model' where m can be [T,F,FD]",
+    fmtcmd "procs"         "list available processes",
+    fmtcmd "assert ref spec impl"         "assert spec [FD= impl",
+    fmtcmd "assert ref spec impl model"   "assert spec [m= impl",
+    fmtcmd "assert refall"                 "perform batch refinement for all processes available",
+    fmtcmd "assert refall model"           "perform refall using a given model",
+    fmtcmd "assert dl spec"             "checks spec for dls",
+    fmtcmd "assert dl spec model"       "checks spec for dls using a given model",
+    fmtcmd "assert dlall"               "perform batch dl check for all processe available",
+    fmtcmd "assert dlall model"         "perform 'dlall' using a given mode",
+    fmtcmd "assert div spec"           "checks spec for div",
+    fmtcmd "assert div spec model"     "checks spec for div using a given mode",
+    fmtcmd "assert divsall"            "perform batch div check for all processe available",
+    fmtcmd "assert divsall model"      "perform 'divsall'  using a given model",
+    fmtcmd "assert det spec"        "checks if spec is det",
+    fmtcmd "assert det spec model " "checks if spec is det using a given model",
+    fmtcmd "assert detall"          "perform batch det check for all processe available",
+    fmtcmd "assert detall model "   "perform 'detall'  using a given model",
+    fmtcmd "assert jumbo"                     "perform all batches available (may take some time)"
   ]
 
 
@@ -263,7 +264,7 @@ do_cmd cmd args anim fn
           done_cmd (anim2, prevarupslonCircus anim2 fn2, fn2))
       (\err ->
           do {putStrLn (show (err :: IOException)); get_cmd anim fn})
-  | cmd == "refinesT"
+  | cmd == "runfdr"
        = do  putStrLn "---------------------"
              putStrLn ("-- Running FDR4 ")
              putStrLn ("-- file: '"
@@ -299,6 +300,9 @@ do_cmd cmd args anim fn
       done_cmd (anim, showO,fn)
   | cmd == "latex" =
       done_cmd (anim, latexCircus anim fn, fn)
+  | cmd == "procs" =
+    done_cmd (anim, Done ("The available processes for checking are:\n"++ (unlines $ (map ("-- " ++) (batchGetProcList anim)))), fn)
+
   | otherwise =
       do putStrLn "Unknown/illegal command."
          get_cmd anim fn
