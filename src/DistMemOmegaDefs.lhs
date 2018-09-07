@@ -1,3 +1,4 @@
+%
 \chapter{Misc functions -- File: OmegaDefs.lhs}
 Functions used for manipulating lists (Z Sets and sequences, as well as calculating the provisos from the Circus Refinement laws)
 
