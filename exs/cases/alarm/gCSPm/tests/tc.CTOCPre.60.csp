@@ -1,0 +1,227 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+RANGE = {0..MAXVAL}
+channel tick, time
+channel out : (RANGE,RANGE)
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = RAN.RANGE
+--Conversions
+valueRAN(RAN.v) = v
+
+typeRAN(x) = U_RAN
+
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec
+datatype NAME = sv_sec | sv_min
+
+-- Subtype definition for RAN
+b_RAN1 = {(sv_sec, RAN.0),(sv_min, RAN.0)}
+subtype NAME_RAN = sv_sec | sv_min
+NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
+
+-- Bindings definitions for RAN
+BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
+
+
+--------------------------------
+ -- mget, mset and terminate --
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI --
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+fst((x,y)) = x
+snd((x,y)) = y
+
+-- D241
+D241 =
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+        [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+  within
+    |~| b_RAN: {b | b <- BINDINGS_RAN} @
+    ( ( ( mset.sv_sec.(RAN.0) -> mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % MAXVAL) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+D241Pre =
+  let
+     MemoryRANVar(n,b_RAN) =
+      ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+      [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+      [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+
+  within
+    |~| b_RAN: {b | b <- BINDINGS_RAN} @
+    ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) &
+      ( (not (valueRAN(v_sv_min) < MAXVAL)) & CHAOS({|mget,mset,terminate,tick,time,out|})
+        []
+             (valueRAN(v_sv_min) < MAXVAL) & |~| v:{(x,y) | x :typeRAN(sv_min), y:typeRAN(sv_sec), valueRAN(x) < MAXVAL, valueRAN(y) < MAXVAL, valueRAN(x) == valueRAN(v_sv_sec)} @ (mset.sv_min.(RAN.((valueRAN(fst(v)) + 1) % MAXVAL)) -> mset.sv_sec.(RAN.(valueRAN(snd(v)))) -> SKIP)
+      )
+    )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+D241Inv =
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+        [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+  within
+    |~| b_RAN: {b | b <- BINDINGS_RAN,valueRAN(apply(b,sv_sec)) < MAXVAL,valueRAN(apply(b,sv_min)) < MAXVAL} @
+    ( ( ( mset.sv_sec.(RAN.0) -> mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % MAXVAL) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+D241InvPre =
+  let
+     MemoryRANVar(n,b_RAN) =
+      ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+      [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+      [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+
+  within
+    |~| b_RAN: {b | b <- BINDINGS_RAN,valueRAN(apply(b,sv_sec)) < MAXVAL,valueRAN(apply(b,sv_min)) < MAXVAL} @
+    ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) &
+      ( (not (valueRAN(v_sv_min) < MAXVAL)) & CHAOS({|mget,mset,terminate,tick,time,out|})
+        []
+             (valueRAN(v_sv_min) < MAXVAL) & |~| v:{(x,y) | x :typeRAN(sv_min), y:typeRAN(sv_sec), valueRAN(x) < MAXVAL, valueRAN(y) < MAXVAL, valueRAN(x) == valueRAN(v_sv_sec)} @ (mset.sv_min.(RAN.((valueRAN(fst(v)) + 1) % MAXVAL)) -> mset.sv_sec.(RAN.(valueRAN(snd(v)))) -> SKIP)
+      )
+    )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+
+-- CTOC
+CTOC(b_RAN) =
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+        [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+  within ( ( ( mset.sv_sec.(RAN.0) -> mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % MAXVAL) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+CTOCPre(b_RAN) =
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) -> MemoryRANVar(n,b_RAN)
+        [] mset.n?nv:typeRAN(n) -> MemoryRANVar(n,over(b_RAN,n,nv)))
+        [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+  within ( ( ( mset.sv_sec.(RAN.0) -> mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) &
+        ( (not (valueRAN(v_sv_min) < MAXVAL)) & CHAOS({|mget,mset,terminate,tick,time,out|})
+          []
+           (valueRAN(v_sv_min) < MAXVAL) &
+              |~| v:{(x,y) | x :typeRAN(sv_min), y:typeRAN(sv_sec), valueRAN(x) < MAXVAL, valueRAN(y) < MAXVAL, valueRAN(x) == valueRAN(v_sv_sec)} @
+                  (mset.sv_min.(RAN.((valueRAN(fst(v)) + 1) % MAXVAL)) -> mset.sv_sec.(RAN.(valueRAN(snd(v)))) -> SKIP)
+        )
+        )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+MAXVAL = 60
+assert CTOCPre(b_RAN1) :[deadlock free [FD]]

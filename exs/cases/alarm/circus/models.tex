@@ -4,8 +4,6 @@ We list a number of models derived from a simple example from
 Oliveira's PhD thesis~\cite{MV05}: a chronometer.
 
 \subsection{$AChrono$}
-
-
 A specification:
 \begin{circus}
 RANGE == 0 \upto 2
@@ -29,7 +27,7 @@ RANGE == 0 \upto 2
 )\\
     \extchoice~ time \then out!(min, sec) \then \Skip \\
 )\\
-\t1 \circspot (AInit \circseq (\circmu X \circspot (Run \circseq X)))\\
+\t1 \circspot ((AInit \circseq (\circmu X \circspot (Run \circseq X))) \circhide \lchanset tick \rchanset)\\
 \circend
 \end{circus}
 
@@ -44,19 +42,22 @@ RANGE == 0 \upto 2
  SecInit \circdef (sec:=0)\\
  IncSec \circdef (sec:=(sec+1)\mod 3)\\
  RunSec \circdef\\
-((tick \then IncSec \circseq\\
-    (\circif  sec = 0 \circthen inc \then \Skip\\
-    \circelse sec \neq 0 \circthen \Skip \circfi))\\
-  \extchoice time \then minsReq \then ans?min \then out!(min,sec)
-      \then \Skip )  \\
+  ((tick \then IncSec \circseq\\
+      (\circif  sec = 0 \circthen inc \then \Skip\\
+      \circelse sec \neq 0 \circthen \Skip \circfi))\\
+      \extchoice time \then minsReq \then ans?min \then out!(min,sec) \then \Skip )  \\
  Seconds \circdef SecInit \circseq (\circmu X \circspot (RunSec \circseq X))\\
+
  MinInit \circdef (min:=0)\\
  IncMin \circdef (min:=(min+1)\mod 3)\\
  RunMin \circdef (inc \then IncMin) \extchoice (minsReq \then ans!min \then \Skip)\\
  Minutes \circdef MinInit \circseq (\circmu X \circspot (RunMin \circseq X))\\
-\circspot ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync)\\
+
+\circspot( ((Seconds \lpar \{sec\} | Sync | \{min\} \rpar Minutes ) \circhide Sync) \circhide \lchanset tick \rchanset)\\
 \circend
 \end{circus}
+
+
 \subsection{Distributed processes - $ChronometerFull$}
 \subsubsection{$Seconds$}
 \begin{circus}
@@ -101,7 +102,7 @@ tick \then IncSec \circseq\\
 \subsubsection{$ChronometerFull$}
 
 \begin{circus}
-  \circprocess ChronometerFull \circdef b\_RAN:BINDINGS \circspot ((Seconds(b\_RAN1) \lpar Sync \rpar Minutes(b\_RAN1)) \circhide Sync)
+  \circprocess ChronometerFull \circdef b\_RAN:BINDINGS \circspot (((Seconds(b\_RAN1) \lpar Sync \rpar Minutes(b\_RAN1)) \circhide Sync) \circhide \lchanset tick \rchanset)
 \end{circus}
 %
 \section{Models by Artur Gomes}

@@ -9,7 +9,7 @@ include "function_aux.csp"
 maxbuff = 2
 
 -- The values buffered are numbers.
-Value = {0..2}
+Value = {0..maxbuff}
 
 -- The ring is a circular array, modelled as a sequence whose two
 -- ends are considered to be joined.
@@ -225,5 +225,8 @@ MemoryDBuffer = (MemoryControllerR(b_C) [| {| rd_i, wrt_i |} |] MemoryDRing(b_R)
 b_R = {(RingCell_v, (Val.0))}
 b_C = {(Controller_cache, (Val.0)), (Controller_size, (Nat.0)), (Controller_top, (Cel.1)), (Controller_bot, (Cel.1))}
 
-assert ABuffer [FD= MemoryDBuffer
-assert MemoryDBuffer [FD= ABuffer
+assert MemoryDBuffer :[deterministic [FD]]
+assert MemoryDBuffer :[deadlock free]
+assert MemoryDBuffer :[livelock free]
+-- assert ABuffer [FD= MemoryDBuffer
+-- assert MemoryDBuffer [FD= ABuffer

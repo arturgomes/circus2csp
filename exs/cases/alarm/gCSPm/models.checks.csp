@@ -9,7 +9,7 @@ channel inc, minsReq
 channel ans : RANGE
 Sync = {| inc,minsReq,ans |}
 
-ChronometerFull(b_RAN) = ( ( Seconds(b_RAN1) [| Sync |] Minutes(b_RAN1) ) \ Sync )
+ChronometerFull(b_RAN) = ( ( ( Seconds(b_RAN1) [| Sync |] Minutes(b_RAN1) ) \ Sync ) \ {| tick |} )
 datatype ALARM = ON | OFF
 
 channel snooze, radioOn
@@ -339,7 +339,7 @@ Chrono(b_RAN) =
       X ) within X );
       lterminate -> SKIP )
       [| MEML |] 
-      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\Sync );
+      MemoryMerge({(sv_min,v_sv_min),(sv_sec,v_sv_sec)},<sv_min>) )\MEML ) )\union(Sync,{| tick |}) );
       terminate -> SKIP )
       [| MEMI |] Memory(b_RAN))\MEMI )
 
@@ -386,4 +386,4 @@ AChrono(b_RAN) =
       X ) within X );
       terminate -> SKIP )
       [| MEMI |] Memory(b_RAN))\MEMI )
-assert ChronometerFull(b_RAN1) :[deadlock free [T]]
+assert ChronometerFull(b_RAN1) [FD= WakeUpOK(b_RAN1,b_ALA1)

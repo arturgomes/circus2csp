@@ -452,6 +452,7 @@ zlexz c ls ('\\':s)
   | cmd=="sym" = tok (L_IN_FUN 1 ('\\':cmd))
   | cmd=="mapsto" = tok (L_IN_FUN 1 ('\\':cmd))
   | cmd=="id"     = tok (L_PRE_GEN ('\\':cmd))
+  | cmd=="hash"   = tok (L_PRE_GEN ('\\':cmd))
   | cmd=="comp"   = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="circ"   = tok (L_IN_FUN 4 ('\\':cmd))
   | cmd=="dom"   = tok (L_PRE_GEN ('\\':cmd))
@@ -686,3 +687,4 @@ isArgChar '{' = True
 isArgChar '}' = True
 isArgChar c   = isAlpha c
 \end{code}
+q
