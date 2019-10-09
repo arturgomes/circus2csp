@@ -1,0 +1,126 @@
+include "sequence_aux.csp"
+include "function_aux.csp"
+
+
+MAXVAL = 10
+RANGE = {0..10}
+channel tick, time
+channel out : (RANGE,RANGE)
+--------------------------------
+-- The universe of values
+ datatype UNIVERSE = RAN.RANGE
+--Conversions
+valueRAN(RAN.v) = v
+
+typeRAN(x) = U_RAN
+
+tagRAN(x) = RAN
+
+-- subtypes of UNIVERSE for RAN
+subtype U_RAN = RAN.RANGE
+
+-- definition of NAME for the entire spec 
+datatype NAME = sv_sec | sv_min
+
+-- Subtype definition for RAN
+b_RAN1 = {(sv_sec, RAN.0),(sv_min, RAN.0)}
+subtype NAME_RAN = sv_sec | sv_min
+NAMES_VALUES_RAN = seq({seq({(n,v) | v <- typeRAN(n)}) | n <- NAME_RAN})
+
+-- Bindings definitions for RAN
+BINDINGS_RAN = {set(b) | b <- set(distCartProd(NAMES_VALUES_RAN))}
+
+
+--------------------------------
+ -- mget, mset and terminate -- 
+--------------------------------
+channel mget, mset : NAME.UNIVERSE
+channel terminate
+
+--------------------------------
+ -- MEMI -- 
+--------------------------------
+MEMI = {| mset,mget,terminate |}
+channel lget, lset : NAME.UNIVERSE
+channel lterminate
+MEML = {| lset,lget,lterminate |}
+
+BChronometer(b_RAN) = 
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) ->
+    MemoryRANVar(n,b_RAN)
+      [] mset.n?nv:typeRAN(n) ->
+    MemoryRANVar(n,over(b_RAN,n,nv)))
+      [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+     MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) ->
+    MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) ->
+    MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+     
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % MAXVAL) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )
+
+AChronometer(b_RAN) = 
+  let
+     MemoryRANVar(n,b_RAN) =
+        ( ( mget.n.apply(b_RAN,n) ->
+    MemoryRANVar(n,b_RAN)
+      [] mset.n?nv:typeRAN(n) ->
+    MemoryRANVar(n,over(b_RAN,n,nv)))
+      [] terminate -> SKIP)
+     MemoryRAN(b_RAN) =
+        ( [| {| terminate |} |] n : dom(b_RAN) @ MemoryRANVar(n,b_RAN) )
+     Memory(b_RAN) =
+        MemoryRAN(b_RAN)
+     MemoryMergeRANVar(n,b_RAN,ns) =
+        ( ( lget.n.apply(b_RAN,n) ->
+    MemoryMergeRANVar(n,b_RAN,ns)
+      [] lset.n?nv:typeRAN(n) ->
+    MemoryMergeRANVar(n,over(b_RAN,n,nv),ns))
+      [] lterminate ->
+    (  ; bd : <b_RAN> @   ; n : <y | y <- ns,member(y,dom(bd))> @  mset.n.apply(bd,n) -> SKIP ))
+     MemoryMergeRAN(b_RAN,ns) =
+        ( [| {| lterminate |} |] n : dom(b_RAN) @ MemoryMergeRANVar(n,b_RAN,ns) )
+     MemoryMerge(b_RAN,ns) =
+        MemoryMergeRAN(b_RAN,ns)
+     
+  within ( ( ( mset.sv_sec.(RAN.0) ->
+    mset.sv_min.(RAN.0) ->
+    ( let X = mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( tick ->
+    mset.sv_sec.(RAN.(valueRAN(v_sv_sec) + 1) % MAXVAL) ->
+    mget.sv_min?v_sv_min:(typeRAN(sv_min)) ->
+    mget.sv_sec?v_sv_sec:(typeRAN(sv_sec)) ->
+    ( ( (valueRAN(v_sv_sec) == 0) & mset.sv_min.(RAN.(valueRAN(v_sv_min) + 1) % MAXVAL) -> SKIP )
+      [] ( (valueRAN(v_sv_sec) != 0) & SKIP ))
+      [] time ->
+    out.(valueRAN(v_sv_min),valueRAN(v_sv_sec)) -> SKIP);
+      X ) within X );
+      terminate -> SKIP )
+      [| MEMI |] Memory(b_RAN))\MEMI )

@@ -1,0 +1,5 @@
+
+
+result for detall:
+HWakeUp :[deterministic [FD]]: Failed WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed HWakeUp [FD= HWakeUpOK: Passed HWakeUpOK [FD= HWakeUp: Passed WakeUp(b_RAN1, b_ALA1) :[deterministic [FD]]: Failed
+HWakeUp :[deterministic [FD]]: Failed WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed HWakeUp [FD= HWakeUpOK: Passed HWakeUpOK [FD= HWakeUp: Passed WakeUpOK(b_RAN1, b_ALA1) :[deterministic [FD]]: Passed

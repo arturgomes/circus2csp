@@ -1,0 +1,41 @@
+\begin{circus}
+MAXVAL == 10\\
+RANGE == \{0 \upto 10\}\\
+\circchannel tick, time\\
+\circchannel out: (RANGE,RANGE)\\
+\circprocess AChronometer \circdef\\
+\circbegin \circstate AState \defs [sec, min : RANGE]\\
+ AInit \defs [AState' | sec' = 0; min' = 0 ]\\
+ IncSec \defs [\Delta AState | sec' = (sec + 1) \mod MAXVAL]\\
+ IncMin \defs [\Delta AState | min' = (min + 1) \mod MAXVAL]\\
+ Run \circdef
+    (
+        tick \then \lschexpract IncSec \rschexpract \circseq\\
+          (
+          \lcircguard sec = 0 \rcircguard \circguard
+          \lschexpract IncMin \rschexpract\\
+          \extchoice\\ \lcircguard sec \neq 0 \rcircguard \circguard \Skip\\
+          )\\
+        \extchoice~~time \then out!(min,sec) \then \Skip
+    )\\
+\circspot AInit \circseq (\circmu X \circspot Run \circseq X)\\
+\circend\\
+
+\circprocess BChronometer \circdef\\
+\circbegin \circstate AState \defs [sec, min : RANGE]\\
+ AInit \circdef (sec,min:= 0,0)\\
+ IncSec \circdef (sec := (sec + 1) \mod MAXVAL)\\
+ IncMin \circdef (min := (min + 1) \mod MAXVAL)\\
+ Run \circdef
+    (
+        tick \then IncSec \circseq\\
+          (
+          \lcircguard sec = 0 \rcircguard \circguard IncMin \\
+          \extchoice\\ \lcircguard sec \neq 0 \rcircguard \circguard \Skip\\
+          )\\
+        \extchoice~~time \then out!(min,sec) \then \Skip
+    )\\
+\circspot AInit \circseq (\circmu X \circspot Run \circseq X)\\
+\circend
+
+\end{circus}
