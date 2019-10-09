@@ -1388,6 +1388,9 @@ get_min_val n (ZAbbreviation y (ZCall (ZVar ("\\upto",[],"")) (ZTuple xs)))
 get_min_val n (ZAbbreviation y (ZCall (ZVar ("\\seq",[],"")) v))
   | (nfst n) == (nfst y) = [ZSeqDisplay []]
   | otherwise = []
+get_min_val n (ZAbbreviation y (ZSetDisplay [ZCall (ZVar ("\\upto",[],"")) (ZTuple xs)]))
+  | (nfst n) == (nfst y) = [Data.List.head xs]
+  | otherwise = []
 get_min_val n (ZFreeTypeDef y xs)
   | (nfst n) == (nfst y) = [Data.List.head (map getZBranch xs)]
   | otherwise = []
